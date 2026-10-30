@@ -135,6 +135,20 @@
     setSpark(v) { spark = v; applyLayers(); },
     setMode(m, bpm) { mode = m; tempo = bpm || (m === 'work' ? 120 : m === 'alien' ? 84 : 92); applyLayers(); },
     sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗不影響遊戲 */ } } },
+    // 創作計分：n 越大音越高（每張素材升半音），營造越計越興奮的感覺
+    fx(name, n) {
+      if (!ctx || muted) return;
+      const t = ctx.currentTime, k = Math.pow(2, Math.min(24, n || 0) / 12);
+      try {
+        if (name === 'chip') { tone('square', 440 * k, t, 0.07, 0.07, sfxBus); tone('triangle', 880 * k, t, 0.05, 0.04, sfxBus); }
+        else if (name === 'mult') { tone('sawtooth', 220 * k, t, 0.12, 0.06, sfxBus, 330 * k); }
+        else if (name === 'xmult') { tone('sawtooth', 110, t, 0.35, 0.1, sfxBus, 880); tone('square', 660, t + 0.12, 0.2, 0.08, sfxBus); noise(t, 0.25, 0.15, sfxBus); }
+        else if (name === 'burn') { noise(t, 0.6, 0.22, sfxBus); tone('sawtooth', 80, t, 0.6, 0.08, sfxBus, 320); }
+        else if (name === 'card') { noise(t, 0.05, 0.12, sfxBus); tone('triangle', 1200 * k, t, 0.04, 0.03, sfxBus); }
+        else if (name === 'total') { [0, 4, 7, 12, 16].forEach((d, i) => tone('square', midi(60 + d + Math.min(12, n || 0)), t + i * 0.05, 0.14, 0.07, sfxBus)); }
+        else if (name === 'legend') { [0, 3, 7, 10, 14, 19].forEach((d, i) => tone('triangle', midi(55 + d), t + i * 0.07, 0.6, 0.1, sfxBus)); noise(t, 0.8, 0.2, sfxBus); }
+      } catch (e) { /* 忽略 */ }
+    },
     // 街頭表演的音階（五聲音階）；i 由 0 開始，oct 升八度
     note(i, oct) {
       if (!ctx || muted) return;

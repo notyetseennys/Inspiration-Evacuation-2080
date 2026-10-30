@@ -8,7 +8,7 @@
 })(function (IE) {
   'use strict';
   const D = IE.DATA;
-  const MAX_CARDS = 12;
+  const MAX_CARDS = D.CRAFT.deckMax;
 
   // ---------- 隨機數（可存檔的 mulberry32） ----------
   function rand(s) {
@@ -112,7 +112,7 @@
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 4, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 5, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -121,7 +121,12 @@
       usedDilemmas: {}, dilemma: null, dilemmaDay: 0,
       world: null, worldNext: 5, worldsSeen: {},
       rentHike: 0, graceUsed: false, debt: 0,
-      premiumUntil: 0, craftSlots: bg.perk.startSlots || 4, realFoodDay: 0,
+      premiumUntil: 0, realFoodDay: 0,
+      // 創作：作品形式等級、AI 對你風格的記憶、靈感物件
+      forms: {}, formsSeen: {}, style: {}, session: null, handBonus: 0, studio: 0,
+      objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
+      unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
+      pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false },
       auto: 0, removed: { smile: false, label: false },
       mastery: { label: 0, smile: 0, dive: 0 },
@@ -134,7 +139,7 @@
       stats: { labels: 0, wrong: 0, smiles: 0, perfects: 0, dives: 0, relics: 0, fish: 0, flows: 0, works: 0,
         crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null,
         actions: {}, deliveries: 0, lateDeliveries: 0, headlines: 0, shares: 0, buskNotes: 0, crowdMax: 0,
-        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '' },
+        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '', bestPlay: 0, maxObjects: 1 },
       log: { fish: {}, relics: {} },
       newsSeen: {}, morning: null, ended: null,
       legacy: (opts.meta && opts.meta.relics) ? opts.meta.relics.slice(-5) : [],
@@ -147,6 +152,8 @@
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
     bg.cards.forEach((id) => addCard(s, id));
+    D.STARTER.forEach((id) => addCard(s, id));
+    s.objects.forEach((id) => { s.objSeen[id] = true; });
     return s;
   }
   const countAction = (s, k) => { s.stats.actions[k] = (s.stats.actions[k] || 0) + 1; };
@@ -158,10 +165,94 @@
   }
   function addCard(s, idOrCard) {
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
+    card.wear = card.wear || 0;
     s.cards.push(card);
     let dropped = null;
-    if (s.cards.length > MAX_CARDS) dropped = s.cards.shift();
+    // 素材庫滿了：丟掉用得最殘的一張（同樣殘就丟最舊的）
+    if (s.cards.length > MAX_CARDS) {
+      let worst = 0;
+      s.cards.forEach((c, i) => {
+        const w = s.cards[worst];
+        if (i < s.cards.length - 1 && ((c.wear || 0) > (w.wear || 0) || ((c.wear || 0) === (w.wear || 0) && c.value < w.value && (c.wear || 0) > 0))) worst = i;
+      });
+      dropped = s.cards.splice(worst, 1)[0];
+    }
     return { card, dropped };
+  }
+
+  // ---------- 創作技法與靈感物件 ----------
+  // 技法：做某些事、和某些朋友聊天，會提升某種作品形式的等級
+  function teach(s, key, chance, rep) {
+    const fid = D.TEACH[key];
+    if (!fid || rand(s) >= chance) return;
+    s.forms[fid] = (s.forms[fid] || 1) + 1;
+    const f = D.FORMS.find((x) => x.id === fid);
+    if (rep) rep.line('技法提升：「' + f.name + '」升到 Lv.' + s.forms[fid], 'good');
+  }
+  const ownsObject = (s, id) => s.objects.includes(id) || s.objStash.includes(id);
+  const objectAvailable = (s, o) => !o.unlock || s.unlocked.includes(o.id);
+  function gainObject(s, id, rep) {
+    const o = D.OBJ[id];
+    if (!o || ownsObject(s, id)) return false;
+    s.objSeen[id] = true;
+    if (s.objects.length < s.objSlots) s.objects.push(id);
+    else if (s.objStash.length < 4) s.objStash.push(id);
+    else { s.cr += Math.round(D.OBJ_PRICE[o.rarity] / 2); if (rep) rep.line('物件欄已滿，把「' + o.name + '」賣給了天空區收藏家', ''); return false; }
+    s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
+    if (rep) { rep.line('獲得靈感物件：「' + o.name + '」' + (s.objects.includes(id) ? '' : '（物件欄已滿，先放進儲物箱）'), 'good'); rep.obj(id); }
+    return true;
+  }
+  function randomObject(s, ids) {
+    const pool = ids.filter((id) => D.OBJ[id] && !ownsObject(s, id) && objectAvailable(s, D.OBJ[id]));
+    return pool.length ? pick(s, pool) : null;
+  }
+  function equipObject(s, id) {
+    if (!s.objStash.includes(id) || s.objects.length >= s.objSlots) return false;
+    s.objStash = s.objStash.filter((x) => x !== id);
+    s.objects.push(id);
+    s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
+    return true;
+  }
+  function unequipObject(s, id) {
+    if (!s.objects.includes(id) || s.objStash.length >= 4) return false;
+    s.objects = s.objects.filter((x) => x !== id);
+    s.objStash.push(id);
+    return true;
+  }
+  function moveObject(s, id, dir) {
+    const i = s.objects.indexOf(id), j = i + dir;
+    if (i < 0 || j < 0 || j >= s.objects.length) return false;
+    [s.objects[i], s.objects[j]] = [s.objects[j], s.objects[i]];
+    return true;
+  }
+  function sellObject(s, id) {
+    const o = D.OBJ[id];
+    if (!o || !ownsObject(s, id)) return 0;
+    s.objects = s.objects.filter((x) => x !== id);
+    s.objStash = s.objStash.filter((x) => x !== id);
+    const price = Math.round(D.OBJ_PRICE[o.rarity] / 2);
+    s.cr += price;
+    return price;
+  }
+  // 朋友幫你打磨素材：隨機一張沒有變化的素材得到「閃亮／燃燒／淚痕／回音」
+  function polishCard(s, rep, who) {
+    const plain = s.cards.filter((c) => !c.mod && !c.guilt);
+    if (!plain.length) return;
+    const c = pick(s, plain);
+    const r = rand(s);
+    c.mod = r < 0.4 ? 'shine' : r < 0.7 ? 'burn' : r < 0.9 ? 'tear' : 'echo';
+    if (rep) rep.line((who || '你') + '幫你打磨了「' + c.name + '」：' + D.CARD_MODS[c.mod].name + '（' + D.CARD_MODS[c.mod].desc + '）', 'good');
+  }
+  // 二手靈感市集：每三天換一批貨
+  function marketItems(s) {
+    const period = Math.floor((s.day - 1) / 3);
+    if (!s.market || s.market.period !== period) {
+      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && objectAvailable(s, o)).map((o) => o.id);
+      const items = [];
+      while (items.length < 2 && pool.length) items.push(pool.splice(Math.floor(rand(s) * pool.length), 1)[0]);
+      s.market = { period, items };
+    }
+    return s.market.items.filter((id) => !ownsObject(s, id));
   }
   function legacyCard(relic) {
     return { id: 'legacy', name: '前世作品《' + relic.name + '》', tags: relic.tags.slice(0, 2),
@@ -185,6 +276,8 @@
     return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1));
   }
 
+  // 抉擇與面試的訊號：資料寫的是舊版數值（門檻 16.5 萬時），按本季門檻等比例放大
+  const sigScale = (s, v) => Math.round(v * threshold(s) / 165000);
   // 累積訊號（篩選日用來與門檻比較）
   function signal(s) {
     return s.works.reduce((a, w) => a + w.score, 0) + (s.bonusSignal || 0);
@@ -255,6 +348,7 @@
     for (let i = 0; i < poison; i++) rep.gain('l_poison');
     applyAutomationNews(s, autoBefore, rep);
     train(s, ot ? { dex: 1.5, obey: 1.5, imag: -0.8, fit: -0.3 } : { dex: 1.5, obey: 1.2, imag: -0.4 }, rep);
+    teach(s, 'label', 0.15, rep);
     sin(s, ot ? 0.8 : 0.6, rep, '你標註的數據，令一些人失去了工作');
     if (worldMods(s).labelSin) sin(s, worldMods(s).labelSin, rep, '你標註的數據被用來訓練瞄準系統', '標註過的目標', 'anger');
     return rep.done();
@@ -381,6 +475,8 @@
     if (sp) rep.delta('spark', sp);
     res.relics.forEach((r) => rep.gain(r));
     train(s, { swim: 1.5, fit: 1, calm: 0.4 }, rep);
+    teach(s, 'dive', 0.3, rep);
+    if (n && rand(s) < 0.1) { const o = randomObject(s, ['oldmap', 'neonshard', 'collectorbox']); if (o) gainObject(s, o, rep); }
     if (res.lockers) sin(s, 0.5 * res.lockers, rep, '撬開了別人的儲物櫃 ' + res.lockers + ' 個');
     return rep.done();
   }
@@ -412,6 +508,7 @@
     if (res.late >= 2) rep.gain('c_review');
     if (rand(s) < 0.5) rep.gain('c_door');
     train(s, { fit: 1.5, swim: 1.2, calm: 0.5, social: 0.3 }, rep);
+    teach(s, 'delivery', 0.25, rep);
     return rep.done();
   }
 
@@ -451,6 +548,8 @@
     if (res.truth >= 2) rep.gain('f_truth');
     addParanoia(s, 1.5 * res.fakeTotal, rep);
     train(s, { insight: 0.4 + 0.3 * res.truth, craft: 0.5, obey: 1, empathy: -0.5 }, rep);
+    teach(s, 'farm', 0.3, rep);
+    if (rand(s) < 0.25) gainObject(s, 'anonacct', rep);
     if (res.fakeTotal > 0.3) sin(s, 0.25 * res.fakeTotal, rep, '你製造的恐慌正在城市裡流傳', res.fakeTotal >= 4 ? '寫過的假新聞' : null, 'neon');
     return rep.done();
   }
@@ -474,6 +573,7 @@
     rep.delta('cr', cr); rep.delta('body', -body); rep.delta('spark', sp);
     rep.gain(res.crowdMax >= 6 ? 'p_clap' : res.soloNotes >= 12 ? 'p_chorus' : 'p_hat');
     train(s, { rhythm: 1.5, craft: 1, social: 0.8, imag: 0.5, obey: -0.5 }, rep);
+    teach(s, 'busk', 0.4, rep);
     return rep.done();
   }
 
@@ -521,11 +621,11 @@
       if (ans.card) rep.gain(ans.card);
       s.stats.lastReact = ans.react;
     });
-    const bonus = Math.max(-6000, score * 2500);
+    const bonus = Math.round(threshold(s) * Math.max(-0.04, score * 0.015));
     s.bonusSignal += bonus;
     s.stats.interviews++; s.stats.interviewScore += score;
     rep.line('面試評分 ' + (score > 0 ? '+' : '') + score + '，外星訊號 ' + (bonus >= 0 ? '+' : '−') + Math.abs(bonus).toLocaleString(), bonus >= 0 ? 'good' : 'bad');
-    if (score >= 4) rep.gain('i_smile');
+    if (score >= 4) { rep.gain('i_smile'); const o = randomObject(s, ['aliencard', 'kpiclock']); if (o) gainObject(s, o, rep); }
     return rep.done();
   }
 
@@ -550,6 +650,9 @@
     if (perk(s).chatExtra) rep.gain(def.cards[n.friend % def.cards.length]);
     addParanoia(s, -2);
     train(s, { social: 1.2, empathy: 1, imag: 0.4 }, rep);
+    teach(s, npcId, n.friend === 2 || n.friend === 4 ? 1 : 0.25, rep);
+    if (n.friend === 3) { const o = D.OBJECTS.find((x) => x.npc === npcId); if (o) gainObject(s, o.id, rep); }
+    if (rand(s) < 0.3 + 0.002 * A(s, 'social')) polishCard(s, rep, def.name);
     return rep.done();
   }
   function applyVolunteer(s) {
@@ -562,6 +665,7 @@
     atone(s, 2.5 * (perk(s).volunteerAtone || 1), rep, '你幫忙分派物資，靈魂輕了一點');
     rep.gain('v_shelter');
     train(s, { empathy: 1.5, fit: 0.5 }, rep);
+    teach(s, 'volunteer', 0.35, rep);
     return rep.done();
   }
   function applyRest(s) {
@@ -576,89 +680,6 @@
     addParanoia(s, -2);
     train(s, { imag: 0.4 }, rep);
     return rep.done();
-  }
-
-  // ---------- 創作 ----------
-  function evalCraft(s, uids) {
-    const cards = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
-    const counts = {};
-    cards.forEach((c) => c.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
-    const cardChips = cards.reduce((a, c) => a + c.value, 0) * (perk(s).craftChips || 1) * (1 + 0.003 * A(s, 'craft'));
-    const combos = [];
-    let maxTag = null, maxCount = 0;
-    Object.keys(counts).forEach((t) => { if (counts[t] > maxCount) { maxCount = counts[t]; maxTag = t; } });
-    for (const r of D.RESONANCE) {
-      if (maxCount >= r.count) {
-        combos.push({ id: r.id, name: r.name + '・' + D.TAGS[maxTag].name, chips: r.chips, mult: r.mult, kind: 'res' });
-        break;
-      }
-    }
-    // 主組合計足倍率，其餘組合只加 0.5（避免倍率無限疊加）
-    const recipes = D.RECIPES
-      .filter((rec) => Object.keys(rec.need).every((t) => (counts[t] || 0) >= rec.need[t]))
-      .sort((a, b) => b.mult - a.mult);
-    recipes.forEach((rec, i) => {
-      combos.push({ id: rec.id, name: rec.name, chips: rec.chips, mult: i === 0 ? rec.mult : 0.5, kind: 'recipe',
-        secondary: i > 0, isNew: !s.discovered[rec.id], used: !!s.usedRecipes[rec.id] });
-    });
-    if (Object.keys(counts).length >= D.MEDLEY.minTags) {
-      combos.push({ id: D.MEDLEY.id, name: D.MEDLEY.name, chips: D.MEDLEY.chips, mult: D.MEDLEY.mult, kind: 'medley' });
-    }
-    const chips = Math.round(cardChips + combos.reduce((a, c) => a + c.chips, 0));
-    const mult = round1(1 + combos.reduce((a, c) => a + c.mult, 0));
-    const base = chips * mult * s.spark * (worldMods(s).signalMult || 1);
-    const k = kpi(s);
-    let kpiMod = 1;
-    if (k.tag && counts[k.tag]) kpiMod = k.mod;
-    if (k.special === 'lean' && cards.length >= 4) kpiMod = 0.5;
-    if (k.special === 'pliable' && s.spark < 2) kpiMod = 1.5;
-    if (k.special === 'novelty') {
-      const named = combos.filter((c) => c.kind === 'recipe');
-      if (named.length && named.every((c) => c.used)) kpiMod = 0.2;
-    }
-    const relief = round1(cards.reduce((a, c) => a + (c.grams || 0), 0));
-    return { cards, counts, cardChips: Math.round(cardChips), chips, mult, spark: s.spark, relief,
-      combos, kpi: k, kpiMod, raw: Math.round(base), total: Math.round(base * kpiMod) };
-  }
-  function workName(s, ev) {
-    const named = ev.combos.filter((c) => c.kind === 'recipe').sort((a, b) => b.mult - a.mult);
-    if (named.length) return named[0].name;
-    const tags = Object.keys(ev.counts).sort((a, b) => ev.counts[b] - ev.counts[a]);
-    if (tags.length >= 2) return D.TAGS[tags[0]].name + '與' + D.TAGS[tags[1]].name;
-    return '無題 #' + (s.stats.works + 1);
-  }
-  // 創作需要材料費：藝術不是免費的
-  const craftCost = (n) => 10 + 5 * n;
-  function canCreate(s) {
-    if (s.spark < 1) return { ok: false, reason: '火花不足 ×1.0，你什麼都想不出來' };
-    if (s.cards.length < 2) return { ok: false, reason: '最少需要 2 張素材' };
-    if (s.cr < craftCost(2)) return { ok: false, reason: '連 $' + craftCost(2) + ' 材料費都付不起' };
-    return { ok: true };
-  }
-  function commitCraft(s, uids) {
-    const ev = evalCraft(s, uids);
-    const used = new Set(uids);
-    s.cards = s.cards.filter((c) => !used.has(c.uid));
-    s.cr -= craftCost(ev.cards.length);
-    const fresh = ev.combos.filter((c) => c.kind === 'recipe' && !s.discovered[c.id]);
-    fresh.forEach((c) => { s.discovered[c.id] = true; });
-    ev.combos.filter((c) => c.kind === 'recipe').forEach((c) => { s.usedRecipes[c.id] = true; });
-    const tags = Object.keys(ev.counts).sort((a, b) => ev.counts[b] - ev.counts[a]);
-    const work = { day: s.day, quarter: s.quarter, name: workName(s, ev), tags,
-      score: ev.total, raw: ev.raw, medium: bgOf(s).medium, n: ev.cards.length };
-    s.works.push(work);
-    s.stats.works++;
-    countAction(s, 'create');
-    if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
-    s.body -= 4;
-    s.saturation = Math.min(1.15, s.saturation + 0.02);
-    let sparkUp = 0;
-    if (fresh.length) sparkUp = addSpark(s, 0.15, true);
-    // 把愧疚寫進作品：卸下它的重量
-    let relief = 0;
-    if (ev.relief) { relief = atone(s, ev.relief, null); s.stats.confessions++; }
-    train(s, { craft: 1.2, imag: 0.5 }, null);
-    return { ev, work, fresh, sparkUp, relief };
   }
 
   // ---------- 行動清單（讓介面顯示取捨） ----------
@@ -703,10 +724,15 @@
       list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
         fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
     } else {
-      const c = canCreate(s);
-      list.push({ id: 'create', group: 'night', name: '創作', sub: '把今天的經歷變成作品，讓外星人看見',
-        fx: [['card', '使用 2 至 ' + s.craftSlots + ' 張素材'], ['cr', '材料 −$' + craftCost(2) + ' 起'], ['sig', '訊號 ↑'], ['body', '−4']],
-        reason: c.reason });
+      const CR = D.CRAFT, Cr = IE.Create;
+      const m = Cr.objMods(s);
+      const hand = CR.hand + (s.handBonus || 0) + (perk(s).handBonus || 0) + m.hand;
+      list.push({ id: 'create', group: 'night', name: '創作', sub: '抽 ' + hand + ' 張素材，下筆 ' + (CR.plays + m.plays) + ' 次、改稿 ' + (CR.discards + m.discards) + ' 次，把今天變成作品',
+        fx: [['card', '素材庫 ' + s.cards.length + ' 張'], ['cr', '材料 −$' + CR.cost], ['sig', '訊號 ↑'], ['body', '−4']],
+        reason: Cr.canStart(s, 'normal') });
+      list.push({ id: 'allnighter', group: 'night', name: '通宵創作', sub: '多一次下筆、多一次改稿；天亮時你會很後悔',
+        fx: [['card', '下筆 ' + (CR.plays + m.plays + 1) + ' 次'], ['cr', '材料 −$' + CR.allnighterCost], ['body', '−15'], ['spark', '−0.2']],
+        reason: Cr.canStart(s, 'allnighter') });
       list.push({ id: 'ot', group: 'night', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
         fx: [['cr', '約 +$' + Math.round(labelCr * 1.5)], ['body', '−14'], ['spark', '約 −' + round1(labelSpark * 1.5)]],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'ot') || labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
@@ -727,7 +753,12 @@
       note: s.premiumUntil >= s.day ? '有效至第 ' + s.premiumUntil + ' 天' : null });
     items.push({ id: 'supplement', ...S.supplement });
     items.push({ id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
-    items.push({ id: 'tools', ...S.tools, owned: s.craftSlots >= 5 });
+    items.push({ id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
+    if (s.objSlots < 5) items.push({ id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
+    marketItems(s).forEach((id) => {
+      const o = D.OBJ[id];
+      items.push({ id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity], obj: id });
+    });
     ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
     items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
       note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
@@ -748,13 +779,15 @@
     const it = shop(s).find((x) => x.id === id);
     if (!it || !it.enabled) return { ok: false, msg: '無法購買' };
     s.cr -= it.cost;
+    if (it.obj) { gainObject(s, it.obj, null); return { ok: true, msg: '已購買：' + D.OBJ[it.obj].name }; }
     switch (id) {
       case 'premium': s.premiumUntil = s.day + 4; break;
       case 'supplement':
         addSpark(s, 1.2, true);
         s.flags.crashDay = s.day + 2; s.flags.crashAmt += 1.6; break;
       case 'realfood': s.realFoodDay = s.day; heal(s, 15); addSpark(s, 0.2); break;
-      case 'tools': s.craftSlots = 5; break;
+      case 'tools': s.handBonus = 1; break;
+      case 'studio': s.objSlots = Math.min(5, s.objSlots + 1); break;
       case 'tank': case 'harpoon': case 'bag': case 'monitor': s.gear[id] = true; break;
       case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
       case 'erase':
@@ -803,7 +836,7 @@
     if (o.sin) fx.push(['soul', '+' + round1(o.sin * sinFactor(s)) + ' 克']);
     if (o.atone) fx.push(['soul', '−' + round1(Math.min(s.soul, o.atone)) + ' 克']);
     if (o.rating) fx.push(['note', '評分 ' + sign(o.rating)]);
-    if (o.signal) fx.push(['sig', '訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(o.signal).toLocaleString()]);
+    if (o.signal) fx.push(['sig', '訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(sigScale(s, o.signal)).toLocaleString()]);
     if (o.rentDiscount) fx.push(['cr', '下期租金減半']);
     if (o.foodFree) fx.push(['cr', '今晚不用付飯錢']);
     if (o.loseCard) fx.push(['card', '失去一張素材']);
@@ -811,6 +844,7 @@
     if (o.paranoia) fx.push(['note', '偏執 +' + o.paranoia]);
     if (o.stats) Object.keys(o.stats).forEach((k) => fx.push(['stat', D.STATS[k].name + ' ' + sign(o.stats[k])]));
     if (o.card) fx.push(['card', D.CARDS[o.card].name]);
+    if (o.obj) fx.push(['card', '靈感物件：' + D.OBJ[o.obj].name]);
     if (o.guilt && o.sin >= 1) fx.push(['card', '愧疚：' + o.guilt]);
     return fx;
   }
@@ -838,7 +872,7 @@
     if (o.body) { heal(s, o.body); rep.delta('body', o.body); }
     if (o.spark) rep.delta('spark', addSpark(s, o.spark, true));
     if (o.rating) { s.rating = clamp(o.rating === 5 ? 5 : s.rating + o.rating, 1, 5); rep.line('平台評分 ' + (o.rating === 5 ? '變成 5.0' : (o.rating > 0 ? '+' : '') + o.rating), o.rating > 0 ? 'good' : 'bad'); }
-    if (o.signal) { s.bonusSignal += o.signal; rep.line('外星訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(o.signal).toLocaleString(), o.signal > 0 ? 'good' : 'bad'); }
+    if (o.signal) { const v = sigScale(s, o.signal); s.bonusSignal += v; rep.line('外星訊號 ' + (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString(), v > 0 ? 'good' : 'bad'); }
     if (o.rentDiscount) { s.rentDiscount = o.rentDiscount; rep.line('下期租金減半', 'good'); }
     if (o.foodFree) s.flags.foodFree = s.day;
     if (o.flag) s.flags[o.flag] = true;
@@ -853,6 +887,7 @@
     }
     if (o.takeNamedNpc && cur.npc) takeNpc(s, s.npcs.find((n) => n.id === cur.npc), rep);
     if (o.card) rep.gain(o.card);
+    if (o.obj) gainObject(s, o.obj, rep);
     if (o.stats) train(s, o.stats, rep);
     if (o.paranoia) addParanoia(s, o.paranoia, rep);
     if (o.sin) sin(s, o.sin, rep, '這件事會一直壓在你心上', o.guilt, o.tag);
@@ -874,6 +909,7 @@
     if (fx.crPct) s.cr = Math.round(s.cr * (1 + fx.crPct));
     if (fx.paranoia) addParanoia(s, fx.paranoia);
     if (fx.card) addCard(s, fx.card);
+    if (w.id === 'aliens' && !ownsObject(s, 'alienradio')) gainObject(s, 'alienradio', null);
     if (fx.takeNpc) {
       const alive = s.npcs.filter((n) => n.alive);
       if (alive.length) { const n = pick(s, alive); n.alive = false; s.saturation = Math.max(0.25, s.saturation - 0.15); }
@@ -933,6 +969,8 @@
     if (e.card) rep.gain(e.card);
     if (e.stats) train(s, e.stats, rep);
     if (e.paranoia) addParanoia(s, e.paranoia, rep);
+    if (e.card === 'e_alien' && rand(s) < 0.5) gainObject(s, 'alienradio', rep);
+    if (e.card === 'e_rob' && rand(s) < 0.4) gainObject(s, 'angrydiary', rep);
   }
 
   function endDay(s) {
@@ -957,6 +995,7 @@
       rep.line('飢餓令你無法思考', 'bad', -0.3, 'spark');
       rep.gain('e_hunger');
       train(s, { fit: -0.5 }, rep);
+      if (s.stats.hungryDays === 3) gainObject(s, 'emptybowl', rep);
     }
     // 睡覺
     if (s.floor === 0) { s.body -= 10; rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
@@ -981,6 +1020,7 @@
     }
     s.workedToday = false;
     if (s.rating < 3.5) s.rating = Math.min(3.5, s.rating + 0.05);
+    if (IE.Create) IE.Create.newDay(s);
     // 全城自動化
     const autoBefore = s.auto;
     s.auto = clamp(s.auto + 0.35, 0, 100);
@@ -1145,6 +1185,19 @@
       meta.stamps = meta.stamps || {};
       dossier.stamps.forEach((x) => { meta.stamps[x.id] = true; });
     }
+    // 創作的跨局紀錄與解鎖
+    meta.totalWorks = (meta.totalWorks || 0) + s.works.length;
+    meta.bestPlay = Math.max(meta.bestPlay || 0, s.stats.bestPlay || 0);
+    meta.maxObjects = Math.max(meta.maxObjects || 0, s.stats.maxObjects || 0);
+    meta.objSeen = meta.objSeen || {};
+    Object.keys(s.objSeen || {}).forEach((k) => { meta.objSeen[k] = true; });
+    meta.forms = meta.forms || {};
+    Object.keys(s.formsSeen || {}).forEach((k) => { meta.forms[k] = Math.max(meta.forms[k] || 0, (s.forms && s.forms[k]) || 1); });
+    meta.unlocked = meta.unlocked || {};
+    meta.lastUnlocks = [];
+    D.OBJECTS.forEach((o) => {
+      if (o.unlock && !meta.unlocked[o.id] && o.unlock.test(meta)) { meta.unlocked[o.id] = true; meta.lastUnlocks.push(o.id); }
+    });
     meta.relics = meta.relics || [];
     const best = s.stats.bestWork;
     if (best) {
@@ -1158,7 +1211,7 @@
 
   // ---------- 工具 ----------
   function report(s, title) {
-    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [] };
+    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [], objs: [] };
     return {
       get review() { return r.review; }, set review(v) { r.review = v; },
       get ending() { return r.ending; }, set ending(v) { r.ending = v; },
@@ -1169,6 +1222,7 @@
       line(text, kind, v, stat) { r.lines.push({ text, kind: kind || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; },
       delta(stat, v) { r.deltas[stat] += v; },
       stat(k, v) { r.stats[k] = (r.stats[k] || 0) + v; },
+      obj(id) { r.objs.push(id); },
       gain(id) {
         const res = addCard(s, id);
         r.cards.push(res.card);
@@ -1193,7 +1247,7 @@
     deliveryConfig, applyDelivery, farmScore, farmConfig, applyFarm, buskConfig, applyBusk,
     clinicConfig, applyClinic, interviewQuestions, applyInterview,
     chatCost, aliveNpcs, applyChat, applyRest,
-    evalCraft, commitCraft, canCreate, craftCost,
+    teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
     MAX_CARDS,
   };

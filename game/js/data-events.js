@@ -108,6 +108,9 @@
   // guilt：留下的「愧疚」素材名稱；tag：它的第二個標籤
   // min：選項需要的能力值；stats：選擇後的能力值變化；repeat：可在多少天後再次出現
   const DILEMMAS = [
+    { id: 'sketchbook', text: '你在咖啡店撿到一本別人的速寫簿，裡面全是你從未想過的點子。',
+      options: [{ label: '據為己有', obj: 'stolen', sin: 2.5, guilt: '別人的速寫簿', tag: 'memory' },
+        { label: '交回咖啡店', atone: 1, card: 'x_sun' }] },
     { id: 'wallet', text: '你在樓梯撿到一個錢包，裡面有 $120 和一張全家福。',
       options: [{ label: '據為己有', cr: 80, sin: 3, guilt: '那個錢包', tag: 'memory' },
         { label: '交到管理處', atone: 1, card: 'm_family', stats: { empathy: 1 } }] },

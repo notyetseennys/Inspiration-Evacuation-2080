@@ -28,11 +28,31 @@ const URL = 'http://localhost:' + PORT + '/';
     }
   };
   let dilemmas = 0;
-  const fail = async (msg) => { console.error('✗ ' + msg); await browser.close(); server.kill(); process.exit(1); };
+  // 創作之夜：每次選最好的下筆，直到三次用完
+  const createNight = async () => {
+    await page.waitForSelector('#ctable .ct-hand .cc');
+    for (let p = 0; p < 6; p++) {
+      if (await page.$('.ct-end [data-end="done"]')) break;
+      const uids = await page.evaluate(() => { const b = window.__IE.Create.bestPlay(window.__IE.Game.state); return b ? b.uids : []; });
+      if (!uids.length) break;
+      for (const u of uids) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
+      await page.click('#ctable [data-ct="play"]');
+      await page.waitForFunction(() => !!document.querySelector('.ct-end') || !window.__IE.Craft.isBusy(), null, { timeout: 30000 });
+    }
+    await page.waitForSelector('.ct-end [data-end="done"]', { timeout: 30000 });
+    await page.click('.ct-end [data-end="done"]');
+    createdWorks++;
+  };
+  let createdWorks = 0;
+  const fail = async (msg) => {
+    console.error('✗ ' + msg);
+    if (process.env.SHOT) { try { await page.screenshot({ path: process.env.SHOT }); } catch (e) { /* 忽略 */ } }
+    await browser.close(); server.kill(); process.exit(1);
+  };
   const ok = (msg) => console.log('✓ ' + msg);
   try {
     await page.goto(URL);
-    await page.evaluate(() => localStorage.clear());
+    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ie2080.speed', '4'); });
     await page.reload();
     await page.click('[data-do="new"]');
     await page.click('[data-do="start"]');
@@ -59,11 +79,8 @@ const URL = 'http://localhost:' + PORT + '/';
       const canCreate = await page.$('.act[data-id="create"]:not([disabled])');
       if (canCreate) {
         await canCreate.click();
-        const cards = await page.$$('#modal .craft-grid .card');
-        for (let i = 0; i < Math.min(3, cards.length); i++) await (await page.$$('#modal .craft-grid .card'))[i].click();
-        await page.click('#modal [data-do="make"]');
-        await page.click('#modal [data-do="skip"]');
-        await page.click('#modal [data-do="done"]');
+        if (await page.$('#modal [data-do="close"]')) await page.click('#modal [data-do="close"]'); // 第一次的教學
+        await createNight();
       } else {
         await page.click('.act[data-id="rest"]');
         await page.click('#modal [data-do="ok"]');
@@ -74,7 +91,10 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     const day = await page.evaluate(() => window.__IE.Game.state.day);
     if (day !== 4) await fail('應該是第 4 天，現在是第 ' + day + ' 天');
-    ok('玩完三天，現在是第 ' + day + ' 天（遇到 ' + dilemmas + ' 個道德抉擇）');
+    ok('玩完三天，現在是第 ' + day + ' 天（遇到 ' + dilemmas + ' 個道德抉擇，創作了 ' + createdWorks + ' 件作品）');
+    if (!createdWorks) await fail('三天都沒有創作');
+    const works = await page.evaluate(() => window.__IE.Game.state.works.map((w) => w.name + ' ' + w.score));
+    ok('作品：' + works.join('、'));
 
     // 存檔 → 重新載入 → 繼續
     await page.reload();

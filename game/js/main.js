@@ -31,7 +31,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 4 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 5 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   function setCityFilter() {
@@ -90,6 +90,7 @@
   function resumeRun() {
     const s = Game.state;
     setScene(S.City);
+    if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
     else showHub();
   }
@@ -146,6 +147,7 @@
     A.setSpark(s.spark);
     UI.setPanel(UI.actionsPanel(s, R.actions(s)), {
       act(el) { doAction(el.dataset.id); },
+      objs() { openObjects(); },
     });
     save();
   }
@@ -164,13 +166,32 @@
           npc(el) { afterAction(R.applyChat(s, el.dataset.id)); },
           back() { showHub(); },
         });
-      case 'create':
-        return IE.Craft.open(s, (res) => {
-          if (!res) { showHub(); return; }
-          UI.renderHud(s);
-          afterSlot();
-        });
+      case 'create': case 'allnighter':
+        IE.Create.start(s, id === 'allnighter' ? 'allnighter' : 'normal');
+        save();
+        return openCraft();
     }
+  }
+  function openCraft() {
+    const s = Game.state;
+    IE.Craft.open(s, (res) => {
+      UI.renderHud(s); A.setSpark(s.spark); save();
+      if (!res) { showHub(); return; }
+      afterSlot();
+    });
+  }
+  // 靈感物件：裝備、卸下、排列（碎鏡會複製右邊的物件）、賣給天空區
+  function openObjects() {
+    const s = Game.state;
+    const render = () => UI.pushModal(UI.objectsModal(s), {
+      equip(el) { R.equipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
+      unequip(el) { R.unequipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
+      left(el) { R.moveObject(s, el.dataset.id, -1); UI.closeModal(); render(); save(); },
+      right(el) { R.moveObject(s, el.dataset.id, 1); UI.closeModal(); render(); save(); },
+      sell(el) { const p = R.sellObject(s, el.dataset.id); UI.toast('賣給天空區收藏家：+$' + p, 'good'); A.sfx('coin'); UI.closeModal(); render(); UI.renderHud(s); save(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
   }
 
   // ---------- 小遊戲 ----------
@@ -388,6 +409,12 @@
     });
     const KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '];
     window.addEventListener('keydown', (e) => {
+      if (IE.Craft.isOpen()) {
+        if (UI.modalOpen()) return;
+        if (e.key === 'Enter' || e.key === 'Backspace' || e.key === ' ') e.preventDefault();
+        if (!e.repeat) IE.Craft.key(e.key);
+        return;
+      }
       const sc = Game.scene;
       if (sc && sc.key && sc !== S.City) {
         if (KEYS.includes(e.key)) e.preventDefault();
@@ -425,7 +452,7 @@
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended) { Game.state = data.run; S.City.enter('hub'); showHub(); }
+    if (data && data.run && !data.run.ended && data.run.v === 5) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

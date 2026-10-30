@@ -7,7 +7,8 @@
 
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
-  const kfmt = (n) => (n >= 10000 ? (n / 1000).toFixed(1) + 'k' : fmt(n));
+  // 大數字：萬、億
+  const kfmt = (n) => (n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
   const pad2 = (n) => String(n).padStart(2, '0');
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
 
@@ -22,6 +23,8 @@
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
       + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
+      + (c.mod ? '<span class="c-mod" style="--c:' + D().CARD_MODS[c.mod].color + '">' + D().CARD_MODS[c.mod].name + '</span>' : '')
+      + (c.wear ? '<span class="c-wear">' + (c.wear >= 4 ? '陳腔濫調' : '用過 ×' + c.wear) + '</span>' : '')
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
@@ -159,8 +162,31 @@
       + invHtml(s);
   }
   function invHtml(s) {
-    return '<div class="inv-wrap"><div class="inv-head"><span>素材 ' + s.cards.length + ' / ' + R().MAX_CARDS + '</span><span>晚上用來創作・超出上限會丟掉最舊的一張</span></div>'
+    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>').join('');
+    return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + s.objSlots + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
+      + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
+      + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
+      + '<div class="inv-head"><span>素材庫 ' + s.cards.length + ' / ' + R().MAX_CARDS + '</span><span>晚上用來創作・用得越多次越殘・滿了會丟掉最殘的一張</span></div>'
       + '<div class="inv">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute" style="font-size:13px">還沒有素材。先去生活吧。</span>') + '</div></div>';
+  }
+  function objectsModal(s) {
+    const D_ = D();
+    const row = (id, equipped, i) => {
+      const o = D_.OBJ[id];
+      return '<div class="obj-row r-' + o.rarity + '">' + IE.Icons.obj(id, 44)
+        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span></div>'
+        + '<div class="obj-btns">'
+        + (equipped ? '<button class="btn mini" type="button" data-do="left" data-id="' + id + '"' + (i === 0 ? ' disabled' : '') + '>←</button>'
+          + '<button class="btn mini" type="button" data-do="right" data-id="' + id + '"' + (i === s.objects.length - 1 ? ' disabled' : '') + '>→</button>'
+          + '<button class="btn mini" type="button" data-do="unequip" data-id="' + id + '"' + (s.objStash.length >= 4 ? ' disabled' : '') + '>卸下</button>'
+          : '<button class="btn mini sea" type="button" data-do="equip" data-id="' + id + '"' + (s.objects.length >= s.objSlots ? ' disabled' : '') + '>裝備</button>')
+        + '<button class="btn mini" type="button" data-do="sell" data-id="' + id + '">賣 $' + Math.round(D_.OBJ_PRICE[o.rarity] / 2) + '</button></div></div>';
+    };
+    return '<div class="modal wide"><h2>靈感物件</h2>'
+      + '<p class="mute" style="font-size:13px">裝備中的物件會在創作計分時由左至右觸發（碎鏡會複製右邊那件）。物件欄 ' + s.objects.length + ' / ' + s.objSlots + '，儲物箱最多 4 件。</p>'
+      + '<h3>裝備中</h3>' + (s.objects.map((id, i) => row(id, true, i)).join('') || '<p class="mute">沒有</p>')
+      + '<h3>儲物箱</h3>' + (s.objStash.map((id) => row(id, false)).join('') || '<p class="mute">沒有</p>')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">完成</button></div></div>';
   }
   function chatPanel(s) {
     const npcs = R().aliveNpcs(s);
@@ -201,6 +227,8 @@
   }
   function gainedHtml(rep) {
     let h = '';
+    if (rep.objs && rep.objs.length) h += '<h3>獲得靈感物件</h3><div class="gained">' + rep.objs.map((id) => '<div class="obj-row r-' + D().OBJ[id].rarity + '">' + IE.Icons.obj(id, 40)
+      + '<div class="obj-txt"><b>' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span></div></div>').join('') + '</div>';
     if (rep.cards.length) h += '<h3>獲得素材</h3><div class="gained">' + rep.cards.map((c) => cardHtml(c)).join('') + '</div>';
     if (rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
@@ -221,7 +249,7 @@
     const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
-    const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item"><div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
+    const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item' + (it.obj ? ' has-icon' : '') + '">' + (it.obj ? IE.Icons.obj(it.obj, 36) : '') + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
       + '<button class="btn' + (it.enabled ? ' sea' : '') + '" type="button" data-do="buy" data-id="' + it.id + '"' + (it.enabled ? '' : ' disabled') + '>' + (it.owned ? '已擁有' : '$' + fmt(it.cost)) + '</button></div>').join('') + '</div>';
     return '<div class="phone" role="dialog" aria-label="手機">'
       + '<div class="phone-bar"><span>' + (opts.morning ? '07:00' : '··:··') + '</span><span>浮聲 5G</span><span class="' + (battery < 10 ? 'low' : '') + '">電量 ' + battery + '%</span></div>'
@@ -335,6 +363,8 @@
       + '<div class="d-stamps">' + stamps + '</div>'
       + '<p class="d-foot">本檔案由自動化流程產生，無需人手覆核。我們不是一個組織，我們是一個宇宙大家庭。</p>'
       + '</div>'
+      + ((meta.lastUnlocks || []).length ? '<div class="unlocks"><h3>跨局解鎖</h3>' + meta.lastUnlocks.map((id) => '<div class="obj-row r-legend">' + IE.Icons.obj(id, 44)
+        + '<div class="obj-txt"><b>新靈感物件：' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span><span class="mute">解鎖條件：' + esc(D().OBJ[id].unlock.text) + '</span></div></div>').join('') + '</div>' : '')
       + '<div class="btn-row"><button class="btn" type="button" data-do="copy">複製檔案</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
       + '<p class="mute" style="font-size:12px;text-align:center">結局 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '・人類模組 ' + seen + '/' + DS.ARCHETYPES.length + '</p>'
       + '</div>';
@@ -371,7 +401,13 @@
       + '<li>良知也決定你的感受力：火花上限 = 2 + 2 × 良知。</li>'
       + '<li>減輕的方法：做義工、在抉擇中選擇良心、把「愧疚」素材寫進作品，或者購買「業力抵銷額度」。</li></ul>'
       + '<h3>人類樣本檔案</h3><p>無論被帶走、留下、死去還是灰化，外星人都會根據你最後的能力值、靈魂和所作所為，把你歸類為 30 種人類模組之一，寫下觀察筆記，再蓋上印章。</p>'
-      + '<h3>創作</h3><p>作品分 = 素材籌碼 × 組合倍率 × 火花 × 外星 KPI。同一標籤的素材越多越有共鳴，特定的標籤組合會觸發具名組合。</p>'
+      + '<h3>創作（核心）</h3><ul>'
+      + '<li>晚上選「創作」：從素材庫抽一手素材，下筆三次、改稿兩次。三次下筆的分數加起來就是今晚的作品，會變成外星訊號。「通宵創作」多一次下筆和改稿，但很傷身。</li>'
+      + '<li>每次下筆的分數 = 籌碼 × 倍率 × 火花。同一標籤出現得越多，作品形式越高級：隨筆、短詩、對聯、歌、拼貼、小說、壁畫、交響曲、史詩，還有一種隱藏形式。</li>'
+      + '<li>特定標籤組合會觸發 48 個具名組合之一，其中 8 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
+      + '<li><b>靈感物件</b>最多裝備 3 件（工作室可擴充至 5 件），在計分時觸發。朋友、潛水、事件、面試和二手市集都可以找到；部分要跨局解鎖。</li>'
+      + '<li><b>技法</b>：白天做不同的事、和不同的朋友聊天，會令相應的作品形式升級。為了創作，去試不同的生活吧。</li>'
+      + '<li>素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格，倍率下降。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
@@ -397,7 +433,17 @@
       + (at[a.id] ? '<span class="mute">' + esc(DS.STAMPS[a.stamp].text) + '・歸類 ' + at[a.id] + ' 次</span>' : '') + '</div>').join('');
     const stampsSeen = meta.stamps || {};
     const stamps = Object.keys(DS.STAMPS).map((k) => '<span class="dstamp mini tone-' + DS.STAMPS[k].tone + (stampsSeen[k] ? '' : ' unknown') + '">' + (stampsSeen[k] ? esc(DS.STAMPS[k].text) : '？？？') + '</span>').join('');
+    const unlocked = meta.unlocked || {}, seenO = meta.objSeen || {};
+    const objs = D().OBJECTS.map((o) => {
+      const open = !o.unlock || unlocked[o.id];
+      const seen = seenO[o.id];
+      return '<div class="recipe obj-card r-' + o.rarity + (seen ? '' : ' unknown') + '">' + (seen || open ? IE.Icons.obj(o.id, 32) : '')
+        + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
+        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
+    }).join('');
     return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
+      + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
+      + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
       + '<h3>人類模組（' + Object.keys(at).length + '/' + DS.ARCHETYPES.length + '）</h3><div class="recipes">' + types + '</div>'
       + '<h3>外星印章（' + Object.keys(stampsSeen).length + '/' + Object.keys(DS.STAMPS).length + '）</h3><div class="stamp-wall">' + stamps + '</div>'
       + '<h3>具名組合</h3><div class="recipes">' + recipes + '</div>'
@@ -426,7 +472,7 @@
 
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
-    renderHud, setPanel, modal, pushModal, closeModal, modalOpen, bindDelegation, toast,
+    renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
   };

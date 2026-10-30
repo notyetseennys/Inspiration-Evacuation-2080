@@ -1,163 +1,597 @@
-// 創作：選擇素材 → 即時看到組合與分數 → 爆分演出。
+// 創作之夜：《小丑牌》式的創作桌。
+//   抽一手素材 → 選 1 至 5 張下筆（或改稿換牌）→ 逐張計分：籌碼跳動、物件觸發、組合蓋章、倍率燃燒、乘上火花 → 爆分。
+//   規則全部在 create.js；這裡只負責演出與輸入。
 (function (IE) {
   'use strict';
-  const D = () => IE.DATA;
-  const R = () => IE.Rules;
-  const UI = () => IE.UI;
-  const A = () => IE.Audio;
+  const D = () => IE.DATA, R = () => IE.Rules, C = () => IE.Create, UI = () => IE.UI, A = () => IE.Audio;
+  const esc = (v) => IE.UI.esc(v);
+  const fmt = (n) => IE.UI.fmt(n);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 忽略 */ } },
+  };
+  let root = null, st = null;
+  const $ = (sel) => root.querySelector(sel);
 
-  function known(s, id) {
-    const meta = IE.Game.meta || {};
-    return !!(s.discovered[id] || (meta.recipes && meta.recipes[id]));
+  // ---------- 素材卡 ----------
+  function cardEl(s, c, o) {
+    o = o || {};
+    const D_ = D();
+    const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
+    const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
+    const wear = c.wear || 0;
+    const val = C().cardValue(s, c);
+    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '')
+      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + '>'
+      + '<span class="cc-stripes">' + stripes + '</span>'
+      + '<span class="cc-name">' + esc(c.name) + '</span>'
+      + '<span class="cc-tags">' + tags + '</span>'
+      + '<span class="cc-foot"><b class="cc-val num">' + val + '</b>'
+      + (wear ? '<span class="cc-wear" title="用過 ' + wear + ' 次，籌碼 ×' + C().wearMult(c).toFixed(2) + '">' + (wear >= 4 ? '陳腔濫調' : '用過 ×' + wear) + '</span>' : '') + '</span>'
+      + (c.mod ? '<span class="cc-mod">' + D_.CARD_MODS[c.mod].name + '</span>' : '')
+      + (c.guilt ? '<span class="cc-grams">愧疚 ' + c.grams + ' 克</span>' : '')
+      + '</button>';
   }
-  function comboHtml(s, c) {
-    const m = '<span class="m">+' + c.mult + '</span>';
-    if (c.kind === 'res' || c.kind === 'medley') return '<span class="combo res">' + c.name + m + '</span>';
-    if (!known(s, c.id)) return '<span class="combo hidden">？？？ 新組合' + m + '</span>';
-    return '<span class="combo' + (c.secondary ? ' secondary' : '') + '">' + c.name + m + '</span>';
+  function objTile(id, slot) {
+    const o = D().OBJ[id];
+    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc) + '">'
+      + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span></button>';
   }
 
+  // ---------- 開啟 ----------
   function open(s, onDone) {
-    let sel = [];
-    const render = () => {
-      const ev = sel.length ? R().evalCraft(s, sel) : null;
-      const cost = R().craftCost(Math.max(2, sel.length));
-      const k = R().kpi(s);
-      const can = sel.length >= 2 && s.cr >= R().craftCost(sel.length);
-      const slots = [];
-      for (let i = 0; i < 5; i++) {
-        const uid = sel[i];
-        const c = uid != null ? s.cards.find((x) => x.uid === uid) : null;
-        if (i >= s.craftSlots) slots.push('<div class="slot locked">要創作工具</div>');
-        else slots.push('<div class="slot">' + (c ? UI().cardHtml(c, { button: true, sel: true }) : '空') + '</div>');
-      }
-      const formula = ev
-        ? '<div class="formula">'
-          + '<span class="term t-chips"><small>籌碼</small>' + ev.chips + '</span><span class="op">×</span>'
-          + '<span class="term t-mult"><small>倍率</small>' + ev.mult + '</span><span class="op">×</span>'
-          + '<span class="term t-spark"><small>火花</small>' + ev.spark.toFixed(1) + '</span>'
-          + (ev.kpiMod !== 1 ? '<span class="op">×</span><span class="term t-kpi"><small>KPI</small>' + ev.kpiMod + '</span>' : '')
-          + '<span class="op">=</span><span class="term t-total"><small>作品分</small>' + UI().fmt(ev.total) + '</span></div>'
-          + '<div class="combos">' + (ev.combos.length ? ev.combos.map((c) => comboHtml(s, c)).join('') : '<span class="mute" style="font-size:13px">沒有組合。試試選擇同一標籤，或者搭配不同標籤。</span>') + '</div>'
-          + (ev.relief ? '<p class="relief">把愧疚寫進作品：靈魂 −' + ev.relief + ' 克（' + s.soul.toFixed(1) + ' → ' + Math.max(0, s.soul - ev.relief).toFixed(1) + ' 克）</p>' : '')
-        : '<p class="mute" style="font-size:14px">選擇 2 至 ' + s.craftSlots + ' 張素材。同一標籤出現 3 張或以上會「同調」，特定標籤組合會觸發具名組合。</p>';
-      UI().modal('<div class="modal wide craft">'
-        + '<div class="panel-head"><h2>創作</h2><p>火花 ×' + s.spark.toFixed(1) + '・本季 KPI：' + UI().esc(k.name) + '（' + UI().esc(k.desc) + '）</p></div>'
-        + '<div class="craft-tray">' + slots.join('') + '</div>'
-        + formula
-        + '<h3>你的素材（材料費 $' + cost + '，你有 $' + UI().fmt(s.cr) + '）</h3>'
-        + '<div class="craft-grid">' + s.cards.map((c) => UI().cardHtml(c, {
-          button: true, sel: sel.includes(c.uid),
-          disabled: !sel.includes(c.uid) && sel.length >= s.craftSlots,
-        })).join('') + '</div>'
-        + '<div class="btn-row"><button class="btn" type="button" data-do="cancel">暫時不做</button>'
-        + '<button class="btn primary big" type="button" data-do="make"' + (can ? '' : ' disabled') + '>創作' + (sel.length >= 2 ? '（$' + R().craftCost(sel.length) + '）' : '') + '</button></div>'
-        + '</div>', {
-        card(el) {
-          const uid = Number(el.dataset.uid);
-          if (sel.includes(uid)) sel = sel.filter((u) => u !== uid);
-          else if (sel.length < s.craftSlots) sel.push(uid);
-          render();
-        },
-        cancel() { UI().closeModal(); onDone(null); },
-        make() { reveal(s, sel, onDone); },
-      });
-    };
+    st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
+      fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0 };
+    root = document.createElement('div');
+    root.id = 'ctable';
+    root.className = 'ctable';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-label', '創作之夜');
+    root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
+      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span></div>'
+      + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
+      + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
+      + '<section class="ct-objs"></section><p class="ct-info"></p>'
+      + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
+      + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
+      + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
+      + '<div class="ct-tags"></div>'
+      + '<section class="ct-stage"><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<p class="ct-hint"></p>'
+      + '<section class="ct-hand"></section>'
+      + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
+      + '<button type="button" class="btn ct-discard" data-ct="discard">改稿</button>'
+      + '<button type="button" class="btn primary big ct-play" data-ct="play">下筆</button></footer>'
+      + '<p class="ct-counts"></p></div>';
+    document.body.appendChild(root);
+    document.body.classList.add('ct-open');
+    root.addEventListener('click', onClick);
+    root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
+    fxInit();
+    render();
+    A().setMode('alien', 80);
+    const meta = IE.Game.meta || {};
+    if (!meta.craftTutorial) {
+      meta.craftTutorial = true;
+      UI().pushModal(tutorialHtml(), { close: UI().closeModal }, { dismiss: () => {} });
+    }
+  }
+  function close(result) {
+    fxStop();
+    if (root) { root.removeEventListener('click', onClick); root.remove(); }
+    document.body.classList.remove('ct-open');
+    root = null;
+    const cb = st.onDone;
+    st = null;
+    A().setMode('city');
+    cb(result);
+  }
+  const isOpen = () => !!root;
+
+  // ---------- 繪畫 ----------
+  function sortedHand() {
+    const s = st.s, ses = s.session;
+    const cards = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const order = D().TAGS ? Object.keys(D().TAGS) : [];
+    if (st.sortBy === 'tag') cards.sort((a, b) => order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]) || b.value - a.value);
+    else cards.sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a));
+    return cards;
+  }
+  function render() {
+    const s = st.s, ses = s.session;
+    const k = R().kpi(s);
+    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
+    const slots = [];
+    for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
+    $('.ct-objs').innerHTML = slots.join('');
+    renderGoal();
+    $('.ct-night b').textContent = fmt(ses.total);
+    $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
+    $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
+    const pb = $('.ct-play'), db = $('.ct-discard');
+    pb.textContent = '下筆（' + ses.plays + '）';
+    db.textContent = '改稿（' + ses.discards + '）';
+    pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
+    db.disabled = st.busy || !st.sel.length || ses.discards <= 0;
+    renderPreview();
+  }
+  function renderGoal(extra) {
+    const s = st.s;
+    const th = R().threshold(s);
+    const sig = R().signal(s) + (extra || 0);
+    $('.ct-goal i').style.width = Math.min(100, sig / th * 100) + '%';
+    $('.ct-goal em').style.left = Math.min(100, st.sigStart / th * 100) + '%';
+    $('.ct-goal-n').textContent = IE.UI.kfmt(sig) + ' / ' + IE.UI.kfmt(th);
+  }
+  function setBoxes(chips, mult, cls) {
+    const cb = $('.ct-chips b'), mb = $('.ct-mult b');
+    cb.textContent = fmt(chips);
+    mb.textContent = Number.isInteger(mult) ? mult : (Math.round(mult * 10) / 10).toFixed(1);
+    $('.ct-chips').classList.toggle('preview', cls === 'preview');
+    $('.ct-mult').classList.toggle('preview', cls === 'preview');
+  }
+  function renderPreview() {
+    const s = st.s;
+    const pv = st.sel.length ? C().preview(s, st.sel) : null;
+    if (!pv) {
+      $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
+      $('.ct-form .fl').textContent = '';
+      setBoxes(0, 0, 'preview');
+      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；特定的標籤組合會觸發具名組合。';
+      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring'));
+      return;
+    }
+    $('.ct-form .fn').textContent = pv.name;
+    $('.ct-form .fl').textContent = 'Lv.' + pv.level;
+    setBoxes(pv.chips, pv.mult, 'preview');
+    const bits = pv.recipes.map((r) => (r.known ? '<span class="rc' + (r.legend ? ' lg' : '') + '">' + esc(r.name) + '</span>'
+      : '<span class="rc unk' + (r.legend ? ' lg' : '') + '">' + (r.legend ? '？？？ 傳說組合' : '？？？ 未知組合') + '</span>'));
+    if (pv.ai < 1) bits.push('<span class="rc ai">AI 正在模仿你的「' + esc(pv.name) + '」：×' + pv.ai + '</span>');
+    $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">沒有具名組合</span>';
+    root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.toggle('scoring', pv.scoring.includes(Number(b.dataset.uid))));
+  }
+
+  // ---------- 輸入 ----------
+  function onClick(e) {
+    if (!st) return;
+    const card = e.target.closest('.ct-hand .cc');
+    if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
+    const ob = e.target.closest('.ct-obj[data-obj]');
+    if (ob) { const o = D().OBJ[ob.dataset.obj]; $('.ct-info').innerHTML = '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + '）：' + esc(o.desc); wiggle(ob); return; }
+    const b = e.target.closest('[data-ct]');
+    if (!b || b.disabled) return;
+    A().sfx('click');
+    const k = b.dataset.ct;
+    if (k === 'play') doPlay();
+    else if (k === 'discard') doDiscard();
+    else if (k === 'sort') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; store.set('ie2080.sort', st.sortBy); render(); }
+    else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
+    else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
+    else if (k === 'leave') leave();
+  }
+  function toggle(uid) {
+    if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
+    else if (st.sel.length < 5) st.sel.push(uid);
+    else return;
+    A().fx('card', st.sel.length * 2);
     render();
   }
-
-  // 爆分演出
-  function reveal(s, sel, onDone) {
-    const before = R().signal(s);
-    const res = R().commitCraft(s, sel);
-    const ev = res.ev;
-    const fast = IE.Pixel.reducedMotion;
-    const step = fast ? 60 : 1;
-    UI().modal('<div class="modal"><div class="reveal">'
-      + '<span class="mute">你' + UI().esc(res.work.medium) + '作品</span>'
-      + '<div class="formula" id="rv-formula">'
-      + '<span class="term t-chips"><small>籌碼</small><span id="rv-chips">0</span></span><span class="op">×</span>'
-      + '<span class="term t-mult"><small>倍率</small><span id="rv-mult">1</span></span><span class="op">×</span>'
-      + '<span class="term t-spark"><small>火花</small><span id="rv-spark">?</span></span>'
-      + '<span class="op" id="rv-kop" hidden>×</span><span class="term t-kpi" id="rv-kpi" hidden><small>KPI</small>' + ev.kpiMod + '</span></div>'
-      + '<div class="combos" id="rv-combos"></div>'
-      + '<div class="score" id="rv-score">0</div>'
-      + '<div class="work" id="rv-work" hidden>《' + UI().esc(res.work.name) + '》</div>'
-      + '<div id="rv-extra" hidden></div>'
-      + '</div><div class="btn-row"><button class="btn" type="button" data-do="skip" id="rv-skip">跳過</button>'
-      + '<button class="btn primary" type="button" data-do="done" id="rv-done" hidden>完成</button></div></div>', {
-      skip() { finishNow(); },
-      done() { UI().closeModal(); onDone(res); },
-    });
-    const $ = (id) => document.getElementById(id);
-    const timers = [];
-    const at = (ms, fn) => timers.push(setTimeout(fn, ms / step));
-    let t = 0;
-    const tickChips = (target, dur) => {
-      const n = 10;
-      for (let i = 1; i <= n; i++) at(t + (dur * i) / n, () => { $('rv-chips').textContent = Math.round((target * i) / n); A().sfx('chips'); });
-      t += dur;
-    };
-    // 1. 素材籌碼
-    tickChips(ev.cardChips, 600);
-    // 2. 組合
-    let mult = 1, chips = ev.cardChips;
-    ev.combos.forEach((c) => {
-      at(t, () => {
-        chips += c.chips; mult = Math.round((mult + c.mult) * 10) / 10;
-        $('rv-chips').textContent = chips;
-        $('rv-mult').textContent = mult;
-        const span = document.createElement('span');
-        span.className = 'combo' + (c.kind !== 'recipe' ? ' res' : c.secondary ? ' secondary' : '');
-        span.innerHTML = c.name + '<span class="m">+' + c.mult + '</span>' + (c.kind === 'recipe' && c.isNew ? ' <b class="new">新！</b>' : '');
-        $('rv-combos').appendChild(span);
-        A().sfx('mult');
-      });
-      t += 380;
-    });
-    // 3. 火花
-    at(t, () => { $('rv-spark').textContent = ev.spark.toFixed(1); A().sfx('stamp'); IE.Pixel.view.shake = 3; });
-    t += 420;
-    // 4. KPI
-    if (ev.kpiMod !== 1) {
-      at(t, () => { $('rv-kop').hidden = false; $('rv-kpi').hidden = false; A().sfx(ev.kpiMod >= 1 ? 'combo' : 'wrong'); });
-      t += 420;
+  function key(k) {
+    if (!st || st.busy) { if (st) st.fast = true; return; }
+    if (/^[1-9]$/.test(k)) { const c = sortedHand()[Number(k) - 1]; if (c) toggle(c.uid); }
+    else if (k === 'Enter') doPlay();
+    else if (k === 'd' || k === 'D' || k === 'Backspace') doDiscard();
+    else if (k === 's' || k === 'S') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; render(); }
+  }
+  function leave() {
+    if (st.busy) return;
+    const s = st.s;
+    if (!s.session.log.length) {
+      C().cancel(s);
+      close(null);
+      return;
     }
-    // 5. 總分
-    const total = ev.total;
-    for (let i = 1; i <= 12; i++) at(t + i * 45, () => { $('rv-score').textContent = UI().fmt((total * i) / 12); });
-    t += 12 * 45;
-    at(t, () => finishNow());
+    endNight();
+  }
 
-    let finished = false;
-    function finishNow() {
-      if (finished) return;
-      finished = true;
-      timers.forEach(clearTimeout);
-      $('rv-chips').textContent = ev.chips;
-      $('rv-mult').textContent = ev.mult;
-      $('rv-spark').textContent = ev.spark.toFixed(1);
-      if (ev.kpiMod !== 1) { $('rv-kop').hidden = false; $('rv-kpi').hidden = false; }
-      if (!$('rv-combos').children.length) $('rv-combos').innerHTML = ev.combos.map((c) => '<span class="combo' + (c.kind !== 'recipe' ? ' res' : '') + '">' + c.name + '<span class="m">+' + c.mult + '</span></span>').join('');
-      const sc = $('rv-score');
-      sc.textContent = UI().fmt(total);
-      sc.classList.add('boom');
-      $('rv-work').hidden = false;
-      const after = R().signal(s);
-      const extra = [];
-      if (res.relief) extra.push('<p class="relief">你把愧疚寫了出來。靈魂輕了 ' + res.relief + ' 克，現在重 ' + s.soul.toFixed(1) + ' 克。</p>');
-      if (res.fresh.length) extra.push('<p class="new">靈光一閃！發現新組合：' + res.fresh.map((c) => c.name).join('、') + (res.sparkUp ? '（火花 +' + res.sparkUp + '）' : '') + '</p>');
-      if (ev.kpiMod === 0) extra.push('<p style="color:#ff9aa6">外星人不計算這件作品：' + UI().esc(ev.kpi.desc) + '</p>');
-      extra.push('<p class="mute">訊號 ' + UI().fmt(before) + ' → <b style="color:#ffd6ef">' + UI().fmt(after) + '</b> / ' + UI().fmt(R().threshold(s)) + '</p>');
-      $('rv-extra').innerHTML = extra.join('');
-      $('rv-extra').hidden = false;
-      $('rv-skip').hidden = true;
-      $('rv-done').hidden = false;
-      $('rv-done').focus({ preventScroll: true });
-      A().sfx('boom');
-      IE.Game.celebrate(total);
+  // ---------- 演出工具 ----------
+  const speedK = () => (IE.Pixel.reducedMotion ? 4 : st.fast ? 5 : st.speed);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms / speedK()));
+  function rectOf(el) {
+    const a = el.getBoundingClientRect();
+    return { x: a.left + a.width / 2, y: a.top + a.height / 2, w: a.width, h: a.height, top: a.top };
+  }
+  function floatText(el, text, cls) {
+    if (!root || !el) return;
+    const r = rectOf(el);
+    const f = document.createElement('div');
+    f.className = 'ct-float ' + (cls || '');
+    f.textContent = text;
+    f.style.left = r.x + 'px';
+    f.style.top = r.top + 'px';
+    root.appendChild(f);
+    const dur = 900 / Math.min(2, speedK());
+    f.animate([{ transform: 'translate(-50%, 0) scale(0.6)', opacity: 0 }, { transform: 'translate(-50%, -22px) scale(1.15)', opacity: 1, offset: 0.25 },
+      { transform: 'translate(-50%, -44px) scale(1)', opacity: 0 }], { duration: dur, easing: 'ease-out' });
+    setTimeout(() => f.remove(), dur);
+  }
+  function bump(el, scale) {
+    if (!el) return;
+    el.animate([{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(-12px) scale(' + (scale || 1.12) + ')' }, { transform: 'translateY(0) scale(1)' }],
+      { duration: 260 / Math.min(2, speedK()), easing: 'ease-out' });
+  }
+  function wiggle(el) {
+    if (!el) return;
+    el.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-9deg) scale(1.15)' }, { transform: 'rotate(7deg) scale(1.1)' }, { transform: 'rotate(0)' }],
+      { duration: 320 / Math.min(2, speedK()), easing: 'ease-out' });
+  }
+  function pulse(el, color) {
+    if (!el) return;
+    el.animate([{ transform: 'scale(1)', filter: 'brightness(1)' }, { transform: 'scale(1.18)', filter: 'brightness(1.6)' }, { transform: 'scale(1)', filter: 'brightness(1)' }],
+      { duration: 220 / Math.min(2, speedK()) });
+    if (color) el.style.setProperty('--glow', color);
+  }
+  function shake(mag) {
+    if (IE.Pixel.reducedMotion || !root) return;
+    const el = $('.ct-inner');
+    const k = [];
+    for (let i = 0; i < 6; i++) k.push({ transform: 'translate(' + ((Math.random() - 0.5) * mag * 2).toFixed(1) + 'px,' + ((Math.random() - 0.5) * mag * 2).toFixed(1) + 'px)' });
+    k.push({ transform: 'translate(0,0)' });
+    el.animate(k, { duration: 260 + mag * 12 });
+  }
+  function tag(text, cls) {
+    const t = document.createElement('span');
+    t.className = 'ct-tag ' + (cls || '');
+    t.textContent = text;
+    $('.ct-tags').appendChild(t);
+    t.animate([{ transform: 'scale(2.2) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1 }], { duration: 260 / Math.min(2, speedK()), easing: 'cubic-bezier(.2,2,.4,1)' });
+  }
+
+  // ---------- 火焰粒子（倍率燃燒） ----------
+  let fx = null;
+  function fxInit() {
+    const cv = $('.ct-fx');
+    const ctx = cv.getContext('2d');
+    fx = { cv, ctx, ps: [], burn: 0, raf: 0 };
+    const resize = () => { const d = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px'; ctx.setTransform(d, 0, 0, d, 0, 0); };
+    resize();
+    fx.resize = resize;
+    window.addEventListener('resize', resize);
+    let last = performance.now();
+    const loop = (now) => {
+      if (!fx) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      // 倍率燃燒：倍率越高，火越大
+      if (fx.burn > 0 && root) {
+        const r = rectOf($('.ct-mult'));
+        const n = Math.min(14, fx.burn) * dt * 22;
+        for (let i = 0; i < n; i++) emit(r.x + (Math.random() - 0.5) * r.w, r.top + r.h * 0.4, 1);
+      }
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      for (let i = fx.ps.length - 1; i >= 0; i--) {
+        const p = fx.ps[i];
+        p.age += dt;
+        if (p.age >= p.life) { fx.ps.splice(i, 1); continue; }
+        p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        const k = 1 - p.age / p.life;
+        ctx.globalAlpha = k;
+        ctx.fillStyle = k > 0.7 ? '#fff2a8' : k > 0.45 ? '#ffc247' : k > 0.25 ? '#ff8a3c' : '#ff4d5e';
+        if (p.col) ctx.fillStyle = p.col;
+        const sz = Math.max(2, Math.round(p.size * (0.4 + k * 0.6)));
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), sz, sz);
+      }
+      ctx.globalAlpha = 1;
+      fx.raf = requestAnimationFrame(loop);
+    };
+    fx.raf = requestAnimationFrame(loop);
+  }
+  function emit(x, y, power, col) {
+    if (!fx || IE.Pixel.reducedMotion) return;
+    fx.ps.push({ x, y, vx: (Math.random() - 0.5) * 40 * power, vy: -60 - Math.random() * 90 * power, g: -20, life: 0.5 + Math.random() * 0.6, age: 0, size: 3 + Math.random() * 4 * power, col });
+  }
+  function burst(el, n, power, col) {
+    if (!el || !fx) return;
+    const r = rectOf(el);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, sp = (60 + Math.random() * 200) * power;
+      fx.ps.push({ x: r.x, y: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 160, life: 0.6 + Math.random() * 0.7, age: 0, size: 3 + Math.random() * 4, col });
+    }
+  }
+  function fxStop() {
+    if (!fx) return;
+    cancelAnimationFrame(fx.raf);
+    window.removeEventListener('resize', fx.resize);
+    fx = null;
+  }
+
+  // ---------- 下筆 ----------
+  async function doPlay() {
+    const s = st.s, ses = s.session;
+    if (st.busy || !st.sel.length || ses.plays <= 0) return;
+    st.busy = true; st.fast = false; st.chipN = 0;
+    const uids = st.sel.slice();
+    st.sel = [];
+    const snap = uids.map((u) => Object.assign({}, s.cards.find((c) => c.uid === u)));
+    const pv = C().preview(s, uids);
+    // 素材飛上舞台
+    $('.ct-tags').innerHTML = '';
+    $('.ct-played').innerHTML = snap.map((c) => cardEl(s, c, { stage: true, dim: !pv.scoring.includes(c.uid) })).join('');
+    $('.ct-hand').innerHTML = sortedHand().filter((c) => !uids.includes(c.uid)).map((c) => cardEl(s, c)).join('');
+    root.querySelectorAll('.ct-played .cc').forEach((el, i) => {
+      el.animate([{ transform: 'translateY(120px) rotate(' + (i * 4 - 8) + 'deg)', opacity: 0 }, { transform: 'translateY(0) rotate(0)', opacity: 1 }],
+        { duration: 260 / Math.min(2, speedK()), delay: i * 50 / speedK(), easing: 'cubic-bezier(.2,1.4,.4,1)', fill: 'backwards' });
+    });
+    A().fx('card', 4);
+    $('.ct-play').disabled = true; $('.ct-discard').disabled = true;
+    $('.ct-hint').innerHTML = '';
+    await wait(380);
+    const res = C().play(s, uids);
+    await animate(res);
+    await showTotal(res);
+    // 收起舞台，補牌
+    root.querySelectorAll('.ct-played .cc').forEach((el, i) => el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-60px) rotate(' + (i * 6 - 10) + 'deg)', opacity: 0 }],
+      { duration: 300 / Math.min(2, speedK()), fill: 'forwards' }));
+    await wait(320);
+    $('.ct-played').innerHTML = '';
+    $('.ct-total').hidden = true;
+    fx && (fx.burn = 0);
+    $('.ct-mult').classList.remove('burning', 'inferno');
+    st.busy = false;
+    render();
+    root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: 220, delay: i * 30, fill: 'backwards' }));
+    if (ses.plays <= 0 || !ses.hand.length) await endNight();
+  }
+
+  async function animate(res) {
+    const s = st.s;
+    const stageCard = (uid) => root.querySelector('.ct-played .cc[data-uid="' + uid + '"]');
+    const objEl = (slot) => root.querySelector('.ct-obj[data-slot="' + slot + '"]');
+    const multEl = $('.ct-mult'), chipsEl = $('.ct-chips');
+    let n = 0;
+    for (const x of res.steps) {
+      if (!root) return;
+      switch (x.t) {
+        case 'form':
+          $('.ct-form .fn').textContent = C().FORM[x.form].name;
+          $('.ct-form .fl').textContent = 'Lv.' + x.level;
+          setBoxes(x.chips, x.mult);
+          pulse(chipsEl); pulse(multEl);
+          A().fx('chip', 0);
+          await wait(320);
+          break;
+        case 'card': {
+          const el = stageCard(x.uid);
+          bump(el);
+          floatText(el, '+' + x.chips, 'chips');
+          setBoxes(x.C, x.M);
+          pulse(chipsEl);
+          A().fx('chip', ++n);
+          await wait(x.again ? 260 : 300);
+          break;
+        }
+        case 'mod': {
+          const el = stageCard(x.uid);
+          floatText(el, x.chips ? '+' + x.chips : x.mult ? '+' + x.mult + ' 倍率' : '×' + x.xmult, x.chips ? 'chips' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(x.chips ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          await wait(280);
+          break;
+        }
+        case 'obj': {
+          const el = objEl(x.slot);
+          wiggle(el);
+          if (x.uid != null) bump(stageCard(x.uid), 1.06);
+          floatText(el, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
+          setBoxes(x.C, x.M);
+          pulse(x.chips && !x.mult ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(4);
+          await wait(x.xmult ? 420 : 300);
+          break;
+        }
+        case 'recipe':
+          tag((x.isNew ? '新組合！' : '') + x.name + '　+' + x.chips + ' 籌碼　+' + x.mult + ' 倍率' + (x.xmult ? '　×' + x.xmult : ''),
+            x.legend ? 'legend' : x.isNew ? 'new' : 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(chipsEl); pulse(multEl);
+          if (x.legend) {
+            A().fx('legend');
+            shake(14);
+            burst($('.ct-tags'), 80, 1.4, '#ffd36b');
+            flash('#ffd36b');
+            await wait(900);
+          } else {
+            A().fx(x.isNew ? 'xmult' : 'mult', ++n);
+            if (x.isNew) burst($('.ct-tags'), 30, 0.8, '#ffd36b');
+            await wait(x.isNew ? 520 : 380);
+          }
+          break;
+        case 'ai':
+          tag('AI 模仿 ×' + x.x, 'ai');
+          setBoxes(res.chips, Math.round(Number($('.ct-mult b').textContent) * x.x * 10) / 10);
+          A().sfx('wrong');
+          await wait(320);
+          break;
+        case 'world':
+          tag('世界事件 ×' + x.x, 'kpi-good');
+          await wait(260);
+          break;
+        case 'kpi':
+          tag('外星 KPI ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          await wait(320);
+          break;
+        case 'spark':
+          tag('× 火花 ' + x.x.toFixed(1), 'spark');
+          A().fx('burn');
+          fx && (fx.burn = Math.log10(Math.max(1, res.mult)) * 6);
+          multEl.classList.add('burning');
+          if (res.mult >= 20) multEl.classList.add('inferno');
+          shake(Math.min(10, 3 + res.mult / 6));
+          await wait(520);
+          break;
+      }
+      // 倍率越高，倍率格燒得越旺
+      const M = x.M || 0;
+      if (fx && M >= 8) { fx.burn = Math.max(fx.burn, Math.log10(M) * 4); multEl.classList.add('burning'); }
     }
   }
 
-  IE.Craft = { open };
+  function flash(color) {
+    if (!root || IE.Pixel.reducedMotion) return;
+    const f = document.createElement('div');
+    f.className = 'ct-flash';
+    f.style.background = color;
+    root.appendChild(f);
+    f.animate([{ opacity: 0.6 }, { opacity: 0 }], { duration: 500 });
+    setTimeout(() => f.remove(), 500);
+  }
+
+  async function showTotal(res) {
+    const s = st.s;
+    const el = $('.ct-total');
+    el.hidden = false;
+    const size = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
+    el.style.fontSize = size + 'px';
+    const record = res.total > st.best;
+    const steps = 18;
+    for (let i = 1; i <= steps; i++) {
+      const v = Math.round(res.total * (1 - Math.pow(1 - i / steps, 3)));
+      el.textContent = fmt(v);
+      if (i % 3 === 0) A().fx('chip', 12 + i / 2);
+      await wait(34);
+    }
+    el.textContent = fmt(res.total);
+    A().fx('total', Math.min(12, Math.round(Math.log10(Math.max(10, res.total)) * 2)));
+    el.animate([{ transform: 'translate(-50%,-50%) scale(1.6)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 280, easing: 'cubic-bezier(.2,2,.4,1)' });
+    const mag = Math.log10(Math.max(10, res.total));
+    shake(Math.min(18, mag * 2.5));
+    burst(el, Math.min(120, Math.round(mag * 14)), Math.min(1.6, mag / 3));
+    if (record) {
+      st.best = res.total;
+      tag('新紀錄！', 'legend');
+      flash('#ff4fb4');
+      A().sfx('boom');
+    }
+    // 數字飛向「今晚」
+    const night = $('.ct-night b');
+    night.textContent = fmt(s.session ? s.session.total : res.total);
+    pulse(night);
+    renderGoal();
+    if (res.reliefApplied) tag('愧疚寫進作品：靈魂 −' + res.reliefApplied + ' 克', 'relief');
+    (res.notes || []).forEach((n) => tag(n, 'ai'));
+    if (res.fresh && res.fresh.length && res.sparkUp) tag('靈光一閃：火花 +' + res.sparkUp, 'spark');
+    await wait(record ? 1300 : 900);
+  }
+
+  // ---------- 改稿 ----------
+  async function doDiscard() {
+    const s = st.s, ses = s.session;
+    if (st.busy || !st.sel.length || ses.discards <= 0) return;
+    st.busy = true;
+    const uids = st.sel.slice();
+    root.querySelectorAll('.ct-hand .cc').forEach((el) => {
+      if (uids.includes(Number(el.dataset.uid))) el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(80px) rotate(20deg)', opacity: 0 }], { duration: 260, fill: 'forwards' });
+    });
+    A().fx('card', 1);
+    await wait(280);
+    st.sel = [];
+    C().discard(s, uids);
+    st.busy = false;
+    render();
+    root.querySelectorAll('.ct-hand .cc').forEach((el) => {
+      if (!el.dataset.seen) el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220 });
+    });
+  }
+
+  // ---------- 今晚完成 ----------
+  async function endNight() {
+    const s = st.s;
+    st.busy = true;
+    const before = st.sigStart;
+    const res = C().finish(s);
+    const w = res.work;
+    const fresh = [...new Set(res.session.fresh)].map((id) => D().RECIPES.find((r) => r.id === id)).filter(Boolean);
+    const th = R().threshold(s);
+    const after = R().signal(s);
+    const best = s.stats.bestWork && w && s.stats.bestWork === w;
+    const panel = document.createElement('div');
+    panel.className = 'ct-end';
+    panel.innerHTML = '<div class="ct-end-card">'
+      + '<span class="mute">今晚的作品</span>'
+      + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
+      + '<div class="ct-end-score num">0</div>'
+      + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
+      + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
+      + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
+      + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
+      + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
+    root.appendChild(panel);
+    let closed = false;
+    panel.querySelector('[data-end="done"]').addEventListener('click', () => {
+      if (closed) return;
+      closed = true;
+      if (IE.Game.celebrate) IE.Game.celebrate(w ? w.score : 0);
+      close(res);
+    });
+    panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 });
+    const sc = panel.querySelector('.ct-end-score');
+    const total = w ? w.score : 0;
+    for (let i = 1; i <= 24 && !closed; i++) { sc.textContent = fmt(total * (1 - Math.pow(1 - i / 24, 3))); if (i % 4 === 0) A().fx('chip', i / 2); await wait(30); }
+    if (closed) return;
+    sc.textContent = fmt(total);
+    A().sfx('boom');
+    burst(sc, 100, 1.4);
+    shake(10);
+    panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
+    requestAnimationFrame(() => { panel.querySelector('.ct-goal i').style.width = Math.min(100, after / th * 100) + '%'; });
+    if (after >= th && before < th) { setTimeout(() => { A().sfx('combo'); flash('#9be36b'); }, 900); }
+    if (!closed) panel.querySelector('[data-end="done"]').focus({ preventScroll: true });
+  }
+
+  // ---------- 教學與圖鑑 ----------
+  function tutorialHtml() {
+    return '<div class="modal"><h2>創作之夜</h2><div class="help">'
+      + '<p>從素材庫抽一手素材。每晚可以<b>下筆</b>三次、<b>改稿</b>兩次；三次下筆的分數加起來，就是今晚的作品。</p>'
+      + '<ul><li>選 1 至 5 張素材下筆。同一標籤出現得越多，<b>作品形式</b>越高級：短詩、對聯、歌、小說、壁畫、交響曲、史詩……</li>'
+      + '<li>特定標籤組合會觸發<b>具名組合</b>（例如「水＋記憶＋飢餓」＝水淹童年）。還有隱藏的<b>傳說組合</b>等你發現。</li>'
+      + '<li><b>靈感物件</b>會在計分時觸發；朋友、潛水、事件和二手市集都可以找到。</li>'
+      + '<li>分數 = 籌碼 × 倍率 × 火花。素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格。</li>'
+      + '<li>白天做不同的事，會練成不同的技法，令相應的作品形式升級。</li></ul>'
+      + '<p class="mute">演出時點一下畫面可以快轉；右上角可以調整速度。</p></div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">開始創作</button></div></div>';
+  }
+  function recipeHint(r) {
+    if (r.hint) return r.hint;
+    const tags = Object.keys(r.need).map((t) => (r.need[t] > 1 ? '「' + D().TAGS[t].name + '」×' + r.need[t] : '「' + D().TAGS[t].name + '」'));
+    return tags.length > 1 ? '需要' + tags.slice(0, -1).join('、') + '，還有一樣東西……' : '需要很多' + tags[0] + '……';
+  }
+  function codexHtml(s, meta) {
+    const known = (id) => !!(s.discovered[id] || (meta.recipes && meta.recipes[id]));
+    const forms = D().FORMS.map((f) => {
+      const seen = (s.formsSeen && s.formsSeen[f.id]) || (meta.forms && meta.forms[f.id]) || !f.secret;
+      const st2 = C().formStats(s, f.id);
+      return '<div class="recipe' + (seen ? '' : ' unknown') + '"><b>' + (seen ? f.name + ' Lv.' + st2.level : '？？？') + '</b>'
+        + '<span>' + (seen ? esc(f.desc) : '一種隱藏的作品形式') + '</span>'
+        + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率・練習：' + esc(f.teach) + '</span>' : '') + '</div>';
+    }).join('');
+    const nKnown = D().RECIPES.filter((r) => known(r.id)).length;
+    const recipes = D().RECIPES.map((r) => {
+      const k = known(r.id);
+      const tags = Object.keys(r.need).map((t) => (r.need[t] > 1 ? D().TAGS[t].name + '×' + r.need[t] : D().TAGS[t].name)).join(' + ');
+      return '<div class="recipe' + (k ? '' : ' unknown') + (r.legend ? ' legend' : '') + '"><b>' + (k ? esc(r.name) : r.legend ? '？？？ 傳說' : '？？？') + '</b>'
+        + '<span>' + (k ? esc(tags || '特殊條件') + (r.hint ? '：' + esc(r.hint) : '') : esc(recipeHint(r))) + '</span>'
+        + '<span class="mute">+' + r.chips + ' 籌碼・+' + r.mult + ' 倍率' + (r.xmult ? '・×' + r.xmult : '') + '</span></div>';
+    }).join('');
+    return '<div class="modal wide"><h2>創作圖鑑</h2>'
+      + '<h3>作品形式</h3><div class="recipes">' + forms + '</div>'
+      + '<h3>具名組合（' + nKnown + '/' + D().RECIPES.length + '）</h3><div class="recipes">' + recipes + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
+  }
+
+  IE.Craft = { open, isOpen, key, codexHtml, cardEl, isBusy: () => !!(st && st.busy) };
 })(window.IE = window.IE || {});

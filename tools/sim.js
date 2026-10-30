@@ -9,8 +9,8 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-jobs.js', 'rules.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
-const { DATA: D, Rules: R, Dossier: DS } = globalThis.IE;
+['data.js', 'data-events.js', 'data-jobs.js', 'data-craft.js', 'rules.js', 'create.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+const { DATA: D, Rules: R, Dossier: DS, Create: CR } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
 
@@ -153,25 +153,21 @@ function simInterview(s, rng, moral) {
   });
 }
 
-// 選出最好的素材組合；靈魂太重時，優先把愧疚寫進作品
-function bestCraft(s) {
-  const cards = s.cards;
-  let best = null;
-  const n = cards.length;
-  let maxK = Math.min(s.craftSlots, n);
-  while (maxK > 2 && R.craftCost(maxK) > s.cr) maxK--;
-  const heavy = s.soul > R.SOUL_LIMIT - 5;
-  const choose = (start, chosen) => {
-    if (chosen.length >= 2) {
-      const ev = R.evalCraft(s, chosen.map((c) => c.uid));
-      const score = ev.total + (heavy ? ev.relief * 3000 : 0);
-      if (!best || score > best.score) best = { score, total: ev.total, uids: chosen.map((c) => c.uid) };
+// 創作之夜：每次下筆前，如果最好的只是隨筆或短詩，就先改稿換掉最弱的牌
+function runCreate(s, mode) {
+  CR.start(s, mode);
+  const ses = s.session;
+  while (ses.plays > 0 && ses.hand.length) {
+    let best = CR.bestPlay(s);
+    if (best && ses.discards > 0 && (best.form === 'sketch' || best.form === 'poem')) {
+      const weak = ses.hand.filter((u) => !best.uids.includes(u))
+        .map((u) => s.cards.find((c) => c.uid === u)).sort((a, b) => a.value - b.value).slice(0, 3).map((c) => c.uid);
+      if (weak.length && CR.discard(s, weak)) best = CR.bestPlay(s);
     }
-    if (chosen.length === maxK) return;
-    for (let i = start; i < n; i++) choose(i + 1, chosen.concat([cards[i]]));
-  };
-  choose(0, []);
-  return best;
+    if (!best) break;
+    CR.play(s, best.uids);
+  }
+  return CR.finish(s);
 }
 
 function act(s, id, rng, moral) {
@@ -190,7 +186,8 @@ function act(s, id, rng, moral) {
     }
     case 'volunteer': return R.applyVolunteer(s);
     case 'rest': return R.applyRest(s);
-    case 'create': return R.commitCraft(s, bestCraft(s).uids);
+    case 'create': return runCreate(s, 'normal');
+    case 'allnighter': return runCreate(s, 'allnighter');
   }
 }
 const enabled = (s, id) => { const a = R.actions(s).find((x) => x.id === id); return a && a.enabled; };
@@ -227,9 +224,9 @@ function chooseDilemma(s, moral, rng) {
 function balancedAct(s, moral) {
   const need = moneyNeed(s);
   if (R.isNight(s)) {
-    if (enabled(s, 'create') && s.cards.length >= 4) {
-      const b = bestCraft(s);
-      if (b && (b.total >= 700 || s.cards.length >= 9 || s.day === R.reviewDay(s))) return 'create';
+    if (enabled(s, 'create') && s.cr >= need * 0.5 + 20) {
+      if (daysToReview(s) <= 2 && s.body > 60 && enabled(s, 'allnighter')) return 'allnighter';
+      return 'create';
     }
     if (s.cr < need && s.spark > 2.2 && s.body > 45) return firstEnabled(s, ['ot']);
     return 'rest';
@@ -255,23 +252,23 @@ const STRATEGIES = {
     return firstEnabled(s, ['smile', 'label', 'farm', 'dive']);
   } },
   courier: { moral: 'saint', act(s) {
-    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 4 ? 'create' : 'rest';
+    if (R.isNight(s)) return enabled(s, 'create') && s.cr >= 40 ? 'create' : 'rest';
     if (s.body < 40) return firstEnabled(s, ['busk', 'rest']);
     return s.slot === 0 ? firstEnabled(s, ['delivery', 'label']) : firstEnabled(s, s.cr < moneyNeed(s) ? ['delivery', 'busk'] : ['busk', 'volunteer', 'chat']);
   } },
   troll: { moral: 'shameless', act(s) {
-    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 4 ? 'create' : 'rest';
+    if (R.isNight(s)) return enabled(s, 'create') && s.cr >= 40 ? 'create' : 'rest';
     if (s.body < 30) return 'rest';
     return s.slot === 2 ? 'rest' : firstEnabled(s, s.slot === 0 ? ['farm', 'smile'] : ['farm', 'chat']);
   } },
   medic: { moral: 'pragmatist', act(s) {
-    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 4 ? 'create' : 'rest';
+    if (R.isNight(s)) return enabled(s, 'create') && s.cr >= 40 ? 'create' : 'rest';
     if (s.body < 30) return 'rest';
     if (s.soul > R.SOUL_LIMIT - 4 && daysToReview(s) <= 4) return firstEnabled(s, ['volunteer']);
     return s.slot === 0 ? firstEnabled(s, ['clinic', 'label']) : firstEnabled(s, ['chat', 'volunteer', 'clinic']);
   } },
   busker: { moral: 'saint', act(s) {
-    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 3 ? 'create' : 'rest';
+    if (R.isNight(s)) return enabled(s, 'create') && s.cr >= 40 ? 'create' : 'rest';
     if (s.body < 30) return 'rest';
     if (s.cr < moneyNeed(s) && s.slot === 0) return firstEnabled(s, ['delivery', 'label']);
     return firstEnabled(s, s.slot === 0 ? ['busk', 'chat'] : ['chat', 'busk', 'volunteer']);
@@ -285,7 +282,7 @@ const STRATEGIES = {
   saint: { moral: 'saint', act: (s) => balancedAct(s, 'saint') },
   shameless: { moral: 'shameless', act: (s) => balancedAct(s, 'shameless') },
   diver: { moral: 'pragmatist', act(s) {
-    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 3 ? 'create' : 'rest';
+    if (R.isNight(s)) return enabled(s, 'create') && s.cr >= 40 ? 'create' : 'rest';
     if (s.body < 35) return 'rest';
     if (s.soul > R.SOUL_LIMIT - 4 && daysToReview(s) <= 3) return firstEnabled(s, ['volunteer']);
     return s.slot === 0 ? firstEnabled(s, ['dive', 'label']) : firstEnabled(s, ['label', 'dive', 'chat']);
@@ -300,7 +297,10 @@ function shopping(s, moral) {
   if (moral === 'random') return;
   if (R.flooded(s)) R.buy(s, 'moveup');
   if (s.floor === 0) R.buy(s, 'rehouse');
-  if (s.craftSlots < 5 && s.cr > 450) R.buy(s, 'tools');
+  if (!s.handBonus && s.cr > 450) R.buy(s, 'tools');
+  if (s.objSlots < 5 && s.cr > 650) R.buy(s, 'studio');
+  // 二手市集：有空位又有餘錢就買靈感物件
+  R.shop(s).filter((it) => it.obj && it.enabled).forEach((it) => { if (s.objects.length < s.objSlots && s.cr > moneyNeed(s) + it.cost + 80) R.buy(s, it.id); });
   if (s.premiumUntil < s.day && s.cr > 300) R.buy(s, 'premium');
   // 有錢就買業力抵銷：天空區的做法
   while (s.soul > R.SOUL_LIMIT - 2 && daysToReview(s) <= 3 && s.cr > moneyNeed(s) + R.offsetCost(s)) {

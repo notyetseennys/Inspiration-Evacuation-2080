@@ -375,7 +375,174 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .stamp-wall { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; border-radius: var(--r); background: var(--paper); }
 @keyframes dstamp { from { opacity: 0; scale: 2.2; } to { opacity: 0.92; scale: 1; } }
 
-/* 創作 */
+
+/* ---------- 創作之夜（創作桌） ---------- */
+body.ct-open { overflow: hidden; }
+.ctable {
+  position: fixed; inset: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain;
+  background: radial-gradient(120% 80% at 50% 0%, #2a1240 0%, #12091f 55%, #07040d 100%);
+  color: var(--fg);
+}
+.ct-fx { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+.ct-flash { position: fixed; inset: 0; pointer-events: none; z-index: 4; mix-blend-mode: screen; }
+.ct-inner {
+  position: relative; z-index: 1; max-width: 980px; margin: 0 auto;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 10px;
+}
+.ct-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.ct-title b { font-size: 20px; font-weight: 900; margin-right: 8px; }
+.ct-sub { font-size: 12px; color: var(--mute); }
+.ct-hbtns { display: flex; gap: 6px; }
+.ct-hbtns .btn { min-height: 34px; padding: 0 10px; font-size: 13px; }
+.ct-goal { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: 12px; color: var(--mute); }
+.ct-goal .bar { height: 8px; }
+.ct-goal .bar > i { background: linear-gradient(90deg, var(--sea), var(--neon)); }
+.ct-goal .bar > em { background: rgba(255,255,255,0.5); }
+.ct-goal .num { font-size: 18px; color: #ffd6ef; }
+.ct-objs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.ct-obj {
+  display: grid; justify-items: center; gap: 2px; padding: 6px 4px 5px; min-width: 0; cursor: pointer;
+  border-radius: 8px; background: #1a1028; border: 2px solid #3a2c50; color: var(--fg);
+}
+.ct-obj .on { font-size: 11px; line-height: 1.25; text-align: center; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ct-obj.r-rare { border-color: #37c3d6; }
+.ct-obj.r-legend { border-color: #ffc247; box-shadow: 0 0 12px rgba(255,194,71,0.35); }
+.ct-obj.empty { color: #4a3b5f; font-size: 12px; place-items: center; border-style: dashed; cursor: default; }
+.px-icon { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.ct-info { margin: -4px 0 0; min-height: 18px; font-size: 12px; color: #cbb8e8; }
+.ct-score { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #120a1c; border: 1px solid #2c1f40; }
+.ct-form { display: grid; }
+.ct-form .fn { font-size: 22px; font-weight: 900; }
+.ct-form .fl { font-family: var(--font-num); font-size: 18px; color: #c38bff; }
+.ct-calc { display: flex; align-items: center; gap: 8px; }
+.ct-calc .x { font-size: 26px; font-weight: 900; color: #fff; }
+.ct-box { --glow: transparent; min-width: 104px; padding: 4px 12px 6px; border-radius: 10px; display: grid; justify-items: end; position: relative; transition: box-shadow 0.2s; }
+.ct-box small { font-size: 11px; opacity: 0.8; justify-self: start; }
+.ct-box b { font-size: 40px; line-height: 1; color: #fff; }
+.ct-chips { background: #1f6fd1; box-shadow: 0 4px 0 #11417d; }
+.ct-mult { background: #d6334a; box-shadow: 0 4px 0 #7d1424; }
+.ct-box.preview { opacity: 0.6; }
+.ct-mult.burning { box-shadow: 0 4px 0 #7d1424, 0 0 18px 4px rgba(255,138,60,0.7); animation: flicker 0.18s steps(2) infinite; }
+.ct-mult.inferno { box-shadow: 0 4px 0 #7d1424, 0 0 34px 10px rgba(255,194,71,0.85); }
+@keyframes flicker { 50% { filter: brightness(1.25); } }
+.ct-night { justify-self: end; display: grid; justify-items: end; }
+.ct-night small { font-size: 11px; color: var(--mute); }
+.ct-night b { font-size: 30px; line-height: 1; color: var(--spark); }
+.ct-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 26px; }
+.ct-tag { font-size: 13px; font-weight: 900; padding: 4px 10px; border-radius: 6px; background: #2a1430; border: 2px solid var(--neon); color: #ffd6ef; }
+.ct-tag.recipe { background: #2a1430; }
+.ct-tag.new { background: #3a2a0a; border-color: var(--spark); color: #ffe2a0; }
+.ct-tag.legend { background: linear-gradient(90deg, #ffc247, #ff4fb4); border-color: #fff; color: #1a0613; font-size: 16px; }
+.ct-tag.ai { background: #1a2233; border-color: #5a6478; color: #c9d1dc; }
+.ct-tag.kpi-good { background: #14321c; border-color: var(--alien); color: #d9f7c7; }
+.ct-tag.kpi-bad { background: #3a1620; border-color: var(--danger); color: #ffc2cb; }
+.ct-tag.spark { background: #3a2a0a; border-color: #ff8a3c; color: #ffe2a0; font-size: 15px; }
+.ct-tag.relief { background: #211d18; border-color: var(--stone); color: #e9dcc4; }
+.ct-stage { position: relative; min-height: 150px; display: grid; place-items: center; }
+.ct-played { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; }
+.ct-total { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; color: #fff; text-shadow: 0 0 18px var(--neon), 0 4px 0 #3a0d26; pointer-events: none; white-space: nowrap; }
+.ct-hint { margin: 0; min-height: 24px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; font-size: 13px; color: var(--mute); text-align: center; }
+.ct-hint .rc { padding: 2px 8px; border-radius: 999px; background: #2a1430; border: 1px solid var(--neon); color: #ffd6ef; }
+.ct-hint .rc.unk { border-style: dashed; background: #1a1428; color: #c3a8e8; animation: glint 1.2s ease-in-out infinite; }
+.ct-hint .rc.lg { border-color: var(--spark); color: #ffe2a0; }
+.ct-hint .rc.ai { border-color: #5a6478; background: #1a2233; color: #c9d1dc; }
+@keyframes glint { 50% { box-shadow: 0 0 10px rgba(195,139,255,0.6); } }
+.ct-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 140px; padding-top: 18px; }
+.ct-actions { display: grid; grid-template-columns: auto 1fr 1.4fr; gap: 8px; }
+.ct-actions .btn.big { min-height: 58px; font-size: 20px; }
+.ct-counts { margin: 0; text-align: center; font-size: 12px; color: var(--mute); }
+
+/* 素材卡（創作桌） */
+.cc {
+  position: relative; width: 104px; min-height: 136px; padding: 0 8px 8px; border-radius: 10px; cursor: pointer; text-align: left;
+  display: grid; grid-template-rows: 10px auto 1fr auto; gap: 5px; overflow: hidden;
+  background: #f1ecdf; color: #1b1b28; border: 2px solid #2a1f3a; box-shadow: 0 4px 0 #2a1f3a;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.cc:hover { transform: translateY(-4px); }
+.cc.sel { transform: translateY(-16px); box-shadow: 0 0 0 3px var(--spark), 0 10px 0 #2a1f3a; }
+.ct-hand .cc.sel.scoring { box-shadow: 0 0 0 3px var(--spark), 0 0 16px 3px rgba(255,194,71,0.6), 0 10px 0 #2a1f3a; }
+.cc.dim { opacity: 0.45; }
+.cc-stripes { display: flex; margin: 0 -8px; height: 10px; }
+.cc-stripes i { flex: 1; background: var(--c); }
+.cc-name { font-size: 13px; font-weight: 900; line-height: 1.3; }
+.cc-tags { display: flex; flex-wrap: wrap; gap: 3px; align-content: start; }
+.cc-tags .t { font-size: 10px; font-weight: 900; padding: 2px 4px; border-radius: 3px; background: var(--c); color: #0b0f1a; }
+.cc-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.cc-val { font-size: 24px; line-height: 1; color: #1f6fd1; }
+.cc-wear { font-size: 10px; color: #8a6a1f; }
+.cc.worn { background: #d8d2c4; }
+.cc.worn .cc-wear { color: #c62f45; font-weight: 900; }
+.cc-mod { position: absolute; right: 4px; top: 12px; font-size: 10px; font-weight: 900; padding: 1px 5px; border-radius: 3px; color: #0b0f1a; }
+.cc.mod-shine { box-shadow: 0 4px 0 #2a1f3a, inset 0 0 0 2px #7fe3ff; } .cc.mod-shine .cc-mod { background: #7fe3ff; }
+.cc.mod-burn { box-shadow: 0 4px 0 #2a1f3a, inset 0 0 0 2px #ff8a3c; } .cc.mod-burn .cc-mod { background: #ff8a3c; }
+.cc.mod-tear { box-shadow: 0 4px 0 #2a1f3a, inset 0 0 0 2px #9fb6ff; } .cc.mod-tear .cc-mod { background: #9fb6ff; }
+.cc.mod-echo { box-shadow: 0 4px 0 #2a1f3a, inset 0 0 0 2px #c38bff; } .cc.mod-echo .cc-mod { background: #c38bff; }
+.cc.guilt { background: #e2d6c0; }
+.cc-grams { font-size: 10px; color: #6b5a3a; font-weight: 700; }
+.cc.legacy { background: #ece2ff; }
+.ct-float { position: fixed; z-index: 5; pointer-events: none; font-family: var(--font-num); font-size: 30px; line-height: 1; white-space: nowrap; text-shadow: 0 2px 0 #000; }
+.ct-float.chips { color: #7fc1ff; }
+.ct-float.mult { color: #ff7a8a; }
+.ct-float.xmult { color: #ffd36b; font-size: 38px; }
+
+/* 今晚完成 */
+.ct-end { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 16px; background: rgba(7,4,13,0.82); }
+.ct-end-card { width: min(520px, 100%); max-height: 100%; overflow: auto; display: grid; gap: 10px; text-align: center; padding: 20px; border-radius: 14px; background: #160c24; border: 2px solid var(--neon); }
+.ct-end-card h2 { margin: 0; font-size: clamp(24px, 6vw, 34px); font-weight: 900; text-wrap: balance; }
+.ct-end-score { font-size: 64px; line-height: 1; color: #fff; text-shadow: 0 0 20px var(--neon); }
+.ct-end-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ct-end-log li { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; border-bottom: 1px dashed #2c1f40; }
+.ct-end-log .num { font-size: 18px; }
+.ct-fresh b { color: var(--spark); } .ct-fresh b.lg { color: #ff4fb4; }
+.ct-best { color: var(--spark); font-weight: 700; margin: 0; }
+.ct-goal.end { text-align: left; }
+.recipe.legend b { color: var(--spark); }
+
+@media (max-width: 640px) {
+  .ct-objs { gap: 4px; }
+  .ct-obj .on { font-size: 10px; }
+  .ct-obj img { width: 30px; height: 30px; }
+  .ct-score { grid-template-columns: minmax(0, 1fr) auto; }
+  .ct-calc { grid-column: 1 / -1; justify-content: center; order: 3; }
+  .ct-box { min-width: 0; flex: 1; }
+  .ct-box b { font-size: 32px; }
+  .ct-hand { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); min-height: 0; padding-top: 16px; row-gap: 14px; }
+  .ct-played { gap: 4px; }
+  .cc { width: auto; min-height: 112px; padding: 0 6px 6px; }
+  .ct-played .cc { width: calc((100vw - 48px) / 5); min-height: 104px; }
+  .cc-name { font-size: 11px; }
+  .cc-val { font-size: 20px; }
+  .ct-stage { min-height: 120px; }
+  .ct-actions { grid-template-columns: auto 1fr 1.3fr; position: sticky; bottom: 0; z-index: 2; margin: 0 -16px; padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, rgba(7,4,13,0), #07040d 30%); }
+  .ct-score { gap: 6px; padding: 8px 10px; }
+  .ct-box b { font-size: 28px; }
+}
+
+
+/* 靈感物件（面板、對話框、商店） */
+.btn.mini { min-height: 30px; padding: 0 10px; font-size: 12px; }
+.inv-head .btn.mini { flex: 0 0 auto; }
+.inv-objs { display: flex; flex-wrap: wrap; gap: 6px; }
+.inv-obj { display: grid; justify-items: center; gap: 2px; width: 76px; padding: 6px 4px; border-radius: 8px; background: #1a1028; border: 1px solid #3a2c50; }
+.inv-obj small { font-size: 10px; text-align: center; line-height: 1.25; color: #d9c8f0; }
+.obj-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: #1a1028; border: 2px solid #3a2c50; }
+.obj-row.r-rare { border-color: #37c3d6; }
+.obj-row.r-legend { border-color: #ffc247; }
+.obj-txt { display: grid; gap: 2px; font-size: 13px; min-width: 0; }
+.obj-txt b { font-size: 15px; }
+.obj-btns { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.gained .obj-row { width: 100%; grid-template-columns: auto minmax(0, 1fr); }
+.shop-item.has-icon { grid-template-columns: auto 1fr auto; }
+.obj-card { grid-template-columns: auto 1fr; align-items: center; }
+.obj-card img { grid-row: span 2; }
+.obj-card.r-rare b { color: #9fe8f2; } .obj-card.r-legend b { color: var(--spark); }
+.unlocks { display: grid; gap: 6px; }
+.card .c-mod { justify-self: start; font-size: 10px; font-weight: 900; padding: 1px 5px; border-radius: 3px; background: var(--c); color: #0b0f1a; }
+.card .c-wear { font-size: 10px; color: #c9a86b; }
+
+/* 創作（舊） */
 .craft { display: grid; gap: 14px; }
 .craft > .btn-row { position: sticky; bottom: -18px; margin: 0 -18px -18px; padding: 12px 18px 18px; background: var(--deck); border-top: 1px solid var(--line); }
 .craft-tray { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
@@ -715,7 +882,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   const SOUL_LIMIT = 21;
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
-  const THRESHOLDS = [165000, 270000, 360000, 430000, 470000];
+  const THRESHOLDS = [1300000, 3600000, 8000000, 14000000, 24000000];
 
   // ---------- 十二項能力值 ----------
   // 0–100。做甚麼，就會變成甚麼：每個行動都會令相關能力值成長或退化。
@@ -822,11 +989,11 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     },
     animator: {
       name: '失業動畫師', short: '動畫師',
-      desc: '想像力豐富，但很難聽話。', perkText: '一開始就能使用 5 張素材創作',
+      desc: '想像力豐富，但很難聽話。', perkText: '創作時手牌 +1',
       cr: 90, spark: 2.6, floor: 2, medium: '畫了一段動畫',
       soul: 4, conscience: 0.95, past: '你畫的角色，現在由 AI 自動生成。',
       cards: ['b_frame', 'b_story', 'b_novel'],
-      perk: { startSlots: 5 },
+      perk: { handBonus: 1 },
       stats: st(25, 50, 35, 15, 40, 25, 65, 70, 35, 25, 40, 20),
     },
   };
@@ -873,7 +1040,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     premium:    { name: '浮聲 Premium',   desc: '5 天內工作時沒有廣告',               cost: 60 },
     supplement: { name: '靈感補充劑',     desc: '火花立即 +1.2，兩天後 −1.6',         cost: 80 },
     realfood:   { name: '真食物套餐',     desc: '身體 +15，火花 +0.2（每天一次）',    cost: 55 },
-    tools:      { name: '二手創作工具',   desc: '創作時可使用 5 張素材',              cost: 160 },
+    tools:      { name: '二手創作工具',   desc: '創作時手牌 +1',                      cost: 160 },
     tank:       { name: '大容量氧氣瓶',   desc: '潛水氧氣 +30%',                      cost: 140 },
     harpoon:    { name: '改裝魚叉',       desc: '魚叉發射更快，傷害加倍',             cost: 120 },
     bag:        { name: '防水大背包',     desc: '潛水背包容量 +4',                    cost: 100 },
@@ -1108,6 +1275,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   // guilt：留下的「愧疚」素材名稱；tag：它的第二個標籤
   // min：選項需要的能力值；stats：選擇後的能力值變化；repeat：可在多少天後再次出現
   const DILEMMAS = [
+    { id: 'sketchbook', text: '你在咖啡店撿到一本別人的速寫簿，裡面全是你從未想過的點子。',
+      options: [{ label: '據為己有', obj: 'stolen', sin: 2.5, guilt: '別人的速寫簿', tag: 'memory' },
+        { label: '交回咖啡店', atone: 1, card: 'x_sun' }] },
     { id: 'wallet', text: '你在樓梯撿到一個錢包，裡面有 $120 和一張全家福。',
       options: [{ label: '據為己有', cr: 80, sin: 3, guilt: '那個錢包', tag: 'memory' },
         { label: '交到管理處', atone: 1, card: 'm_family', stats: { empathy: 1 } }] },
@@ -1368,6 +1538,236 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   });
 });
 
+// ---- js/data-craft.js ----
+// 《靈感撤離 2080》創作系統的內容：作品形式、具名組合、靈感物件、素材變化、起始素材。
+// 創作規則見 create.js；演出見 craft.js。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const has = (c, t) => c.tags.includes(t);
+
+  // ---------- 作品形式（相當於撲克牌型） ----------
+  // 按標籤出現次數判斷；一張素材有兩個標籤時，兩個都會計算。
+  // up：每升一級增加的籌碼與倍率。teach：在哪裡可以練習這種技法。
+  const FORMS = [
+    { id: 'sketch',   name: '隨筆',   desc: '任何素材，只計最高分的一張',           chips: 5,   mult: 1,  up: [10, 1], teach: 'AI 數據標註' },
+    { id: 'poem',     name: '短詩',   desc: '兩張素材有相同標籤',                   chips: 10,  mult: 2,  up: [15, 1], teach: '與何伯聊天' },
+    { id: 'couplet',  name: '對聯',   desc: '兩種標籤各出現兩次',                   chips: 20,  mult: 2,  up: [20, 1], teach: '陰謀論內容農場' },
+    { id: 'song',     name: '歌',     desc: '同一標籤出現三次',                     chips: 30,  mult: 3,  up: [20, 2], teach: '街頭表演、與小雨聊天' },
+    { id: 'collage',  name: '拼貼',   desc: '五張素材，合共七種或以上標籤',         chips: 35,  mult: 4,  up: [30, 2], teach: '舊城潛水、與 Miu 聊天' },
+    { id: 'novel',    name: '小說',   desc: '一種標籤三次，另一種兩次',             chips: 40,  mult: 4,  up: [25, 2], teach: '做義工、與 Mary 姐聊天' },
+    { id: 'mural',    name: '壁畫',   desc: '同一標籤出現四次',                     chips: 60,  mult: 7,  up: [30, 3], teach: '外送潛水、與阿 Ken 聊天' },
+    { id: 'symphony', name: '交響曲', desc: '一種標籤四次，另一種三次',             chips: 80,  mult: 8,  up: [35, 3], teach: '與 DJ 小妹聊天' },
+    { id: 'epic',     name: '史詩',   desc: '同一標籤出現五次',                     chips: 100, mult: 12, up: [40, 3], teach: '與芳姐聊天' },
+    { id: 'film',     name: '電影',   desc: '五張素材全部擁有同樣的兩種標籤',       chips: 150, mult: 16, up: [50, 4], teach: '與老陳聊天', secret: true },
+  ];
+  // 行動與朋友教你的技法
+  const TEACH = { label: 'sketch', farm: 'couplet', busk: 'song', dive: 'collage', volunteer: 'novel', delivery: 'mural',
+    ho: 'poem', yu: 'song', miu: 'collage', mary: 'novel', ken: 'mural', dj: 'symphony', fong: 'epic', chan: 'film' };
+
+  // ---------- 具名組合 ----------
+  // need：每個標籤最少要有多少張素材包含它（看所有下筆的素材，包括不計分的陪襯）。
+  // legend：隱藏的傳說組合，xmult 為額外乘數，cond 為特殊條件，hint 為圖鑑裡的謎語。
+  const R = (id, name, need, chips, mult, extra) => Object.assign({ id, name, need, chips, mult }, extra || {});
+  const RECIPES = [
+    R('childhood', '水淹童年', { water: 1, memory: 1, hunger: 1 }, 30, 3),
+    R('nostalgia', '電子鄉愁', { neon: 1, machine: 1, memory: 1 }, 25, 2.5),
+    R('robodream', '機械人的夢', { machine: 1, hope: 1 }, 15, 1.5),
+    R('band', '地下樂隊', { rebel: 1, anger: 1, warmth: 1 }, 35, 3),
+    R('diary', '浮城日記', { water: 1, neon: 1, warmth: 1 }, 25, 2.5),
+    R('lovesong', '末世情歌', { warmth: 1, hope: 1, memory: 1 }, 30, 3),
+    R('labeler', '標註員之死', { machine: 3, rebel: 1 }, 40, 3.5),
+    R('dinner', '有錢人的晚餐', { neon: 1, hunger: 1, anger: 1 }, 30, 2.5),
+    R('archaeo', '舊城考古', { water: 2, memory: 2 }, 30, 2.5),
+    R('blackhumor', '黑色幽默', { hope: 1, anger: 1 }, 15, 1.5),
+    R('letter', '外星來信', { hope: 1, neon: 1 }, 15, 1.5),
+    R('rentday', '交租日', { hunger: 1, machine: 1, anger: 1 }, 25, 2.5),
+    R('confession', '懺悔錄', { guilt: 1, memory: 1 }, 30, 3),
+    R('absolve', '告解', { guilt: 1, warmth: 1 }, 25, 2.5),
+    R('crime', '罪與罰', { guilt: 2, anger: 1 }, 40, 3.5),
+    R('drown', '溺水的霓虹', { water: 2, neon: 2 }, 35, 3),
+    R('strike', '罷工宣言', { rebel: 2, machine: 1 }, 30, 3),
+    R('lullaby', '搖籃曲', { warmth: 2, memory: 1 }, 25, 2.5),
+    R('starve', '飢餓藝術家', { hunger: 2, hope: 1 }, 30, 3),
+    R('riot', '暴動', { anger: 2, rebel: 2 }, 45, 4),
+    R('algo', '演算法之神', { machine: 2, neon: 1 }, 25, 2.5),
+    R('acidlove', '酸雨情書', { water: 1, warmth: 1, anger: 1 }, 25, 2.5),
+    R('dawn', '黎明前', { hope: 2, rebel: 1 }, 30, 3),
+    R('noodles', '半夜的即食麵', { hunger: 1, warmth: 1, neon: 1 }, 25, 2.5),
+    R('ghost', '舊城的鬼', { water: 1, memory: 1, machine: 1 }, 25, 2.5),
+    R('alarm', '鬧鐘響了', { machine: 1, hunger: 1 }, 15, 1.5),
+    R('overtime', '加班到天光', { machine: 2, hunger: 1, neon: 1 }, 40, 3.5),
+    R('rally', '和平集會', { warmth: 1, rebel: 1, hope: 1 }, 30, 3),
+    R('eulogy', '悼詞', { memory: 2, guilt: 1 }, 35, 3),
+    R('lies', '謊言大全', { neon: 2, guilt: 1 }, 30, 3),
+    R('tides', '潮汐', { water: 3 }, 30, 3),
+    R('karaoke', '卡拉 OK 之夜', { neon: 1, warmth: 1, memory: 1 }, 25, 2.5),
+    R('recycle', '回收的夢', { machine: 1, memory: 1, hope: 1 }, 25, 2.5),
+    R('fury', '沉默的憤怒', { anger: 3 }, 30, 3),
+    R('family', '全家福', { warmth: 3 }, 30, 3),
+    R('future', '未來考古學', { machine: 1, water: 1, hope: 1 }, 25, 2.5),
+    R('sweatshop', '血汗工廠', { hunger: 2, machine: 2 }, 40, 3.5),
+    R('escape', '逃離計劃', { rebel: 1, water: 1, hope: 1 }, 30, 3),
+    R('debt', '負債人生', { hunger: 1, anger: 1, guilt: 1 }, 35, 3),
+    R('neonsign', '霓虹之下', { neon: 3 }, 30, 3),
+    // ---- 隱藏的傳說組合 ----
+    R('g21', '21 克', { guilt: 1, hope: 1 }, 80, 4, { legend: true, xmult: 3,
+      cond: (s) => s.soul >= 19 && s.soul <= 21, hint: '當你的靈魂剛好壓在極限上，把愧疚和希望放在一起。' }),
+    R('lastart', '最後的人類藝術', {}, 60, 4, { legend: true, xmult: 2.5,
+      cond: (s, sel) => sel.length === 5 && !sel.some((c) => has(c, 'machine')) && ((s.world && s.world.id === 'airogue') || s.auto >= 80),
+      hint: '機器停下來的時候，或者全城都已經自動化的時候，用五件沒有機械的東西。' }),
+    R('unreadable', '外星人看不懂', {}, 60, 3, { legend: true, xmult: 3,
+      cond: (s, sel) => new Set(sel.flatMap((c) => c.tags)).size >= 9, hint: '把盡可能多種不同的東西塞進同一件作品。' }),
+    R('astarletter', '給阿星的信', { hope: 1 }, 50, 3, { legend: true, xmult: 2,
+      cond: (s, sel) => sel.some((c) => c.id === 'r_astar'), hint: '在夢裡見過的那個人，配上一點希望。' }),
+    R('deluge', '大洪水', { water: 5 }, 100, 6, { legend: true, xmult: 2.5,
+      cond: (s) => s.water >= 6 || (s.world && s.world.id === 'flood'), hint: '水淹得很高的時候，全部都要是水。' }),
+    R('blank', '空白', {}, 0, 0, { legend: true, xmult: 6,
+      cond: (s, sel) => sel.length === 1 && (sel[0].wear || 0) >= 4, hint: '外星人最欣賞甚麼都沒有的作品。用一件用到爛的東西就夠了。' }),
+    R('lastpainting', '欠債藝術家的最後一幅畫', { hunger: 1 }, 50, 3, { legend: true, xmult: 3,
+      cond: (s) => s.cr < 25, hint: '口袋裡幾乎一分錢都沒有的時候，畫你的肚餓。' }),
+    R('forthetaken', '為所有被帶走的人', { warmth: 1, memory: 1 }, 60, 4, { legend: true, xmult: 3,
+      cond: (s) => s.npcs.filter((n) => !n.alive).length >= 3, hint: '當身邊的朋友一個一個被帶走之後……' }),
+  ];
+
+  // ---------- 素材變化 ----------
+  const CARD_MODS = {
+    shine: { name: '閃亮', desc: '計分時籌碼 +30', color: '#7fe3ff' },
+    burn:  { name: '燃燒', desc: '計分時倍率 +4', color: '#ff8a3c' },
+    tear:  { name: '淚痕', desc: '計分時倍率 ×1.5', color: '#9fb6ff' },
+    echo:  { name: '回音', desc: '計分兩次', color: '#c38bff' },
+  };
+
+  // ---------- 起始素材：每個人的日常 ----------
+  Object.assign(D.CARDS, {
+    x_rain:    { name: '窗外的雨',          tags: ['water'],           value: 12 },
+    x_paste:   { name: '合成糊早餐',        tags: ['hunger'],          value: 10 },
+    x_phone:   { name: '裂了的手機',        tags: ['machine', 'neon'], value: 14 },
+    x_noise:   { name: '隔壁的吵架聲',      tags: ['anger'],           value: 12 },
+    x_photo:   { name: '舊錢包裡的照片',    tags: ['memory', 'warmth'],value: 16 },
+    x_sun:     { name: '難得的晴天',        tags: ['hope'],            value: 14 },
+    x_poster:  { name: '撕爛的海報',        tags: ['rebel', 'neon'],   value: 14 },
+    x_kettle:  { name: '燒水壺的聲音',      tags: ['warmth'],          value: 10 },
+  });
+  const STARTER = ['x_rain', 'x_paste', 'x_phone', 'x_noise', 'x_photo', 'x_sun', 'x_poster', 'x_kettle'];
+
+  // ---------- 靈感物件（相當於小丑牌） ----------
+  // card(c, ctx)：每張計分素材觸發；play(ctx)：每次下筆觸發；mods：手牌／下筆／改稿次數；
+  // after(ctx)：下筆之後的代價；retrig(c, ctx, i)：額外計分一次；unlock：跨局解鎖條件（meta → 是否已達成）。
+  // 數值：chips 加籌碼、mult 加倍率、xmult 乘倍率。
+  const O = (id, name, rarity, icon, pal, desc, fx) => Object.assign({ id, name, rarity, icon, pal, desc }, fx);
+  const OBJECTS = [
+    // 朋友送的（熟絡度達 3）
+    O('spraycan', '阿 Ken 的噴漆罐', 'common', 'can', { a: '#ff4fb4', b: '#a3206b', c: '#ffc2e6' }, '每張「反叛」素材計分時，倍率 +3。', { npc: 'ken',
+      card: (c) => (has(c, 'rebel') ? { mult: 3 } : null) }),
+    O('subwoofer', '天台低音喇叭', 'common', 'speaker', { a: '#37c3d6', b: '#1f6b7a', c: '#bff3fb' }, '每張「霓虹」素材計分時，倍率 +2。', { npc: 'dj',
+      card: (c) => (has(c, 'neon') ? { mult: 2 } : null) }),
+    O('oldpoems', '何伯的舊詩集', 'common', 'book', { a: '#c98d5e', b: '#7a4f2a', c: '#f5d6c0' }, '作品形式是「短詩」或「對聯」時，籌碼 +60。', { npc: 'ho',
+      play: (x) => (x.form === 'poem' || x.form === 'couplet' ? { chips: 60 } : null) }),
+    O('robocat', 'Miu 的機械貓', 'common', 'cat', { a: '#8e9bb0', b: '#4a5568', c: '#e8edf6' }, '每張「機械」素材計分時，籌碼 +15。', { npc: 'miu',
+      card: (c) => (has(c, 'machine') ? { chips: 15 } : null) }),
+    O('costume', '芳姐的戲服', 'common', 'mask', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffd36b' }, '每張「記憶」素材計分時，倍率 +2。', { npc: 'fong',
+      card: (c) => (has(c, 'memory') ? { mult: 2 } : null) }),
+    O('boatlamp', '老陳的船燈', 'common', 'lamp', { a: '#ffc247', b: '#8a6a1f', c: '#fff2c4' }, '每張「水」素材計分時，籌碼 +20。', { npc: 'chan',
+      card: (c) => (has(c, 'water') ? { chips: 20 } : null) }),
+    O('lyricbook', '小雨的歌詞簿', 'rare', 'book', { a: '#9be36b', b: '#3d6b2a', c: '#e4ffd0' }, '每張「希望」素材計分時，倍率 ×1.2。', { npc: 'yu',
+      card: (c) => (has(c, 'hope') ? { xmult: 1.2 } : null) }),
+    O('sweetbowl', 'Mary 姐的糖水碗', 'common', 'bowl', { a: '#ff8fb1', b: '#a34a6b', c: '#ffe0ec' }, '每張「人情」素材計分時，倍率 +2。', { npc: 'mary',
+      card: (c) => (has(c, 'warmth') ? { mult: 2 } : null) }),
+    // 角色的起始物件
+    O('slogans', '被否決的標語本', 'common', 'paper', { a: '#e8edf6', b: '#8d99b4', c: '#ff4fb4' }, '下筆的素材每有一種不同標籤，倍率 +1。', { start: 'copywriter',
+      play: (x) => ({ mult: x.distinct }) }),
+    O('whistle', '救生員哨子', 'common', 'whistle', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffd0d5' }, '每張「水」素材計分時，倍率 +2。', { start: 'lifeguard',
+      card: (c) => (has(c, 'water') ? { mult: 2 } : null) }),
+    O('autoedit', '自動剪輯軟件', 'common', 'monitor', { a: '#37c3d6', b: '#26334d', c: '#e8fdff' }, '每次下筆籌碼 +60，但 AI 模仿你的速度加倍。', { start: 'programmer',
+      play: () => ({ chips: 60 }), aiDouble: true }),
+    O('guitar', '斷弦結他', 'rare', 'guitar', { a: '#c98d5e', b: '#6b3a1e', c: '#ffd36b' }, '作品形式是「歌」時，倍率 ×2。', { start: 'busker',
+      play: (x) => (x.form === 'song' ? { xmult: 2 } : null) }),
+    O('thermobag', '外送保溫袋', 'common', 'box', { a: '#ffc247', b: '#8a6a1f', c: '#fff2c4' }, '每次下筆籌碼 +25，並得到 $3 小費。', { start: 'courier',
+      play: () => ({ chips: 25 }), after: () => ({ cr: 3 }) }),
+    O('redpen', '批改紅筆', 'common', 'pen', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffffff' }, '剛好用三張素材下筆時，倍率 ×2。', { start: 'teacher',
+      play: (x) => (x.sel.length === 3 ? { xmult: 2 } : null) }),
+    O('ringlight', '補光燈', 'common', 'lamp', { a: '#ffffff', b: '#8d99b4', c: '#ffe9a8' }, '每張「霓虹」素材計分時，倍率 ×1.25。', { start: 'influencer',
+      card: (c) => (has(c, 'neon') ? { xmult: 1.25 } : null) }),
+    O('solder', '焊槍', 'common', 'gun', { a: '#8e9bb0', b: '#4a5568', c: '#ff8a3c' }, '每張「機械」素材計分時，倍率 +2。', { start: 'cybertech',
+      card: (c) => (has(c, 'machine') ? { mult: 2 } : null) }),
+    O('confkey', '告解室的鑰匙', 'rare', 'key', { a: '#e8c25a', b: '#8a6a1f', c: '#fff2c4' }, '每張「愧疚」素材計分時，倍率 ×2。', { start: 'nurse',
+      card: (c) => (has(c, 'guilt') ? { xmult: 2 } : null) }),
+    O('frame24', '第 24 格', 'rare', 'film', { a: '#c38bff', b: '#5a2f8a', c: '#f0e0ff' }, '最後一張計分的素材會再計分一次。', { start: 'animator',
+      retrig: (c, x, i) => i === x.scoring.length - 1 }),
+    // 生活裡找到的
+    O('emptybowl', '空碗', 'rare', 'bowl', { a: '#e8edf6', b: '#8d99b4', c: '#ffffff' }, '每張「飢餓」素材計分時，倍率 ×1.3。', { src: '挨餓三天',
+      card: (c) => (has(c, 'hunger') ? { xmult: 1.3 } : null) }),
+    O('alienradio', '外星收音機', 'rare', 'radio', { a: '#9be36b', b: '#2b3a5c', c: '#d9f7c7' }, '下筆的素材裡有「希望」時，倍率 ×1.5。', { src: '外星人干預、可疑的外星訊號',
+      play: (x) => (x.counts.hope ? { xmult: 1.5 } : null) }),
+    O('angrydiary', '憤怒的日記', 'common', 'book', { a: '#d6334a', b: '#6b1424', c: '#ffc2cb' }, '每張「憤怒」素材計分時，倍率 +3。', { src: '被搶劫、二手市集',
+      card: (c) => (has(c, 'anger') ? { mult: 3 } : null) }),
+    O('pills', '過期的靈感補充劑', 'common', 'bottle', { a: '#ffc247', b: '#8a4a1e', c: '#ffffff' }, '每次下筆倍率 +10，但火花 −0.1。', { src: '二手市集',
+      play: () => ({ mult: 10 }), after: () => ({ spark: -0.1 }) }),
+    O('stolen', '偷來的靈感', 'rare', 'hand', { a: '#f2c6a0', b: '#8e5b3a', c: '#a89a82' }, '每次下筆倍率 ×3，但靈魂變重。', { src: '道德抉擇',
+      play: () => ({ xmult: 3 }), after: () => ({ sin: 1 }) }),
+    O('typewriter', '二手打字機', 'common', 'typewriter', { a: '#5a6478', b: '#2a3142', c: '#e8edf6' }, '手牌 +1。', { src: '二手市集',
+      mods: { hand: 1 } }),
+    O('espresso', '雙倍濃縮咖啡', 'rare', 'cup', { a: '#8a5a3b', b: '#3b2a1e', c: '#f2f2f2' }, '每晚多一次下筆。', { src: '二手市集',
+      mods: { plays: 1 } }),
+    O('shredder', '碎紙機', 'common', 'shredder', { a: '#8e9bb0', b: '#4a5568', c: '#ffffff' }, '每晚多兩次改稿。', { src: '二手市集',
+      mods: { discards: 2 } }),
+    O('neonshard', '霓虹招牌碎片', 'rare', 'shard', { a: '#ff4fb4', b: '#37c3d6', c: '#ffffff' }, '今晚每改稿一次，之後下筆倍率 +4。', { src: '舊城潛水',
+      play: (x) => (x.discardsUsed ? { mult: 4 * x.discardsUsed } : null) }),
+    O('oldmap', '舊城地圖', 'rare', 'map', { a: '#e8c25a', b: '#3fb6d9', c: '#fff2c4' }, '作品形式是「拼貼」時，倍率 ×2。', { src: '舊城潛水',
+      play: (x) => (x.form === 'collage' ? { xmult: 2 } : null) }),
+    O('collectorbox', '收藏家的盒子', 'rare', 'box', { a: '#c38bff', b: '#5a2f8a', c: '#ffd36b' }, '本局每打撈過一件遺物，籌碼 +4。', { src: '舊城潛水',
+      play: (x) => (x.s.stats.relics ? { chips: 4 * x.s.stats.relics } : null) }),
+    O('aliencard', '外星人的名片', 'rare', 'card', { a: '#9be36b', b: '#2b3a5c', c: '#ffffff' }, '每有一位朋友被帶走，倍率 +4。', { src: '夢境面試表現出色',
+      play: (x) => { const n = x.s.npcs.filter((m) => !m.alive).length; return n ? { mult: 4 * n } : null; } }),
+    O('anonacct', '匿名帳號', 'common', 'phone', { a: '#1b1b28', b: '#5a6478', c: '#ff4fb4' }, '每張「憤怒」或「霓虹」素材計分時，籌碼 +12。', { src: '陰謀論內容農場',
+      card: (c) => (has(c, 'anger') || has(c, 'neon') ? { chips: 12 } : null) }),
+    O('nightlamp', '熬夜檯燈', 'rare', 'lamp', { a: '#ff8a3c', b: '#6b3a1e', c: '#ffe9a8' }, '身體低於 40 時，倍率 ×2。', { src: '二手市集',
+      play: (x) => (x.s.body < 40 ? { xmult: 2 } : null) }),
+    O('kpiclock', '外星 KPI 打卡機', 'rare', 'clock', { a: '#9be36b', b: '#2b3a5c', c: '#ffffff' }, '作品符合本季 KPI 時倍率 ×2；不符合時 ×0.8。', { src: '夢境面試表現出色',
+      play: (x) => (x.kpiMod > 1 ? { xmult: 2 } : { xmult: 0.8 }) }),
+    O('instant', '即影即有相機', 'rare', 'camera', { a: '#e8edf6', b: '#5a6478', c: '#ff4d5e' }, '第一張計分的素材會再計分一次。', { src: '二手市集',
+      retrig: (c, x, i) => i === 0 }),
+    O('raincoat', '酸雨雨衣', 'common', 'coat', { a: '#c4e04a', b: '#5a6b12', c: '#f0ffb0' }, '倍率 +4；酸雨季時改為 ×1.5。', { src: '二手市集',
+      play: (x) => (x.s.season === 'acid' ? { xmult: 1.5 } : { mult: 4 }) }),
+    // 跨局解鎖的傳說物件
+    O('weight21', '21 克的砝碼', 'legend', 'weight', { a: '#a89a82', b: '#5c5448', c: '#e9dcc4' }, '靈魂越輕，倍率越高：×(1 + (21 − 靈魂重量) ÷ 14)。', {
+      play: (x) => ({ xmult: Math.round((1 + Math.max(0, 21 - x.s.soul) / 14) * 100) / 100 }),
+      unlock: { text: '發現傳說組合「21 克」', test: (m) => !!(m.recipes && m.recipes.g21) } }),
+    O('lastpainter', '地球最後的畫家', 'legend', 'brush', { a: '#ffc247', b: '#ff4fb4', c: '#ffffff' }, '本局每完成過一件作品，倍率 +1。', {
+      play: (x) => (x.s.works.length ? { mult: x.s.works.length } : null),
+      unlock: { text: '累積完成 60 件作品', test: (m) => (m.totalWorks || 0) >= 60 } }),
+    O('mirror', '碎鏡', 'legend', 'mirror', { a: '#bff3fb', b: '#37c3d6', c: '#ffffff' }, '複製右邊那件靈感物件的效果。', { copy: true,
+      unlock: { text: '同時裝備 5 件靈感物件', test: (m) => (m.maxObjects || 0) >= 5 } }),
+    O('blackbox', '外星黑盒', 'legend', 'cube', { a: '#1b1b28', b: '#9be36b', c: '#ff4fb4' }, '每次下筆倍率隨機 ×1 至 ×4。', {
+      play: (x) => ({ xmult: Math.round((1 + x.roll * 3) * 10) / 10 }),
+      unlock: { text: '被外星人帶走一次', test: (m) => !!(m.endings && (m.endings.agent || m.endings.returned)) } }),
+    O('greybadge', '灰色員工證', 'legend', 'card', { a: '#9ca3af', b: '#4a5568', c: '#ffffff' }, '火花低於 1.5 時，倍率 ×3。', {
+      play: (x) => (x.s.spark < 1.5 ? { xmult: 3 } : null),
+      unlock: { text: '得到「灰化」結局', test: (m) => !!(m.endings && m.endings.grey) } }),
+    O('rubbing', '墓碑拓本', 'legend', 'stone', { a: '#8d99b4', b: '#4a5568', c: '#e8edf6' }, '你在所有局裡每死過一次，倍率 +3。', {
+      play: (x) => (x.s.pastDeaths ? { mult: 3 * x.s.pastDeaths } : null),
+      unlock: { text: '死亡 3 次', test: (m) => ((m.endings && m.endings.death) || 0) >= 3 } }),
+    O('goldframe', '鍍金畫框', 'legend', 'frame', { a: '#e8c25a', b: '#8a6a1f', c: '#fff2c4' }, '同一晚每多下筆一次，倍率 ×1.5（第二次 ×1.5，第三次 ×2.25……）。', {
+      play: (x) => (x.playIndex ? { xmult: Math.round(Math.pow(1.5, x.playIndex) * 100) / 100 } : null),
+      unlock: { text: '一次下筆得到 50,000 分以上', test: (m) => (m.bestPlay || 0) >= 50000 } }),
+  ];
+  const OBJ = {};
+  OBJECTS.forEach((o) => { OBJ[o.id] = o; });
+  const OBJ_PRICE = { common: 90, rare: 160, legend: 260 };
+  const RARITY = { common: '普通', rare: '稀有', legend: '傳說' };
+  // 角色的起始物件
+  const START_OBJECT = { copywriter: 'slogans', lifeguard: 'whistle', programmer: 'autoedit', busker: 'guitar', courier: 'thermobag',
+    teacher: 'redpen', influencer: 'ringlight', cybertech: 'solder', nurse: 'confkey', animator: 'frame24' };
+
+  Object.assign(D, { FORMS, TEACH, RECIPES, CARD_MODS, STARTER, OBJECTS, OBJ, OBJ_PRICE, RARITY, START_OBJECT,
+    CRAFT: { hand: 7, plays: 3, discards: 2, deckMax: 30, cost: 20, allnighterCost: 25 } });
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -1379,7 +1779,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 })(function (IE) {
   'use strict';
   const D = IE.DATA;
-  const MAX_CARDS = 12;
+  const MAX_CARDS = D.CRAFT.deckMax;
 
   // ---------- 隨機數（可存檔的 mulberry32） ----------
   function rand(s) {
@@ -1483,7 +1883,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 4, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 5, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -1492,7 +1892,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       usedDilemmas: {}, dilemma: null, dilemmaDay: 0,
       world: null, worldNext: 5, worldsSeen: {},
       rentHike: 0, graceUsed: false, debt: 0,
-      premiumUntil: 0, craftSlots: bg.perk.startSlots || 4, realFoodDay: 0,
+      premiumUntil: 0, realFoodDay: 0,
+      // 創作：作品形式等級、AI 對你風格的記憶、靈感物件
+      forms: {}, formsSeen: {}, style: {}, session: null, handBonus: 0, studio: 0,
+      objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
+      unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
+      pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false },
       auto: 0, removed: { smile: false, label: false },
       mastery: { label: 0, smile: 0, dive: 0 },
@@ -1505,7 +1910,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       stats: { labels: 0, wrong: 0, smiles: 0, perfects: 0, dives: 0, relics: 0, fish: 0, flows: 0, works: 0,
         crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null,
         actions: {}, deliveries: 0, lateDeliveries: 0, headlines: 0, shares: 0, buskNotes: 0, crowdMax: 0,
-        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '' },
+        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '', bestPlay: 0, maxObjects: 1 },
       log: { fish: {}, relics: {} },
       newsSeen: {}, morning: null, ended: null,
       legacy: (opts.meta && opts.meta.relics) ? opts.meta.relics.slice(-5) : [],
@@ -1518,6 +1923,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
     bg.cards.forEach((id) => addCard(s, id));
+    D.STARTER.forEach((id) => addCard(s, id));
+    s.objects.forEach((id) => { s.objSeen[id] = true; });
     return s;
   }
   const countAction = (s, k) => { s.stats.actions[k] = (s.stats.actions[k] || 0) + 1; };
@@ -1529,10 +1936,94 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   }
   function addCard(s, idOrCard) {
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
+    card.wear = card.wear || 0;
     s.cards.push(card);
     let dropped = null;
-    if (s.cards.length > MAX_CARDS) dropped = s.cards.shift();
+    // 素材庫滿了：丟掉用得最殘的一張（同樣殘就丟最舊的）
+    if (s.cards.length > MAX_CARDS) {
+      let worst = 0;
+      s.cards.forEach((c, i) => {
+        const w = s.cards[worst];
+        if (i < s.cards.length - 1 && ((c.wear || 0) > (w.wear || 0) || ((c.wear || 0) === (w.wear || 0) && c.value < w.value && (c.wear || 0) > 0))) worst = i;
+      });
+      dropped = s.cards.splice(worst, 1)[0];
+    }
     return { card, dropped };
+  }
+
+  // ---------- 創作技法與靈感物件 ----------
+  // 技法：做某些事、和某些朋友聊天，會提升某種作品形式的等級
+  function teach(s, key, chance, rep) {
+    const fid = D.TEACH[key];
+    if (!fid || rand(s) >= chance) return;
+    s.forms[fid] = (s.forms[fid] || 1) + 1;
+    const f = D.FORMS.find((x) => x.id === fid);
+    if (rep) rep.line('技法提升：「' + f.name + '」升到 Lv.' + s.forms[fid], 'good');
+  }
+  const ownsObject = (s, id) => s.objects.includes(id) || s.objStash.includes(id);
+  const objectAvailable = (s, o) => !o.unlock || s.unlocked.includes(o.id);
+  function gainObject(s, id, rep) {
+    const o = D.OBJ[id];
+    if (!o || ownsObject(s, id)) return false;
+    s.objSeen[id] = true;
+    if (s.objects.length < s.objSlots) s.objects.push(id);
+    else if (s.objStash.length < 4) s.objStash.push(id);
+    else { s.cr += Math.round(D.OBJ_PRICE[o.rarity] / 2); if (rep) rep.line('物件欄已滿，把「' + o.name + '」賣給了天空區收藏家', ''); return false; }
+    s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
+    if (rep) { rep.line('獲得靈感物件：「' + o.name + '」' + (s.objects.includes(id) ? '' : '（物件欄已滿，先放進儲物箱）'), 'good'); rep.obj(id); }
+    return true;
+  }
+  function randomObject(s, ids) {
+    const pool = ids.filter((id) => D.OBJ[id] && !ownsObject(s, id) && objectAvailable(s, D.OBJ[id]));
+    return pool.length ? pick(s, pool) : null;
+  }
+  function equipObject(s, id) {
+    if (!s.objStash.includes(id) || s.objects.length >= s.objSlots) return false;
+    s.objStash = s.objStash.filter((x) => x !== id);
+    s.objects.push(id);
+    s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
+    return true;
+  }
+  function unequipObject(s, id) {
+    if (!s.objects.includes(id) || s.objStash.length >= 4) return false;
+    s.objects = s.objects.filter((x) => x !== id);
+    s.objStash.push(id);
+    return true;
+  }
+  function moveObject(s, id, dir) {
+    const i = s.objects.indexOf(id), j = i + dir;
+    if (i < 0 || j < 0 || j >= s.objects.length) return false;
+    [s.objects[i], s.objects[j]] = [s.objects[j], s.objects[i]];
+    return true;
+  }
+  function sellObject(s, id) {
+    const o = D.OBJ[id];
+    if (!o || !ownsObject(s, id)) return 0;
+    s.objects = s.objects.filter((x) => x !== id);
+    s.objStash = s.objStash.filter((x) => x !== id);
+    const price = Math.round(D.OBJ_PRICE[o.rarity] / 2);
+    s.cr += price;
+    return price;
+  }
+  // 朋友幫你打磨素材：隨機一張沒有變化的素材得到「閃亮／燃燒／淚痕／回音」
+  function polishCard(s, rep, who) {
+    const plain = s.cards.filter((c) => !c.mod && !c.guilt);
+    if (!plain.length) return;
+    const c = pick(s, plain);
+    const r = rand(s);
+    c.mod = r < 0.4 ? 'shine' : r < 0.7 ? 'burn' : r < 0.9 ? 'tear' : 'echo';
+    if (rep) rep.line((who || '你') + '幫你打磨了「' + c.name + '」：' + D.CARD_MODS[c.mod].name + '（' + D.CARD_MODS[c.mod].desc + '）', 'good');
+  }
+  // 二手靈感市集：每三天換一批貨
+  function marketItems(s) {
+    const period = Math.floor((s.day - 1) / 3);
+    if (!s.market || s.market.period !== period) {
+      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && objectAvailable(s, o)).map((o) => o.id);
+      const items = [];
+      while (items.length < 2 && pool.length) items.push(pool.splice(Math.floor(rand(s) * pool.length), 1)[0]);
+      s.market = { period, items };
+    }
+    return s.market.items.filter((id) => !ownsObject(s, id));
   }
   function legacyCard(relic) {
     return { id: 'legacy', name: '前世作品《' + relic.name + '》', tags: relic.tags.slice(0, 2),
@@ -1556,6 +2047,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1));
   }
 
+  // 抉擇與面試的訊號：資料寫的是舊版數值（門檻 16.5 萬時），按本季門檻等比例放大
+  const sigScale = (s, v) => Math.round(v * threshold(s) / 165000);
   // 累積訊號（篩選日用來與門檻比較）
   function signal(s) {
     return s.works.reduce((a, w) => a + w.score, 0) + (s.bonusSignal || 0);
@@ -1626,6 +2119,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     for (let i = 0; i < poison; i++) rep.gain('l_poison');
     applyAutomationNews(s, autoBefore, rep);
     train(s, ot ? { dex: 1.5, obey: 1.5, imag: -0.8, fit: -0.3 } : { dex: 1.5, obey: 1.2, imag: -0.4 }, rep);
+    teach(s, 'label', 0.15, rep);
     sin(s, ot ? 0.8 : 0.6, rep, '你標註的數據，令一些人失去了工作');
     if (worldMods(s).labelSin) sin(s, worldMods(s).labelSin, rep, '你標註的數據被用來訓練瞄準系統', '標註過的目標', 'anger');
     return rep.done();
@@ -1752,6 +2246,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (sp) rep.delta('spark', sp);
     res.relics.forEach((r) => rep.gain(r));
     train(s, { swim: 1.5, fit: 1, calm: 0.4 }, rep);
+    teach(s, 'dive', 0.3, rep);
+    if (n && rand(s) < 0.1) { const o = randomObject(s, ['oldmap', 'neonshard', 'collectorbox']); if (o) gainObject(s, o, rep); }
     if (res.lockers) sin(s, 0.5 * res.lockers, rep, '撬開了別人的儲物櫃 ' + res.lockers + ' 個');
     return rep.done();
   }
@@ -1783,6 +2279,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (res.late >= 2) rep.gain('c_review');
     if (rand(s) < 0.5) rep.gain('c_door');
     train(s, { fit: 1.5, swim: 1.2, calm: 0.5, social: 0.3 }, rep);
+    teach(s, 'delivery', 0.25, rep);
     return rep.done();
   }
 
@@ -1822,6 +2319,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (res.truth >= 2) rep.gain('f_truth');
     addParanoia(s, 1.5 * res.fakeTotal, rep);
     train(s, { insight: 0.4 + 0.3 * res.truth, craft: 0.5, obey: 1, empathy: -0.5 }, rep);
+    teach(s, 'farm', 0.3, rep);
+    if (rand(s) < 0.25) gainObject(s, 'anonacct', rep);
     if (res.fakeTotal > 0.3) sin(s, 0.25 * res.fakeTotal, rep, '你製造的恐慌正在城市裡流傳', res.fakeTotal >= 4 ? '寫過的假新聞' : null, 'neon');
     return rep.done();
   }
@@ -1845,6 +2344,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     rep.delta('cr', cr); rep.delta('body', -body); rep.delta('spark', sp);
     rep.gain(res.crowdMax >= 6 ? 'p_clap' : res.soloNotes >= 12 ? 'p_chorus' : 'p_hat');
     train(s, { rhythm: 1.5, craft: 1, social: 0.8, imag: 0.5, obey: -0.5 }, rep);
+    teach(s, 'busk', 0.4, rep);
     return rep.done();
   }
 
@@ -1892,11 +2392,11 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       if (ans.card) rep.gain(ans.card);
       s.stats.lastReact = ans.react;
     });
-    const bonus = Math.max(-6000, score * 2500);
+    const bonus = Math.round(threshold(s) * Math.max(-0.04, score * 0.015));
     s.bonusSignal += bonus;
     s.stats.interviews++; s.stats.interviewScore += score;
     rep.line('面試評分 ' + (score > 0 ? '+' : '') + score + '，外星訊號 ' + (bonus >= 0 ? '+' : '−') + Math.abs(bonus).toLocaleString(), bonus >= 0 ? 'good' : 'bad');
-    if (score >= 4) rep.gain('i_smile');
+    if (score >= 4) { rep.gain('i_smile'); const o = randomObject(s, ['aliencard', 'kpiclock']); if (o) gainObject(s, o, rep); }
     return rep.done();
   }
 
@@ -1921,6 +2421,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (perk(s).chatExtra) rep.gain(def.cards[n.friend % def.cards.length]);
     addParanoia(s, -2);
     train(s, { social: 1.2, empathy: 1, imag: 0.4 }, rep);
+    teach(s, npcId, n.friend === 2 || n.friend === 4 ? 1 : 0.25, rep);
+    if (n.friend === 3) { const o = D.OBJECTS.find((x) => x.npc === npcId); if (o) gainObject(s, o.id, rep); }
+    if (rand(s) < 0.3 + 0.002 * A(s, 'social')) polishCard(s, rep, def.name);
     return rep.done();
   }
   function applyVolunteer(s) {
@@ -1933,6 +2436,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     atone(s, 2.5 * (perk(s).volunteerAtone || 1), rep, '你幫忙分派物資，靈魂輕了一點');
     rep.gain('v_shelter');
     train(s, { empathy: 1.5, fit: 0.5 }, rep);
+    teach(s, 'volunteer', 0.35, rep);
     return rep.done();
   }
   function applyRest(s) {
@@ -1947,89 +2451,6 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     addParanoia(s, -2);
     train(s, { imag: 0.4 }, rep);
     return rep.done();
-  }
-
-  // ---------- 創作 ----------
-  function evalCraft(s, uids) {
-    const cards = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
-    const counts = {};
-    cards.forEach((c) => c.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
-    const cardChips = cards.reduce((a, c) => a + c.value, 0) * (perk(s).craftChips || 1) * (1 + 0.003 * A(s, 'craft'));
-    const combos = [];
-    let maxTag = null, maxCount = 0;
-    Object.keys(counts).forEach((t) => { if (counts[t] > maxCount) { maxCount = counts[t]; maxTag = t; } });
-    for (const r of D.RESONANCE) {
-      if (maxCount >= r.count) {
-        combos.push({ id: r.id, name: r.name + '・' + D.TAGS[maxTag].name, chips: r.chips, mult: r.mult, kind: 'res' });
-        break;
-      }
-    }
-    // 主組合計足倍率，其餘組合只加 0.5（避免倍率無限疊加）
-    const recipes = D.RECIPES
-      .filter((rec) => Object.keys(rec.need).every((t) => (counts[t] || 0) >= rec.need[t]))
-      .sort((a, b) => b.mult - a.mult);
-    recipes.forEach((rec, i) => {
-      combos.push({ id: rec.id, name: rec.name, chips: rec.chips, mult: i === 0 ? rec.mult : 0.5, kind: 'recipe',
-        secondary: i > 0, isNew: !s.discovered[rec.id], used: !!s.usedRecipes[rec.id] });
-    });
-    if (Object.keys(counts).length >= D.MEDLEY.minTags) {
-      combos.push({ id: D.MEDLEY.id, name: D.MEDLEY.name, chips: D.MEDLEY.chips, mult: D.MEDLEY.mult, kind: 'medley' });
-    }
-    const chips = Math.round(cardChips + combos.reduce((a, c) => a + c.chips, 0));
-    const mult = round1(1 + combos.reduce((a, c) => a + c.mult, 0));
-    const base = chips * mult * s.spark * (worldMods(s).signalMult || 1);
-    const k = kpi(s);
-    let kpiMod = 1;
-    if (k.tag && counts[k.tag]) kpiMod = k.mod;
-    if (k.special === 'lean' && cards.length >= 4) kpiMod = 0.5;
-    if (k.special === 'pliable' && s.spark < 2) kpiMod = 1.5;
-    if (k.special === 'novelty') {
-      const named = combos.filter((c) => c.kind === 'recipe');
-      if (named.length && named.every((c) => c.used)) kpiMod = 0.2;
-    }
-    const relief = round1(cards.reduce((a, c) => a + (c.grams || 0), 0));
-    return { cards, counts, cardChips: Math.round(cardChips), chips, mult, spark: s.spark, relief,
-      combos, kpi: k, kpiMod, raw: Math.round(base), total: Math.round(base * kpiMod) };
-  }
-  function workName(s, ev) {
-    const named = ev.combos.filter((c) => c.kind === 'recipe').sort((a, b) => b.mult - a.mult);
-    if (named.length) return named[0].name;
-    const tags = Object.keys(ev.counts).sort((a, b) => ev.counts[b] - ev.counts[a]);
-    if (tags.length >= 2) return D.TAGS[tags[0]].name + '與' + D.TAGS[tags[1]].name;
-    return '無題 #' + (s.stats.works + 1);
-  }
-  // 創作需要材料費：藝術不是免費的
-  const craftCost = (n) => 10 + 5 * n;
-  function canCreate(s) {
-    if (s.spark < 1) return { ok: false, reason: '火花不足 ×1.0，你什麼都想不出來' };
-    if (s.cards.length < 2) return { ok: false, reason: '最少需要 2 張素材' };
-    if (s.cr < craftCost(2)) return { ok: false, reason: '連 $' + craftCost(2) + ' 材料費都付不起' };
-    return { ok: true };
-  }
-  function commitCraft(s, uids) {
-    const ev = evalCraft(s, uids);
-    const used = new Set(uids);
-    s.cards = s.cards.filter((c) => !used.has(c.uid));
-    s.cr -= craftCost(ev.cards.length);
-    const fresh = ev.combos.filter((c) => c.kind === 'recipe' && !s.discovered[c.id]);
-    fresh.forEach((c) => { s.discovered[c.id] = true; });
-    ev.combos.filter((c) => c.kind === 'recipe').forEach((c) => { s.usedRecipes[c.id] = true; });
-    const tags = Object.keys(ev.counts).sort((a, b) => ev.counts[b] - ev.counts[a]);
-    const work = { day: s.day, quarter: s.quarter, name: workName(s, ev), tags,
-      score: ev.total, raw: ev.raw, medium: bgOf(s).medium, n: ev.cards.length };
-    s.works.push(work);
-    s.stats.works++;
-    countAction(s, 'create');
-    if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
-    s.body -= 4;
-    s.saturation = Math.min(1.15, s.saturation + 0.02);
-    let sparkUp = 0;
-    if (fresh.length) sparkUp = addSpark(s, 0.15, true);
-    // 把愧疚寫進作品：卸下它的重量
-    let relief = 0;
-    if (ev.relief) { relief = atone(s, ev.relief, null); s.stats.confessions++; }
-    train(s, { craft: 1.2, imag: 0.5 }, null);
-    return { ev, work, fresh, sparkUp, relief };
   }
 
   // ---------- 行動清單（讓介面顯示取捨） ----------
@@ -2074,10 +2495,15 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
         fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
     } else {
-      const c = canCreate(s);
-      list.push({ id: 'create', group: 'night', name: '創作', sub: '把今天的經歷變成作品，讓外星人看見',
-        fx: [['card', '使用 2 至 ' + s.craftSlots + ' 張素材'], ['cr', '材料 −$' + craftCost(2) + ' 起'], ['sig', '訊號 ↑'], ['body', '−4']],
-        reason: c.reason });
+      const CR = D.CRAFT, Cr = IE.Create;
+      const m = Cr.objMods(s);
+      const hand = CR.hand + (s.handBonus || 0) + (perk(s).handBonus || 0) + m.hand;
+      list.push({ id: 'create', group: 'night', name: '創作', sub: '抽 ' + hand + ' 張素材，下筆 ' + (CR.plays + m.plays) + ' 次、改稿 ' + (CR.discards + m.discards) + ' 次，把今天變成作品',
+        fx: [['card', '素材庫 ' + s.cards.length + ' 張'], ['cr', '材料 −$' + CR.cost], ['sig', '訊號 ↑'], ['body', '−4']],
+        reason: Cr.canStart(s, 'normal') });
+      list.push({ id: 'allnighter', group: 'night', name: '通宵創作', sub: '多一次下筆、多一次改稿；天亮時你會很後悔',
+        fx: [['card', '下筆 ' + (CR.plays + m.plays + 1) + ' 次'], ['cr', '材料 −$' + CR.allnighterCost], ['body', '−15'], ['spark', '−0.2']],
+        reason: Cr.canStart(s, 'allnighter') });
       list.push({ id: 'ot', group: 'night', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
         fx: [['cr', '約 +$' + Math.round(labelCr * 1.5)], ['body', '−14'], ['spark', '約 −' + round1(labelSpark * 1.5)]],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'ot') || labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
@@ -2098,7 +2524,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       note: s.premiumUntil >= s.day ? '有效至第 ' + s.premiumUntil + ' 天' : null });
     items.push({ id: 'supplement', ...S.supplement });
     items.push({ id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
-    items.push({ id: 'tools', ...S.tools, owned: s.craftSlots >= 5 });
+    items.push({ id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
+    if (s.objSlots < 5) items.push({ id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
+    marketItems(s).forEach((id) => {
+      const o = D.OBJ[id];
+      items.push({ id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity], obj: id });
+    });
     ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
     items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
       note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
@@ -2119,13 +2550,15 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const it = shop(s).find((x) => x.id === id);
     if (!it || !it.enabled) return { ok: false, msg: '無法購買' };
     s.cr -= it.cost;
+    if (it.obj) { gainObject(s, it.obj, null); return { ok: true, msg: '已購買：' + D.OBJ[it.obj].name }; }
     switch (id) {
       case 'premium': s.premiumUntil = s.day + 4; break;
       case 'supplement':
         addSpark(s, 1.2, true);
         s.flags.crashDay = s.day + 2; s.flags.crashAmt += 1.6; break;
       case 'realfood': s.realFoodDay = s.day; heal(s, 15); addSpark(s, 0.2); break;
-      case 'tools': s.craftSlots = 5; break;
+      case 'tools': s.handBonus = 1; break;
+      case 'studio': s.objSlots = Math.min(5, s.objSlots + 1); break;
       case 'tank': case 'harpoon': case 'bag': case 'monitor': s.gear[id] = true; break;
       case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
       case 'erase':
@@ -2174,7 +2607,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (o.sin) fx.push(['soul', '+' + round1(o.sin * sinFactor(s)) + ' 克']);
     if (o.atone) fx.push(['soul', '−' + round1(Math.min(s.soul, o.atone)) + ' 克']);
     if (o.rating) fx.push(['note', '評分 ' + sign(o.rating)]);
-    if (o.signal) fx.push(['sig', '訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(o.signal).toLocaleString()]);
+    if (o.signal) fx.push(['sig', '訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(sigScale(s, o.signal)).toLocaleString()]);
     if (o.rentDiscount) fx.push(['cr', '下期租金減半']);
     if (o.foodFree) fx.push(['cr', '今晚不用付飯錢']);
     if (o.loseCard) fx.push(['card', '失去一張素材']);
@@ -2182,6 +2615,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (o.paranoia) fx.push(['note', '偏執 +' + o.paranoia]);
     if (o.stats) Object.keys(o.stats).forEach((k) => fx.push(['stat', D.STATS[k].name + ' ' + sign(o.stats[k])]));
     if (o.card) fx.push(['card', D.CARDS[o.card].name]);
+    if (o.obj) fx.push(['card', '靈感物件：' + D.OBJ[o.obj].name]);
     if (o.guilt && o.sin >= 1) fx.push(['card', '愧疚：' + o.guilt]);
     return fx;
   }
@@ -2209,7 +2643,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (o.body) { heal(s, o.body); rep.delta('body', o.body); }
     if (o.spark) rep.delta('spark', addSpark(s, o.spark, true));
     if (o.rating) { s.rating = clamp(o.rating === 5 ? 5 : s.rating + o.rating, 1, 5); rep.line('平台評分 ' + (o.rating === 5 ? '變成 5.0' : (o.rating > 0 ? '+' : '') + o.rating), o.rating > 0 ? 'good' : 'bad'); }
-    if (o.signal) { s.bonusSignal += o.signal; rep.line('外星訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(o.signal).toLocaleString(), o.signal > 0 ? 'good' : 'bad'); }
+    if (o.signal) { const v = sigScale(s, o.signal); s.bonusSignal += v; rep.line('外星訊號 ' + (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString(), v > 0 ? 'good' : 'bad'); }
     if (o.rentDiscount) { s.rentDiscount = o.rentDiscount; rep.line('下期租金減半', 'good'); }
     if (o.foodFree) s.flags.foodFree = s.day;
     if (o.flag) s.flags[o.flag] = true;
@@ -2224,6 +2658,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     }
     if (o.takeNamedNpc && cur.npc) takeNpc(s, s.npcs.find((n) => n.id === cur.npc), rep);
     if (o.card) rep.gain(o.card);
+    if (o.obj) gainObject(s, o.obj, rep);
     if (o.stats) train(s, o.stats, rep);
     if (o.paranoia) addParanoia(s, o.paranoia, rep);
     if (o.sin) sin(s, o.sin, rep, '這件事會一直壓在你心上', o.guilt, o.tag);
@@ -2245,6 +2680,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (fx.crPct) s.cr = Math.round(s.cr * (1 + fx.crPct));
     if (fx.paranoia) addParanoia(s, fx.paranoia);
     if (fx.card) addCard(s, fx.card);
+    if (w.id === 'aliens' && !ownsObject(s, 'alienradio')) gainObject(s, 'alienradio', null);
     if (fx.takeNpc) {
       const alive = s.npcs.filter((n) => n.alive);
       if (alive.length) { const n = pick(s, alive); n.alive = false; s.saturation = Math.max(0.25, s.saturation - 0.15); }
@@ -2304,6 +2740,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (e.card) rep.gain(e.card);
     if (e.stats) train(s, e.stats, rep);
     if (e.paranoia) addParanoia(s, e.paranoia, rep);
+    if (e.card === 'e_alien' && rand(s) < 0.5) gainObject(s, 'alienradio', rep);
+    if (e.card === 'e_rob' && rand(s) < 0.4) gainObject(s, 'angrydiary', rep);
   }
 
   function endDay(s) {
@@ -2328,6 +2766,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       rep.line('飢餓令你無法思考', 'bad', -0.3, 'spark');
       rep.gain('e_hunger');
       train(s, { fit: -0.5 }, rep);
+      if (s.stats.hungryDays === 3) gainObject(s, 'emptybowl', rep);
     }
     // 睡覺
     if (s.floor === 0) { s.body -= 10; rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
@@ -2352,6 +2791,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     }
     s.workedToday = false;
     if (s.rating < 3.5) s.rating = Math.min(3.5, s.rating + 0.05);
+    if (IE.Create) IE.Create.newDay(s);
     // 全城自動化
     const autoBefore = s.auto;
     s.auto = clamp(s.auto + 0.35, 0, 100);
@@ -2516,6 +2956,19 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       meta.stamps = meta.stamps || {};
       dossier.stamps.forEach((x) => { meta.stamps[x.id] = true; });
     }
+    // 創作的跨局紀錄與解鎖
+    meta.totalWorks = (meta.totalWorks || 0) + s.works.length;
+    meta.bestPlay = Math.max(meta.bestPlay || 0, s.stats.bestPlay || 0);
+    meta.maxObjects = Math.max(meta.maxObjects || 0, s.stats.maxObjects || 0);
+    meta.objSeen = meta.objSeen || {};
+    Object.keys(s.objSeen || {}).forEach((k) => { meta.objSeen[k] = true; });
+    meta.forms = meta.forms || {};
+    Object.keys(s.formsSeen || {}).forEach((k) => { meta.forms[k] = Math.max(meta.forms[k] || 0, (s.forms && s.forms[k]) || 1); });
+    meta.unlocked = meta.unlocked || {};
+    meta.lastUnlocks = [];
+    D.OBJECTS.forEach((o) => {
+      if (o.unlock && !meta.unlocked[o.id] && o.unlock.test(meta)) { meta.unlocked[o.id] = true; meta.lastUnlocks.push(o.id); }
+    });
     meta.relics = meta.relics || [];
     const best = s.stats.bestWork;
     if (best) {
@@ -2529,7 +2982,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 
   // ---------- 工具 ----------
   function report(s, title) {
-    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [] };
+    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [], objs: [] };
     return {
       get review() { return r.review; }, set review(v) { r.review = v; },
       get ending() { return r.ending; }, set ending(v) { r.ending = v; },
@@ -2540,6 +2993,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       line(text, kind, v, stat) { r.lines.push({ text, kind: kind || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; },
       delta(stat, v) { r.deltas[stat] += v; },
       stat(k, v) { r.stats[k] = (r.stats[k] || 0) + v; },
+      obj(id) { r.objs.push(id); },
       gain(id) {
         const res = addCard(s, id);
         r.cards.push(res.card);
@@ -2564,9 +3018,372 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     deliveryConfig, applyDelivery, farmScore, farmConfig, applyFarm, buskConfig, applyBusk,
     clinicConfig, applyClinic, interviewQuestions, applyInterview,
     chatCost, aliveNpcs, applyChat, applyRest,
-    evalCraft, commitCraft, canCreate, craftCost,
+    teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
     MAX_CARDS,
+  };
+});
+
+// ---- js/create.js ----
+// 《靈感撤離 2080》創作規則：純邏輯，瀏覽器與 Node（tools/sim.js）共用。
+// 每晚創作 = 從素材庫抽一手牌 → 下筆（打出 1 至 5 張）／改稿（換牌）→ 全部下筆的分數加起來就是今晚的作品。
+// 每次下筆的分數 = (形式籌碼 + 素材籌碼 + 組合籌碼) × (形式倍率 + 加成) × 乘數 × 火花 × KPI × AI 模仿
+// scorePlay 會回傳逐步的計分紀錄（steps），讓 craft.js 逐張演出。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA, RL = IE.Rules;
+  const C = D.CRAFT;
+  const FORM = {};
+  D.FORMS.forEach((f) => { FORM[f.id] = f; });
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const r2 = (v) => Math.round(v * 100) / 100;
+
+  // ---------- 素材 ----------
+  const cardOf = (s, uid) => s.cards.find((c) => c.uid === uid);
+  const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
+  function cardValue(s, c) {
+    const perk = D.BACKGROUNDS[s.bg].perk;
+    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft));
+  }
+  const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
+
+  // ---------- 作品形式 ----------
+  function tagCounts(cards) {
+    const counts = {};
+    cards.forEach((c) => c.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
+    return counts;
+  }
+  function detectForm(cards) {
+    const counts = tagCounts(cards);
+    const weight = (t) => cards.filter((c) => c.tags.includes(t)).reduce((a, c) => a + c.value, 0);
+    const tags = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || weight(b) - weight(a));
+    const t0 = tags[0], t1 = tags[1];
+    const c1 = counts[t0] || 0, c2 = counts[t1] || 0;
+    const n = cards.length, distinct = tags.length;
+    let id, keys = null;
+    if (n === 5 && c1 >= 5 && c2 >= 5) { id = 'film'; keys = [t0, t1]; }
+    else if (c1 >= 5) { id = 'epic'; keys = [t0]; }
+    else if (c1 >= 4 && c2 >= 3) { id = 'symphony'; keys = [t0, t1]; }
+    else if (c1 >= 4) { id = 'mural'; keys = [t0]; }
+    else if (c1 >= 3 && c2 >= 2) { id = 'novel'; keys = [t0, t1]; }
+    else if (n === 5 && distinct >= 7) { id = 'collage'; }
+    else if (c1 >= 3) { id = 'song'; keys = [t0]; }
+    else if (c1 >= 2 && c2 >= 2) { id = 'couplet'; keys = [t0, t1]; }
+    else if (c1 >= 2) { id = 'poem'; keys = [t0]; }
+    else id = 'sketch';
+    let scoring;
+    if (keys) scoring = cards.filter((c) => c.tags.some((t) => keys.includes(t)));
+    else if (id === 'collage') scoring = cards.slice();
+    else scoring = cards.length ? [cards.reduce((a, c) => (c.value > a.value ? c : a), cards[0])] : [];
+    return { id, keys, scoring, counts, distinct };
+  }
+  const level = (s, id) => (s.forms && s.forms[id]) || 1;
+  function formStats(s, id) {
+    const f = FORM[id], l = level(s, id);
+    return { chips: f.chips + (l - 1) * f.up[0], mult: f.mult + (l - 1) * f.up[1], level: l };
+  }
+
+  // ---------- 具名組合與 KPI ----------
+  function matchRecipes(s, sel) {
+    const counts = tagCounts(sel);
+    return D.RECIPES.filter((r) => {
+      const need = Object.keys(r.need);
+      if (!need.length && !r.cond) return false;
+      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!r.cond || r.cond(s, sel));
+    });
+  }
+  const power = (r) => r.chips / 10 + r.mult * 10 + (Object.values(r.need).reduce((a, b) => a + b, 0)) * 0.5;
+  function topRecipes(recs) {
+    const regular = recs.filter((r) => !r.legend).sort((a, b) => power(b) - power(a)).slice(0, 2);
+    return recs.filter((r) => r.legend).concat(regular);
+  }
+  function kpiMod(s, sel, recs) {
+    const k = RL.kpi(s);
+    if (k.tag) return sel.some((c) => c.tags.includes(k.tag)) ? k.mod : 1;
+    if (k.special === 'lean') return sel.length >= 4 ? 0.5 : 1;
+    if (k.special === 'pliable') return s.spark < 2 ? 1.5 : 1;
+    if (k.special === 'novelty') {
+      const named = recs.filter((r) => !r.legend);
+      return named.length && named.every((r) => s.usedRecipes[r.id]) ? 0.2 : 1;
+    }
+    return 1;
+  }
+  // AI 模仿：同一種形式用得越密，AI 學得越快，倍率越低（每天消退四成）
+  function aiFactor(s, form, objs) {
+    const heat = ((s.style && s.style[form]) || 0) * (objs.some((o) => o.def.aiDouble) ? 2 : 1);
+    return Math.max(0.4, r2(1 - 0.1 * Math.max(0, heat - 2)));
+  }
+
+  // ---------- 靈感物件 ----------
+  // 碎鏡複製右邊那件物件的效果
+  function activeObjects(s) {
+    const ids = s.objects || [];
+    return ids.map((id, i) => {
+      let def = D.OBJ[id];
+      if (def && def.copy) {
+        const right = D.OBJ[ids[i + 1]];
+        def = right && !right.copy ? Object.assign({}, right, { id, copyOf: right.id }) : null;
+      }
+      return def ? { id, slot: i, def } : null;
+    }).filter(Boolean);
+  }
+  function objMods(s) {
+    const m = { hand: 0, plays: 0, discards: 0 };
+    activeObjects(s).forEach((o) => { const x = o.def.mods; if (x) Object.keys(x).forEach((k) => { m[k] += x[k]; }); });
+    return m;
+  }
+
+  // ---------- 計分 ----------
+  function scorePlay(s, uids, opt) {
+    const sel = uids.map((u) => cardOf(s, u)).filter(Boolean);
+    const F = detectForm(sel);
+    const fs = formStats(s, F.id);
+    let chips = fs.chips, mult = fs.mult;
+    const steps = [{ t: 'form', form: F.id, level: fs.level, chips, mult, C: chips, M: mult }];
+    const objs = activeObjects(s);
+    const ses = s.session || {};
+    const recs = matchRecipes(s, sel);
+    const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct,
+      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs),
+      roll: opt && opt.roll != null ? opt.roll : 0.5 };
+    const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
+    const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
+    F.scoring.forEach((c, i) => {
+      let reps = 1 + (c.mod === 'echo' ? 1 : 0);
+      objs.forEach((o) => { if (o.def.retrig && o.def.retrig(c, ctx, i)) reps++; });
+      for (let r = 0; r < reps; r++) {
+        const v = cardValue(s, c);
+        chips += v;
+        steps.push(snap({ t: 'card', uid: c.uid, chips: v, again: r > 0 }));
+        const mf = MOD_FX[c.mod];
+        if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
+        objs.forEach((o) => {
+          if (!o.def.card) return;
+          const e = o.def.card(c, ctx);
+          if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
+        });
+      }
+    });
+    // 組合：只有最強的一個一般組合計足，第二個計一半，其餘被埋沒；傳說組合全部計算並另外乘
+    const sorted = topRecipes(recs);
+    let primary = false;
+    sorted.forEach((r) => {
+      let m = r.mult;
+      if (!r.legend) { if (primary) m = r.mult / 2; primary = true; }
+      chips += r.chips; mult += m;
+      if (r.xmult) mult *= r.xmult;
+      steps.push(snap({ t: 'recipe', id: r.id, name: r.name, chips: r.chips, mult: m, xmult: r.xmult || 0, legend: !!r.legend, isNew: !s.discovered[r.id] }));
+    });
+    objs.forEach((o) => {
+      if (!o.def.play) return;
+      const e = o.def.play(ctx);
+      if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot }, e))); }
+    });
+    mult = Math.max(0, mult);
+    const ai = aiFactor(s, F.id, objs);
+    const wm = (RL.worldMods(s).signalMult) || 1;
+    if (ai !== 1) steps.push({ t: 'ai', x: ai });
+    if (wm !== 1) steps.push({ t: 'world', x: wm });
+    if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
+    steps.push({ t: 'spark', x: s.spark });
+    const raw = Math.round(chips * mult * s.spark * ai * wm);
+    const total = Math.round(raw * ctx.kpiMod);
+    const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
+    return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
+      ai, kpi: ctx.kpiMod, world: wm, spark: s.spark, raw, total, steps, recipes: sorted.map((r) => r.id), relief };
+  }
+
+  // 下筆前的預覽：只顯示形式與可能觸發的組合（不計物件，留一點懸念）
+  function preview(s, uids) {
+    const sel = uids.map((u) => cardOf(s, u)).filter(Boolean);
+    if (!sel.length) return null;
+    const F = detectForm(sel);
+    const fs = formStats(s, F.id);
+    const all = matchRecipes(s, sel);
+    const recs = topRecipes(all).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+    return { form: F.id, name: FORM[F.id].name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: F.scoring.map((c) => c.uid),
+      recipes: recs, ai: aiFactor(s, F.id, activeObjects(s)) };
+  }
+  const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
+
+  // ---------- 一晚的創作 ----------
+  function canStart(s, mode) {
+    const cost = mode === 'allnighter' ? C.allnighterCost : C.cost;
+    if (s.spark < 1) return '火花不足 ×1.0，你甚麼都想不出來';
+    if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
+    if (s.cr < cost) return '連 $' + cost + ' 材料費都付不起';
+    if (mode === 'allnighter' && s.body <= 20) return '身體撐不住通宵';
+    return null;
+  }
+  function shuffle(s, arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(RL.rand(s) * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function start(s, mode) {
+    const all = mode === 'allnighter';
+    const m = objMods(s);
+    const perk = D.BACKGROUNDS[s.bg].perk;
+    const refund = { cr: all ? C.allnighterCost : C.cost, body: all ? 15 : 4, spark: s.spark };
+    s.cr -= refund.cr;
+    s.body -= refund.body;
+    if (all) RL.addSpark(s, -0.2, true);
+    s.session = {
+      mode: all ? 'allnighter' : 'normal', day: s.day,
+      deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
+      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand,
+      plays: C.plays + m.plays + (all ? 1 : 0), discards: C.discards + m.discards + (all ? 1 : 0),
+      discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
+    };
+    draw(s);
+    return s.session;
+  }
+  function draw(s) {
+    const ses = s.session;
+    // 素材庫抽完了：把用過的素材洗回去（再用會更殘）
+    if (ses.deck.length < ses.handSize - ses.hand.length && ses.used.length) {
+      ses.deck = ses.deck.concat(shuffle(s, ses.used));
+      ses.used = [];
+      ses.reshuffled++;
+    }
+    while (ses.hand.length < ses.handSize && ses.deck.length) {
+      const uid = ses.deck.shift();
+      if (cardOf(s, uid)) ses.hand.push(uid);
+    }
+  }
+  function play(s, uids) {
+    const ses = s.session;
+    if (!ses || ses.plays <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return null;
+    const res = scorePlay(s, uids, { roll: RL.rand(s) });
+    // 用過的素材會磨損；寫進作品的愧疚會被卸下
+    res.scoring.forEach((u) => { const c = cardOf(s, u); if (c) c.wear = (c.wear || 0) + 1; });
+    const guilt = res.scoring.map((u) => cardOf(s, u)).filter((c) => c && c.guilt);
+    let relief = 0;
+    if (guilt.length) {
+      relief = RL.atone(s, guilt.reduce((a, c) => a + (c.grams || 0), 0), null);
+      s.stats.confessions = (s.stats.confessions || 0) + guilt.length;
+      const gone = new Set(guilt.map((c) => c.uid));
+      s.cards = s.cards.filter((c) => !gone.has(c.uid));
+    }
+    res.reliefApplied = relief;
+    ses.relief = r1(ses.relief + relief);
+    // 新組合帶來靈光一閃
+    res.fresh = res.recipes.filter((id) => !s.discovered[id]);
+    res.fresh.forEach((id) => { s.discovered[id] = true; });
+    if (res.fresh.length) res.sparkUp = RL.addSpark(s, 0.15, true);
+    res.recipes.forEach((id) => { s.usedRecipes[id] = true; });
+    ses.fresh.push(...res.fresh);
+    s.formsSeen = s.formsSeen || {};
+    s.formsSeen[res.form] = true;
+    const objs = activeObjects(s);
+    s.style = s.style || {};
+    s.style[res.form] = (s.style[res.form] || 0) + 1;
+    // 物件的代價
+    const notes = [];
+    objs.forEach((o) => {
+      if (!o.def.after) return;
+      const e = o.def.after({ s });
+      if (e.sin) notes.push(D.OBJ[o.id].name + '：靈魂 +' + RL.sin(s, e.sin, null) + ' 克');
+      if (e.spark) { RL.addSpark(s, e.spark, true); notes.push(D.OBJ[o.id].name + '：火花 ' + e.spark); }
+      if (e.cr) { s.cr += e.cr; notes.push(D.OBJ[o.id].name + '：+$' + e.cr); }
+    });
+    res.notes = notes;
+    ses.notes.push(...notes);
+    ses.total += res.total; ses.raw += res.raw;
+    ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
+    ses.plays--;
+    ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
+    ses.used.push(...uids.filter((u) => cardOf(s, u)));
+    s.stats.bestPlay = Math.max(s.stats.bestPlay || 0, res.total);
+    if (ses.plays > 0) draw(s);
+    return res;
+  }
+  function discard(s, uids) {
+    const ses = s.session;
+    if (!ses || ses.discards <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return false;
+    ses.hand = ses.hand.filter((u) => !uids.includes(u));
+    ses.used.push(...uids);
+    ses.discards--; ses.discardsUsed++;
+    draw(s);
+    return true;
+  }
+  function workName(log) {
+    const best = log.reduce((a, x) => (x.total > a.total ? x : a), log[0]);
+    const rec = best.recipes.map((id) => D.RECIPES.find((r) => r.id === id)).filter(Boolean)
+      .sort((a, b) => (b.legend ? 100 : 0) + b.mult - ((a.legend ? 100 : 0) + a.mult))[0];
+    if (rec) return rec.name;
+    const counts = {};
+    best.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
+    const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    return FORM[best.form].name + (top ? '・' + D.TAGS[top].name : '');
+  }
+  function finish(s) {
+    const ses = s.session;
+    if (!ses) return null;
+    s.session = null;
+    if (!ses.log.length) return { work: null, session: ses };
+    const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
+    const tagCount = {};
+    ses.log.forEach((x) => x.tags.forEach((t) => { tagCount[t] = (tagCount[t] || 0) + 1; }));
+    const work = { day: s.day, quarter: s.quarter, name: workName(ses.log), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
+      score: ses.total, raw: ses.raw, medium: D.BACKGROUNDS[s.bg].medium, n: ses.log.length, form: best.form };
+    s.works.push(work);
+    s.stats.works++;
+    s.stats.actions.create = (s.stats.actions.create || 0) + 1;
+    if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
+    s.saturation = Math.min(1.15, s.saturation + 0.02);
+    RL.train(s, { craft: 1.2, imag: 0.5 }, null);
+    return { work, session: ses };
+  }
+  // 還未下筆就離開：退回材料費與體力
+  function cancel(s) {
+    const ses = s.session;
+    if (!ses || ses.log.length) return false;
+    s.cr += ses.refund.cr; s.body += ses.refund.body; s.spark = ses.refund.spark;
+    s.session = null;
+    return true;
+  }
+  // 每天 AI 對你風格的記憶消退四成
+  function newDay(s) {
+    if (!s.style) return;
+    Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * 0.6); if (s.style[k] < 0.05) delete s.style[k]; });
+  }
+
+  // ---------- 模擬用：找出這手牌最好的下筆 ----------
+  function bestPlay(s) {
+    const ses = s.session;
+    const hand = ses.hand.map((u) => cardOf(s, u)).filter(Boolean);
+    if (!hand.length) return null;
+    const cands = new Map();
+    const add = (cards) => { const uids = cards.slice(0, 5).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
+    const byVal = hand.slice().sort((a, b) => b.value - a.value);
+    add(byVal);
+    const tags = [...new Set(hand.flatMap((c) => c.tags))];
+    tags.forEach((t) => add(byVal.filter((c) => c.tags.includes(t))));
+    tags.forEach((a, i) => tags.slice(i + 1).forEach((b) => add(byVal.filter((c) => c.tags.includes(a) || c.tags.includes(b)))));
+    // 湊組合：每個已知組合各試一次
+    D.RECIPES.forEach((r) => {
+      const need = Object.keys(r.need);
+      if (!need.length) return;
+      const pick = [];
+      need.forEach((t) => byVal.filter((c) => c.tags.includes(t) && !pick.includes(c)).slice(0, r.need[t]).forEach((c) => pick.push(c)));
+      if (pick.length <= 5) add(pick);
+    });
+    let best = null;
+    cands.forEach((uids) => {
+      const sc = scorePlay(s, uids);
+      if (!best || sc.total > best.total) best = { uids, total: sc.total, form: sc.form };
+    });
+    return best;
+  }
+
+  IE.Create = {
+    FORM, cardValue, wearMult, tagCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    activeObjects, objMods, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
 
@@ -2943,6 +3760,20 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     setSpark(v) { spark = v; applyLayers(); },
     setMode(m, bpm) { mode = m; tempo = bpm || (m === 'work' ? 120 : m === 'alien' ? 84 : 92); applyLayers(); },
     sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗不影響遊戲 */ } } },
+    // 創作計分：n 越大音越高（每張素材升半音），營造越計越興奮的感覺
+    fx(name, n) {
+      if (!ctx || muted) return;
+      const t = ctx.currentTime, k = Math.pow(2, Math.min(24, n || 0) / 12);
+      try {
+        if (name === 'chip') { tone('square', 440 * k, t, 0.07, 0.07, sfxBus); tone('triangle', 880 * k, t, 0.05, 0.04, sfxBus); }
+        else if (name === 'mult') { tone('sawtooth', 220 * k, t, 0.12, 0.06, sfxBus, 330 * k); }
+        else if (name === 'xmult') { tone('sawtooth', 110, t, 0.35, 0.1, sfxBus, 880); tone('square', 660, t + 0.12, 0.2, 0.08, sfxBus); noise(t, 0.25, 0.15, sfxBus); }
+        else if (name === 'burn') { noise(t, 0.6, 0.22, sfxBus); tone('sawtooth', 80, t, 0.6, 0.08, sfxBus, 320); }
+        else if (name === 'card') { noise(t, 0.05, 0.12, sfxBus); tone('triangle', 1200 * k, t, 0.04, 0.03, sfxBus); }
+        else if (name === 'total') { [0, 4, 7, 12, 16].forEach((d, i) => tone('square', midi(60 + d + Math.min(12, n || 0)), t + i * 0.05, 0.14, 0.07, sfxBus)); }
+        else if (name === 'legend') { [0, 3, 7, 10, 14, 19].forEach((d, i) => tone('triangle', midi(55 + d), t + i * 0.07, 0.6, 0.1, sfxBus)); noise(t, 0.8, 0.2, sfxBus); }
+      } catch (e) { /* 忽略 */ }
+    },
     // 街頭表演的音階（五聲音階）；i 由 0 開始，oct 升八度
     note(i, oct) {
       if (!ctx || muted) return;
@@ -3248,6 +4079,77 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     mix, desat, rgba, hexToRgb,
     reducedMotion: typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   };
+})(window.IE = window.IE || {});
+
+// ---- js/icons.js ----
+// 像素圖示：靈感物件（之後的道具也會用）。12×12 的格子，k = 外框、a = 主色、b = 暗色、c = 亮色、w = 白色。
+// IE.Icons.url(形狀, 調色盤) 回傳快取的 dataURL，用 <img> 顯示並以 CSS 放大（image-rendering: pixelated）。
+(function (IE) {
+  'use strict';
+  const SHAPES = {
+    can: ['....kk......', '...kcck.....', '...kkkk.....', '..kaaaak....', '..kacaak....', '..kacaak....', '..kaaaak....', '..kbbbbk....', '..kaaaak....', '..kacaak....', '..kaaaak....', '...kkkk.....'],
+    speaker: ['.kkkkkkkk...', '.kbbbbbbk...', '.kbkkkkbk...', '.kbkcckbk...', '.kbkcckbk...', '.kbkkkkbk...', '.kbbbbbbk...', '.kbkkkkbk...', '.kbkaakbk...', '.kbkkkkbk...', '.kbbbbbbk...', '.kkkkkkkk...'],
+    book: ['............', '.kkkkkkkkk..', '.kaaaaaaaak.', '.kaccccccak.', '.kaaaaaaaak.', '.kaccccaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', '.kbbbbbbbbk.', '.kwwwwwwwwk.', '.kkkkkkkkkk.', '............'],
+    cat: ['.k......k...', '.kk....kk...', '.kakkkkak...', '.kaaaaaak...', '.kawaawak...', '.kakaakak...', '.kaaccaak...', '..kaaaak....', '.kaaaaaak...', '.kabaabak..k', '.kaaaaaakkk.', '..kk..kk....'],
+    mask: ['............', '..kkkkkkkk..', '.kaaaaaaaak.', 'kaaccaaccaak', 'kakkcaackkak', 'kaaaaaaaaaak', '.kaaabbaaak.', '.kaaaaaaaak.', '..kaabbaak..', '...kaaaak...', '....kkkk....', '............'],
+    lamp: ['....kkkk....', '...kaaaak...', '..kaaaaaak..', '.kaacaaaaak.', '.kkkkkkkkkk.', '....kcck....', '....kcck....', '.....kk.....', '.....bb.....', '.....bb.....', '...kbbbbk...', '...kkkkkk...'],
+    bowl: ['............', '....c..c....', '...c..c.....', '....c..c....', 'kkkkkkkkkkkk', 'kaaaaaaaaaak', '.kaaccaaaak.', '.kaaaaaaaak.', '..kbbbbbbk..', '...kkkkkk...', '....kbbk....', '...kkkkkk...'],
+    paper: ['.kkkkkkkk...', '.kwwwwwwkk..', '.kwccccwwkk.', '.kwwwwwwwwk.', '.kwcccccwwk.', '.kwwwwwwwwk.', '.kwccccccwk.', '.kwwwwwwwwk.', '.kwaaaawwwk.', '.kwwwwwwwwk.', '.kkkkkkkkkk.', '............'],
+    whistle: ['............', '............', '..kkkkkkk...', '.kaaaaaaak..', 'kaacaaaaakkk', 'kaaaaaaaaaak', 'kaaakkkaaakk', '.kaak..kak..', '..kk....k...', '.......b....', '......b.....', '............'],
+    monitor: ['kkkkkkkkkkkk', 'kbbbbbbbbbbk', 'kbaaaaaaaabk', 'kbacccaaaabk', 'kbaaaaaccabk', 'kbacaaaaaabk', 'kbaaaaaaaabk', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk', '....kbbk....', '..kkkkkkkk..', '............'],
+    guitar: ['.........kk.', '........kbk.', '.......kbk..', '......kbk...', '..kkk.kk....', '.kaaakk.....', 'kaacaak.....', 'kacwcak.....', 'kaacaak.....', '.kaaak......', '..kkk.......', '............'],
+    box: ['............', '.kkkkkkkkkk.', '.kcccccccck.', '.kkkkkkkkkk.', '.kaaaaaaaak.', '.kaaabbaaak.', '.kaaabbaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', '.kbbbbbbbbk.', '.kkkkkkkkkk.', '............'],
+    pen: ['..........kk', '.........kck', '........kaak', '.......kaak.', '......kaak..', '.....kaak...', '....kaak....', '...kaak.....', '..kbak......', '..kwk.......', '.kk.........', 'k...........'],
+    gun: ['............', '............', 'kkkkkkkkk...', 'kaaaaaaaakkk', 'kacccaaaabbc', 'kaaaaaaaakkk', 'kkkkbbkkk...', '....bbk.....', '....bbk.....', '....kkk.....', '............', '............'],
+    key: ['............', '..kkkk......', '.kaaaak.....', 'kaakkaak....', 'kak..kak....', 'kaakkaak....', '.kaaaakkkkkk', '..kkkkaaaaak', '......kkakak', '.......kk.kk', '............', '............'],
+    film: ['kkkkkkkkkkkk', 'kwkwkwkwkwkk', 'kkkkkkkkkkkk', 'kaaaakaaaakk', 'kacaakacaakk', 'kaaaakaaaakk', 'kbbbbkbbbbkk', 'kkkkkkkkkkkk', 'kwkwkwkwkwkk', 'kkkkkkkkkkkk', '............', '............'],
+    radio: ['.........k..', '........k...', '.......k....', 'kkkkkkkkkkkk', 'kaaaaaaaaaak', 'kakkkkkaccak', 'kakbbbkaccak', 'kakbbbkaaaak', 'kakkkkkaccak', 'kaaaaaaaaaak', 'kkkkkkkkkkkk', '.kk......kk.'],
+    bottle: ['....kkkk....', '....kwwk....', '....kkkk....', '...kaaaak...', '..kaaaaaak..', '..kwwwwwwk..', '..kwcccwwk..', '..kwwwwwwk..', '..kaaaaaak..', '..kaaaaaak..', '..kbbbbbbk..', '...kkkkkk...'],
+    hand: ['...k.k.k....', '..kakakak...', '..kakakakk..', '..kakakakak.', '..kaaaaakak.', 'k.kaaaaaaak.', 'kakaaaaaaak.', '.kaaaaaaaak.', '..kaaaaaak..', '...kaaaaak..', '....kbbbk...', '....kkkkk...'],
+    typewriter: ['...kkkkkk...', '...kwwwwk...', '...kwccwk...', '.kkkkkkkkkk.', 'kaaaaaaaaaak', 'kacacacacaak', 'kaaaaaaaaaak', 'kacacacacaak', 'kabbbbbbbbak', 'kaaaaaaaaaak', 'kkkkkkkkkkkk', '............'],
+    cup: ['....c..c....', '...c..c.....', '....c..c....', '.kkkkkkkk...', '.kwwwwwwkkk.', '.kwaaaawk.k.', '.kwwwwwwk.k.', '.kwwwwwwkkk.', '..kwwwwk....', 'kkkkkkkkkkk.', '.kbbbbbbbk..', '..kkkkkkk...'],
+    shredder: ['..kkkkkkkk..', '..kwwwwwwk..', '..kwccccwk..', 'kkkkkkkkkkkk', 'kaaaaaaaaaak', 'kaaaaaaccaak', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk', '.w.w.w.w.w..', '.w.w.w.w.w..', 'w.w.w.w.w...', '............'],
+    shard: ['......k.....', '.....kak....', '....kaaak...', '....kacak...', '...kaacak...', '...kaaabk...', '..kaacbbk...', '..kaabbbk...', '.kaaabbbbk..', '.kabbbbbbk..', 'kkkkkkkkkk..', '............'],
+    map: ['kkkkkkkkkkkk', 'kccbccccbcck', 'kcaabccaabck', 'kcaacbcaaack', 'kcbbccbbccck', 'kccaacbccaak', 'kcaabbcaabck', 'kccaacbbcack', 'kcbcccbcccck', 'kkkkkkkkkkkk', '............', '............'],
+    card: ['............', 'kkkkkkkkkkkk', 'kwwwwwwwwwwk', 'kwaaawwwwwwk', 'kwaaawccccwk', 'kwaaawwwwwwk', 'kwwwwwccccwk', 'kwbbbbbbbbwk', 'kwwwwwwwwwwk', 'kkkkkkkkkkkk', '............', '............'],
+    phone: ['..kkkkkkk...', '..kbbbbbk...', '..kaaaaak...', '..kacccak...', '..kaaaaak...', '..kacccak...', '..kaaaaak...', '..kacaaak...', '..kaaaaak...', '..kbbbbbk...', '..kbbcbbk...', '..kkkkkkk...'],
+    clock: ['...kkkkkk...', '..kaaaaaak..', '.kaaacaaaak.', 'kaaaacaaaaak', 'kaaaacaaaaak', 'kaaaacckaaak', 'kaaaaaaaaaak', 'kaaaaaaaaaak', '.kaaaaaaaak.', '..kaaaaaak..', '...kkkkkk...', '..kk....kk..'],
+    camera: ['............', '....kkkk....', '.kkkkbbkkkk.', 'kaaaaaaaaaak', 'kaaakkkkaaak', 'kaakwccwkaak', 'kaakcwwckaak', 'kaakwccwkaak', 'kaaakkkkaaak', 'kaaaaaaaaaak', 'kkkkkkkkkkkk', '............'],
+    coat: ['...kk..kk...', '..kaakkaak..', '.kaaacaaaak.', 'kaaaacaaaaak', 'kakaacaaakak', 'kakaacaaakak', 'kakaacaaakak', 'kakaacaaakak', 'kkkaacaaakkk', '..kaacaaak..', '..kbbbbbbk..', '..kkkkkkkk..'],
+    weight: ['....kkkk....', '...kk..kk...', '...k....k...', '..kkkkkkkk..', '..kaaaaaak..', '.kaacaaaaak.', '.kaacaaaaak.', 'kaaaaaaaaaak', 'kaaaaaaaaaak', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk', '............'],
+    brush: ['..........kk', '.........kbk', '........kbk.', '.......kbk..', '......kbk...', '.....kbk....', '....kkk.....', '...kccck....', '..kaaack....', '.kaaaak.....', 'kaaakk......', 'kkkk........'],
+    mirror: ['...kkkkkk...', '..kbbbbbbk..', '.kbcccwcabk.', '.kbccwcaabk.', '.kbcwcaaabk.', '.kbwcaaaabk.', '.kbcaaaaabk.', '.kbaaaaaabk.', '..kbbbbbbk..', '...kkkkkk...', '.....kk.....', '...kkkkkk...'],
+    cube: ['....kkkk....', '..kkbbbbkk..', 'kkbbbbbbbbkk', 'kakkbbbbkkck', 'kaaakkkkccck', 'kaaaaakcccck', 'kaaaaakcccck', 'kaaaaakcccck', 'kaaaaakcccck', '.kkaaakcckk.', '...kkakkk...', '.....k......'],
+    stone: ['...kkkkkk...', '..kaaaaaak..', '.kaaaaaaaak.', '.kaacccaaak.', '.kaaacaaaak.', '.kaaacaaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', 'kkkkkkkkkkkk', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk'],
+    frame: ['kkkkkkkkkkkk', 'kaaaaaaaaaak', 'kakkkkkkkkak', 'kakcccccckak', 'kakccbccckak', 'kakcbbbcckak', 'kakbbbbbbkak', 'kakkkkkkkkak', 'kaaaaaaaaaak', 'kkkkkkkkkkkk', '............', '............'],
+    gem: ['............', '...kkkkkk...', '..kccaaaak..', '.kcaaaaaabk.', 'kkkkkkkkkkkk', '.kaaaaaabk..', '..kaaaabk...', '...kaabk....', '....kbk.....', '.....k......', '............', '............'],
+  };
+  const cache = new Map();
+  function url(shape, pal) {
+    pal = pal || {};
+    const key = shape + JSON.stringify(pal);
+    if (cache.has(key)) return cache.get(key);
+    const rows = (SHAPES[shape] || SHAPES.gem).map((r) => r.padEnd(12, '.').slice(0, 12));
+    // 水平置中
+    let min = 12, max = -1;
+    rows.forEach((r) => { for (let i = 0; i < 12; i++) if (r[i] !== '.') { min = Math.min(min, i); max = Math.max(max, i); } });
+    const off = Math.floor((12 - (max - min + 1)) / 2) - min;
+    const P = Object.assign({ k: '#14141c', a: '#8e9bb0', b: '#4a5568', c: '#e8edf6', w: '#ffffff' }, pal);
+    const cv = document.createElement('canvas');
+    cv.width = 12; cv.height = 12;
+    const x = cv.getContext('2d');
+    rows.forEach((r, j) => { for (let i = 0; i < 12; i++) { const ch = r[i]; if (ch === '.' || !P[ch]) continue; x.fillStyle = P[ch]; x.fillRect(i + off, j, 1, 1); } });
+    const u = cv.toDataURL();
+    cache.set(key, u);
+    return u;
+  }
+  // 靈感物件的 <img>
+  function obj(id, size) {
+    const o = IE.DATA.OBJ[id];
+    if (!o) return '';
+    return '<img class="px-icon r-' + o.rarity + '" src="' + url(o.icon, o.pal) + '" width="' + (size || 36) + '" height="' + (size || 36) + '" alt="">';
+  }
+  IE.Icons = { SHAPES, url, obj };
 })(window.IE = window.IE || {});
 
 // ---- js/scene.js ----
@@ -6260,7 +7162,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
-  const kfmt = (n) => (n >= 10000 ? (n / 1000).toFixed(1) + 'k' : fmt(n));
+  // 大數字：萬、億
+  const kfmt = (n) => (n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
   const pad2 = (n) => String(n).padStart(2, '0');
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
 
@@ -6275,6 +7178,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
       + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
+      + (c.mod ? '<span class="c-mod" style="--c:' + D().CARD_MODS[c.mod].color + '">' + D().CARD_MODS[c.mod].name + '</span>' : '')
+      + (c.wear ? '<span class="c-wear">' + (c.wear >= 4 ? '陳腔濫調' : '用過 ×' + c.wear) + '</span>' : '')
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
@@ -6412,8 +7317,31 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + invHtml(s);
   }
   function invHtml(s) {
-    return '<div class="inv-wrap"><div class="inv-head"><span>素材 ' + s.cards.length + ' / ' + R().MAX_CARDS + '</span><span>晚上用來創作・超出上限會丟掉最舊的一張</span></div>'
+    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>').join('');
+    return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + s.objSlots + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
+      + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
+      + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
+      + '<div class="inv-head"><span>素材庫 ' + s.cards.length + ' / ' + R().MAX_CARDS + '</span><span>晚上用來創作・用得越多次越殘・滿了會丟掉最殘的一張</span></div>'
       + '<div class="inv">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute" style="font-size:13px">還沒有素材。先去生活吧。</span>') + '</div></div>';
+  }
+  function objectsModal(s) {
+    const D_ = D();
+    const row = (id, equipped, i) => {
+      const o = D_.OBJ[id];
+      return '<div class="obj-row r-' + o.rarity + '">' + IE.Icons.obj(id, 44)
+        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span></div>'
+        + '<div class="obj-btns">'
+        + (equipped ? '<button class="btn mini" type="button" data-do="left" data-id="' + id + '"' + (i === 0 ? ' disabled' : '') + '>←</button>'
+          + '<button class="btn mini" type="button" data-do="right" data-id="' + id + '"' + (i === s.objects.length - 1 ? ' disabled' : '') + '>→</button>'
+          + '<button class="btn mini" type="button" data-do="unequip" data-id="' + id + '"' + (s.objStash.length >= 4 ? ' disabled' : '') + '>卸下</button>'
+          : '<button class="btn mini sea" type="button" data-do="equip" data-id="' + id + '"' + (s.objects.length >= s.objSlots ? ' disabled' : '') + '>裝備</button>')
+        + '<button class="btn mini" type="button" data-do="sell" data-id="' + id + '">賣 $' + Math.round(D_.OBJ_PRICE[o.rarity] / 2) + '</button></div></div>';
+    };
+    return '<div class="modal wide"><h2>靈感物件</h2>'
+      + '<p class="mute" style="font-size:13px">裝備中的物件會在創作計分時由左至右觸發（碎鏡會複製右邊那件）。物件欄 ' + s.objects.length + ' / ' + s.objSlots + '，儲物箱最多 4 件。</p>'
+      + '<h3>裝備中</h3>' + (s.objects.map((id, i) => row(id, true, i)).join('') || '<p class="mute">沒有</p>')
+      + '<h3>儲物箱</h3>' + (s.objStash.map((id) => row(id, false)).join('') || '<p class="mute">沒有</p>')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">完成</button></div></div>';
   }
   function chatPanel(s) {
     const npcs = R().aliveNpcs(s);
@@ -6454,6 +7382,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   }
   function gainedHtml(rep) {
     let h = '';
+    if (rep.objs && rep.objs.length) h += '<h3>獲得靈感物件</h3><div class="gained">' + rep.objs.map((id) => '<div class="obj-row r-' + D().OBJ[id].rarity + '">' + IE.Icons.obj(id, 40)
+      + '<div class="obj-txt"><b>' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span></div></div>').join('') + '</div>';
     if (rep.cards.length) h += '<h3>獲得素材</h3><div class="gained">' + rep.cards.map((c) => cardHtml(c)).join('') + '</div>';
     if (rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
@@ -6474,7 +7404,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
-    const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item"><div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
+    const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item' + (it.obj ? ' has-icon' : '') + '">' + (it.obj ? IE.Icons.obj(it.obj, 36) : '') + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
       + '<button class="btn' + (it.enabled ? ' sea' : '') + '" type="button" data-do="buy" data-id="' + it.id + '"' + (it.enabled ? '' : ' disabled') + '>' + (it.owned ? '已擁有' : '$' + fmt(it.cost)) + '</button></div>').join('') + '</div>';
     return '<div class="phone" role="dialog" aria-label="手機">'
       + '<div class="phone-bar"><span>' + (opts.morning ? '07:00' : '··:··') + '</span><span>浮聲 5G</span><span class="' + (battery < 10 ? 'low' : '') + '">電量 ' + battery + '%</span></div>'
@@ -6588,6 +7518,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<div class="d-stamps">' + stamps + '</div>'
       + '<p class="d-foot">本檔案由自動化流程產生，無需人手覆核。我們不是一個組織，我們是一個宇宙大家庭。</p>'
       + '</div>'
+      + ((meta.lastUnlocks || []).length ? '<div class="unlocks"><h3>跨局解鎖</h3>' + meta.lastUnlocks.map((id) => '<div class="obj-row r-legend">' + IE.Icons.obj(id, 44)
+        + '<div class="obj-txt"><b>新靈感物件：' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span><span class="mute">解鎖條件：' + esc(D().OBJ[id].unlock.text) + '</span></div></div>').join('') + '</div>' : '')
       + '<div class="btn-row"><button class="btn" type="button" data-do="copy">複製檔案</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
       + '<p class="mute" style="font-size:12px;text-align:center">結局 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '・人類模組 ' + seen + '/' + DS.ARCHETYPES.length + '</p>'
       + '</div>';
@@ -6624,7 +7556,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<li>良知也決定你的感受力：火花上限 = 2 + 2 × 良知。</li>'
       + '<li>減輕的方法：做義工、在抉擇中選擇良心、把「愧疚」素材寫進作品，或者購買「業力抵銷額度」。</li></ul>'
       + '<h3>人類樣本檔案</h3><p>無論被帶走、留下、死去還是灰化，外星人都會根據你最後的能力值、靈魂和所作所為，把你歸類為 30 種人類模組之一，寫下觀察筆記，再蓋上印章。</p>'
-      + '<h3>創作</h3><p>作品分 = 素材籌碼 × 組合倍率 × 火花 × 外星 KPI。同一標籤的素材越多越有共鳴，特定的標籤組合會觸發具名組合。</p>'
+      + '<h3>創作（核心）</h3><ul>'
+      + '<li>晚上選「創作」：從素材庫抽一手素材，下筆三次、改稿兩次。三次下筆的分數加起來就是今晚的作品，會變成外星訊號。「通宵創作」多一次下筆和改稿，但很傷身。</li>'
+      + '<li>每次下筆的分數 = 籌碼 × 倍率 × 火花。同一標籤出現得越多，作品形式越高級：隨筆、短詩、對聯、歌、拼貼、小說、壁畫、交響曲、史詩，還有一種隱藏形式。</li>'
+      + '<li>特定標籤組合會觸發 48 個具名組合之一，其中 8 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
+      + '<li><b>靈感物件</b>最多裝備 3 件（工作室可擴充至 5 件），在計分時觸發。朋友、潛水、事件、面試和二手市集都可以找到；部分要跨局解鎖。</li>'
+      + '<li><b>技法</b>：白天做不同的事、和不同的朋友聊天，會令相應的作品形式升級。為了創作，去試不同的生活吧。</li>'
+      + '<li>素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格，倍率下降。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
@@ -6650,7 +7588,17 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + (at[a.id] ? '<span class="mute">' + esc(DS.STAMPS[a.stamp].text) + '・歸類 ' + at[a.id] + ' 次</span>' : '') + '</div>').join('');
     const stampsSeen = meta.stamps || {};
     const stamps = Object.keys(DS.STAMPS).map((k) => '<span class="dstamp mini tone-' + DS.STAMPS[k].tone + (stampsSeen[k] ? '' : ' unknown') + '">' + (stampsSeen[k] ? esc(DS.STAMPS[k].text) : '？？？') + '</span>').join('');
+    const unlocked = meta.unlocked || {}, seenO = meta.objSeen || {};
+    const objs = D().OBJECTS.map((o) => {
+      const open = !o.unlock || unlocked[o.id];
+      const seen = seenO[o.id];
+      return '<div class="recipe obj-card r-' + o.rarity + (seen ? '' : ' unknown') + '">' + (seen || open ? IE.Icons.obj(o.id, 32) : '')
+        + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
+        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
+    }).join('');
     return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
+      + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
+      + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
       + '<h3>人類模組（' + Object.keys(at).length + '/' + DS.ARCHETYPES.length + '）</h3><div class="recipes">' + types + '</div>'
       + '<h3>外星印章（' + Object.keys(stampsSeen).length + '/' + Object.keys(DS.STAMPS).length + '）</h3><div class="stamp-wall">' + stamps + '</div>'
       + '<h3>具名組合</h3><div class="recipes">' + recipes + '</div>'
@@ -6679,175 +7627,609 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
-    renderHud, setPanel, modal, pushModal, closeModal, modalOpen, bindDelegation, toast,
+    renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
   };
 })(window.IE = window.IE || {});
 
 // ---- js/craft.js ----
-// 創作：選擇素材 → 即時看到組合與分數 → 爆分演出。
+// 創作之夜：《小丑牌》式的創作桌。
+//   抽一手素材 → 選 1 至 5 張下筆（或改稿換牌）→ 逐張計分：籌碼跳動、物件觸發、組合蓋章、倍率燃燒、乘上火花 → 爆分。
+//   規則全部在 create.js；這裡只負責演出與輸入。
 (function (IE) {
   'use strict';
-  const D = () => IE.DATA;
-  const R = () => IE.Rules;
-  const UI = () => IE.UI;
-  const A = () => IE.Audio;
+  const D = () => IE.DATA, R = () => IE.Rules, C = () => IE.Create, UI = () => IE.UI, A = () => IE.Audio;
+  const esc = (v) => IE.UI.esc(v);
+  const fmt = (n) => IE.UI.fmt(n);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 忽略 */ } },
+  };
+  let root = null, st = null;
+  const $ = (sel) => root.querySelector(sel);
 
-  function known(s, id) {
-    const meta = IE.Game.meta || {};
-    return !!(s.discovered[id] || (meta.recipes && meta.recipes[id]));
+  // ---------- 素材卡 ----------
+  function cardEl(s, c, o) {
+    o = o || {};
+    const D_ = D();
+    const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
+    const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
+    const wear = c.wear || 0;
+    const val = C().cardValue(s, c);
+    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '')
+      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + '>'
+      + '<span class="cc-stripes">' + stripes + '</span>'
+      + '<span class="cc-name">' + esc(c.name) + '</span>'
+      + '<span class="cc-tags">' + tags + '</span>'
+      + '<span class="cc-foot"><b class="cc-val num">' + val + '</b>'
+      + (wear ? '<span class="cc-wear" title="用過 ' + wear + ' 次，籌碼 ×' + C().wearMult(c).toFixed(2) + '">' + (wear >= 4 ? '陳腔濫調' : '用過 ×' + wear) + '</span>' : '') + '</span>'
+      + (c.mod ? '<span class="cc-mod">' + D_.CARD_MODS[c.mod].name + '</span>' : '')
+      + (c.guilt ? '<span class="cc-grams">愧疚 ' + c.grams + ' 克</span>' : '')
+      + '</button>';
   }
-  function comboHtml(s, c) {
-    const m = '<span class="m">+' + c.mult + '</span>';
-    if (c.kind === 'res' || c.kind === 'medley') return '<span class="combo res">' + c.name + m + '</span>';
-    if (!known(s, c.id)) return '<span class="combo hidden">？？？ 新組合' + m + '</span>';
-    return '<span class="combo' + (c.secondary ? ' secondary' : '') + '">' + c.name + m + '</span>';
+  function objTile(id, slot) {
+    const o = D().OBJ[id];
+    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc) + '">'
+      + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span></button>';
   }
 
+  // ---------- 開啟 ----------
   function open(s, onDone) {
-    let sel = [];
-    const render = () => {
-      const ev = sel.length ? R().evalCraft(s, sel) : null;
-      const cost = R().craftCost(Math.max(2, sel.length));
-      const k = R().kpi(s);
-      const can = sel.length >= 2 && s.cr >= R().craftCost(sel.length);
-      const slots = [];
-      for (let i = 0; i < 5; i++) {
-        const uid = sel[i];
-        const c = uid != null ? s.cards.find((x) => x.uid === uid) : null;
-        if (i >= s.craftSlots) slots.push('<div class="slot locked">要創作工具</div>');
-        else slots.push('<div class="slot">' + (c ? UI().cardHtml(c, { button: true, sel: true }) : '空') + '</div>');
-      }
-      const formula = ev
-        ? '<div class="formula">'
-          + '<span class="term t-chips"><small>籌碼</small>' + ev.chips + '</span><span class="op">×</span>'
-          + '<span class="term t-mult"><small>倍率</small>' + ev.mult + '</span><span class="op">×</span>'
-          + '<span class="term t-spark"><small>火花</small>' + ev.spark.toFixed(1) + '</span>'
-          + (ev.kpiMod !== 1 ? '<span class="op">×</span><span class="term t-kpi"><small>KPI</small>' + ev.kpiMod + '</span>' : '')
-          + '<span class="op">=</span><span class="term t-total"><small>作品分</small>' + UI().fmt(ev.total) + '</span></div>'
-          + '<div class="combos">' + (ev.combos.length ? ev.combos.map((c) => comboHtml(s, c)).join('') : '<span class="mute" style="font-size:13px">沒有組合。試試選擇同一標籤，或者搭配不同標籤。</span>') + '</div>'
-          + (ev.relief ? '<p class="relief">把愧疚寫進作品：靈魂 −' + ev.relief + ' 克（' + s.soul.toFixed(1) + ' → ' + Math.max(0, s.soul - ev.relief).toFixed(1) + ' 克）</p>' : '')
-        : '<p class="mute" style="font-size:14px">選擇 2 至 ' + s.craftSlots + ' 張素材。同一標籤出現 3 張或以上會「同調」，特定標籤組合會觸發具名組合。</p>';
-      UI().modal('<div class="modal wide craft">'
-        + '<div class="panel-head"><h2>創作</h2><p>火花 ×' + s.spark.toFixed(1) + '・本季 KPI：' + UI().esc(k.name) + '（' + UI().esc(k.desc) + '）</p></div>'
-        + '<div class="craft-tray">' + slots.join('') + '</div>'
-        + formula
-        + '<h3>你的素材（材料費 $' + cost + '，你有 $' + UI().fmt(s.cr) + '）</h3>'
-        + '<div class="craft-grid">' + s.cards.map((c) => UI().cardHtml(c, {
-          button: true, sel: sel.includes(c.uid),
-          disabled: !sel.includes(c.uid) && sel.length >= s.craftSlots,
-        })).join('') + '</div>'
-        + '<div class="btn-row"><button class="btn" type="button" data-do="cancel">暫時不做</button>'
-        + '<button class="btn primary big" type="button" data-do="make"' + (can ? '' : ' disabled') + '>創作' + (sel.length >= 2 ? '（$' + R().craftCost(sel.length) + '）' : '') + '</button></div>'
-        + '</div>', {
-        card(el) {
-          const uid = Number(el.dataset.uid);
-          if (sel.includes(uid)) sel = sel.filter((u) => u !== uid);
-          else if (sel.length < s.craftSlots) sel.push(uid);
-          render();
-        },
-        cancel() { UI().closeModal(); onDone(null); },
-        make() { reveal(s, sel, onDone); },
-      });
-    };
+    st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
+      fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0 };
+    root = document.createElement('div');
+    root.id = 'ctable';
+    root.className = 'ctable';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-label', '創作之夜');
+    root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
+      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span></div>'
+      + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
+      + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
+      + '<section class="ct-objs"></section><p class="ct-info"></p>'
+      + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
+      + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
+      + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
+      + '<div class="ct-tags"></div>'
+      + '<section class="ct-stage"><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<p class="ct-hint"></p>'
+      + '<section class="ct-hand"></section>'
+      + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
+      + '<button type="button" class="btn ct-discard" data-ct="discard">改稿</button>'
+      + '<button type="button" class="btn primary big ct-play" data-ct="play">下筆</button></footer>'
+      + '<p class="ct-counts"></p></div>';
+    document.body.appendChild(root);
+    document.body.classList.add('ct-open');
+    root.addEventListener('click', onClick);
+    root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
+    fxInit();
+    render();
+    A().setMode('alien', 80);
+    const meta = IE.Game.meta || {};
+    if (!meta.craftTutorial) {
+      meta.craftTutorial = true;
+      UI().pushModal(tutorialHtml(), { close: UI().closeModal }, { dismiss: () => {} });
+    }
+  }
+  function close(result) {
+    fxStop();
+    if (root) { root.removeEventListener('click', onClick); root.remove(); }
+    document.body.classList.remove('ct-open');
+    root = null;
+    const cb = st.onDone;
+    st = null;
+    A().setMode('city');
+    cb(result);
+  }
+  const isOpen = () => !!root;
+
+  // ---------- 繪畫 ----------
+  function sortedHand() {
+    const s = st.s, ses = s.session;
+    const cards = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const order = D().TAGS ? Object.keys(D().TAGS) : [];
+    if (st.sortBy === 'tag') cards.sort((a, b) => order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]) || b.value - a.value);
+    else cards.sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a));
+    return cards;
+  }
+  function render() {
+    const s = st.s, ses = s.session;
+    const k = R().kpi(s);
+    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
+    const slots = [];
+    for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
+    $('.ct-objs').innerHTML = slots.join('');
+    renderGoal();
+    $('.ct-night b').textContent = fmt(ses.total);
+    $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
+    $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
+    const pb = $('.ct-play'), db = $('.ct-discard');
+    pb.textContent = '下筆（' + ses.plays + '）';
+    db.textContent = '改稿（' + ses.discards + '）';
+    pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
+    db.disabled = st.busy || !st.sel.length || ses.discards <= 0;
+    renderPreview();
+  }
+  function renderGoal(extra) {
+    const s = st.s;
+    const th = R().threshold(s);
+    const sig = R().signal(s) + (extra || 0);
+    $('.ct-goal i').style.width = Math.min(100, sig / th * 100) + '%';
+    $('.ct-goal em').style.left = Math.min(100, st.sigStart / th * 100) + '%';
+    $('.ct-goal-n').textContent = IE.UI.kfmt(sig) + ' / ' + IE.UI.kfmt(th);
+  }
+  function setBoxes(chips, mult, cls) {
+    const cb = $('.ct-chips b'), mb = $('.ct-mult b');
+    cb.textContent = fmt(chips);
+    mb.textContent = Number.isInteger(mult) ? mult : (Math.round(mult * 10) / 10).toFixed(1);
+    $('.ct-chips').classList.toggle('preview', cls === 'preview');
+    $('.ct-mult').classList.toggle('preview', cls === 'preview');
+  }
+  function renderPreview() {
+    const s = st.s;
+    const pv = st.sel.length ? C().preview(s, st.sel) : null;
+    if (!pv) {
+      $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
+      $('.ct-form .fl').textContent = '';
+      setBoxes(0, 0, 'preview');
+      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；特定的標籤組合會觸發具名組合。';
+      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring'));
+      return;
+    }
+    $('.ct-form .fn').textContent = pv.name;
+    $('.ct-form .fl').textContent = 'Lv.' + pv.level;
+    setBoxes(pv.chips, pv.mult, 'preview');
+    const bits = pv.recipes.map((r) => (r.known ? '<span class="rc' + (r.legend ? ' lg' : '') + '">' + esc(r.name) + '</span>'
+      : '<span class="rc unk' + (r.legend ? ' lg' : '') + '">' + (r.legend ? '？？？ 傳說組合' : '？？？ 未知組合') + '</span>'));
+    if (pv.ai < 1) bits.push('<span class="rc ai">AI 正在模仿你的「' + esc(pv.name) + '」：×' + pv.ai + '</span>');
+    $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">沒有具名組合</span>';
+    root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.toggle('scoring', pv.scoring.includes(Number(b.dataset.uid))));
+  }
+
+  // ---------- 輸入 ----------
+  function onClick(e) {
+    if (!st) return;
+    const card = e.target.closest('.ct-hand .cc');
+    if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
+    const ob = e.target.closest('.ct-obj[data-obj]');
+    if (ob) { const o = D().OBJ[ob.dataset.obj]; $('.ct-info').innerHTML = '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + '）：' + esc(o.desc); wiggle(ob); return; }
+    const b = e.target.closest('[data-ct]');
+    if (!b || b.disabled) return;
+    A().sfx('click');
+    const k = b.dataset.ct;
+    if (k === 'play') doPlay();
+    else if (k === 'discard') doDiscard();
+    else if (k === 'sort') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; store.set('ie2080.sort', st.sortBy); render(); }
+    else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
+    else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
+    else if (k === 'leave') leave();
+  }
+  function toggle(uid) {
+    if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
+    else if (st.sel.length < 5) st.sel.push(uid);
+    else return;
+    A().fx('card', st.sel.length * 2);
     render();
   }
-
-  // 爆分演出
-  function reveal(s, sel, onDone) {
-    const before = R().signal(s);
-    const res = R().commitCraft(s, sel);
-    const ev = res.ev;
-    const fast = IE.Pixel.reducedMotion;
-    const step = fast ? 60 : 1;
-    UI().modal('<div class="modal"><div class="reveal">'
-      + '<span class="mute">你' + UI().esc(res.work.medium) + '作品</span>'
-      + '<div class="formula" id="rv-formula">'
-      + '<span class="term t-chips"><small>籌碼</small><span id="rv-chips">0</span></span><span class="op">×</span>'
-      + '<span class="term t-mult"><small>倍率</small><span id="rv-mult">1</span></span><span class="op">×</span>'
-      + '<span class="term t-spark"><small>火花</small><span id="rv-spark">?</span></span>'
-      + '<span class="op" id="rv-kop" hidden>×</span><span class="term t-kpi" id="rv-kpi" hidden><small>KPI</small>' + ev.kpiMod + '</span></div>'
-      + '<div class="combos" id="rv-combos"></div>'
-      + '<div class="score" id="rv-score">0</div>'
-      + '<div class="work" id="rv-work" hidden>《' + UI().esc(res.work.name) + '》</div>'
-      + '<div id="rv-extra" hidden></div>'
-      + '</div><div class="btn-row"><button class="btn" type="button" data-do="skip" id="rv-skip">跳過</button>'
-      + '<button class="btn primary" type="button" data-do="done" id="rv-done" hidden>完成</button></div></div>', {
-      skip() { finishNow(); },
-      done() { UI().closeModal(); onDone(res); },
-    });
-    const $ = (id) => document.getElementById(id);
-    const timers = [];
-    const at = (ms, fn) => timers.push(setTimeout(fn, ms / step));
-    let t = 0;
-    const tickChips = (target, dur) => {
-      const n = 10;
-      for (let i = 1; i <= n; i++) at(t + (dur * i) / n, () => { $('rv-chips').textContent = Math.round((target * i) / n); A().sfx('chips'); });
-      t += dur;
-    };
-    // 1. 素材籌碼
-    tickChips(ev.cardChips, 600);
-    // 2. 組合
-    let mult = 1, chips = ev.cardChips;
-    ev.combos.forEach((c) => {
-      at(t, () => {
-        chips += c.chips; mult = Math.round((mult + c.mult) * 10) / 10;
-        $('rv-chips').textContent = chips;
-        $('rv-mult').textContent = mult;
-        const span = document.createElement('span');
-        span.className = 'combo' + (c.kind !== 'recipe' ? ' res' : c.secondary ? ' secondary' : '');
-        span.innerHTML = c.name + '<span class="m">+' + c.mult + '</span>' + (c.kind === 'recipe' && c.isNew ? ' <b class="new">新！</b>' : '');
-        $('rv-combos').appendChild(span);
-        A().sfx('mult');
-      });
-      t += 380;
-    });
-    // 3. 火花
-    at(t, () => { $('rv-spark').textContent = ev.spark.toFixed(1); A().sfx('stamp'); IE.Pixel.view.shake = 3; });
-    t += 420;
-    // 4. KPI
-    if (ev.kpiMod !== 1) {
-      at(t, () => { $('rv-kop').hidden = false; $('rv-kpi').hidden = false; A().sfx(ev.kpiMod >= 1 ? 'combo' : 'wrong'); });
-      t += 420;
+  function key(k) {
+    if (!st || st.busy) { if (st) st.fast = true; return; }
+    if (/^[1-9]$/.test(k)) { const c = sortedHand()[Number(k) - 1]; if (c) toggle(c.uid); }
+    else if (k === 'Enter') doPlay();
+    else if (k === 'd' || k === 'D' || k === 'Backspace') doDiscard();
+    else if (k === 's' || k === 'S') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; render(); }
+  }
+  function leave() {
+    if (st.busy) return;
+    const s = st.s;
+    if (!s.session.log.length) {
+      C().cancel(s);
+      close(null);
+      return;
     }
-    // 5. 總分
-    const total = ev.total;
-    for (let i = 1; i <= 12; i++) at(t + i * 45, () => { $('rv-score').textContent = UI().fmt((total * i) / 12); });
-    t += 12 * 45;
-    at(t, () => finishNow());
+    endNight();
+  }
 
-    let finished = false;
-    function finishNow() {
-      if (finished) return;
-      finished = true;
-      timers.forEach(clearTimeout);
-      $('rv-chips').textContent = ev.chips;
-      $('rv-mult').textContent = ev.mult;
-      $('rv-spark').textContent = ev.spark.toFixed(1);
-      if (ev.kpiMod !== 1) { $('rv-kop').hidden = false; $('rv-kpi').hidden = false; }
-      if (!$('rv-combos').children.length) $('rv-combos').innerHTML = ev.combos.map((c) => '<span class="combo' + (c.kind !== 'recipe' ? ' res' : '') + '">' + c.name + '<span class="m">+' + c.mult + '</span></span>').join('');
-      const sc = $('rv-score');
-      sc.textContent = UI().fmt(total);
-      sc.classList.add('boom');
-      $('rv-work').hidden = false;
-      const after = R().signal(s);
-      const extra = [];
-      if (res.relief) extra.push('<p class="relief">你把愧疚寫了出來。靈魂輕了 ' + res.relief + ' 克，現在重 ' + s.soul.toFixed(1) + ' 克。</p>');
-      if (res.fresh.length) extra.push('<p class="new">靈光一閃！發現新組合：' + res.fresh.map((c) => c.name).join('、') + (res.sparkUp ? '（火花 +' + res.sparkUp + '）' : '') + '</p>');
-      if (ev.kpiMod === 0) extra.push('<p style="color:#ff9aa6">外星人不計算這件作品：' + UI().esc(ev.kpi.desc) + '</p>');
-      extra.push('<p class="mute">訊號 ' + UI().fmt(before) + ' → <b style="color:#ffd6ef">' + UI().fmt(after) + '</b> / ' + UI().fmt(R().threshold(s)) + '</p>');
-      $('rv-extra').innerHTML = extra.join('');
-      $('rv-extra').hidden = false;
-      $('rv-skip').hidden = true;
-      $('rv-done').hidden = false;
-      $('rv-done').focus({ preventScroll: true });
-      A().sfx('boom');
-      IE.Game.celebrate(total);
+  // ---------- 演出工具 ----------
+  const speedK = () => (IE.Pixel.reducedMotion ? 4 : st.fast ? 5 : st.speed);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms / speedK()));
+  function rectOf(el) {
+    const a = el.getBoundingClientRect();
+    return { x: a.left + a.width / 2, y: a.top + a.height / 2, w: a.width, h: a.height, top: a.top };
+  }
+  function floatText(el, text, cls) {
+    if (!root || !el) return;
+    const r = rectOf(el);
+    const f = document.createElement('div');
+    f.className = 'ct-float ' + (cls || '');
+    f.textContent = text;
+    f.style.left = r.x + 'px';
+    f.style.top = r.top + 'px';
+    root.appendChild(f);
+    const dur = 900 / Math.min(2, speedK());
+    f.animate([{ transform: 'translate(-50%, 0) scale(0.6)', opacity: 0 }, { transform: 'translate(-50%, -22px) scale(1.15)', opacity: 1, offset: 0.25 },
+      { transform: 'translate(-50%, -44px) scale(1)', opacity: 0 }], { duration: dur, easing: 'ease-out' });
+    setTimeout(() => f.remove(), dur);
+  }
+  function bump(el, scale) {
+    if (!el) return;
+    el.animate([{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(-12px) scale(' + (scale || 1.12) + ')' }, { transform: 'translateY(0) scale(1)' }],
+      { duration: 260 / Math.min(2, speedK()), easing: 'ease-out' });
+  }
+  function wiggle(el) {
+    if (!el) return;
+    el.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-9deg) scale(1.15)' }, { transform: 'rotate(7deg) scale(1.1)' }, { transform: 'rotate(0)' }],
+      { duration: 320 / Math.min(2, speedK()), easing: 'ease-out' });
+  }
+  function pulse(el, color) {
+    if (!el) return;
+    el.animate([{ transform: 'scale(1)', filter: 'brightness(1)' }, { transform: 'scale(1.18)', filter: 'brightness(1.6)' }, { transform: 'scale(1)', filter: 'brightness(1)' }],
+      { duration: 220 / Math.min(2, speedK()) });
+    if (color) el.style.setProperty('--glow', color);
+  }
+  function shake(mag) {
+    if (IE.Pixel.reducedMotion || !root) return;
+    const el = $('.ct-inner');
+    const k = [];
+    for (let i = 0; i < 6; i++) k.push({ transform: 'translate(' + ((Math.random() - 0.5) * mag * 2).toFixed(1) + 'px,' + ((Math.random() - 0.5) * mag * 2).toFixed(1) + 'px)' });
+    k.push({ transform: 'translate(0,0)' });
+    el.animate(k, { duration: 260 + mag * 12 });
+  }
+  function tag(text, cls) {
+    const t = document.createElement('span');
+    t.className = 'ct-tag ' + (cls || '');
+    t.textContent = text;
+    $('.ct-tags').appendChild(t);
+    t.animate([{ transform: 'scale(2.2) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1 }], { duration: 260 / Math.min(2, speedK()), easing: 'cubic-bezier(.2,2,.4,1)' });
+  }
+
+  // ---------- 火焰粒子（倍率燃燒） ----------
+  let fx = null;
+  function fxInit() {
+    const cv = $('.ct-fx');
+    const ctx = cv.getContext('2d');
+    fx = { cv, ctx, ps: [], burn: 0, raf: 0 };
+    const resize = () => { const d = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px'; ctx.setTransform(d, 0, 0, d, 0, 0); };
+    resize();
+    fx.resize = resize;
+    window.addEventListener('resize', resize);
+    let last = performance.now();
+    const loop = (now) => {
+      if (!fx) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      // 倍率燃燒：倍率越高，火越大
+      if (fx.burn > 0 && root) {
+        const r = rectOf($('.ct-mult'));
+        const n = Math.min(14, fx.burn) * dt * 22;
+        for (let i = 0; i < n; i++) emit(r.x + (Math.random() - 0.5) * r.w, r.top + r.h * 0.4, 1);
+      }
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      for (let i = fx.ps.length - 1; i >= 0; i--) {
+        const p = fx.ps[i];
+        p.age += dt;
+        if (p.age >= p.life) { fx.ps.splice(i, 1); continue; }
+        p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        const k = 1 - p.age / p.life;
+        ctx.globalAlpha = k;
+        ctx.fillStyle = k > 0.7 ? '#fff2a8' : k > 0.45 ? '#ffc247' : k > 0.25 ? '#ff8a3c' : '#ff4d5e';
+        if (p.col) ctx.fillStyle = p.col;
+        const sz = Math.max(2, Math.round(p.size * (0.4 + k * 0.6)));
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), sz, sz);
+      }
+      ctx.globalAlpha = 1;
+      fx.raf = requestAnimationFrame(loop);
+    };
+    fx.raf = requestAnimationFrame(loop);
+  }
+  function emit(x, y, power, col) {
+    if (!fx || IE.Pixel.reducedMotion) return;
+    fx.ps.push({ x, y, vx: (Math.random() - 0.5) * 40 * power, vy: -60 - Math.random() * 90 * power, g: -20, life: 0.5 + Math.random() * 0.6, age: 0, size: 3 + Math.random() * 4 * power, col });
+  }
+  function burst(el, n, power, col) {
+    if (!el || !fx) return;
+    const r = rectOf(el);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, sp = (60 + Math.random() * 200) * power;
+      fx.ps.push({ x: r.x, y: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 160, life: 0.6 + Math.random() * 0.7, age: 0, size: 3 + Math.random() * 4, col });
+    }
+  }
+  function fxStop() {
+    if (!fx) return;
+    cancelAnimationFrame(fx.raf);
+    window.removeEventListener('resize', fx.resize);
+    fx = null;
+  }
+
+  // ---------- 下筆 ----------
+  async function doPlay() {
+    const s = st.s, ses = s.session;
+    if (st.busy || !st.sel.length || ses.plays <= 0) return;
+    st.busy = true; st.fast = false; st.chipN = 0;
+    const uids = st.sel.slice();
+    st.sel = [];
+    const snap = uids.map((u) => Object.assign({}, s.cards.find((c) => c.uid === u)));
+    const pv = C().preview(s, uids);
+    // 素材飛上舞台
+    $('.ct-tags').innerHTML = '';
+    $('.ct-played').innerHTML = snap.map((c) => cardEl(s, c, { stage: true, dim: !pv.scoring.includes(c.uid) })).join('');
+    $('.ct-hand').innerHTML = sortedHand().filter((c) => !uids.includes(c.uid)).map((c) => cardEl(s, c)).join('');
+    root.querySelectorAll('.ct-played .cc').forEach((el, i) => {
+      el.animate([{ transform: 'translateY(120px) rotate(' + (i * 4 - 8) + 'deg)', opacity: 0 }, { transform: 'translateY(0) rotate(0)', opacity: 1 }],
+        { duration: 260 / Math.min(2, speedK()), delay: i * 50 / speedK(), easing: 'cubic-bezier(.2,1.4,.4,1)', fill: 'backwards' });
+    });
+    A().fx('card', 4);
+    $('.ct-play').disabled = true; $('.ct-discard').disabled = true;
+    $('.ct-hint').innerHTML = '';
+    await wait(380);
+    const res = C().play(s, uids);
+    await animate(res);
+    await showTotal(res);
+    // 收起舞台，補牌
+    root.querySelectorAll('.ct-played .cc').forEach((el, i) => el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-60px) rotate(' + (i * 6 - 10) + 'deg)', opacity: 0 }],
+      { duration: 300 / Math.min(2, speedK()), fill: 'forwards' }));
+    await wait(320);
+    $('.ct-played').innerHTML = '';
+    $('.ct-total').hidden = true;
+    fx && (fx.burn = 0);
+    $('.ct-mult').classList.remove('burning', 'inferno');
+    st.busy = false;
+    render();
+    root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: 220, delay: i * 30, fill: 'backwards' }));
+    if (ses.plays <= 0 || !ses.hand.length) await endNight();
+  }
+
+  async function animate(res) {
+    const s = st.s;
+    const stageCard = (uid) => root.querySelector('.ct-played .cc[data-uid="' + uid + '"]');
+    const objEl = (slot) => root.querySelector('.ct-obj[data-slot="' + slot + '"]');
+    const multEl = $('.ct-mult'), chipsEl = $('.ct-chips');
+    let n = 0;
+    for (const x of res.steps) {
+      if (!root) return;
+      switch (x.t) {
+        case 'form':
+          $('.ct-form .fn').textContent = C().FORM[x.form].name;
+          $('.ct-form .fl').textContent = 'Lv.' + x.level;
+          setBoxes(x.chips, x.mult);
+          pulse(chipsEl); pulse(multEl);
+          A().fx('chip', 0);
+          await wait(320);
+          break;
+        case 'card': {
+          const el = stageCard(x.uid);
+          bump(el);
+          floatText(el, '+' + x.chips, 'chips');
+          setBoxes(x.C, x.M);
+          pulse(chipsEl);
+          A().fx('chip', ++n);
+          await wait(x.again ? 260 : 300);
+          break;
+        }
+        case 'mod': {
+          const el = stageCard(x.uid);
+          floatText(el, x.chips ? '+' + x.chips : x.mult ? '+' + x.mult + ' 倍率' : '×' + x.xmult, x.chips ? 'chips' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(x.chips ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          await wait(280);
+          break;
+        }
+        case 'obj': {
+          const el = objEl(x.slot);
+          wiggle(el);
+          if (x.uid != null) bump(stageCard(x.uid), 1.06);
+          floatText(el, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
+          setBoxes(x.C, x.M);
+          pulse(x.chips && !x.mult ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(4);
+          await wait(x.xmult ? 420 : 300);
+          break;
+        }
+        case 'recipe':
+          tag((x.isNew ? '新組合！' : '') + x.name + '　+' + x.chips + ' 籌碼　+' + x.mult + ' 倍率' + (x.xmult ? '　×' + x.xmult : ''),
+            x.legend ? 'legend' : x.isNew ? 'new' : 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(chipsEl); pulse(multEl);
+          if (x.legend) {
+            A().fx('legend');
+            shake(14);
+            burst($('.ct-tags'), 80, 1.4, '#ffd36b');
+            flash('#ffd36b');
+            await wait(900);
+          } else {
+            A().fx(x.isNew ? 'xmult' : 'mult', ++n);
+            if (x.isNew) burst($('.ct-tags'), 30, 0.8, '#ffd36b');
+            await wait(x.isNew ? 520 : 380);
+          }
+          break;
+        case 'ai':
+          tag('AI 模仿 ×' + x.x, 'ai');
+          setBoxes(res.chips, Math.round(Number($('.ct-mult b').textContent) * x.x * 10) / 10);
+          A().sfx('wrong');
+          await wait(320);
+          break;
+        case 'world':
+          tag('世界事件 ×' + x.x, 'kpi-good');
+          await wait(260);
+          break;
+        case 'kpi':
+          tag('外星 KPI ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          await wait(320);
+          break;
+        case 'spark':
+          tag('× 火花 ' + x.x.toFixed(1), 'spark');
+          A().fx('burn');
+          fx && (fx.burn = Math.log10(Math.max(1, res.mult)) * 6);
+          multEl.classList.add('burning');
+          if (res.mult >= 20) multEl.classList.add('inferno');
+          shake(Math.min(10, 3 + res.mult / 6));
+          await wait(520);
+          break;
+      }
+      // 倍率越高，倍率格燒得越旺
+      const M = x.M || 0;
+      if (fx && M >= 8) { fx.burn = Math.max(fx.burn, Math.log10(M) * 4); multEl.classList.add('burning'); }
     }
   }
 
-  IE.Craft = { open };
+  function flash(color) {
+    if (!root || IE.Pixel.reducedMotion) return;
+    const f = document.createElement('div');
+    f.className = 'ct-flash';
+    f.style.background = color;
+    root.appendChild(f);
+    f.animate([{ opacity: 0.6 }, { opacity: 0 }], { duration: 500 });
+    setTimeout(() => f.remove(), 500);
+  }
+
+  async function showTotal(res) {
+    const s = st.s;
+    const el = $('.ct-total');
+    el.hidden = false;
+    const size = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
+    el.style.fontSize = size + 'px';
+    const record = res.total > st.best;
+    const steps = 18;
+    for (let i = 1; i <= steps; i++) {
+      const v = Math.round(res.total * (1 - Math.pow(1 - i / steps, 3)));
+      el.textContent = fmt(v);
+      if (i % 3 === 0) A().fx('chip', 12 + i / 2);
+      await wait(34);
+    }
+    el.textContent = fmt(res.total);
+    A().fx('total', Math.min(12, Math.round(Math.log10(Math.max(10, res.total)) * 2)));
+    el.animate([{ transform: 'translate(-50%,-50%) scale(1.6)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 280, easing: 'cubic-bezier(.2,2,.4,1)' });
+    const mag = Math.log10(Math.max(10, res.total));
+    shake(Math.min(18, mag * 2.5));
+    burst(el, Math.min(120, Math.round(mag * 14)), Math.min(1.6, mag / 3));
+    if (record) {
+      st.best = res.total;
+      tag('新紀錄！', 'legend');
+      flash('#ff4fb4');
+      A().sfx('boom');
+    }
+    // 數字飛向「今晚」
+    const night = $('.ct-night b');
+    night.textContent = fmt(s.session ? s.session.total : res.total);
+    pulse(night);
+    renderGoal();
+    if (res.reliefApplied) tag('愧疚寫進作品：靈魂 −' + res.reliefApplied + ' 克', 'relief');
+    (res.notes || []).forEach((n) => tag(n, 'ai'));
+    if (res.fresh && res.fresh.length && res.sparkUp) tag('靈光一閃：火花 +' + res.sparkUp, 'spark');
+    await wait(record ? 1300 : 900);
+  }
+
+  // ---------- 改稿 ----------
+  async function doDiscard() {
+    const s = st.s, ses = s.session;
+    if (st.busy || !st.sel.length || ses.discards <= 0) return;
+    st.busy = true;
+    const uids = st.sel.slice();
+    root.querySelectorAll('.ct-hand .cc').forEach((el) => {
+      if (uids.includes(Number(el.dataset.uid))) el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(80px) rotate(20deg)', opacity: 0 }], { duration: 260, fill: 'forwards' });
+    });
+    A().fx('card', 1);
+    await wait(280);
+    st.sel = [];
+    C().discard(s, uids);
+    st.busy = false;
+    render();
+    root.querySelectorAll('.ct-hand .cc').forEach((el) => {
+      if (!el.dataset.seen) el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220 });
+    });
+  }
+
+  // ---------- 今晚完成 ----------
+  async function endNight() {
+    const s = st.s;
+    st.busy = true;
+    const before = st.sigStart;
+    const res = C().finish(s);
+    const w = res.work;
+    const fresh = [...new Set(res.session.fresh)].map((id) => D().RECIPES.find((r) => r.id === id)).filter(Boolean);
+    const th = R().threshold(s);
+    const after = R().signal(s);
+    const best = s.stats.bestWork && w && s.stats.bestWork === w;
+    const panel = document.createElement('div');
+    panel.className = 'ct-end';
+    panel.innerHTML = '<div class="ct-end-card">'
+      + '<span class="mute">今晚的作品</span>'
+      + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
+      + '<div class="ct-end-score num">0</div>'
+      + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
+      + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
+      + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
+      + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
+      + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
+    root.appendChild(panel);
+    let closed = false;
+    panel.querySelector('[data-end="done"]').addEventListener('click', () => {
+      if (closed) return;
+      closed = true;
+      if (IE.Game.celebrate) IE.Game.celebrate(w ? w.score : 0);
+      close(res);
+    });
+    panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 });
+    const sc = panel.querySelector('.ct-end-score');
+    const total = w ? w.score : 0;
+    for (let i = 1; i <= 24 && !closed; i++) { sc.textContent = fmt(total * (1 - Math.pow(1 - i / 24, 3))); if (i % 4 === 0) A().fx('chip', i / 2); await wait(30); }
+    if (closed) return;
+    sc.textContent = fmt(total);
+    A().sfx('boom');
+    burst(sc, 100, 1.4);
+    shake(10);
+    panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
+    requestAnimationFrame(() => { panel.querySelector('.ct-goal i').style.width = Math.min(100, after / th * 100) + '%'; });
+    if (after >= th && before < th) { setTimeout(() => { A().sfx('combo'); flash('#9be36b'); }, 900); }
+    if (!closed) panel.querySelector('[data-end="done"]').focus({ preventScroll: true });
+  }
+
+  // ---------- 教學與圖鑑 ----------
+  function tutorialHtml() {
+    return '<div class="modal"><h2>創作之夜</h2><div class="help">'
+      + '<p>從素材庫抽一手素材。每晚可以<b>下筆</b>三次、<b>改稿</b>兩次；三次下筆的分數加起來，就是今晚的作品。</p>'
+      + '<ul><li>選 1 至 5 張素材下筆。同一標籤出現得越多，<b>作品形式</b>越高級：短詩、對聯、歌、小說、壁畫、交響曲、史詩……</li>'
+      + '<li>特定標籤組合會觸發<b>具名組合</b>（例如「水＋記憶＋飢餓」＝水淹童年）。還有隱藏的<b>傳說組合</b>等你發現。</li>'
+      + '<li><b>靈感物件</b>會在計分時觸發；朋友、潛水、事件和二手市集都可以找到。</li>'
+      + '<li>分數 = 籌碼 × 倍率 × 火花。素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格。</li>'
+      + '<li>白天做不同的事，會練成不同的技法，令相應的作品形式升級。</li></ul>'
+      + '<p class="mute">演出時點一下畫面可以快轉；右上角可以調整速度。</p></div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">開始創作</button></div></div>';
+  }
+  function recipeHint(r) {
+    if (r.hint) return r.hint;
+    const tags = Object.keys(r.need).map((t) => (r.need[t] > 1 ? '「' + D().TAGS[t].name + '」×' + r.need[t] : '「' + D().TAGS[t].name + '」'));
+    return tags.length > 1 ? '需要' + tags.slice(0, -1).join('、') + '，還有一樣東西……' : '需要很多' + tags[0] + '……';
+  }
+  function codexHtml(s, meta) {
+    const known = (id) => !!(s.discovered[id] || (meta.recipes && meta.recipes[id]));
+    const forms = D().FORMS.map((f) => {
+      const seen = (s.formsSeen && s.formsSeen[f.id]) || (meta.forms && meta.forms[f.id]) || !f.secret;
+      const st2 = C().formStats(s, f.id);
+      return '<div class="recipe' + (seen ? '' : ' unknown') + '"><b>' + (seen ? f.name + ' Lv.' + st2.level : '？？？') + '</b>'
+        + '<span>' + (seen ? esc(f.desc) : '一種隱藏的作品形式') + '</span>'
+        + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率・練習：' + esc(f.teach) + '</span>' : '') + '</div>';
+    }).join('');
+    const nKnown = D().RECIPES.filter((r) => known(r.id)).length;
+    const recipes = D().RECIPES.map((r) => {
+      const k = known(r.id);
+      const tags = Object.keys(r.need).map((t) => (r.need[t] > 1 ? D().TAGS[t].name + '×' + r.need[t] : D().TAGS[t].name)).join(' + ');
+      return '<div class="recipe' + (k ? '' : ' unknown') + (r.legend ? ' legend' : '') + '"><b>' + (k ? esc(r.name) : r.legend ? '？？？ 傳說' : '？？？') + '</b>'
+        + '<span>' + (k ? esc(tags || '特殊條件') + (r.hint ? '：' + esc(r.hint) : '') : esc(recipeHint(r))) + '</span>'
+        + '<span class="mute">+' + r.chips + ' 籌碼・+' + r.mult + ' 倍率' + (r.xmult ? '・×' + r.xmult : '') + '</span></div>';
+    }).join('');
+    return '<div class="modal wide"><h2>創作圖鑑</h2>'
+      + '<h3>作品形式</h3><div class="recipes">' + forms + '</div>'
+      + '<h3>具名組合（' + nKnown + '/' + D().RECIPES.length + '）</h3><div class="recipes">' + recipes + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
+  }
+
+  IE.Craft = { open, isOpen, key, codexHtml, cardEl, isBusy: () => !!(st && st.busy) };
 })(window.IE = window.IE || {});
 
 // ---- js/main.js ----
@@ -6884,7 +8266,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 4 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 5 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   function setCityFilter() {
@@ -6943,6 +8325,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   function resumeRun() {
     const s = Game.state;
     setScene(S.City);
+    if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
     else showHub();
   }
@@ -6999,6 +8382,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     A.setSpark(s.spark);
     UI.setPanel(UI.actionsPanel(s, R.actions(s)), {
       act(el) { doAction(el.dataset.id); },
+      objs() { openObjects(); },
     });
     save();
   }
@@ -7017,13 +8401,32 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
           npc(el) { afterAction(R.applyChat(s, el.dataset.id)); },
           back() { showHub(); },
         });
-      case 'create':
-        return IE.Craft.open(s, (res) => {
-          if (!res) { showHub(); return; }
-          UI.renderHud(s);
-          afterSlot();
-        });
+      case 'create': case 'allnighter':
+        IE.Create.start(s, id === 'allnighter' ? 'allnighter' : 'normal');
+        save();
+        return openCraft();
     }
+  }
+  function openCraft() {
+    const s = Game.state;
+    IE.Craft.open(s, (res) => {
+      UI.renderHud(s); A.setSpark(s.spark); save();
+      if (!res) { showHub(); return; }
+      afterSlot();
+    });
+  }
+  // 靈感物件：裝備、卸下、排列（碎鏡會複製右邊的物件）、賣給天空區
+  function openObjects() {
+    const s = Game.state;
+    const render = () => UI.pushModal(UI.objectsModal(s), {
+      equip(el) { R.equipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
+      unequip(el) { R.unequipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
+      left(el) { R.moveObject(s, el.dataset.id, -1); UI.closeModal(); render(); save(); },
+      right(el) { R.moveObject(s, el.dataset.id, 1); UI.closeModal(); render(); save(); },
+      sell(el) { const p = R.sellObject(s, el.dataset.id); UI.toast('賣給天空區收藏家：+$' + p, 'good'); A.sfx('coin'); UI.closeModal(); render(); UI.renderHud(s); save(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
   }
 
   // ---------- 小遊戲 ----------
@@ -7241,6 +8644,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     });
     const KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '];
     window.addEventListener('keydown', (e) => {
+      if (IE.Craft.isOpen()) {
+        if (UI.modalOpen()) return;
+        if (e.key === 'Enter' || e.key === 'Backspace' || e.key === ' ') e.preventDefault();
+        if (!e.repeat) IE.Craft.key(e.key);
+        return;
+      }
       const sc = Game.scene;
       if (sc && sc.key && sc !== S.City) {
         if (KEYS.includes(e.key)) e.preventDefault();
@@ -7278,7 +8687,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended) { Game.state = data.run; S.City.enter('hub'); showHub(); }
+    if (data && data.run && !data.run.ended && data.run.v === 5) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

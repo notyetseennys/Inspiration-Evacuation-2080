@@ -211,7 +211,7 @@
   const SOUL_LIMIT = 21;
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
-  const THRESHOLDS = [165000, 270000, 360000, 430000, 470000];
+  const THRESHOLDS = [1300000, 3600000, 8000000, 14000000, 24000000];
 
   // ---------- 十二項能力值 ----------
   // 0–100。做甚麼，就會變成甚麼：每個行動都會令相關能力值成長或退化。
@@ -318,11 +318,11 @@
     },
     animator: {
       name: '失業動畫師', short: '動畫師',
-      desc: '想像力豐富，但很難聽話。', perkText: '一開始就能使用 5 張素材創作',
+      desc: '想像力豐富，但很難聽話。', perkText: '創作時手牌 +1',
       cr: 90, spark: 2.6, floor: 2, medium: '畫了一段動畫',
       soul: 4, conscience: 0.95, past: '你畫的角色，現在由 AI 自動生成。',
       cards: ['b_frame', 'b_story', 'b_novel'],
-      perk: { startSlots: 5 },
+      perk: { handBonus: 1 },
       stats: st(25, 50, 35, 15, 40, 25, 65, 70, 35, 25, 40, 20),
     },
   };
@@ -369,7 +369,7 @@
     premium:    { name: '浮聲 Premium',   desc: '5 天內工作時沒有廣告',               cost: 60 },
     supplement: { name: '靈感補充劑',     desc: '火花立即 +1.2，兩天後 −1.6',         cost: 80 },
     realfood:   { name: '真食物套餐',     desc: '身體 +15，火花 +0.2（每天一次）',    cost: 55 },
-    tools:      { name: '二手創作工具',   desc: '創作時可使用 5 張素材',              cost: 160 },
+    tools:      { name: '二手創作工具',   desc: '創作時手牌 +1',                      cost: 160 },
     tank:       { name: '大容量氧氣瓶',   desc: '潛水氧氣 +30%',                      cost: 140 },
     harpoon:    { name: '改裝魚叉',       desc: '魚叉發射更快，傷害加倍',             cost: 120 },
     bag:        { name: '防水大背包',     desc: '潛水背包容量 +4',                    cost: 100 },
