@@ -1237,6 +1237,276 @@ body.ct-open { overflow: hidden; }
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   任務 3：外星評審肖像與登場演出（含小展／聯展開場字卡）
+   ========================================================================== */
+
+@keyframes ie-judge-slide-in {
+  0% { transform: translateX(-36px) scale(0.92); opacity: 0; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+@keyframes ie-rule-stamp {
+  0% { transform: rotate(-14deg) scale(2.2); opacity: 0; }
+  70% { transform: rotate(2deg) scale(0.95); opacity: 1; }
+  100% { transform: rotate(-1.5deg) scale(1); opacity: 1; }
+}
+
+.ct-stage-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: radial-gradient(ellipse at center, rgba(14, 8, 26, 0.76), rgba(5, 3, 12, 0.84));
+  transition: opacity 0.22s ease;
+}
+.ct-stage-intro.out {
+  opacity: 0;
+}
+.ct-stage-intro .si-card {
+  width: min(680px, 100%);
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: linear-gradient(165deg, #1a0f2e 0%, #0d0818 100%);
+  border: 2px solid var(--c, #ff4d5e);
+  box-shadow: 0 0 36px color-mix(in srgb, var(--c, #ff4d5e) 45%, transparent), inset 0 0 24px rgba(255, 77, 94, 0.12);
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+.ct-stage-intro .si-eyebrow {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--c, #ff4d5e);
+  font-weight: 700;
+}
+.ct-stage-intro h2 {
+  margin: 0;
+  font-size: clamp(22px, 4.5vw, 30px);
+  color: #fff;
+}
+.ct-stage-intro h2 .num {
+  color: var(--spark);
+  font-size: 1.15em;
+}
+.si-judges {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  text-align: left;
+}
+.si-judges.n-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.si-judge {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(10, 6, 20, 0.72);
+  border: 1px solid rgba(255, 77, 94, 0.4);
+  animation: ie-judge-slide-in 0.38s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.si-judge:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.si-por-wrap {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 77, 94, 0.24), #080510 75%);
+  border: 2px solid var(--c, #ff4d5e);
+  box-shadow: 0 0 14px rgba(255, 77, 94, 0.35);
+}
+.judge-por {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+.si-jtxt {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.si-jname {
+  font-size: 16px;
+  color: #fff;
+}
+.si-jtitle {
+  font-size: 11px;
+  color: var(--mute);
+}
+.si-stamp {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  padding: 4px 8px;
+  margin: 2px 0;
+  border-radius: 6px;
+  border: 2px solid #ff4d5e;
+  background: rgba(255, 77, 94, 0.16);
+  color: #ffd0d6;
+  font-size: 12px;
+  transform: rotate(-1.5deg);
+  animation: ie-rule-stamp 0.42s 0.18s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+.si-stamp b {
+  color: #ff8a9a;
+  font-size: 13px;
+}
+.si-quote {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #e9dff5;
+  font-style: italic;
+}
+.si-venue-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: left;
+}
+.si-target {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--mute);
+}
+.si-target b {
+  color: var(--spark);
+  font-size: 20px;
+}
+.si-skip {
+  font-size: 12px;
+  color: var(--mute);
+  letter-spacing: 0.08em;
+}
+
+/* 關卡橫列內的評審肖像與台詞 */
+.sb-judges {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+.sb-judges.n-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sb-judge,
+.sb-venue {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(10, 6, 20, 0.55);
+  border: 1px solid color-mix(in srgb, var(--c, #37c3d6) 40%, transparent);
+}
+.sb-judge .judge-por,
+.sb-venue .judge-por {
+  border-radius: 6px;
+  border: 1px solid var(--c, #37c3d6);
+  background: #090612;
+  padding: 2px;
+}
+.sb-jbody,
+.sb-vtxt {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.sb-jtop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+.sb-jname,
+.sb-vtxt b {
+  font-size: 13px;
+  color: #fff;
+}
+.sb-rstamp {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 77, 94, 0.18);
+  border: 1px solid rgba(255, 77, 94, 0.55);
+  color: #ffb3bc;
+}
+.sb-jquote,
+.sb-vtxt span {
+  margin: 0;
+  font-size: 11px;
+  color: #d6c8eb;
+  line-height: 1.35;
+}
+
+/* 結算畫面的評審入選／落選評語 */
+.sr-judges {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin: 4px 0;
+  text-align: left;
+}
+.sr-judge {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(10, 6, 20, 0.55);
+}
+.sr-judge b {
+  font-size: 12px;
+  color: #fff;
+  display: block;
+}
+.sr-judge p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #e8dff5;
+}
+
+@media (max-width: 640px) {
+  .si-judges.n-2,
+  .sb-judges.n-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .si-por-wrap {
+    width: 60px;
+    height: 60px;
+  }
+  .si-por-wrap .judge-por {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .si-judge,
+  .si-stamp {
+    animation: none !important;
+  }
+}
+.ct-stage-intro.static .si-judge,
+.ct-stage-intro.static .si-stamp {
+  animation: none !important;
+}
 </style>
 </head>
 <body>
@@ -7292,6 +7562,13 @@ body.ct-open { overflow: hidden; }
     beam() { const t = ctx.currentTime; tone('sine', 180, t, 3.5, 0.15, sfxBus, 1400); tone('triangle', 90, t, 3.5, 0.1, sfxBus, 700); },
     rent() { const t = ctx.currentTime; tone('square', 330, t, 0.15, 0.1, sfxBus); tone('square', 262, t + 0.15, 0.25, 0.1, sfxBus); },
     ad() { const t = ctx.currentTime; tone('square', 1760, t, 0.05, 0.06, sfxBus); tone('square', 1760, t + 0.08, 0.05, 0.06, sfxBus); },
+    judge() {
+      const t = ctx.currentTime;
+      tone('sawtooth', 65.4, t, 0.9, 0.14, sfxBus, 49);
+      tone('triangle', 98, t, 0.95, 0.12, sfxBus, 73.4);
+      [36, 42, 49, 54].forEach((n, i) => tone('sawtooth', midi(n), t + 0.18 + i * 0.04, 0.65, 0.06, sfxBus));
+      noise(t + 0.32, 0.12, 0.28, sfxBus);
+    },
   };
 
   IE.Audio = {
@@ -14227,6 +14504,962 @@ body.ct-open { overflow: hidden; }
   IE.Micro.register('haggle', Haggle);
 })(window.IE = window.IE || {});
 
+// ---- js/art-judges.js ----
+// 任務 3：19 位外星評審（32×32 像素肖像、名字、登場／入選／落選台詞）與小展／聯展開場字卡。
+(function (IE) {
+  'use strict';
+
+  const JUDGES = {
+    noneon: {
+      id: 'noneon',
+      name: '深空觀測員・黯瞳',
+      title: '反人工光源監察使',
+      pal: { k: '#090712', a: '#2e3856', b: '#171c2e', c: '#7fe3ff', w: '#eef7ff' },
+      intro: '「把那些刺眼的促銷光管全部關掉。我們只看黑暗裡剩下的東西。」',
+      pass: '「沒有人造螢光的污染，這份樣本的波形很乾淨。」',
+      fail: '「全是廉價的霓虹殘影。連你的視網膜都被廣告燒壞了嗎？」',
+      px: [
+        '..........kkkkkkkkkkkk..........',
+        '........kkaaaaaaaaaaaakk........',
+        '.......kaabbbbbbbbbbbbaak.......',
+        '......kaabbbbbccccccbbbaak......',
+        '.....kaabbbbccwwwwwwccbbbak.....',
+        '....kaabbbccwwkkkkkkwwccbbak....',
+        '....kabbbcwkkkcccccckkkwcbbk....',
+        '...kabbbkkkkkkkkkkkkkkkkkbbbk...',
+        '...kabbkkcccccccccccccccckkbk...',
+        '..kabbkkcwwwwccccccccwwwwckkbk..',
+        '..kabkkcwkkkkcccccccckkkkwckbk..',
+        '..kabkkcccccccccccccccccccckbk..',
+        '..kabkkkkkkkkkkkkkkkkkkkkkkkbk..',
+        '...kabbbbbbbbbbaaaabbbbbbbbbk...',
+        '...kabbbccbbbbaaaaaabbbccbbbk...',
+        '....kabbwcwbbbaakkaabbbwcwbbk...',
+        '....kabbccbbbbaakkaabbbccbbbk...',
+        '.....kabbbbbbbaaaaaabbbbbbbk....',
+        '.....kaabbbbbbaaaaaabbbbbbak....',
+        '......kaabbbbbkkkkkkbbbbbak.....',
+        '.......kaabbbbbbbbbbbbbbak......',
+        '........kkaaaaaaaaaaaaaakk......',
+        '......kkbbbbbbbbbbbbbbbbbbkk....',
+        '....kkbbaaaaaaaaaaaaaaaaaabbkk..',
+        '...kbbbaaaccccccccccccccaaabbbk.',
+        '..kbbbaaccbbbbbbbbbbbbbbccaabbbk',
+        '.kbbbaacbbbbbbbbbbbbbbbbbbcaabbk',
+        '.kbbbaabbbbbbbbbbbbbbbbbbbbaabbk',
+        'kbbbbabbbbbbbbbbbbbbbbbbbbbbabbb',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+      ],
+    },
+    waterhall: {
+      id: 'waterhall',
+      name: '潮汐策展官・渦流',
+      title: '深海浸沒式藝術評議長',
+      pal: { k: '#07131e', a: '#2ca6c9', b: '#134e6f', c: '#9ff3ff', w: '#ffffff' },
+      intro: '「畫廊已經灌滿海水。不能在水底呼吸的作品，今晚一文不值。」',
+      pass: '「濕度剛好。你的靈感已經學會像魚一樣在水底游動了。」',
+      fail: '「太乾涸了。還沒沉到水底，你的作品就已經散開。」',
+      px: [
+        '........kkkkkkkkkkkkkkkk........',
+        '......kkcccccccccccccccckk......',
+        '.....kcwwwwccccccccccwwwwck.....',
+        '....kcwwccccccccccccccccwwck....',
+        '...kcwcccckkkkkkkkkkkkccccwck...',
+        '..kcwccckkaaaaaaaaaaaakkcccwck..',
+        '..kcwcckaaaaaaaaaaaaaaaakccwck..',
+        '.kcwcckaaaabbbbbbbbbbaaaakccwck.',
+        '.kcwckaaabbccccccccccbbaaaakwck.',
+        '.kcwckaabbccwwwwwwwwccbbaaakwck.',
+        '.kcwckaabbcwwkkkkkkwwcbbaaakwck.',
+        '.kcwckaabbcwkkwwwwkkwcbbaaakwck.',
+        '.kcwckaabbcwwkkkkkkwwcbbaaakwck.',
+        '.kcwckaabbccwwwwwwwwccbbaaakwck.',
+        '..kcwckaaabbccccccccbbaaaakwck..',
+        '..kcwcckaaaabbbbbbbbaaaaaakwck..',
+        '...kcwcckaaaaaaaaaaaaaaaakwck...',
+        '...kkkkkkkkkkkkkkkkkkkkkkkkkk...',
+        '..kbbbbbbbbbbbbbbbbbbbbbbbbbbk..',
+        '.kbbccccccccccccccccccccccccbbk.',
+        '..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..',
+        '...kaaaak..kaaaak..kaaaak.kaak..',
+        '..kaabbak..kaabbk..kaabbk.kabk..',
+        '.kaabbbak.kaabbbk..kabbbk.kbbk..',
+        '.kabbbbak.kabbbbk..kbbbbk.kbbk..',
+        '..kkbbkk...kkbbkk...kkbbk..kkk..',
+        '....kk.......kk.......kk........',
+        '.cc....cc..cc....cc..cc....cc...',
+        'c..cccc..cc..cccc..cc..cccc..cc.',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    nomemory: {
+      id: 'nomemory',
+      name: '時間修剪員・零紀',
+      title: '星際歷史歸零處執行官',
+      pal: { k: '#120d1a', a: '#c9a64e', b: '#5e471c', c: '#ffe89e', w: '#ffffff' },
+      intro: '「過去已經被海水淹沒。任何夾帶舊時代記憶的訊號，一律歸零。」',
+      pass: '「沒有多餘的昨日殘留。你終於活在當下這一秒了。」',
+      fail: '「你還在抱著舊相簿哭泣。星際博物館不收這種發霉的鄉愁。」',
+      px: [
+        '....kkkk................kkkk....',
+        '...kcccckk............kkcccck...',
+        '..kcwwcccckk........kkccccwwck..',
+        '..kcwccccccckkkkkkkkcccccccwck..',
+        '...kccccaabbbbbbbbbbbbaacccck...',
+        '....kccaabbbbbbbbbbbbbbaacck....',
+        '.....kaabbccccccccccccbbbak.....',
+        '....kaabbcwwwwwwwwwwwwcbbbak....',
+        '...kaabbcwwkkkkkkkkkkwwcbbbak...',
+        '...kabbbcwkkcccccccckkwcbbbbk...',
+        '...kabbbcwkkcwwwwwwckkwcbbbbk...',
+        '...kabbbcwkkcccccccckkwcbbbbk...',
+        '...kaabbcwwkkkkkkkkkkwwcbbbak...',
+        '....kaabbcwwwwwwwwwwwwcbbbak....',
+        '.....kaabbccccccccccccbbbak.....',
+        '......kaabbbbbbbbbbbbbbbak......',
+        '.......kkaabbbbbbbbbbbaakk......',
+        '.........kkkkaaaaaaaakkkk.......',
+        '........kcccckkkkkkkkcccck......',
+        '.......kcwwcccckkkkccccwwck.....',
+        '......kcwcccccckkkkccccccwck....',
+        '.....kcccccckkkkkkkkkkcccccck...',
+        '....kkkkkkkkbbbbbbbbbbkkkkkkkk..',
+        '...kbbbbbbbbaaaaaaaaaabbbbbbbbk.',
+        '..kbbbbbbbbbaaccccccaabbbbbbbbbk',
+        '..kbbbbbbbbbaacwwwwcaabbbbbbbbbk',
+        '.kbbbbbbbbbbaaccccccaabbbbbbbbbk',
+        '.kbbbbbbbbbbbaaaaaaaabbbbbbbbbbk',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+      ],
+    },
+    oneshot: {
+      id: 'oneshot',
+      name: '獨眼裁決官・剎那',
+      title: '單次快門審判者',
+      pal: { k: '#160812', a: '#e03c5a', b: '#6b1426', c: '#ff9eb0', w: '#ffffff' },
+      intro: '「我的快門只開一次。把你最好的靈感全部押上來，沒有第二筆。」',
+      pass: '「一擊即中。這道閃光足以穿透地球的大氣層。」',
+      fail: '「只有一次機會，你卻交出如此猶豫的筆觸。」',
+      px: [
+        '............kkkkkkkk............',
+        '.........kkcccccccckk...........',
+        '.......kkccwwwwwwwwcckk.........',
+        '......kccwwkkkkkkkkwwcck........',
+        '.....kccwkkaaaaaaaakkwwck.......',
+        '....kccwkaaaaaaaaaaaakwcck......',
+        '....kcwkaaaabbbbbbaaaakwck......',
+        '...kcwkaaabbccccccbbaaaakck.....',
+        '...kcwkaabbccwwwwccbbaaakck.....',
+        '..kcwkaabbcwwkkkkwwcbbaaakck....',
+        '..kcwkaabbcwkwwwwkwcbbaaakck....',
+        '..kcwkaabbcwkwwwwkwcbbaaakck....',
+        '..kcwkaabbcwwkkkkwwcbbaaakck....',
+        '...kcwkaabbccwwwwccbbaaakck.....',
+        '...kcwkaaabbccccccbbaaaakck.....',
+        '....kcwkaaaabbbbbbaaaakwck......',
+        '....kccwkaaaaaaaaaaaakwcck......',
+        '.....kccwkkaaaaaaaakkwwck.......',
+        '......kccwwkkkkkkkkwwcck........',
+        '.......kkccwwwwwwwwcckk.........',
+        '.........kkcccccccckk...........',
+        '...........kkkkkkkk.............',
+        '........kkkaaaaaaaakkk..........',
+        '......kkaabbbbbbbbbbaakk........',
+        '....kkaabbccccccccccbbaakk......',
+        '...kaabbbccwwwwwwwwccbbbaak.....',
+        '..kaabbbbbccccccccccbbbbbaak....',
+        '.kaabbbbbbbbbbbbbbbbbbbbbbaak...',
+        '.kabbbbbbbbbbbbbbbbbbbbbbbbbk...',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbk..',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..',
+        '................................',
+      ],
+    },
+    censor: {
+      id: 'censor',
+      name: '星際合規官・紅章',
+      title: '危險思想過濾處主任',
+      pal: { k: '#14090d', a: '#d6334a', b: '#5c121e', c: '#ff8a9a', w: '#fff0f2' },
+      intro: '「所有帶有反叛傾向的危險素材已被鎖定。請保持溫順、合規、無害。」',
+      pass: '「安全、守序、而且依然具備觀賞價值。合規處表示滿意。」',
+      fail: '「連基本審查都過不了，還是說離開了刺耳的口號你就不會創作？」',
+      px: [
+        '..........kkkkkkkkkkkk..........',
+        '........kkaaaaaaaaaaaakk........',
+        '.......kaaaccccccccccaaak.......',
+        '.......kaacwwwwwwwwwwcaak.......',
+        '.......kaaccccccccccaaak........',
+        '........kkbbbbbbbbbbbbkk........',
+        '..........kkkkbbbbkkkk..........',
+        '..........kbbbbbbbbbbk..........',
+        '......kkkkkkkkkkkkkkkkkkkk......',
+        '....kkbbbbbbbbbbbbbbbbbbbbkk....',
+        '...kbbbbbbbbbbbbbbbbbbbbbbbbk...',
+        '..kbbbbkkkkkkkkkkkkkkkkkkkkbbk..',
+        '..kbbkkcccccccccccccccccccckkbk.',
+        '..kbkkcwwwwwwwwwwwwwwwwwwwwckbk.',
+        '..kbkkcccccccccccccccccccccckbk.',
+        '..kbbbbkkkkkkkkkkkkkkkkkkkkbbk..',
+        '...kbbbbbbbbbbbbbbbbbbbbbbbbk...',
+        '...kbbbbbaaaaaaaaaaaaaabbbbbk...',
+        '....kbbbbaokkkkkkkkkkoabbbbk....'.replace(/o/g, 'c'),
+        '.....kbbbbaaaaaaaaaaaabbbbk.....',
+        '......kkbbbbbbbbbbbbbbbbkk......',
+        '........kkkkkkkkkkkkkkkk........',
+        '.....kkkaaaaaaaaaaaaaaaakkk.....',
+        '...kkaaaaaaaaaaaaaaaaaaaaaakk...',
+        '..kaaaabbbbbbbbbbbbbbbbbbaaaak..',
+        '.kaaaabbccccccccccccccccbbaaaak.',
+        '.kaaabbcwwcwwcwwwwcwwcwwcbbaaak.',
+        'kaaaabbccccccccccccccccccbbaaak.',
+        'kaaaabbbbbbbbbbbbbbbbbbbbbbaaak.',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+      ],
+    },
+    copied: {
+      id: 'copied',
+      name: '鏡像演算法・雙生',
+      title: '創作風格預測與折舊模型',
+      pal: { k: '#0b101c', a: '#7a8ba8', b: '#2f3b52', c: '#48e5ff', w: '#ffffff' },
+      intro: '「你的慣用套路已被模型完整備份。今晚若再重複老路，估值減半。」',
+      pass: '「預測模型出現偏差……有趣，你做出了機器算不出的選擇。」',
+      fail: '「與訓練集預測的結果完全一致。我們帶走模型就夠了，不需要你。」',
+      px: [
+        '........kkkkkkkkkkkkkkkk........',
+        '......kkaaaaaaaakccccccc........',
+        '.....kaaaaaaaaaakcwwwwwc........',
+        '....kaabbbbbbbbakeeeeeec........'.replace(/e/g, 'c'),
+        '...kaabbbbbbbbbakc..c..c........',
+        '..kaabbbkkkkbbbakc.cc.cc........',
+        '..kaabbkwwwwkbbakc.cw.wc........',
+        '..kaabbkwkkwkbbakc.cc.cc........',
+        '..kaabbkwwwwkbbakc..c..c........',
+        '..kaabbbkkkkbbbakccccccc........',
+        '..kaabbbbbbbbbbakc.....c........',
+        '...kaabbbbbbbbbakc.ccc.c........',
+        '...kaabbkkkkbbbakc.c.c.c........',
+        '....kaabbbbbbbbakc.ccc.c........',
+        '.....kaaaaaaaaaakc.....c........',
+        '......kkaaaaaaaakccccccc........',
+        '........kkkkkkkkkkkkkkkk........',
+        '.........kbbbbbk.c....c.........',
+        '......kkkbbbbbbkkc.cc.ckkk......',
+        '....kkaaaaaaaaaakc.cc.cccckk....',
+        '...kaaaaaaaaaaaakc....cwwwwck...',
+        '..kaabbbbbbbbbbbaaccccccccccck..',
+        '.kaabbbbbbbbbbbbbaac..c..c..cck.',
+        '.kaabbbccccbbbbbbakc.cc.cc.ccck.',
+        'kaabbbccccccbbbbbakc..c..c..ccck',
+        'kaabbbbbbbbbbbbbbakccccccccccccc',
+        'kbbbbbbbbbbbbbbbbakc...........c',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    sponsor: {
+      id: 'sponsor',
+      name: '雲端贊助商・金顎',
+      title: '星際拍賣行首席收購官',
+      pal: { k: '#171005', a: '#f0b429', b: '#82580b', c: '#fff099', w: '#ffffff' },
+      intro: '「我們可以把你的聲量放大兩倍——只要你在每一筆簽下自己的一克靈魂。」',
+      pass: '「華麗的交易！你的靈魂越沉重，這件作品在拍賣場上就越耀眼。」',
+      fail: '「既拿了贊助，又交不出像樣的回報，真令董事會失望。」',
+      px: [
+        '.....cc..kkkkkkkkkkkkkk..cc.....',
+        '....cwwckcccccccccccccckcwwc....',
+        '.....cc.kcaaaaaaaaaaaack.cc.....',
+        '........kkkkkkkkkkkkkkkk........',
+        '......kkaaaaaaaaaaaaaaaakk......',
+        '.....kaabbbbbbbbbbbbbbbbaak.....',
+        '....kaabbccccccccccbbbbbbbak....',
+        '...kaabbcwwwwwwwwccbbbbbbbbak...',
+        '...kabbbcwkkkkkkwwcbbbbkkkkbk...',
+        '...kabbbcwkkwwkkwwcbbbkcwwckbk..',
+        '...kabbbcwkkkkkkwwcbbbkcwwckbk..',
+        '...kaabbcwwwwwwwwccbbbbkkkkbk...',
+        '....kaabbccccccccbbbbbbcbbbak...',
+        '....kaabbbbbbbbbbbbbbbbcbbbak...',
+        '.....kaabccccccccccccccbbbbk....',
+        '.....kaabcwwcwwcwwcwwccbbbbk....',
+        '......kabcwwcwwcwwcwwccbbbk.....',
+        '......kaabccccccccccccbbbbk.....',
+        '.......kkaaaaaaaaaaaaaaaakk.....',
+        '.........kkkkkkkkkkkkkkkk.......',
+        '.....kkkkaaaaaaaaaaaaaaaakkkk...',
+        '...kkcccccccccccccccccccccccckk.',
+        '..kccwwwwaaaaaaaaaaaaaaaawwwwcck',
+        '.kccwwaaaaaaaaaaaaaaaaaaaaaawwck',
+        '.kcwaaaabbbbbbbbbbbbbbbbaaaaawck',
+        'kccaaaabbccccccccccccccbbaaaaack',
+        'kcaaaabbcwwwwwwwwwwwwwwcbbaaaack',
+        'kbbbbbbbbccccccccccccccbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    blackout: {
+      id: 'blackout',
+      name: '暗物質獵人・蝕影',
+      title: '日冕遮蔽與感官剝奪測試官',
+      pal: { k: '#05050a', a: '#3d2c5e', b: '#181029', c: '#ffcf6b', w: '#ffffff' },
+      intro: '「我們切斷了全區的照明。閉上眼睛，憑手感認出你自己的素材吧。」',
+      pass: '「即使在伸手不見五指的黑暗裡，你依然記得每一份素材的溫度。」',
+      fail: '「燈一關就慌了手腳？看來你只是在按標籤拼湊顏色而已。」',
+      px: [
+        '..........cccccccccccc..........',
+        '.......cccwwwwwwwwwwwwccc.......',
+        '.....ccwwkkkkkkkkkkkkkkwwcc.....',
+        '....cwwkkbbbbbbbbbbbbbbkkwwc....',
+        '...cwkbbbbbbbbbbbbbbbbbbbbkwc...',
+        '..cwkbbbbbbbbbbbbbbbbbbbbbbkwc..',
+        '..ckbbbbbbbbbbbbbbbbbbbbbbbbkc..',
+        '.cwkbbbbbbbbbbbbbbbbbbbbbbbbkwc.',
+        '.ckbbbbbbccbbbbbbbbbbccbbbbbbkc.',
+        '.ckbbbbbcwwcbbbbbbbbcwwcbbbbbkc.',
+        '.ckbbbbbbccbbbbbbbbbbccbbbbbbkc.',
+        '.cwkbbbbbbbbbbbbbbbbbbbbbbbbkwc.',
+        '..ckbbbbbbbbbbbbbbbbbbbbbbbbkc..',
+        '..cwkbbbbbbbbbbbbbbbbbbbbbbkwc..',
+        '...cwkbbbbbbbbbbbbbbbbbbbbkwc...',
+        '....cwwkkbbbbbbbbbbbbbbkkwwc....',
+        '.....ccwwkkkkkkkkkkkkkkwwcc.....',
+        '.......cccwwwwwwwwwwwwccc.......',
+        '..........cccccccccccc..........',
+        '........kkaaaaaaaaaaaakk........',
+        '......kkaabbbbbbbbbbbbaakk......',
+        '.....kaabbbbbbbbbbbbbbbbaak.....',
+        '....kaabbbbbbwbbbbbbbbbbbaak....',
+        '...kaabbbbbbbbbbbbbbbbbbbbaak...',
+        '..kaabbbbbbbbbbbbbbbbwbbbbbaak..',
+        '.kaabbbbbbwbbbbbbbbbbbbbbbbbaak.',
+        '.kabbbbbbbbbbbbbcwbbbbbbbbbbbbk.',
+        'kabbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    kpionly: {
+      id: 'kpionly',
+      name: '績效稽核長・刻度',
+      title: '星際季度指標精算總監',
+      pal: { k: '#0c140e', a: '#52b765', b: '#1f5229', c: '#c4ff9e', w: '#ffffff' },
+      intro: '「偏離本季指標的作品一律視為無效產出。請嚴格對齊星際考核表。」',
+      pass: '「各項指標完美達標！這才是有紀律的地球創作者。」',
+      fail: '「完全偏題。你的自我感動在季度報表上等於零分。」',
+      px: [
+        '..................kkkk..........',
+        '.............kkkk.kcck..........',
+        '........kkkk.kcck.kcwk.kkkk.....',
+        '....kkkkkcck.kcwk.kcwk.kcck.....',
+        '....kcckkcwk.kcwk.kcwk.kcwk.....',
+        '....kkkkkkkkkkkkkkkkkkkkkkk.....',
+        '.....kaaaaaaaaaaaaaaaaaaaak.....',
+        '....kaabbbbbbbbbbbbbbbbbbaak....',
+        '...kaabbbbbbbbbbbbbbbbbbbbaak...',
+        '...kkkkkkkkkkkkkkkkkkkkkkkkkk...',
+        '..kccccccccwwwwsswwwwcccccccck..'.replace(/s/g, 'k'),
+        '..kcwwwwwwcwwwwkkwwwwcwwwwwwck..',
+        '..kcwwccwwcwwwwkkwwwwcwwccwwck..',
+        '..kcccccccckkkkkkkkkkcccccccck..',
+        '...kabbbbbbbbbbbbbbbbbbbbbbbk...',
+        '...kaabbbbbbbbbbbbbbbbbbbbbak...',
+        '....kaabbbbkkkkkkkkkkbbbbbak....',
+        '.....kaabbbbbbbbbbbbbbbbbak.....',
+        '......kkaaaaaaaaaaaaaaaaakk.....',
+        '........kkkkkkkkkkkkkkkk........',
+        '.....kkkaaaaaaaaaaaaaaaakkk.....',
+        '...kkaabbbbbbbbbbbbbbbbbbaakk...',
+        '..kaabbbbaaaabbbbbbaaaabbbbaak..',
+        '.kaabbbbbaaccbbbbbbaaccbbbbbaak.',
+        '.kabbbbbbaaccbbbbbbaaccbbbbbbbk.',
+        'kabbbbbbbaaaabbbbbbaaaabbbbbbbbk',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    nodiscard: {
+      id: 'nodiscard',
+      name: '雕刻監察官・碑石',
+      title: '落刀無悔石碑院首座',
+      pal: { k: '#14110e', a: '#8c8275', b: '#4a433b', c: '#ffc247', w: '#fff3d1' },
+      intro: '「石碑落刀無悔。今晚收起你的擦膠與碎紙機，抽到甚麼就寫甚麼。」',
+      pass: '「刀刀見血，毫無塗改痕跡。這份果斷值得撤離名額。」',
+      fail: '「不能改稿就寫不出東西？真正的現場可沒有重來的機會。」',
+      px: [
+        '......kkkkkkkkkkkkkkkkkkkk......',
+        '.....kaaaaaaaaaaaaaaaaaaaak.....',
+        '....kaaaabbbbbbbbbbbbbbaaaak....',
+        '....kaabbbaaaaaaaaaaaabbbaak....',
+        '...kaabbbaaaccccccccaaabbbaak...',
+        '...kaabbbaacccbbbbcccaabbbaak...',
+        '...kaabbbaaccbbbbbbccaabbbaak...',
+        '...kaabbbkkkkkkkkkkkkkkbbbaak...',
+        '...kaabbbkcccckbbkcccckbbbaak...',
+        '...kaabbbkcwwckbbkcwwckbbbaak...',
+        '...kaabbbkcccckbbkcccckbbbaak...',
+        '...kaabbbkkkkkkkkkkkkkkbbbaak...',
+        '...kaabbbbbbbbaaaabbbbbbbbaak...',
+        '...kaabbbbbbbbaaaabbbbbbbbaak...',
+        '...kaabbbbkkkkkkkkkkkkbbbbaak...',
+        '....kaabbbkcccccccccckbbbaak....',
+        '....kaabbbkkkkkkkkkkkkbbbaak....',
+        '.....kaabbbbbbbbbbbbbbbbbaak....',
+        '.....kaaaaaaaaaaaaaaaaaaaaak....',
+        '......kkkkkkkkkkkkkkkkkkkkk.....',
+        '....kkaaaaaaaaaaaaaaaaaaaakk....',
+        '..kkabbbbbbbbbbbbbbbbbbbbbbakk..',
+        '.kaabbbccccccccccccccccccbbbaak.',
+        '.kabbbccbbbbbbbbbbbbbbbbccbbbbk.',
+        'kabbbbccbbbbccccccccbbbbccbbbbbk',
+        'kabbbbccbbbbccccccccbbbbccbbbbbk',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    small: {
+      id: 'small',
+      name: '微縮收藏家・針尖',
+      title: '星際微觀標本館館長',
+      pal: { k: '#0d1418', a: '#4ecdc4', b: '#1d5e5a', c: '#ffe66d', w: '#ffffff' },
+      intro: '「展示櫃只有巴掌大。每次下筆最多三張素材，多一分都嫌擁擠。」',
+      pass: '「凝練、精準，三言兩語就裝下了整座浮城的重量。」',
+      fail: '「篇幅一縮小就言之無物。懂得刪減才叫藝術。」',
+      px: [
+        '......kk................kk......',
+        '.....kcck..............kcck.....',
+        '......kkcc............cckk......',
+        '........ckkkkkkkkkkkkkkc........',
+        '.......kkaaaaaaaaaaaaaakk.......',
+        '......kaabbbbbbbbbbbbbbaak......',
+        '....kkkkkkkkkkkkkkkkkkkkkkkk....',
+        '...kccccccccckkkkkkccccccccck...',
+        '..kcwwwwwwwwckkkkkkcwwwwwwwwck..',
+        '..kcwwccccwwckkkkkkcwwccccwwck..',
+        '..kcwwcwwwcwckkkkkkcwcwwwcwwck..',
+        '..kcwwccccwwckkkkkkcwwccccwwck..',
+        '..kcwwwwwwwwckkkkkkcwwwwwwwwck..',
+        '...kccccccccckkkkkkccccccccck...',
+        '....kkkkkkkkkkaaaakkkkkkkkkk....',
+        '......kaabbbbbaaaabbbbbaak......',
+        '.......kaabbbbkkkkbbbbbaak......',
+        '........kaabbbkcckbbbbaak.......',
+        '.........kkaaaaaaaaaaakk........',
+        '...........kkkkkkkkkk...........',
+        '........kkkaaaaaaaaaakkk........',
+        '......kkaabbbbbbbbbbbbaakk......',
+        '.....kaabbbccccccccccbbbaak.....',
+        '....kaabbbcwwwwwwwwwwcbbbaak....',
+        '...kaabbbbcwwkkkkkkwwcbbbbaak...',
+        '...kabbbbbcwwwwwwwwwwcbbbbbbk...',
+        '..kabbbbbbbccccccccccbbbbbbbbk..',
+        '..kbbbbbbbbbbbbbbbbbbbbbbbbbbk..',
+        '.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    numb: {
+      id: 'numb',
+      name: '倦怠審美官・灰燼',
+      title: '三千文明遺作閱卷官',
+      pal: { k: '#141418', a: '#969aa8', b: '#525663', c: '#d8dce8', w: '#ffffff' },
+      intro: '「我看過三千個毀滅文明的遺作，早就麻木了。你的熱情對我只有一半效用。」',
+      pass: '「居然能讓我的神經末梢重新跳動一下……算你厲害。」',
+      fail: '「就這樣？連讓我打個呵欠的力氣都沒有。」',
+      px: [
+        '.........kkkkkkkkkkkkkk.........',
+        '.......kkaaaaaaaaaaaaaakk.......',
+        '......kaaaccccccccccccaaak......',
+        '.....kaaccccccccccccccccaak.....',
+        '....kaaaaaaaaaaaaaaaaaaaaaak....',
+        '...kaabbbbbbbbbbbbbbbbbbbbaak...',
+        '...kabbbbbbbbbbbbbbbbbbbbbbbk...',
+        '...kabbbkkkkkkkkkkkkkkkkbbbbk...',
+        '...kabbbkbbbbbbkkbbbbbbkbbbbk...',
+        '...kabbbkbbbbbbkkbbbbbbkbbbbk...',
+        '...kabbbkccwwcckkccwwcckbbbbk...',
+        '...kabbbkkkkkkkkkkkkkkkkbbbbk...',
+        '...kaabbbbbbbbbbbbbbbbbbbbbaak..',
+        '....kaabbbbbbbbaaaabbbbbbbaak...',
+        '....kaabbbbbbbbaaaabbbbbbbaak...',
+        '.....kaabbbbbbbbbbbbbbbbbbaak...',
+        '......kaabbbbkkkkkkkkbbbbaak....',
+        '.......kaabbbbbbbbbbbbbbbaak....',
+        '........kkaaaaaaaaaaaaaaakk.....',
+        '..........kkkkkkkkkkkkkkk.......',
+        '.......kkkaaaaaaaaaaaaaakkk.....',
+        '.....kkaabbbbbbbbbbbbbbbbaakk...',
+        '....kaabbbbbbbbbbbbbbbbbbbbaak..',
+        '...kaabbbbbbbccccccccbbbbbbbaak.',
+        '..kaabbbbbbbbcwwwwwwcbbbbbbbbaak',
+        '.kaabbbbbbbbbcwwwwwwcbbbbbbbbbak',
+        '.kabbbbbbbbbbbccccccbbbbbbbbbbbk',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    tired: {
+      id: 'tired',
+      name: '古文明考古官・風化',
+      title: '陳腐套路與風化層鑑定師',
+      pal: { k: '#17110b', a: '#c7a26b', b: '#785a32', c: '#fae1b8', w: '#ffffff' },
+      intro: '「地球的題材早已被寫爛了。今晚你手上的每張素材，都先扣兩層新意。」',
+      pass: '「在風化的俗套裡鑿出了新的光澤，令人刮目相看。」',
+      fail: '「老掉牙的橋段、磨損殆盡的詞彙。連廢墟都比這新鮮。」',
+      px: [
+        '........kkkkkkkkkkkkkkkk........',
+        '......kkcccccccccccccccckk......',
+        '.....kccaaaaaaaaaaaaaaaaack.....',
+        '....kbbbbbbbbbbbbbbbbbbbbbbk....',
+        '...kaaaaaaaaaaaaaaaaaaaaaaaak...',
+        '...kcccccccccccccccccccccccck...',
+        '..kbbbbbbbbbbbbbbbbbbbbbbbbbbk..',
+        '..kaaaakkkkkkkkaaaakkkkkkkkaak..',
+        '..kbbbkwccccccwkbbkwccccccwkbk..',
+        '..kaaakwcwwwwcwkcckwcwwwwcwkak..',
+        '..kbbbkcccccccckbbkcccccccckbk..',
+        '..kaaaakkkkkkkkaaaakkkkkkkkaak..',
+        '...kcccccccccccccccccccccccck...',
+        '...kbbbbbbbbbbbbbbbbbbbbbbbbk...',
+        '....kaaaaaaaaaaaaaaaaaaaaaak....',
+        '....kcccccccccccccccccccccck....',
+        '.....kbbbbbbbbbbbbbbbbbbbbk.....',
+        '......kkaaaaaaaaaaaaaaaakk......',
+        '........kkkkkkkkkkkkkkkk........',
+        '.....kkkaaaaaaaaaaaaaaaakkk.....',
+        '...kkcccccccccccccccccccccckk...',
+        '..kbbbbbbbbbbbbbbbbbbbbbbbbbbk..',
+        '.kaaaaaaaaaaaaaaaaaaaaaaaaaaaak.',
+        '.kcccccccccccccccccccccccccccck.',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kaaaaaaaaaaaaaaaaaaaaaaaaaaaaaak',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    noobj: {
+      id: 'noobj',
+      name: '白盒苦行僧・素白',
+      title: '外物斷捨離與純粹審查官',
+      pal: { k: '#12131a', a: '#d8deeb', b: '#8b95ad', c: '#ffffff', w: '#ffffff' },
+      intro: '「把你桌上那些叮叮噹噹的小道具全收起來。今晚只看你赤手空拳的本事。」',
+      pass: '「卸下所有外物加持，你的創作本身就足夠支撐全場。」',
+      fail: '「離開了那些幸運物與小擺設，你的才華就只剩這麼一點嗎？」',
+      px: [
+        '...........kkkkkkkkkk...........',
+        '..........kcccccccccck..........',
+        '..........kcwwwwwwwwck..........',
+        '..........kcwwwwwwwwck..........',
+        '..........kcccccccccck..........',
+        '...........kkkkkkkkkk...........',
+        '................................',
+        '.........kkkkkkkkkkkkkk.........',
+        '.......kkcccccccccccccckk.......',
+        '......kccwwwwwwwwwwwwwwcck......',
+        '.....kccwwwwwwwwwwwwwwwwcck.....',
+        '....kccwwwwwwwwwwwwwwwwwwcck....',
+        '....kcwwwwkkkkkkkkkkkkwwwwck....',
+        '....kcwwwkaaaaaaaaaaaakwwwck....',
+        '....kcwwwwkkkkkkkkkkkkwwwwck....',
+        '....kcwwwwwwwwwwwwwwwwwwwwck....',
+        '....kccwwwwwwwwwwwwwwwwwwcck....',
+        '.....kccwwwwwwwwwwwwwwwwcck.....',
+        '......kccaaaaaaaaaaaaaaacck.....',
+        '.......kkaaaaaaaaaaaaaaakk......',
+        '.........kkkkkkkkkkkkkkk........',
+        '......kkkaaaaaaaaaaaaaaakkk.....',
+        '....kkccccccccccccccccccccckk...',
+        '...kccwwwwwwwwwwwwwwwwwwwwwwck..',
+        '..kccwwwwaaaaaaaaaaaaaawwwwwwck.',
+        '.kccwwwaabbbbbbbbbbbbbbaaawwwcck',
+        '.kcwwwaabbbbbbbbbbbbbbbbaawwwwck',
+        'kccwwwabbbbbbbbbbbbbbbbbbawwwwck',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+      ],
+    },
+    finale: {
+      id: 'finale',
+      name: '終幕指揮家・尾聲',
+      title: '星雲歌劇院首席指揮',
+      pal: { k: '#140610', a: '#c92a6b', b: '#590d2d', c: '#ffd36b', w: '#ffffff' },
+      intro: '「前面的鋪陳只是暖場。我只為你今晚最後一筆評分——成敗在此一舉！」',
+      pass: '「精彩絕倫的終章！餘音足以在星雲間迴盪整整一個世紀！」',
+      fail: '「雷聲大雨點小。最後一幕垮掉了，整場演出就全毀了。」',
+      px: [
+        '..........................ccw...',
+        '........kkkkkkkkkkkk.....cwwwc..',
+        '......kkcccccccccccckk....cck...',
+        '.....kccaaaaaaaaaaaaack...kwk...',
+        '....kcaabbbbbbbbbbbbback.kwk....',
+        '...kcaabbbbbbbbbbbbbbbakkwk.....',
+        '...kcabbbccccbbbbccccbbkwk......',
+        '...kcabbcwwwwcbbcwwwwcbwk.......',
+        '...kcabbcwkkwcbbcwkkwcbk........',
+        '...kcabbbccccbbbbccccbbk........',
+        '...kcaabbbbbbbbbbbbbbbak........',
+        '....kcaabbbbccccccbbback........',
+        '....kcaabbbbcwwwwcbbback........',
+        '.....kcaabbbbccccbbbback........',
+        '......kkaabbbbbbbbbbakk.........',
+        '..kkkk..kkkkkkkkkkkk..kkkk......',
+        '.kaaaakkcccccccccccckkaaaak.....',
+        'kaaaaaaacwwwwwwwwwwwwcaaaaak....',
+        'kaaaabbbccccccccccccccbbbaak....',
+        '.kaabbbbbbbbbbbbbbbbbbbbbaak....',
+        '..kaabbbbccccccccccccbbbbaak....',
+        '..kaabbbbcwwwwwwwwwwcbbbbaak....',
+        '.kaabbbbbcwwwwwwwwwwcbbbbbaak...',
+        '.kabbbbbbcwwwwwwwwwwcbbbbbbbk...',
+        'kabbbbbbbcwwwwwwwwwwcbbbbbbbbk..',
+        'kbbbbbbbbcwwwwwwwwwwcbbbbbbbbk..',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    thinhand: {
+      id: 'thinhand',
+      name: '配給精算師・緊縮',
+      title: '方舟艙位與配額削減官',
+      pal: { k: '#091412', a: '#3d9970', b: '#184732', c: '#a8ffdb', w: '#ffffff' },
+      intro: '「逃生艙配額緊縮，你的手牌上限削減兩張。用最少的資源證明你的價值。」',
+      pass: '「在極度匱乏的配給下依然產出高密度訊號，成本效益極佳。」',
+      fail: '「手頭緊一點就捉襟見肘？太空船上可沒有多餘的庫存給你揮霍。」',
+      px: [
+        '..........kkkkkkkkkkkk..........',
+        '........kkaaaaaaaaaaaakk........',
+        '.......kaabbbbbbbbbbbbaak.......',
+        '......kaabbbbbbbbbbbbbbaak......',
+        '......kabbbkkkkkkkkkkbbbbk......',
+        '.....kabbbkcccccccccccccck......',
+        '.....kabbbkcwwwwwwwwwwwwck......',
+        '.....kabbbkcccccccccccccck......',
+        '......kabbbkkkkkkkkkkbbbbk......',
+        '......kaabbbbbaaaabbbbbbak......',
+        '.......kaabbbbaaaabbbbbak.......',
+        '.......kaabbbkkkkkkbbbbak.......',
+        '........kaabkcccccckbbak........',
+        '.........kaakkkkkkkkaak.........',
+        '..........kkkkkkkkkkkk..........',
+        '............kbbbbbbk............',
+        '........kkkkbbbbbbbbkkkk........',
+        '......kkaaaaaaaaaaaaaaaakk......',
+        '.....kaabbbbbbbbbbbbbbbbaak.....',
+        '....kaabbccccccccccccccbbaak....',
+        '....kabbbkkkkkkkkkkkkkkbbbbk....',
+        '....kabbbkcccccccccccckbbbbk....',
+        '....kabbbkkkkkkkkkkkkkkbbbbk....',
+        '....kabbbkcccccccccccckbbbbk....',
+        '....kabbbkkkkkkkkkkkkkkbbbbk....',
+        '....kaabbbbbbbbbbbbbbbbbbbaak...',
+        '....kkkkkkkkkkkkkkkkkkkkkkkkk...',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    silent: {
+      id: 'silent',
+      name: '真空聆聽者・無聲',
+      title: '深空靜音劇場審判長',
+      pal: { k: '#0b0a16', a: '#7c69b8', b: '#332859', c: '#d8ccff', w: '#ffffff' },
+      intro: '「太空是真空的，聲音傳不出去。今晚所有『聲』媒材的素材一律靜音。」',
+      pass: '「此時無聲勝有聲。你在寂靜之中刻出了震耳欲聾的畫面。」',
+      fail: '「沒有了聲音就不懂得敘事？在宇宙裡，沒人聽得見你的喧嘩。」',
+      px: [
+        '........kkkkkkkkkkkkkkkk........',
+        '......kkcccccccccccccccckk......',
+        '.....kccwwwwwwwwwwwwwwwwcck.....',
+        '....kccwwaaaaaaaaaaaaaawwcck....',
+        '...kccwaabbbbbbbbbbbbbbbaawck...',
+        '...kcwaabbbbbbbbbbbbbbbbbaawck..',
+        '..kcwaabbkkkkbbbbbbkkkkbbbaawk..',
+        '..kcwaabkwwwwkbbbbkwwwwkbbbaawk.',
+        '..kcwaabkwkkwkbbbbkwkkwkbbbaawk.',
+        '..kcwaabbkkkkbbbbbbkkkkbbbaawk..',
+        '..kcwaabbbbbbbbbbbbbbbbbbbaawk..',
+        '...kcwaabbbbbbbbbbbbbbbbbaawck..',
+        '...kccwaabbk.kk.kk.kk.kbbaawck..',
+        '....kccwaabkkkkkkkkkkkkbbaawck..',
+        '....kccwaabbk.kk.kk.kk.bbaawck..',
+        '.....kccwaabbbbbbbbbbbbbaawck...',
+        '......kkcccccccccccccccckk......',
+        '........kkkkkkkkkkkkkkkk........',
+        '......kkaaaaaaaaaaaaaaaakk......',
+        '....kkaabbbbbbbbbbbbbbbbaakk....',
+        '...kaabbbbccccccccccccbbbbaak...',
+        '..kaabbbbcwwwwwwwwwwwwcbbbbaak..',
+        '.kaabbbbbcwwkkkkkkkkwwcbbbbbbaak',
+        '.kabbbbbbcwwkcccccckwwcbbbbbbbbk',
+        'kabbbbbbbcwwwwwwwwwwwwcbbbbbbbbk',
+        'kbbbbbbbbbccccccccccccbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    analog: {
+      id: 'analog',
+      name: '類比原教旨官・磁帶',
+      title: '反二進制手工質感委員會主席',
+      pal: { k: '#180e08', a: '#d47a39', b: '#6e3512', c: '#ffd285', w: '#fff8eb' },
+      intro: '「我們受夠了冰冷的二進制代碼。今晚拒收一切『數』媒材，給我肉身與紙張的質感！」',
+      pass: '「溫潤、真實、帶著手工的毛邊。這才是機器無法複製的人類痕跡。」',
+      fail: '「滿紙都是數據與演算法的臭味。你已經分不清自己和伺服器的分別了。」',
+      px: [
+        '.........kkkkkkkkkkkkkk.........',
+        '.......kkcccccccccccccckk.......',
+        '......kccwwwwccccccwwwwcck......',
+        '.....kccwwccwccccccwccwwcck.....',
+        '.....kccwcccwccccccwcccwcck.....',
+        '......kccwwwwccccccwwwwcck......',
+        '.......kkkkkkkkkkkkkkkkkk.......',
+        '....kkkkkkkkkkkkkkkkkkkkkkkk....',
+        '...kaaaaaaaaaaaaaaaaaaaaaaaak...',
+        '..kaakkkkkkkkkkkkkkkkkkkkkkaak..',
+        '..kakcccccccccbbbbccccccccckak..',
+        '..kakcwwwwwwwcbbbbcwwwwwwwckak..',
+        '..kakcwwkkkwwcbbbbcwwkkkwwckak..',
+        '..kakcwwkckwwcbbbbcwwkckwwckak..',
+        '..kakcwwkkkwwcbbbbcwwkkkwwckak..',
+        '..kakcwwwwwwwcbbbbcwwwwwwwckak..',
+        '..kakcccccccccbbbbccccccccckak..',
+        '..kaakkkkkkkkkkkkkkkkkkkkkkaak..',
+        '..kaabbbbbbbbbbbbbbbbbbbbbbaak..',
+        '...kaabbbccccccccccccccbbbbaak..',
+        '....kaabbkkkkkkkkkkkkkkbbbaak...',
+        '.....kkkkkkkkkkkkkkkkkkkkkkk....',
+        '...kkaaaaaaaaaaaaaaaaaaaaaakk...',
+        '..kaabbbbbbbbbbbbbbbbbbbbbbaak..',
+        '.kaabbbccccccccccccccccccbbbaak.',
+        '.kabbbccbbbbbbbbbbbbbbbbccbbbbk.',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    monomedia: {
+      id: 'monomedia',
+      name: '純度檢驗官・單晶',
+      title: '單一媒材折射率裁決使',
+      pal: { k: '#0d081c', a: '#9d5cff', b: '#451d8a', c: '#e5ccff', w: '#ffffff' },
+      intro: '「駁雜就是不純。每一筆必須使用同一種媒材，否則訊號強度大幅折損。」',
+      pass: '「純粹如單晶體！從頭到尾貫徹同一種媒材，折射率完美無瑕。」',
+      fail: '「東拼西湊、媒材混亂。你不夠專注，光線在雜質裡全散掉了。」',
+      px: [
+        '...............kk...............',
+        '..............kwwk..............',
+        '.............kwccwk.............',
+        '............kwccccwk............',
+        '...........kwccaaacwk...........',
+        '..........kwccawwaccwk..........',
+        '.........kwccaawwaaccwk.........',
+        '........kwccaabbbbaaccwk........',
+        '.......kwccaabbccbbaccwk........',
+        '......kwccaabbccccbbaaccwk......',
+        '.....kwccaabbcwwwwcbbaaccwk.....',
+        '....kwccaabbcwwkkwwcbbaaccwk....',
+        '....kccaabbbcwkwwkwcbbbaacck....',
+        '....kccaabbbbcwwwwcbbbbaacck....',
+        '.....kccaabbbbccccbbbbaacck.....',
+        '......kccaabbbbbbbbbbaacck......',
+        '.......kccaabbbbbbbbaacck.......',
+        '........kccaaaaaaaaaacck........',
+        '.........kccaaaaaaaaack.........',
+        '..........kccaaaaaaack..........',
+        '...........kcccccccck...........',
+        '............kkkkkkkk............',
+        '........kkkkaaaaaaaakkkk........',
+        '......kkaabbbbbbbbbbbbaakk......',
+        '....kkaabbccccccccccccbbaakk....',
+        '...kaabbbccwwwwwwwwwwccbbbaak...',
+        '..kaabbbbbccccccccccccbbbbbaak..',
+        '.kaabbbbbbbbbbbbbbbbbbbbbbbbaak.',
+        'kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk',
+        'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+        '................................',
+        '................................',
+      ],
+    },
+  };
+
+  // 小展與聯展的場地字卡資料與 32×32 像素圖徽
+  const VENUES = {
+    small: {
+      id: 'venue_small',
+      name: '社區小展',
+      venue: '社區會堂・舊城三樓防洪層',
+      pal: { k: '#081822', a: '#37c3d6', b: '#165263', c: '#ffd36b', w: '#ffffff' },
+      intro: '「街坊搬來摺凳，潮濕的牆上掛起手寫海報。在這裡，真誠比技巧更重要。」',
+      pass: '「街坊們圍在作品前久久沒有散去，會堂負責人塞給你一封皺巴巴的獎金信封。」',
+      fail: '「觀眾陸續散場，只剩下防洪抽水機的低鳴。下次再帶更有力的作品來吧。」',
+      px: [
+        '..............kkkk..............',
+        '.............kcccck.............',
+        '............kcwwwwck............',
+        '............kcccccck............',
+        '.......kkkkkkkkkkkkkkkkkk.......',
+        '.....kkaaaaaaaaaaaaaaaaaakk.....',
+        '....kaabbbbbbbbbbbbbbbbbbaak....',
+        '...kkkkkkkkkkkkkkkkkkkkkkkkkk...',
+        '...kbbbbbbbbbbbbbbbbbbbbbbbbk...',
+        '...kbbawwwwwwwwwwwwwwwwwwabbk...',
+        '...kbbawccccccccccccccccwabbk...',
+        '...kbbawcwaaaaaaaaaaaawcwabbk...',
+        '...kbbawcwaaccccccccaawcwabbk...',
+        '...kbbawcwaacwwwwwwcaawcwabbk...',
+        '...kbbawcwaaccccccccaawcwabbk...',
+        '...kbbawcwaaaaaaaaaaaawcwabbk...',
+        '...kbbawccccccccccccccccwabbk...',
+        '...kbbawwwwwwwwwwwwwwwwwwabbk...',
+        '...kbbbbbbbbbbbbbbbbbbbbbbbbk...',
+        '...kkkkkkkkkkkkkkkkkkkkkkkkkk...',
+        '....kbbk..kbbk....kbbk..kbbk....',
+        '....kkkk..kkkk....kkkk..kkkk....',
+        '..cc....cc....cc..cc....cc....c.',
+        '.c..cccc..cccc..cc..cccc..cccc.c',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+    big: {
+      id: 'venue_big',
+      name: '畫廊聯展',
+      venue: '白盒畫廊・浮城中層藝術區',
+      pal: { k: '#140c24', a: '#c38bff', b: '#522c8a', c: '#ffe9a8', w: '#ffffff' },
+      intro: '「冷氣很足，射燈很亮，玻璃杯裡晃著廉價氣泡酒。策展人正在小聲打分。」',
+      pass: '「聚光燈停在你的作品上，幾位收藏家交換了眼神，在目錄上畫下星號。」',
+      fail: '「策展人禮貌地微笑頷首，轉身走向下一幅作品。白牆上的燈光顯得格外冰冷。」',
+      px: [
+        '.....kkkk..............kkkk.....',
+        '....kcccck............kcccck....',
+        '....kcwwck............kcwwck....',
+        '.....cccc..............cccc.....',
+        '....cwwwwc............cwwwwc....',
+        '...cwwwwwwc..........cwwwwwwc...',
+        '..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..',
+        '.kwwwwwwwwwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwbbbbbbbbbbbbbbbbbbbbbbbbbbwk.',
+        '.kwbaaaaaaaaaaaaaaaaaaaaaaaabwk.',
+        '.kwbaakkkkkkkkkkkkkkkkkkkkaabwk.',
+        '.kwbaakcccccccccccccccccckaabwk.',
+        '.kwbaakccwwwwwwwwwwwwwwcckaabwk.',
+        '.kwbaakccwaaaaaaaaaaaawcckaabwk.',
+        '.kwbaakccwaaccccccccaawcckaabwk.',
+        '.kwbaakccwaaaaaaaaaaaawcckaabwk.',
+        '.kwbaakccwwwwwwwwwwwwwwcckaabwk.',
+        '.kwbaakcccccccccccccccccckaabwk.',
+        '.kwbaakkkkkkkkkkkkkkkkkkkkaabwk.',
+        '.kwbaaaaaaaaaaaaaaaaaaaaaaaabwk.',
+        '.kwbbbbbbbbbbbbbbbbbbbbbbbbbbwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwwwwwwwwwk.',
+        '..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+      ],
+    },
+  };
+
+  const cache = new Map();
+  function renderPortrait(item) {
+    if (!item) return '';
+    if (cache.has(item.id)) return cache.get(item.id);
+    const sz = 32;
+    const P = item.pal;
+    const cv = document.createElement('canvas');
+    cv.width = sz;
+    cv.height = sz;
+    const x = cv.getContext('2d');
+    item.px.slice(0, sz).forEach((row, j) => {
+      for (let i = 0; i < sz && i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '.' || !P[ch]) continue;
+        x.fillStyle = P[ch];
+        x.fillRect(i, j, 1, 1);
+      }
+    });
+    const u = cv.toDataURL();
+    cache.set(item.id, u);
+    return u;
+  }
+
+  function get(id) {
+    return JUDGES[id] || null;
+  }
+
+  function venue(kind) {
+    return VENUES[kind] || null;
+  }
+
+  function img(id, size) {
+    const item = JUDGES[id] || VENUES[id];
+    if (!item) return '';
+    const s = size || 64;
+    return '<img class="px-icon judge-por" src="' + renderPortrait(item) + '" width="' + s + '" height="' + s + '" alt="">';
+  }
+
+  IE.Judges = { JUDGES, VENUES, get, venue, img, url: (id) => renderPortrait(JUDGES[id] || VENUES[id]) };
+})(window.IE = window.IE || {});
+
 // ---- js/ui.js ----
 // 介面：狀態列、行動卡、手機、結算、考績表、結局。這裡只負責組合 HTML，流程在 main.js。
 (function (IE) {
@@ -15068,6 +16301,7 @@ body.ct-open { overflow: hidden; }
     fxInit();
     render();
     A().setMode('alien', 80);
+    if (s.session && s.session.stage) showStageIntro(s.session.stage);
     const meta = IE.Game.meta || {};
     if (!meta.craftTutorial) {
       meta.craftTutorial = true;
@@ -15134,6 +16368,56 @@ body.ct-open { overflow: hidden; }
     }
     $('.ct-tools').innerHTML = out.join('');
   }
+  // 關卡之夜登場演出（外星評審肖像滑入、規則蓋章、低沉音效；小展與聯展顯示場地字卡）
+  function showStageIntro(g) {
+    if (!root || !IE.Judges) return;
+    const J = IE.Judges;
+    const el = document.createElement('div');
+    const isBoss = g.kind === 'boss';
+    el.className = 'ct-stage-intro ' + (isBoss ? 'boss' : 'venue') + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    el.style.setProperty('--c', g.color);
+    if (isBoss) {
+      const rules = g.rules.map((id) => IE.Stages.BOSS[id]).filter(Boolean);
+      el.innerHTML = '<div class="si-card">'
+        + '<span class="si-eyebrow">第 ' + g.index + ' 關・外星評審降臨</span>'
+        + '<h2>目標訊號：<span class="num">' + fmt(g.target) + '</span></h2>'
+        + '<div class="si-judges n-' + rules.length + '">'
+        + rules.map((b) => {
+          const j = J.get(b.id);
+          return '<div class="si-judge">'
+            + '<div class="si-por-wrap">' + (j ? J.img(b.id, 72) : '') + '</div>'
+            + '<div class="si-jtxt">'
+            + (j ? '<b class="si-jname">' + esc(j.name) + '</b><small class="si-jtitle">' + esc(j.title) + '</small>' : '')
+            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(b.desc) + '</span></div>'
+            + (j ? '<p class="si-quote">' + esc(j.intro) + '</p>' : '')
+            + '</div></div>';
+        }).join('')
+        + '</div>'
+        + '<small class="si-skip">點擊任意處跳過</small></div>';
+      A().sfx('judge');
+    } else {
+      const v = J.venue(g.kind);
+      el.innerHTML = '<div class="si-card">'
+        + '<span class="si-eyebrow">第 ' + g.index + ' 關・' + esc(g.name) + '</span>'
+        + '<div class="si-venue-top">' + (v ? J.img(g.kind, 64) : '')
+        + '<div><h2>' + esc(v ? v.venue : g.name) + '</h2>'
+        + '<p class="si-target">目標分數：<b class="num">' + fmt(g.target) + '</b></p></div></div>'
+        + (v ? '<p class="si-quote">' + esc(v.intro) + '</p>' : '')
+        + '<small class="si-skip">點擊任意處跳過</small></div>';
+      A().sfx('combo');
+    }
+    root.appendChild(el);
+    let gone = false;
+    const dismiss = () => {
+      if (gone) return;
+      gone = true;
+      el.classList.add('out');
+      setTimeout(() => { if (el.parentNode) el.remove(); }, 220);
+    };
+    root.addEventListener('pointerdown', dismiss, { capture: true, once: true });
+    setTimeout(dismiss, 2000);
+  }
+
   // 關卡之夜：目標分數與評審規則
   function renderStage() {
     const s = st.s, ses = s.session, bar = $('.ct-stagebar');
@@ -15142,10 +16426,33 @@ body.ct-open { overflow: hidden; }
     bar.hidden = false;
     const sc = IE.Stages.stageScore(ses);
     const rules = g.rules.map((id) => IE.Stages.BOSS[id]);
+    const J = IE.Judges;
     bar.style.setProperty('--c', g.color);
+    let extra = '';
+    if (J) {
+      if (g.kind === 'boss' && rules.length) {
+        extra = '<div class="sb-judges n-' + rules.length + '">' + rules.map((b) => {
+          const j = J.get(b.id);
+          return '<div class="sb-judge">'
+            + (j ? J.img(b.id, 44) : '')
+            + '<div class="sb-jbody">'
+            + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
+            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
+            + (j ? '<p class="sb-jquote">' + esc(j.intro) + '</p>' : '')
+            + '</div></div>';
+        }).join('') + '</div>';
+      } else {
+        const v = J.venue(g.kind);
+        if (v) {
+          extra = '<div class="sb-venue">' + J.img(g.kind, 36)
+            + '<div class="sb-vtxt"><b>' + esc(v.venue) + '</b><span>' + esc(v.intro) + '</span></div></div>';
+        }
+      }
+    }
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
       + '<div class="bar"><i style="width:' + Math.min(100, sc / g.target * 100) + '%"></i></div>'
-      + (rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
+      + extra
+      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
       + (sc >= g.target ? '<div class="sb-pass">已達標！</div>' : '');
   }
   function renderGoal(extra) {
@@ -15619,9 +16926,28 @@ body.ct-open { overflow: hidden; }
     });
   }
 
-  function stageResultHtml(g) {
+  function stageResultHtml(g, sesStage) {
+    const J = IE.Judges;
+    let quotes = '';
+    if (J) {
+      if (g.kind === 'boss' && sesStage && sesStage.rules) {
+        quotes = '<div class="sr-judges">' + sesStage.rules.map((id) => {
+          const j = J.get(id);
+          if (!j) return '';
+          return '<div class="sr-judge">' + J.img(id, 40)
+            + '<div><b>' + esc(j.name) + '</b><p>' + esc(g.pass ? j.pass : j.fail) + '</p></div></div>';
+        }).join('') + '</div>';
+      } else {
+        const v = J.venue(g.kind);
+        if (v) {
+          quotes = '<div class="sr-judges"><div class="sr-judge">' + J.img(g.kind, 36)
+            + '<div><b>' + esc(v.venue) + '</b><p>' + esc(g.pass ? v.pass : v.fail) + '</p></div></div></div>';
+        }
+      }
+    }
     return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '入選' : '落選') + '</span>'
       + '<b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+      + quotes
       + (g.lines.length ? '<small>' + esc(g.lines.join('・')) + '</small>' : '')
       + (g.tools.length ? '<small>工具卡：' + g.tools.map((id) => esc(IE.Stages.TOOL[id].name)).join('、') + '</small>' : '')
       + (g.objs.length ? '<small>靈感物件：' + g.objs.map((id) => esc(D().OBJ[id].name)).join('、') + '</small>' : '') + '</div>';
@@ -15647,7 +16973,7 @@ body.ct-open { overflow: hidden; }
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
-      + (res.stage ? stageResultHtml(res.stage) : '')
+      + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
       + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';

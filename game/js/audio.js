@@ -127,6 +127,13 @@
     beam() { const t = ctx.currentTime; tone('sine', 180, t, 3.5, 0.15, sfxBus, 1400); tone('triangle', 90, t, 3.5, 0.1, sfxBus, 700); },
     rent() { const t = ctx.currentTime; tone('square', 330, t, 0.15, 0.1, sfxBus); tone('square', 262, t + 0.15, 0.25, 0.1, sfxBus); },
     ad() { const t = ctx.currentTime; tone('square', 1760, t, 0.05, 0.06, sfxBus); tone('square', 1760, t + 0.08, 0.05, 0.06, sfxBus); },
+    judge() {
+      const t = ctx.currentTime;
+      tone('sawtooth', 65.4, t, 0.9, 0.14, sfxBus, 49);
+      tone('triangle', 98, t, 0.95, 0.12, sfxBus, 73.4);
+      [36, 42, 49, 54].forEach((n, i) => tone('sawtooth', midi(n), t + 0.18 + i * 0.04, 0.65, 0.06, sfxBus));
+      noise(t + 0.32, 0.12, 0.28, sfxBus);
+    },
   };
 
   IE.Audio = {

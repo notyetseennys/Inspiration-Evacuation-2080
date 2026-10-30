@@ -97,6 +97,7 @@
     fxInit();
     render();
     A().setMode('alien', 80);
+    if (s.session && s.session.stage) showStageIntro(s.session.stage);
     const meta = IE.Game.meta || {};
     if (!meta.craftTutorial) {
       meta.craftTutorial = true;
@@ -163,6 +164,56 @@
     }
     $('.ct-tools').innerHTML = out.join('');
   }
+  // 關卡之夜登場演出（外星評審肖像滑入、規則蓋章、低沉音效；小展與聯展顯示場地字卡）
+  function showStageIntro(g) {
+    if (!root || !IE.Judges) return;
+    const J = IE.Judges;
+    const el = document.createElement('div');
+    const isBoss = g.kind === 'boss';
+    el.className = 'ct-stage-intro ' + (isBoss ? 'boss' : 'venue') + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    el.style.setProperty('--c', g.color);
+    if (isBoss) {
+      const rules = g.rules.map((id) => IE.Stages.BOSS[id]).filter(Boolean);
+      el.innerHTML = '<div class="si-card">'
+        + '<span class="si-eyebrow">第 ' + g.index + ' 關・外星評審降臨</span>'
+        + '<h2>目標訊號：<span class="num">' + fmt(g.target) + '</span></h2>'
+        + '<div class="si-judges n-' + rules.length + '">'
+        + rules.map((b) => {
+          const j = J.get(b.id);
+          return '<div class="si-judge">'
+            + '<div class="si-por-wrap">' + (j ? J.img(b.id, 72) : '') + '</div>'
+            + '<div class="si-jtxt">'
+            + (j ? '<b class="si-jname">' + esc(j.name) + '</b><small class="si-jtitle">' + esc(j.title) + '</small>' : '')
+            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(b.desc) + '</span></div>'
+            + (j ? '<p class="si-quote">' + esc(j.intro) + '</p>' : '')
+            + '</div></div>';
+        }).join('')
+        + '</div>'
+        + '<small class="si-skip">點擊任意處跳過</small></div>';
+      A().sfx('judge');
+    } else {
+      const v = J.venue(g.kind);
+      el.innerHTML = '<div class="si-card">'
+        + '<span class="si-eyebrow">第 ' + g.index + ' 關・' + esc(g.name) + '</span>'
+        + '<div class="si-venue-top">' + (v ? J.img(g.kind, 64) : '')
+        + '<div><h2>' + esc(v ? v.venue : g.name) + '</h2>'
+        + '<p class="si-target">目標分數：<b class="num">' + fmt(g.target) + '</b></p></div></div>'
+        + (v ? '<p class="si-quote">' + esc(v.intro) + '</p>' : '')
+        + '<small class="si-skip">點擊任意處跳過</small></div>';
+      A().sfx('combo');
+    }
+    root.appendChild(el);
+    let gone = false;
+    const dismiss = () => {
+      if (gone) return;
+      gone = true;
+      el.classList.add('out');
+      setTimeout(() => { if (el.parentNode) el.remove(); }, 220);
+    };
+    root.addEventListener('pointerdown', dismiss, { capture: true, once: true });
+    setTimeout(dismiss, 2000);
+  }
+
   // 關卡之夜：目標分數與評審規則
   function renderStage() {
     const s = st.s, ses = s.session, bar = $('.ct-stagebar');
@@ -171,10 +222,33 @@
     bar.hidden = false;
     const sc = IE.Stages.stageScore(ses);
     const rules = g.rules.map((id) => IE.Stages.BOSS[id]);
+    const J = IE.Judges;
     bar.style.setProperty('--c', g.color);
+    let extra = '';
+    if (J) {
+      if (g.kind === 'boss' && rules.length) {
+        extra = '<div class="sb-judges n-' + rules.length + '">' + rules.map((b) => {
+          const j = J.get(b.id);
+          return '<div class="sb-judge">'
+            + (j ? J.img(b.id, 44) : '')
+            + '<div class="sb-jbody">'
+            + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
+            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
+            + (j ? '<p class="sb-jquote">' + esc(j.intro) + '</p>' : '')
+            + '</div></div>';
+        }).join('') + '</div>';
+      } else {
+        const v = J.venue(g.kind);
+        if (v) {
+          extra = '<div class="sb-venue">' + J.img(g.kind, 36)
+            + '<div class="sb-vtxt"><b>' + esc(v.venue) + '</b><span>' + esc(v.intro) + '</span></div></div>';
+        }
+      }
+    }
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
       + '<div class="bar"><i style="width:' + Math.min(100, sc / g.target * 100) + '%"></i></div>'
-      + (rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
+      + extra
+      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
       + (sc >= g.target ? '<div class="sb-pass">已達標！</div>' : '');
   }
   function renderGoal(extra) {
@@ -648,9 +722,28 @@
     });
   }
 
-  function stageResultHtml(g) {
+  function stageResultHtml(g, sesStage) {
+    const J = IE.Judges;
+    let quotes = '';
+    if (J) {
+      if (g.kind === 'boss' && sesStage && sesStage.rules) {
+        quotes = '<div class="sr-judges">' + sesStage.rules.map((id) => {
+          const j = J.get(id);
+          if (!j) return '';
+          return '<div class="sr-judge">' + J.img(id, 40)
+            + '<div><b>' + esc(j.name) + '</b><p>' + esc(g.pass ? j.pass : j.fail) + '</p></div></div>';
+        }).join('') + '</div>';
+      } else {
+        const v = J.venue(g.kind);
+        if (v) {
+          quotes = '<div class="sr-judges"><div class="sr-judge">' + J.img(g.kind, 36)
+            + '<div><b>' + esc(v.venue) + '</b><p>' + esc(g.pass ? v.pass : v.fail) + '</p></div></div></div>';
+        }
+      }
+    }
     return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '入選' : '落選') + '</span>'
       + '<b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+      + quotes
       + (g.lines.length ? '<small>' + esc(g.lines.join('・')) + '</small>' : '')
       + (g.tools.length ? '<small>工具卡：' + g.tools.map((id) => esc(IE.Stages.TOOL[id].name)).join('、') + '</small>' : '')
       + (g.objs.length ? '<small>靈感物件：' + g.objs.map((id) => esc(D().OBJ[id].name)).join('、') + '</small>' : '') + '</div>';
@@ -676,7 +769,7 @@
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
-      + (res.stage ? stageResultHtml(res.stage) : '')
+      + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
       + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
