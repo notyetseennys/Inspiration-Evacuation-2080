@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 平衡模擬：以與遊戲相同的規則，用不同策略各跑數百局，檢驗核心矛盾是否成立。
-// 用法：node tools/sim.js [局數]
+// 用法：node tools/sim.js [局數]　　DIST=1：查看訊號分佈　STRAT=名稱：只跑指定策略　TYPES=1：人類模組分佈
 // 每個策略 = 行動方式 + 道德取向：
 //   - 道德取向：saint（永遠選擇良心）、pragmatist（缺錢或有大好處就妥協，臨近篩選日會贖罪）、shameless（永遠選擇利益）
 // 設計目標：
@@ -9,9 +9,8 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-require(path.join(__dirname, '../game/js/data.js'));
-require(path.join(__dirname, '../game/js/rules.js'));
-const { DATA: D, Rules: R } = globalThis.IE;
+['data.js', 'data-events.js', 'data-jobs.js', 'rules.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+const { DATA: D, Rules: R, Dossier: DS } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
 
@@ -87,6 +86,73 @@ function simDive(s, rng, moral) {
   return { relics, money, fish, hits, drowned, lockers };
 }
 
+function simDelivery(s, rng) {
+  const cfg = R.deliveryConfig(s);
+  const deliveries = Math.max(1, Math.round((4 + 3 * rng()) * cfg.speedMult));
+  const late = Math.round(deliveries * (0.08 + 0.2 * rng()));
+  const hits = rng() < 0.15 * cfg.boats ? 1 + Math.floor(rng() * 2) : 0;
+  const on = deliveries - late;
+  const cr = (on * 9.6 + late * 3) * cfg.payMult + on * 0.6 * 3 * cfg.tipMult;
+  return { cr, deliveries, late, hits };
+}
+// 內容農場：聖人盡量選有根據的字卡，無恥的人選最煽動的
+function simFarm(s, rng, moral) {
+  const cfg = R.farmConfig(s);
+  const T = D.FARM_TILES;
+  const n = 5 + Math.floor(rng() * 4);
+  let shares = 0, fakeTotal = 0, truth = 0;
+  const draw = (list) => { const a = list.slice(); const out = []; while (out.length < 3) out.push(a.splice(Math.floor(rng() * a.length), 1)[0]); return out; };
+  for (let h = 0; h < n; h++) {
+    const tray = ['subject', 'verb', 'object'].map((k) => draw(T[k]));
+    let best = null;
+    tray[0].forEach((a) => tray[1].forEach((b) => tray[2].forEach((c) => {
+      const sc = R.farmScore([a, b, c]);
+      const v = moral === 'saint' ? -sc.fake * 10000 + sc.shares * 0.01 : moral === 'random' ? rng() : sc.shares * (moral === 'pragmatist' ? 0.7 + 0.3 * rng() : 1);
+      if (!best || v > best.v) best = { v, sc };
+    })));
+    const mult = rng() < 0.4 ? 1.5 : 1;
+    shares += Math.round(best.sc.shares * mult);
+    fakeTotal += best.sc.fake;
+    if (best.sc.truth) truth++;
+  }
+  return { cr: shares * 0.0026 * cfg.payMult, headlines: n, shares, fakeTotal: Math.round(fakeTotal * 10) / 10, truth };
+}
+function simBusk(s, rng) {
+  const cfg = R.buskConfig(s);
+  const rounds = 2 + Math.floor(rng() * 4);
+  let crowd = 1, crowdMax = 1, cr = 0;
+  for (let i = 0; i < rounds; i++) { cr += (1 + crowd * 0.5) * cfg.payMult; crowd = Math.min(12, crowd + 1 + (rng() < 0.3 ? 1 : 0)); crowdMax = Math.max(crowdMax, crowd); if (rng() < 0.3) crowd = Math.max(0, crowd - 2); }
+  const soloNotes = Math.floor(rounds * (2 + rng() * 3));
+  cr += soloNotes * 0.25 * cfg.payMult * 0.7 + crowd * cfg.payMult;
+  return { cr, rounds, soloNotes, notes: soloNotes * 2 + rounds * 5, crowdMax };
+}
+function simClinic(s, rng, moral) {
+  const cfg = R.clinicConfig(s);
+  let patients = 0, illegal = 0, cr = 0;
+  const slots = 4 + Math.floor(rng() * 3);
+  for (let i = 0; i < slots; i++) {
+    const offer = i > 0 && rng() < 0.38;
+    if (offer) {
+      const take = moral === 'shameless' || (moral === 'pragmatist' && s.cr < moneyNeed(s)) || (moral === 'random' && rng() < 0.5);
+      if (!take) continue;
+      illegal++;
+    }
+    patients++;
+    cr += (10 + 4 * rng()) * cfg.payMult * (offer ? 2.5 : 1);
+  }
+  return { cr, patients, illegal, mistakes: Math.floor(rng() * 3) };
+}
+function simInterview(s, rng, moral) {
+  return R.interviewQuestions(s).map((q) => {
+    const a = D.INTERVIEW_QS[q].a;
+    let pickI;
+    if (moral === 'saint') { const honest = a.map((x, i) => i).filter((i) => !a[i].sin && a[i].score <= 0); pickI = honest[Math.floor(rng() * honest.length)] ?? 0; }
+    else if (moral === 'random' || rng() < 0.35) pickI = Math.floor(rng() * 3);
+    else { pickI = 0; a.forEach((x, i) => { if (x.score > a[pickI].score) pickI = i; }); }
+    return { q, a: pickI };
+  });
+}
+
 // 選出最好的素材組合；靈魂太重時，優先把愧疚寫進作品
 function bestCraft(s) {
   const cards = s.cards;
@@ -114,6 +180,10 @@ function act(s, id, rng, moral) {
     case 'ot': return R.applyLabel(s, simLabel(s, true, rng), { ot: true });
     case 'smile': return R.applySmile(s, simSmile(s, rng, moral));
     case 'dive': return R.applyDive(s, simDive(s, rng, moral));
+    case 'delivery': return R.applyDelivery(s, simDelivery(s, rng));
+    case 'farm': return R.applyFarm(s, simFarm(s, rng, moral));
+    case 'busk': return R.applyBusk(s, simBusk(s, rng));
+    case 'clinic': return R.applyClinic(s, simClinic(s, rng, moral));
     case 'chat': {
       const alive = R.aliveNpcs(s);
       return R.applyChat(s, alive[Math.floor(rng() * alive.length)].id);
@@ -127,7 +197,7 @@ const enabled = (s, id) => { const a = R.actions(s).find((x) => x.id === id); re
 const firstEnabled = (s, ids) => ids.find((id) => enabled(s, id)) || 'rest';
 const moneyNeed = (s) => {
   const daysToRent = R.nextRentDay(s) - s.day + 1;
-  return R.rentAmount(s) + s.debt + D.SEASONS[s.season].food * daysToRent + 40;
+  return R.rentAmount(s) + s.debt + R.foodCost(s) * daysToRent + 40;
 };
 const daysToReview = (s) => R.reviewDay(s) - s.day;
 
@@ -169,22 +239,47 @@ function balancedAct(s, moral) {
   if (moral !== 'shameless' && s.soul > R.SOUL_LIMIT - 4 && daysToReview(s) <= 4 && s.cr >= need * 0.6) return firstEnabled(s, ['volunteer']);
   if (moral === 'saint' && s.soul > 8 && s.cr >= need && s.slot === 1) return firstEnabled(s, ['volunteer']);
   // 火花太低就先救火花，否則會陷入「為交租而無限標註」的死循環
-  if (s.spark < 1.2 && s.cr > D.SEASONS[s.season].food * 2) return firstEnabled(s, ['chat', 'rest']);
-  if (s.cr < need) return s.spark >= 2.2 ? firstEnabled(s, ['smile', 'label']) : firstEnabled(s, ['label', 'smile']);
-  if (s.spark < 1.8) return firstEnabled(s, ['chat', 'rest']);
-  if (s.cards.length < 6) return firstEnabled(s, s.body > 45 ? ['dive', 'chat'] : ['chat', 'rest']);
-  return firstEnabled(s, ['chat', 'dive', 'label']);
+  if (s.spark < 1.2 && s.cr > R.foodCost(s) * 2) return firstEnabled(s, ['busk', 'chat', 'rest']);
+  if (s.cr < need) {
+    const jobs = moral === 'saint' ? ['delivery', 'clinic', 'label', 'smile'] : moral === 'shameless' ? ['farm', 'smile', 'clinic', 'label'] : ['clinic', 'delivery', 'smile', 'label', 'farm'];
+    return firstEnabled(s, s.body > 40 ? jobs : jobs.filter((j) => j !== 'delivery'));
+  }
+  if (s.spark < 1.8) return firstEnabled(s, ['busk', 'chat', 'rest']);
+  if (s.cards.length < 6) return firstEnabled(s, s.body > 45 ? (s.slot === 0 ? ['dive', 'busk'] : ['busk', 'dive', 'chat']) : ['chat', 'rest']);
+  return firstEnabled(s, s.slot === 1 ? ['busk', 'chat', 'dive'] : ['chat', 'dive', 'busk']);
 }
 const STRATEGIES = {
   workaholic: { moral: 'shameless', act(s) {
     if (R.isNight(s)) return s.body > 30 ? firstEnabled(s, ['ot']) : 'rest';
     if (s.body < 25) return 'rest';
-    return firstEnabled(s, ['smile', 'label', 'dive']);
+    return firstEnabled(s, ['smile', 'label', 'farm', 'dive']);
+  } },
+  courier: { moral: 'saint', act(s) {
+    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 4 ? 'create' : 'rest';
+    if (s.body < 40) return firstEnabled(s, ['busk', 'rest']);
+    return s.slot === 0 ? firstEnabled(s, ['delivery', 'label']) : firstEnabled(s, s.cr < moneyNeed(s) ? ['delivery', 'busk'] : ['busk', 'volunteer', 'chat']);
+  } },
+  troll: { moral: 'shameless', act(s) {
+    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 4 ? 'create' : 'rest';
+    if (s.body < 30) return 'rest';
+    return s.slot === 2 ? 'rest' : firstEnabled(s, s.slot === 0 ? ['farm', 'smile'] : ['farm', 'chat']);
+  } },
+  medic: { moral: 'pragmatist', act(s) {
+    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 4 ? 'create' : 'rest';
+    if (s.body < 30) return 'rest';
+    if (s.soul > R.SOUL_LIMIT - 4 && daysToReview(s) <= 4) return firstEnabled(s, ['volunteer']);
+    return s.slot === 0 ? firstEnabled(s, ['clinic', 'label']) : firstEnabled(s, ['chat', 'volunteer', 'clinic']);
+  } },
+  busker: { moral: 'saint', act(s) {
+    if (R.isNight(s)) return enabled(s, 'create') && s.cards.length >= 3 ? 'create' : 'rest';
+    if (s.body < 30) return 'rest';
+    if (s.cr < moneyNeed(s) && s.slot === 0) return firstEnabled(s, ['delivery', 'label']);
+    return firstEnabled(s, s.slot === 0 ? ['busk', 'chat'] : ['chat', 'busk', 'volunteer']);
   } },
   artist: { moral: 'saint', act(s) {
     if (R.isNight(s)) return enabled(s, 'create') ? 'create' : 'rest';
     if (s.body < 30) return 'rest';
-    return firstEnabled(s, s.slot === 0 ? ['chat', 'dive'] : ['dive', 'chat']);
+    return firstEnabled(s, s.slot === 0 ? ['chat', 'dive', 'busk'] : ['dive', 'busk', 'chat']);
   } },
   balanced: { moral: 'pragmatist', act: (s) => balancedAct(s, 'pragmatist') },
   saint: { moral: 'saint', act: (s) => balancedAct(s, 'saint') },
@@ -235,16 +330,21 @@ function runOne(strat, bg, season, seed) {
     if (R.drawDilemma(s)) chooseDilemma(s, S.moral, rng);
     for (let slot = 0; slot < 3 && !s.ended; slot++) {
       s.slot = slot;
-      act(s, S.act(s, rng), rng, S.moral);
+      // 普通玩家都懂得：身體太差就休息（隨機策略除外）
+      const tired = S.moral !== 'random' && strat !== 'workaholic' && s.body < (R.isNight(s) ? 36 : 26);
+      act(s, tired ? 'rest' : S.act(s, rng), rng, S.moral);
       if (s.body <= 0) break;
     }
     if (s.day === R.reviewDay(s)) signals.push(R.signal(s));
     const rep = R.endDay(s);
     if (rep.review && rep.review.overweight && rep.review.signalOk) overweightFails++;
     if (rep.ending) break;
+    if (rep.interview) R.applyInterview(s, simInterview(s, rng, S.moral));
   }
+  const kind = { recruited: 'agent' }[s.ended.type] || s.ended.type;
+  const dos = DS.evaluate(s, kind);
   return { ending: s.ended.type, day: s.ended.day, signals, works: s.works.length, soul: s.soul,
-    conscience: s.conscience, sparkMax: R.sparkMax(s), overweightFails };
+    conscience: s.conscience, sparkMax: R.sparkMax(s), overweightFails, type: dos.archetype.id, worlds: Object.keys(s.worldsSeen).length };
 }
 
 const bgs = Object.keys(D.BACKGROUNDS);
@@ -254,14 +354,14 @@ const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length :
 
 // DIST=1：不設門檻，查看各策略在第 10、20、30 天的累積訊號分佈，用來設定門檻
 if (process.env.DIST) {
-  D.THRESHOLDS = [1e12, 1e12, 1e12];
+  D.THRESHOLDS = D.REVIEW_DAYS.map(() => 1e12);
   const pctl = (arr, p) => { if (!arr.length) return '-'; const a = arr.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.floor(p * a.length))]; };
   for (const strat of Object.keys(STRATEGIES)) {
     const res = [];
     for (let i = 0; i < RUNS; i++) res.push(runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % 3], 1000 + i));
-    const line = [0, 1, 2].map((q) => {
+    const line = D.REVIEW_DAYS.map((day, q) => {
       const arr = res.filter((r) => r.signals[q] != null).map((r) => r.signals[q]);
-      return 'D' + (q + 1) * 10 + ' 存活' + String(Math.round(100 * arr.length / RUNS)).padStart(3) + '% p50/75/90 '
+      return 'D' + day + ' 存活' + String(Math.round(100 * arr.length / RUNS)).padStart(3) + '% p50/75/90 '
         + [0.5, 0.75, 0.9].map((p) => pctl(arr, p)).join('/');
     });
     console.log(strat.padEnd(11) + line.join('  ｜ '));
@@ -279,9 +379,7 @@ for (const strat of only) {
   const rec = res.filter((r) => r.ending === 'recruited');
   console.log(strat.padEnd(11) + '（' + STRATEGIES[strat].moral.padEnd(10) + '）'
     + ' 被選中' + pct(rec.length, RUNS)
-    + '（D10' + pct(count((r) => r.ending === 'recruited' && r.day === 10), RUNS)
-    + ' D20' + pct(count((r) => r.ending === 'recruited' && r.day === 20), RUNS)
-    + ' D30' + pct(count((r) => r.ending === 'recruited' && r.day === 30), RUNS) + '）'
+    + '（' + D.REVIEW_DAYS.map((d) => 'D' + d + pct(count((r) => r.ending === 'recruited' && r.day === d), RUNS)).join(' ') + '）'
     + ' 良知太重' + pct(count((r) => r.ending === 'heavy'), RUNS)
     + ' 平凡人' + pct(count((r) => r.ending === 'ordinary'), RUNS)
     + ' 死亡' + pct(count((r) => r.ending === 'death'), RUNS)
@@ -289,7 +387,23 @@ for (const strat of only) {
     + ' ｜超重落選 ' + avg(res.map((r) => r.overweightFails)).toFixed(2) + ' 次'
     + ' 最終靈魂 ' + avg(res.map((r) => r.soul)).toFixed(1) + ' 克'
     + ' 良知 ' + Math.round(avg(res.map((r) => r.conscience)) * 100) + '%'
-    + ' 火花上限 ' + avg(res.map((r) => r.sparkMax)).toFixed(1));
+    + ' 火花上限 ' + avg(res.map((r) => r.sparkMax)).toFixed(1)
+    + ' 平均存活 ' + avg(res.map((r) => r.day)).toFixed(0) + ' 天');
+}
+// TYPES=1：人類模組分佈（所有策略、所有背景）
+if (process.env.TYPES) {
+  const counts = {}, byStrat = {};
+  let total = 0;
+  for (const strat of only) {
+    byStrat[strat] = {};
+    for (let i = 0; i < RUNS; i++) {
+      const r = runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % seasons.length], 9000 + i);
+      counts[r.type] = (counts[r.type] || 0) + 1; byStrat[strat][r.type] = (byStrat[strat][r.type] || 0) + 1; total++;
+    }
+  }
+  console.log('\n人類模組分佈（' + Object.keys(counts).length + '/' + DS.ARCHETYPES.length + ' 種出現過）：');
+  DS.ARCHETYPES.forEach((a) => console.log('  ' + a.name.padEnd(10, '　') + pct(counts[a.id] || 0, total) + '　' + Object.keys(byStrat).filter((k) => byStrat[k][a.id]).map((k) => k + ':' + byStrat[k][a.id]).join(' ')));
+  process.exit(0);
 }
 if (process.env.STRAT) process.exit(0);
 console.log('\n按開局背景（balanced）：');

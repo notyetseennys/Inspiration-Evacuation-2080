@@ -39,14 +39,23 @@ const URL = 'http://localhost:' + PORT + '/';
     await closePhone();
     ok('開局');
 
-    // 玩三天：早上標註、下午潛水、晚上創作或睡覺
+    // 玩三天：早上工作（標註、外送、內容農場輪流）、下午潛水或表演、晚上創作或睡覺
+    const MORNING = [
+      ['label', { cr: 95, drain: 0.35, correct: 30, wrong: 2, maxCombo: 16, flows: 1, caught: 0 }],
+      ['delivery', { cr: 80, deliveries: 6, late: 1, hits: 1 }],
+      ['farm', { cr: 70, headlines: 6, shares: 24000, fakeTotal: 3.4, truth: 1 }],
+    ];
+    const AFTERNOON = [
+      ['dive', { relics: ['d_album', 'd_crayon'], money: 20, fish: { sardine: 2, eel: 1, grouper: 0, jelly: 0 }, hits: 0, drowned: false }],
+      ['busk', { cr: 22, rounds: 4, soloNotes: 12, notes: 40, crowdMax: 6 }],
+      ['dive', { relics: ['d_album'], money: 12, fish: { sardine: 1, eel: 0, grouper: 0, jelly: 0 }, hits: 1, drowned: false }],
+    ];
     for (let d = 0; d < 3; d++) {
-      await page.click('.act[data-id="label"]');
-      await page.evaluate(() => window.__IE.Game.applyMicroResult('label', { cr: 95, drain: 0.35, correct: 30, wrong: 2, maxCombo: 16, flows: 1, caught: 0 }));
-      await page.click('#modal [data-do="ok"]');
-      await page.click('.act[data-id="dive"]');
-      await page.evaluate(() => window.__IE.Game.applyMicroResult('dive', { relics: ['d_album', 'd_crayon'], money: 20, fish: { sardine: 2, eel: 1, grouper: 0, jelly: 0 }, hits: 0, drowned: false }));
-      await page.click('#modal [data-do="ok"]');
+      for (const [kind, res] of [MORNING[d], AFTERNOON[d]]) {
+        await page.click('.act[data-id="' + kind + '"]');
+        await page.evaluate(([k, r]) => window.__IE.Game.applyMicroResult(k, r), [kind, res]);
+        await page.click('#modal [data-do="ok"]');
+      }
       const canCreate = await page.$('.act[data-id="create"]:not([disabled])');
       if (canCreate) {
         await canCreate.click();
@@ -75,6 +84,38 @@ const URL = 'http://localhost:' + PORT + '/';
     if (resumed !== 4) await fail('繼續後的天數不正確：' + resumed);
     ok('自動存檔與繼續');
 
+    // 能力值面板
+    await page.click('[data-hud="stats"]');
+    const bars = await page.$$eval('#modal .sb', (els) => els.length);
+    if (bars !== 12) await fail('能力值面板應有 12 項，現在有 ' + bars + ' 項');
+    await page.click('#modal [data-do="close"]');
+    ok('能力值面板（12 項）');
+
+    // 夢境面試：跳到第 18 天晚上
+    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 18; s.slot = 2; s.body = 80; s.morning = { day: 18, feed: [] }; });
+    if (!(await page.$('.phone'))) await page.click('[data-hud="phone"]');
+    await closePhone();
+    await page.click('.act[data-id="rest"]');
+    await page.click('#modal [data-do="ok"]');
+    await page.waitForSelector('#modal [data-do="ok"]', { timeout: 8000 });
+    await page.click('#modal [data-do="ok"]');
+    await page.waitForSelector('#modal .d-text');
+    await page.click('#modal [data-do="ok"]');
+    const before = await page.evaluate(() => window.__IE.Game.state.bonusSignal);
+    // 直接驅動面試小遊戲：每題按 1，然後快轉
+    await page.evaluate(() => {
+      const G = window.__IE.Game, m = G.micro;
+      const step = (n) => { for (let i = 0; i < n && G.micro === m; i++) m.update(0.05); };
+      step(40);
+      for (let q = 0; q < 5; q++) { m.key(' ', true); m.key('1', true); step(70); }
+      step(80);
+    });
+    await page.waitForSelector('#modal [data-do="ok"]');
+    const after = await page.evaluate(() => window.__IE.Game.state.bonusSignal);
+    await page.click('#modal [data-do="ok"]');
+    await closePhone();
+    ok('夢境面試（訊號 ' + before + ' → ' + after + '）');
+
     // 強制死亡 → 結局
     await page.evaluate(() => { window.__IE.Game.state.body = 3; });
     if (await page.$('.phone [data-do="close"]')) await closePhone();
@@ -83,6 +124,9 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('#modal [data-do="ok"]');
     await page.waitForSelector('.ending.death');
     ok('死亡結局：' + (await page.textContent('.ending .epitaph')));
+    await page.waitForSelector('.dossier .d-class h3');
+    const stamps = await page.$$eval('.dossier .dstamp', (els) => els.map((e) => e.textContent));
+    ok('人類樣本檔案：' + (await page.textContent('.dossier .d-class h3')) + '｜印章 ' + stamps.join('、'));
 
     if (errors.length) await fail('有錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');

@@ -31,7 +31,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 3 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 4 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   function setCityFilter() {
@@ -153,7 +153,7 @@
   function doAction(id) {
     const s = Game.state;
     switch (id) {
-      case 'label': case 'ot': case 'smile': case 'dive':
+      case 'label': case 'ot': case 'smile': case 'dive': case 'delivery': case 'farm': case 'busk': case 'clinic':
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
@@ -213,6 +213,11 @@
     if (kind === 'label' || kind === 'ot') rep = R.applyLabel(s, result, { ot: kind === 'ot' });
     else if (kind === 'smile') rep = R.applySmile(s, result);
     else if (kind === 'dive') rep = R.applyDive(s, result);
+    else if (kind === 'delivery') rep = R.applyDelivery(s, result);
+    else if (kind === 'farm') rep = R.applyFarm(s, result);
+    else if (kind === 'busk') rep = R.applyBusk(s, result);
+    else if (kind === 'clinic') rep = R.applyClinic(s, result);
+    else if (kind === 'interview') rep = R.applyInterview(s, result.answers);
     setScene(S.City);
     afterAction(rep);
   };
@@ -261,10 +266,31 @@
               },
             });
           } else if (rep.ending) finishRun(rep.ending);
+          else if (rep.interview) dreamInterview();
           else startDay();
         },
       });
     }, heavy);
+  }
+
+  // ---------- 夢境面試（篩選日前兩晚） ----------
+  function dreamInterview() {
+    const s = Game.state;
+    R.interviewQuestions(s);
+    save();
+    UI.setPanel('<p class="mute">你睡著了。</p>');
+    UI.modal('<div class="modal dilemma"><span class="eyebrow">深夜・夢境</span><p class="d-text">你夢見有人敲門。門外是一張很長的辦公桌，桌後坐著一個沒有臉的面試官。</p>'
+      + '<p class="mute">「請坐。這只是一個非正式的對話。」</p><div class="btn-row"><button class="btn primary" type="button" data-do="ok">坐下</button></div></div>', {
+      ok() {
+        UI.closeModal();
+        startMicro('interview', (res) => {
+          const rep = R.applyInterview(s, res.answers);
+          setScene(S.City);
+          UI.renderHud(s); A.setMode('city'); save();
+          UI.modal(UI.reportModal(rep, '醒來'), { ok() { UI.closeModal(); startDay(); } });
+        });
+      },
+    });
   }
 
   // ---------- 被選中 ----------
@@ -321,7 +347,8 @@
     const kind = ending.kind || ending.type;
     ending.kind = kind;
     s.ended = ending;
-    Game.meta = R.recordMeta(Game.meta, s, kind);
+    const dossier = IE.Dossier.evaluate(s, kind);
+    Game.meta = R.recordMeta(Game.meta, s, kind, dossier);
     store.set(KEY_META, Game.meta);
     store.del(KEY_RUN);
     S.City.forceNight = true;
@@ -331,9 +358,9 @@
     UI.renderHud(s);
     UI.setPanel('<div class="btn-row"><button class="btn primary" type="button" data-do="again">再玩一局</button><button class="btn" type="button" data-do="title">返回標題</button></div>',
       { again: () => { UI.closeModal(); showSetup(); }, title: () => showTitle() });
-    UI.modal(UI.endingModal(ending, s, Game.meta), {
+    UI.modal(UI.dossierModal(ending, s, dossier, Game.meta), {
       copy() {
-        const text = '《靈感撤離 2080》' + ending.title + '：' + ending.text;
+        const text = UI.dossierText(ending, s, dossier);
         const ok = () => UI.toast('已複製', 'good');
         try {
           navigator.clipboard.writeText(text).then(ok, () => UI.toast(text));
@@ -368,9 +395,9 @@
         return;
       }
       if (UI.modalOpen()) return;
-      if (/^[1-9]$/.test(e.key)) {
+      if (/^[0-9]$/.test(e.key)) {
         const btns = document.querySelectorAll('#panel .act');
-        const b = btns[Number(e.key) - 1];
+        const b = btns[(Number(e.key) + 9) % 10];
         if (b && !b.disabled) b.click();
       }
     });
@@ -383,8 +410,9 @@
       if (!b || !Game.state) return;
       A.sfx('click');
       if (b.dataset.hud === 'mute') { A.init(); A.toggleMute(); UI.renderHud(Game.state); }
-      else if (b.dataset.hud === 'help') UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
-      else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended) openPhone(false);
+      else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
+      else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
+      else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);
     });
     window.addEventListener('resize', () => P.resize());
   }

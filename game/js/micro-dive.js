@@ -86,7 +86,7 @@
     A.setMode('city', 70);
 
     // ---------- 工具 ----------
-    const speedMax = () => 82 * (1 - 0.35 * st.load / cfg.capacity);
+    const speedMax = () => 82 * (cfg.speedMult || 1) * (1 - 0.35 * st.load / cfg.capacity);
     function popup(text, color, sub) { st.popups.push({ text, sub, color, t: 0 }); if (st.popups.length > 3) st.popups.shift(); }
     function addToBag(entry, w) {
       if (st.load + w > cfg.capacity) return false;
@@ -97,6 +97,7 @@
     }
     function hurt(amount, why) {
       if (st.inv > 0) return;
+      amount = Math.round(amount * (cfg.dmgMult || 1));
       st.ox -= amount; st.hits++; st.inv = 1.2; st.flash = 0.35; P.view.shake = 5;
       A.sfx('hurt');
       popup(why + '：氧氣 −' + amount, '#ff4d5e');

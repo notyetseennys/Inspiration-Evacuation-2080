@@ -81,6 +81,7 @@ button { font: inherit; color: inherit; }
 }
 .chip.warn { border-color: var(--danger); color: #ffd0d5; }
 .chip.season { border-color: color-mix(in srgb, var(--sea) 60%, var(--line)); }
+.chip.world { border-color: #ff8a3c; color: #ffe2c4; background: #2a1a10; }
 .icon-btn {
   min-width: 40px; height: 34px; padding: 0 10px; border-radius: var(--r);
   background: var(--deck-2); border: 1px solid var(--line); cursor: pointer; font-size: 13px;
@@ -267,6 +268,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .post.alien { background: #14261a; border: 1px solid #3c6b2a; color: #d9f7c7; }
 .post.news { background: #10233a; }
 .post.warn { background: #3a1620; color: #ffd0d5; }
+.post.world { background: #3a2410; border: 1px solid #ff8a3c; color: #ffe2c4; }
+.post.fake { background: #1a1024; color: #c9a8e8; font-style: italic; filter: blur(0.3px); }
 .msg { justify-self: start; max-width: 88%; padding: 10px 12px; border-radius: 4px 14px 14px 14px; background: #1f6b4f; color: #eafff4; font-size: 14px; }
 .msg.memo { background: #e8ecf4; color: #1b2233; border-radius: 4px; font-size: 13px; }
 .msg.auto { background: #2a3350; color: #b8c2db; border-radius: 4px; font-size: 13px; }
@@ -299,6 +302,66 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .stamp.pass { color: #2a8a3e; }
 .stamp.fail { color: #c62f45; }
 @keyframes stamp { from { transform: rotate(-12deg) scale(2.4); opacity: 0; } to { transform: rotate(-12deg) scale(1); opacity: 0.9; } }
+
+/* ---------- 能力值與人類樣本檔案 ---------- */
+.act-group { margin: 4px 0 -4px; font-size: 13px; font-weight: 700; color: var(--mute); }
+.stat-deltas { display: flex; flex-wrap: wrap; gap: 6px; }
+.stat-deltas .sd { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: #13233a; color: #bfe6ff; }
+.stat-deltas .sd.neg { background: #2a1620; color: #ffb3bd; }
+.statbars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; }
+.statbars.compact { gap: 3px 14px; }
+.sb { display: grid; grid-template-columns: 4.5em 1fr 3.4em; align-items: center; gap: 8px; font-size: 13px; min-width: 0; }
+.statbars.compact .sb { font-size: 12px; }
+.sb-k { color: var(--mute); white-space: nowrap; }
+.sb-track { position: relative; height: 6px; border-radius: 3px; background: #1d2740; overflow: hidden; }
+.sb-track > i { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; background: var(--sea); }
+.sb-v { font-size: 18px; line-height: 1; text-align: right; white-space: nowrap; }
+.sb-v small { font-family: var(--font-body); font-size: 10px; margin-left: 3px; }
+.sb-v small.pos { color: #bfe6ff; }
+.sb-v small.neg { color: #ffb3bd; }
+.bg-detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; padding: 14px; border-radius: var(--r); background: var(--deck); border: 1px solid var(--line); }
+.bg-detail h3 { margin: 0 0 4px; font-size: 16px; }
+.bg-detail p { margin: 0 0 6px; font-size: 13px; }
+
+.dossier {
+  background: var(--paper); color: var(--paper-ink); border-radius: 4px; padding: 18px;
+  display: grid; gap: 14px; position: relative; overflow: hidden;
+  background-image: repeating-linear-gradient(0deg, transparent 0 27px, rgba(91,107,144,0.08) 27px 28px);
+}
+.dossier .d-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #5b6b90; border-bottom: 2px solid var(--paper-ink); padding-bottom: 6px; }
+.dossier .d-head .num { font-size: 18px; color: var(--paper-ink); }
+.dossier .d-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: #4a5878; }
+.dossier .d-k { display: block; font-size: 11px; letter-spacing: 0.1em; color: #5b6b90; margin-bottom: 4px; }
+.dossier .d-class h3 { margin: 0; font-size: clamp(24px, 5vw, 32px); font-weight: 900; color: var(--paper-ink); }
+.dossier .d-class p { margin: 4px 0 0; font-size: 14px; }
+.dossier .d-runner { color: #5b6b90; font-size: 12px !important; }
+.dossier .d-cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+.dossier .d-notes { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; font-size: 13px; line-height: 1.55; }
+.dossier .statbars { grid-template-columns: minmax(0, 1fr); }
+.dossier .sb-k { color: #4a5878; }
+.dossier .sb-track { background: var(--paper-line); }
+.dossier .sb-track > i { background: #34548a; }
+.dossier .sb-v { color: var(--paper-ink); }
+.dossier .d-stamps { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; justify-content: center; padding: 10px 0 4px; }
+.dossier .d-foot { margin: 0; font-size: 11px; color: #7a86a3; text-align: center; }
+.dstamp {
+  display: inline-grid; justify-items: center; gap: 0; font-weight: 900; font-size: 24px; line-height: 1.15;
+  padding: 4px 14px; border: 4px double currentColor; border-radius: 6px; transform: rotate(-8deg);
+  animation: dstamp 0.35s cubic-bezier(.2, 2, .4, 1) both;
+}
+.dstamp small { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+.dstamp.n1 { transform: rotate(6deg); animation-delay: 0.5s; font-size: 20px; }
+.dstamp.n2 { transform: rotate(-3deg); animation-delay: 0.9s; font-size: 18px; }
+.dstamp.n0 { animation-delay: 0.15s; }
+.dstamp.tone-hire { color: #2a8a3e; }
+.dstamp.tone-reject { color: #c62f45; }
+.dstamp.tone-odd { color: #7a3fb8; }
+.dstamp.tone-file { color: #4a5878; }
+.dstamp.tone-warn { color: #c46a1e; }
+.dstamp.mini { font-size: 13px; padding: 2px 8px; border-width: 3px; animation: none; transform: rotate(-4deg); }
+.dstamp.mini.unknown { color: #4a5568; }
+.stamp-wall { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; border-radius: var(--r); background: var(--paper); }
+@keyframes dstamp { from { opacity: 0; scale: 2.2; } to { opacity: 0.92; scale: 1; } }
 
 /* 創作 */
 .craft { display: grid; gap: 14px; }
@@ -394,6 +457,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .toast.bad { border-color: var(--danger); }
 
 @media (max-width: 720px) {
+  .statbars { grid-template-columns: minmax(0, 1fr); }
+  .bg-detail, .dossier .d-cols { grid-template-columns: minmax(0, 1fr); }
   .hud-meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hud-meters .m-signal { grid-column: span 2; }
   .meter { padding: 6px 8px; gap: 6px; }

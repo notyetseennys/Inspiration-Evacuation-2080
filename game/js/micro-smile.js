@@ -9,12 +9,14 @@
   const R = () => IE.Rules, D = () => IE.DATA, G = () => IE.Game;
   const HIT_X = 74, SPAWN_X = 330, TRAVEL = 1.9;
   const LANE_Y = { laugh: 140, nod: 162 };
-  const WIN_P = 0.075, WIN_G = 0.15, WIN_MISS = 0.2;
+  const WIN_MISS = 0.2;
   const GLASS = { x: 200, y: 82, w: 18, h: 36 };
 
   function Smile(opts, onDone) {
     const s = G().state;
     const cfg = R().smileConfig(s);
+    // 節奏感越好，判定範圍越寬
+    const WIN_P = 0.075 + cfg.winBonus, WIN_G = 0.15 + cfg.winBonus;
     const fx = P.particles();
     const notes = [];
     // 預先排好音符：後半段節奏加快
@@ -34,7 +36,9 @@
       tt += b;
     }
     // 每場插入三句偏見言論，取代附近的音符
-    [0.25, 0.55, 0.8].forEach((f) => {
+    const biasAt = [];
+    for (let i = 0; i < cfg.biasCount; i++) biasAt.push((i + 0.6) / (cfg.biasCount + 0.2));
+    biasAt.forEach((f) => {
       const t0 = 1.2 + f * (cfg.duration - 2.4);
       for (let i = notes.length - 1; i >= 0; i--) if (Math.abs(notes[i].t - t0) < 0.45 || (notes[i].dur && t0 > notes[i].t && t0 < notes[i].t + notes[i].dur + 0.3)) notes.splice(i, 1);
       notes.push({ t: t0, lane: 'nod', kind: 'bias', line: D().BIAS_LINES[Math.floor(Math.random() * D().BIAS_LINES.length)] });

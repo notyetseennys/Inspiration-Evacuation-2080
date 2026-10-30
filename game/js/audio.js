@@ -135,6 +135,15 @@
     setSpark(v) { spark = v; applyLayers(); },
     setMode(m, bpm) { mode = m; tempo = bpm || (m === 'work' ? 120 : m === 'alien' ? 84 : 92); applyLayers(); },
     sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗不影響遊戲 */ } } },
+    // 街頭表演的音階（五聲音階）；i 由 0 開始，oct 升八度
+    note(i, oct) {
+      if (!ctx || muted) return;
+      const SCALE = [60, 64, 67, 69, 72, 76];
+      try {
+        const t = ctx.currentTime, f = midi(SCALE[i % SCALE.length] + (oct ? 12 : 0));
+        tone('triangle', f, t, 0.35, 0.14, sfxBus); tone('sine', f * 2, t, 0.2, 0.04, sfxBus);
+      } catch (e) { /* 忽略 */ }
+    },
     toggleMute() {
       muted = !muted;
       if (master) master.gain.setTargetAtTime(muted ? 0 : 0.7, ctx.currentTime, 0.05);

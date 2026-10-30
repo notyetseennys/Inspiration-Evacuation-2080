@@ -122,9 +122,75 @@
       this.drawBuilding(c, s, night);
       this.drawWater(c, s, night, bot);
       this.drawWeather(c, s);
+      this.drawWorld(c, s, night);
       if (night) this.drawUfo(c, s);
       this.fx.draw(c);
       if (this.flash > 0) { c.fillStyle = 'rgba(255,255,255,' + Math.min(1, this.flash) + ')'; c.fillRect(0, 0, 320, 180); }
+    },
+    // 世界事件的畫面：戰爭的火光、失控 AI 的雜訊、停電、飛碟群、霉菌、派對煙花、熱穹
+    drawWorld(c, s, night) {
+      const w = s.world && IE.Rules.worldInfo(s);
+      if (!w || !w.visual) return;
+      const t = this.t;
+      switch (w.visual) {
+        case 'war':
+          c.fillStyle = 'rgba(255,70,40,0.10)'; c.fillRect(0, 0, 320, 180);
+          for (let i = 0; i < 3; i++) {
+            const ph = (t * 0.7 + i * 0.37) % 1;
+            if (ph < 0.12) { c.fillStyle = 'rgba(255,170,90,' + (0.5 - ph * 4) + ')'; c.fillRect(20 + i * 110 + Math.sin(i * 9) * 30, GROUND - 30 - ph * 60, 26, 30 + ph * 40); }
+          }
+          c.fillStyle = 'rgba(255,220,160,0.7)';
+          for (let i = 0; i < 4; i++) { const x = (t * 90 + i * 83) % 360 - 20; c.fillRect(Math.round(x), Math.round(40 + i * 9 - x * 0.08), 4, 1); }
+          break;
+        case 'ai':
+          for (let i = 0; i < 6; i++) {
+            if (Math.random() < 0.5) continue;
+            c.fillStyle = ['rgba(255,79,180,0.35)', 'rgba(55,195,214,0.35)', 'rgba(155,227,107,0.3)'][i % 3];
+            c.fillRect(Math.floor(Math.random() * 300), Math.floor(Math.random() * 170), 6 + Math.floor(Math.random() * 40), 1 + Math.floor(Math.random() * 3));
+          }
+          if (Math.floor(t * 2) % 7 === 0) { c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, Math.floor((t * 60) % 180), 320, 4); }
+          break;
+        case 'blackout': {
+          c.fillStyle = 'rgba(2,4,10,' + (night ? 0.55 : 0.3) + ')'; c.fillRect(0, 0, 320, 180);
+          const p = this.playerPos(s);
+          const g = c.createRadialGradient(p.x + 4, p.y + 4, 1, p.x + 4, p.y + 4, 14);
+          g.addColorStop(0, 'rgba(255,200,120,0.55)'); g.addColorStop(1, 'rgba(255,200,120,0)');
+          c.fillStyle = g; c.fillRect(p.x - 12, p.y - 12, 32, 32);
+          break;
+        }
+        case 'aliens':
+          for (let i = 0; i < 3; i++) {
+            const x = Math.round(50 + i * 110 + Math.sin(t * 0.6 + i * 2) * 20), y = Math.round(22 + i * 6 + Math.sin(t + i) * 3);
+            c.fillStyle = 'rgba(200,255,250,0.12)';
+            c.beginPath(); c.moveTo(x - 2, y + 4); c.lineTo(x + 2, y + 4); c.lineTo(x + 10, GROUND); c.lineTo(x - 10, GROUND); c.closePath(); c.fill();
+            c.fillStyle = '#9aa7c7'; c.fillRect(x - 8, y + 2, 16, 2);
+            c.fillStyle = '#cfd8ee'; c.fillRect(x - 4, y - 1, 8, 3);
+            c.fillStyle = (Math.floor(t * 5) + i) % 2 ? '#ff4fb4' : '#9be36b'; c.fillRect(x - 1, y, 2, 1);
+          }
+          break;
+        case 'plague':
+          for (let i = 0; i < 5; i++) {
+            c.fillStyle = 'rgba(140,190,90,' + (0.07 + 0.03 * Math.sin(t + i)) + ')';
+            c.fillRect(0, Math.round(GROUND - 50 + i * 12 + Math.sin(t * 0.5 + i) * 4), 320, 10);
+          }
+          break;
+        case 'party':
+          if (Math.random() < 0.05) {
+            const x = 40 + Math.random() * 240, y = 10 + Math.random() * 30;
+            const col = ['#ffc247', '#ff4fb4', '#37c3d6', '#9be36b'][Math.floor(Math.random() * 4)];
+            for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; this.fx.add({ x, y, vx: Math.cos(a) * 30, vy: Math.sin(a) * 30, g: 20, drag: 0.97, life: 1.2, color: col }); }
+          }
+          break;
+        case 'heat':
+          c.fillStyle = 'rgba(255,140,60,0.12)'; c.fillRect(0, 0, 320, 180);
+          c.fillStyle = 'rgba(255,220,180,0.08)';
+          for (let i = 0; i < 6; i++) c.fillRect(0, Math.round(GROUND - 20 - i * 14 + Math.sin(t * 3 + i) * 2), 320, 1);
+          break;
+        case 'flood':
+          c.fillStyle = 'rgba(159,220,255,0.35)';
+          for (let i = 0; i < 50; i++) c.fillRect((i * 41 + t * 30) % 320, (i * 29 + t * 260) % 180, 1, 5);
+          break;
+      }
     },
     drawBuilding(c, s, night) {
       const top = floorTop(8);

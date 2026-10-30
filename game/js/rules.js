@@ -1,5 +1,6 @@
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
+// 一局 100 天；第 20、40、60、80、100 天是篩選日；外星人要「又亮又輕」的人。
 (function (factory) {
   const root = typeof window !== 'undefined' ? window : globalThis;
   root.IE = root.IE || {};
@@ -21,11 +22,49 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const round1 = (v) => Math.round(v * 10) / 10;
 
+  function bgOf(s) { return D.BACKGROUNDS[s.bg]; }
+  function seasonOf(s) { return D.SEASONS[s.season]; }
+  function perk(s) { return bgOf(s).perk; }
+
+  // ---------- 世界事件 ----------
+  const worldDef = (s) => (s.world ? D.WORLD_EVENTS.find((w) => w.id === s.world.id) : null);
+  function worldMods(s) { const w = worldDef(s); return (w && w.mods) || {}; }
+  const worldPay = (s, job) => ((worldMods(s).pay || {})[job] || 1);
+  const worldClosed = (s, job) => {
+    const m = worldMods(s);
+    return m.closed && m.closed.includes(job) ? '世界事件：' + worldDef(s).name : null;
+  };
+  function worldInfo(s) {
+    const w = worldDef(s);
+    return w ? { id: w.id, name: w.name, visual: w.visual, left: s.world.until - s.day + 1, news: w.news } : null;
+  }
+
+  // ---------- 十二項能力值 ----------
+  // 做甚麼就變成甚麼：成長有遞減效應，退化則直接扣
+  function train(s, gains, rep) {
+    Object.keys(gains).forEach((k) => {
+      let v = gains[k];
+      if (v > 0) v *= 1 - s.attr[k] / 130;
+      const before = s.attr[k];
+      s.attr[k] = clamp(before + v, 0, 100);
+      if (rep) rep.stat(k, s.attr[k] - before);
+    });
+    s.body = Math.min(s.body, bodyMax(s));
+  }
+  const A = (s, k) => s.attr[k];
+  const bodyMax = (s) => Math.round(70 + 0.3 * A(s, 'fit'));
+  const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
+  const calmMult = (s) => Math.max(0.6, 1 - 0.004 * A(s, 'calm'));
+  const obeyPay = (s) => 1 + 0.003 * A(s, 'obey');
+  const socialTip = (s) => 1 + 0.004 * A(s, 'social');
+
+  // ---------- 火花、靈魂重量與良知 ----------
   // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
-  // 超過 3 之後越升越慢（回傳實際變化）
+  // 自然恢復的火花受想像力（加成）與服從（壓抑）影響；超過 3 之後越升越慢。
   const SPARK_MAX = 4;
   const sparkMax = (s) => round1(2 + 2 * s.conscience);
-  function addSpark(s, v) {
+  function addSpark(s, v, raw) {
+    if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey'));
     if (v > 0 && s.spark >= 3) v *= 0.5;
     const before = s.spark;
     let next = s.spark + v;
@@ -33,19 +72,16 @@
     s.spark = clamp(next, 0, SPARK_MAX);
     return round1(s.spark - before);
   }
-
-  // ---------- 靈魂重量與良知 ----------
-  // 良知是負重：同一件虧心事，良知越強就越重。每做一次，良知都會被磨損一點（麻木）。
+  // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
   // 外星人的牽引光束最多只能拉起 21 克的靈魂，太重會污染他們的神經網絡。
   const SOUL_LIMIT = D.SOUL_LIMIT;
-  const sinFactor = (s) => 0.3 + 0.7 * s.conscience;
+  const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1);
   function sin(s, base, rep, reason, guiltName, tag) {
     const grams = round1(base * sinFactor(s));
     s.soul = round1(s.soul + grams);
     s.conscience = clamp(s.conscience - base * 0.015, 0, 1);
     s.stats.sins++;
     if (rep) rep.line(reason, 'sin', grams, 'soul');
-    // 良知變弱，感受力（火花上限）也跟著下降
     const before = s.spark;
     s.spark = Math.min(s.spark, sparkMax(s));
     if (rep && s.spark < before) rep.line('良知被磨損，你的感受力也變弱了', 'bad', round1(s.spark - before), 'spark');
@@ -57,30 +93,35 @@
     return grams;
   }
   function atone(s, base, rep, reason) {
-    const grams = round1(Math.min(s.soul, base));
+    const b = base * (1 + 0.004 * A(s, 'empathy')) * (worldMods(s).atoneMult || 1);
+    const grams = round1(Math.min(s.soul, b));
     s.soul = round1(s.soul - grams);
     s.conscience = clamp(s.conscience + base * 0.02, 0, 1);
     s.stats.atones++;
     if (rep && grams) rep.line(reason, 'good', -grams, 'soul');
     return grams;
   }
-  function bgOf(s) { return D.BACKGROUNDS[s.bg]; }
-  function seasonOf(s) { return D.SEASONS[s.season]; }
-  function perk(s) { return bgOf(s).perk; }
+  function addParanoia(s, v, rep) {
+    if (v > 0) v *= Math.max(0.3, 1 - A(s, 'insight') / 150) * Math.max(0.6, 1 - 0.003 * A(s, 'calm'));
+    s.paranoia = clamp(s.paranoia + v, 0, 100);
+    if (rep && Math.abs(v) >= 1) rep.line(v > 0 ? '你越來越懷疑身邊的一切' : '你冷靜了一點', v > 0 ? 'bad' : 'good', round1(v), 'para');
+  }
 
   // ---------- 開局 ----------
   function newRun(opts) {
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 3, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 4, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
-      cr: bg.cr, body: bg.body, spark: bg.spark, rating: 4.0,
+      cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
+      attr: Object.assign({}, bg.stats), paranoia: 15,
       floor: bg.floor, water: 0.8,
       soul: bg.soul, conscience: bg.conscience, bonusSignal: 0, rentDiscount: 0,
       usedDilemmas: {}, dilemma: null, dilemmaDay: 0,
+      world: null, worldNext: 5, worldsSeen: {},
       rentHike: 0, graceUsed: false, debt: 0,
-      premiumUntil: 0, craftSlots: 4, realFoodDay: 0,
+      premiumUntil: 0, craftSlots: bg.perk.startSlots || 4, realFoodDay: 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false },
       auto: 0, removed: { smile: false, label: false },
       mastery: { label: 0, smile: 0, dive: 0 },
@@ -91,20 +132,24 @@
       saturation: 1, numbStreak: 0, workedToday: false,
       flags: { crashDay: 0, crashAmt: 0, bigOrder: 0, richDive: 0, fishDinner: 0, divedDay: 0, foodFree: 0 },
       stats: { labels: 0, wrong: 0, smiles: 0, perfects: 0, dives: 0, relics: 0, fish: 0, flows: 0, works: 0,
-        crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null },
+        crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null,
+        actions: {}, deliveries: 0, lateDeliveries: 0, headlines: 0, shares: 0, buskNotes: 0, crowdMax: 0,
+        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '' },
       log: { fish: {}, relics: {} },
       newsSeen: {}, morning: null, ended: null,
       legacy: (opts.meta && opts.meta.relics) ? opts.meta.relics.slice(-5) : [],
       greyed: (opts.meta && opts.meta.greyed) || 0,
     };
+    s.body = bodyMax(s);
     const keys = Object.keys(D.KPIS);
-    while (s.kpis.length < 3) {
+    while (s.kpis.length < D.REVIEW_DAYS.length) {
       const k = pick(s, keys);
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
     bg.cards.forEach((id) => addCard(s, id));
     return s;
   }
+  const countAction = (s, k) => { s.stats.actions[k] = (s.stats.actions[k] || 0) + 1; };
 
   // ---------- 素材卡 ----------
   function makeCard(s, id) {
@@ -124,19 +169,20 @@
   }
 
   // ---------- 時間 ----------
-  const quarterOf = (day) => (day <= 10 ? 0 : day <= 20 ? 1 : 2);
+  const quarterOf = (day) => Math.min(D.REVIEW_DAYS.length - 1, Math.floor((day - 1) / 20));
   const isNight = (s) => s.slot === 2;
-  const threshold = (s) => D.THRESHOLDS[s.quarter];
+  const threshold = (s) => Math.round(D.THRESHOLDS[s.quarter] * (worldMods(s).thresholdMult || 1));
   const reviewDay = (s) => D.REVIEW_DAYS[s.quarter];
   const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
-  const nextRentDay = (s) => Math.ceil(s.day / 5) * 5;
+  const nextRentDay = (s) => Math.ceil(s.day / D.RENT_EVERY) * D.RENT_EVERY;
+  const foodCost = (s) => Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1));
 
   function rentAmount(s, floor) {
     const f = floor == null ? s.floor : floor;
     if (f <= 0) return 0;
-    const period = Math.floor((s.day - 1) / 5);
-    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.08 * period + s.rentHike));
+    const period = Math.floor((s.day - 1) / D.RENT_EVERY);
+    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1));
   }
 
   // 累積訊號（篩選日用來與門檻比較）
@@ -150,7 +196,7 @@
     o = o || {};
     const tier = 1 + Math.min(6, Math.floor(combo / 8)) * 0.25;
     let pay = 2 * tier * (0.6 + 0.1 * s.rating) * (1 - (s.auto / 100) * 0.5)
-      * (perk(s).labelPay || 1) * seasonOf(s).labelPay;
+      * (perk(s).labelPay || 1) * seasonOf(s).labelPay * worldPay(s, 'label') * obeyPay(s);
     if (s.spark < 1) pay *= 1.3; // 麻木反而令你更有效率
     if (o.ot) pay *= 1.5;
     if (o.flow) pay *= 2;
@@ -160,15 +206,16 @@
   }
   function labelItemDrain(s, o) {
     o = o || {};
-    return 0.012 * (1 + 0.08 * s.mastery.label) * (o.ot ? 1.5 : 1) * (o.flow ? 2 : 1);
+    return 0.012 * (1 + 0.08 * Math.min(15, s.mastery.label)) * (o.ot ? 1.5 : 1) * (o.flow ? 2 : 1);
   }
   function labelConfig(s, o) {
-    const m = s.mastery.label;
+    const m = Math.min(15, s.mastery.label);
+    const dex = A(s, 'dex');
     return {
       duration: 45,
       phases: [0, 15, 30],          // 指引在第 15、30 秒更新
-      startLimit: Math.max(1.5, 2.7 - 0.05 * m) + (s.gear.monitor ? 0.2 : 0),
-      minLimit: 0.85 + (s.gear.monitor ? 0.2 : 0),
+      startLimit: Math.max(1.5, 2.7 - 0.05 * m) + (s.gear.monitor ? 0.2 : 0) + 0.006 * dex,
+      minLimit: 0.85 + (s.gear.monitor ? 0.2 : 0) + 0.003 * dex,
       flowAt: 15, flowTime: 7,      // 連續 15 張正確進入心流狀態
       supervisor: true,
       preview: !!s.gear.monitor,
@@ -188,12 +235,13 @@
     const caught = res.caught || 0;
     s.rating = clamp(s.rating + 0.01 * res.correct - 0.03 * res.wrong - 0.1 * caught, 1, 5);
     const autoBefore = s.auto;
-    s.auto = clamp(s.auto + 0.06 * res.correct - 0.15 * res.wrong, 0, 100);
+    s.auto = clamp(s.auto + 0.025 * res.correct - 0.05 * res.wrong, 0, 100);
     s.mastery.label++;
     s.stats.labels += res.correct + res.wrong;
     s.stats.wrong += res.wrong;
     s.stats.flows += res.flows || 0;
     if (ot) s.stats.ot++;
+    countAction(s, ot ? 'ot' : 'label');
     s.workedToday = true;
     rep.line('正確標註 ' + res.correct + ' 張，錯誤 ' + res.wrong + ' 張，最高連擊 ' + (res.maxCombo || 0), '');
     if (res.flows) rep.line('進入心流狀態 ' + res.flows + ' 次。你完全沒有思考。', 'bad');
@@ -206,34 +254,37 @@
     const poison = Math.min(2, Math.floor(res.wrong / 4));
     for (let i = 0; i < poison; i++) rep.gain('l_poison');
     applyAutomationNews(s, autoBefore, rep);
+    train(s, ot ? { dex: 1.5, obey: 1.5, imag: -0.8, fit: -0.3 } : { dex: 1.5, obey: 1.2, imag: -0.4 }, rep);
     sin(s, ot ? 0.8 : 0.6, rep, '你標註的數據，令一些人失去了工作');
+    if (worldMods(s).labelSin) sin(s, worldMods(s).labelSin, rep, '你標註的數據被用來訓練瞄準系統', '標註過的目標', 'anger');
     return rep.done();
   }
 
   // ---------- 工作：企業情緒陪伴員 ----------
-  // lane：laugh（笑）、nod（點頭）、hold（長笑）、pour（倒酒）
+  // lane：laugh（笑）、nod（點頭）、hold（長笑）、pour（倒酒）、bias（附和偏見）
   const SMILE_PAY = { laugh: [5, 2.5], nod: [3, 1.5], hold: [8, 4], pour: [6, 3], bias: [6, 6] };
   const SMILE_DRAIN = { laugh: [0.018, 0.008], nod: [0.006, 0.003], hold: [0.03, 0.015], pour: [0, 0], bias: [0, 0] };
   function smileItemPay(s, kind, lane) {
     const t = SMILE_PAY[lane || 'laugh'];
     const base = kind === 'perfect' ? t[0] : kind === 'good' ? t[1] : 0;
-    return base * (s.spark < 1 ? 1.3 : 1);
+    return base * (s.spark < 1 ? 1.3 : 1) * worldPay(s, 'smile') * obeyPay(s);
   }
   function smileItemDrain(s, kind, lane) {
     const t = SMILE_DRAIN[lane || 'laugh'];
     const base = kind === 'perfect' ? t[0] : kind === 'good' ? t[1] : 0;
-    return base * (1 + 0.08 * s.mastery.smile);
+    return base * (1 + 0.08 * Math.min(15, s.mastery.smile));
   }
   function smileConfig(s) {
     return {
-      duration: 36, bpm: 92 + Math.min(24, s.mastery.smile * 3),
+      duration: 36, bpm: 92 + Math.min(24, s.mastery.smile * 2),
       trapRate: 0.14, nodRate: 0.28, holdRate: 0.14, pourEvery: 9,
+      winBonus: 0.0004 * A(s, 'rhythm'), biasCount: worldMods(s).biasMore ? 5 : 3,
       ads: s.premiumUntil < s.day,
     };
   }
   function applySmile(s, res) {
     const rep = report(s, '企業情緒陪伴');
-    const tip = res.satisfaction >= 0.8 ? 30 : res.satisfaction >= 0.6 ? 12 : 0;
+    const tip = Math.round((res.satisfaction >= 0.8 ? 30 : res.satisfaction >= 0.6 ? 12 : 0) * socialTip(s));
     const fine = res.trapHits * 5;
     const cr = Math.round(res.cr) + tip - fine;
     s.cr += cr; s.stats.crEarned += Math.max(0, cr);
@@ -242,6 +293,7 @@
     s.mastery.smile++;
     s.stats.smiles += res.perfect + res.good;
     s.stats.perfects += res.perfect;
+    countAction(s, 'smile');
     s.workedToday = true;
     rep.line('完美回應 ' + res.perfect + ' 次，普通 ' + res.good + ' 次，冷場 ' + res.miss + ' 次', '');
     if (res.pours || res.spills) rep.line('倒酒：恰到好處 ' + (res.pours || 0) + ' 杯，倒瀉 ' + (res.spills || 0) + ' 杯', '');
@@ -252,7 +304,9 @@
     if (res.satisfaction >= 0.85) rep.gain('s_truth');
     if (res.satisfaction < 0.5) rep.gain('s_complaint');
     if ((res.pours || 0) >= 2) rep.gain('s_wine');
-    if (res.endorsed) sin(s, 0.7 * res.endorsed, rep, '附和了客人的偏見 ' + res.endorsed + ' 次', res.endorsed >= 2 ? '附和過的偏見' : null, 'anger');
+    const e = res.endorsed || 0;
+    train(s, { rhythm: 1.5, social: 0.8, empathy: -0.4 - 0.5 * e, obey: 0.5 * e }, rep);
+    if (e) sin(s, 0.7 * e, rep, '附和了客人的偏見 ' + e + ' 次', e >= 2 ? '附和過的偏見' : null, 'anger');
     return rep.done();
   }
 
@@ -268,9 +322,10 @@
     const p = perk(s);
     const rich = s.flags.richDive === s.day;
     const picked = s.flags.divedDay === s.day;
+    const bonus = worldMods(s).relicBonus || 0;
     const zones = D.DIVE_ZONES.map((z, i) => {
       const L = DIVE_LAYOUT[i];
-      let n = L.relics + (i === 0 ? seasonOf(s).diveRelics : 0) + (rich && i > 0 ? 1 : 0);
+      let n = L.relics + (i === 0 ? seasonOf(s).diveRelics : 0) + (rich && i > 0 ? 1 : 0) + (i === 2 ? bonus : 0);
       let ln = L.lockers + (rich && i > 0 ? 1 : 0);
       if (picked) { n = i === 2 ? 1 : 0; ln = 0; }
       const relics = [];
@@ -284,21 +339,23 @@
     const scrap = [];
     for (let i = 0; i < (picked ? 1 : 3); i++) scrap.push(3 + Math.floor(rand(s) * 4));
     return {
-      oxygen: 45 * (p.oxygen || 1) * (s.gear.tank ? 1.3 : 1) * (1 + 0.02 * Math.min(10, s.mastery.dive)),
+      oxygen: 45 * (p.oxygen || 1) * (s.gear.tank ? 1.3 : 1) * (1 + 0.02 * Math.min(10, s.mastery.dive)) * (1 + 0.004 * A(s, 'swim')),
+      speedMult: 1 + 0.002 * A(s, 'swim') + 0.001 * A(s, 'fit'),
+      dmgMult: calmMult(s),
       harpoon: { cd: s.gear.harpoon ? 0.4 : 0.7, dmg: s.gear.harpoon ? 2 : 1 },
       capacity: 8 + (s.gear.bag ? 4 : 0),
       zones, legacy, scrap, picked,
-      fish: { sardine: 2, eel: 2 + Math.floor(s.day / 12), grouper: 1 + Math.floor(s.day / 15), jelly: 3 + Math.floor(s.day / 8) },
+      fish: { sardine: 2, eel: 2 + Math.floor(s.day / 30), grouper: 1 + Math.floor(s.day / 45), jelly: 3 + Math.floor(s.day / 25) },
     };
   }
   function diveBodyCost(s) {
     return Math.round((14 - seasonOf(s).outdoorBody) * (perk(s).diveBody || 1));
   }
-  // res：{ relics: [卡 id 或前世作品], money, fish: { sardine, eel, grouper }, hits, drowned }
+  // res：{ relics: [卡 id 或前世作品], money, fish: { sardine, eel, grouper }, hits, drowned, lockers }
   function applyDive(s, res) {
     const rep = report(s, '舊城潛水');
     const fish = res.fish || {};
-    const cost = diveBodyCost(s) + 5 * res.hits + (res.drowned ? 15 : 0);
+    const cost = Math.round(diveBodyCost(s) + 5 * res.hits * calmMult(s) + (res.drowned ? 15 : 0));
     s.body -= cost;
     s.cr += res.money; s.stats.crEarned += res.money;
     const n = res.relics.length;
@@ -307,6 +364,7 @@
     s.mastery.dive++;
     s.flags.divedDay = s.day;
     s.stats.dives++; s.stats.relics += n; s.stats.fish += caught;
+    countAction(s, 'dive');
     Object.keys(fish).forEach((k) => { if (fish[k]) s.log.fish[k] = true; });
     res.relics.forEach((r) => { if (typeof r === 'string') s.log.relics[r] = true; });
     if (res.drowned) rep.line('氧氣耗盡，你掙扎著浮上水面，失去了一半收穫', 'bad');
@@ -322,11 +380,156 @@
     rep.delta('cr', res.money); rep.delta('body', -cost);
     if (sp) rep.delta('spark', sp);
     res.relics.forEach((r) => rep.gain(r));
+    train(s, { swim: 1.5, fit: 1, calm: 0.4 }, rep);
     if (res.lockers) sin(s, 0.5 * res.lockers, rep, '撬開了別人的儲物櫃 ' + res.lockers + ' 個');
     return rep.done();
   }
 
-  // ---------- 聊天、休息 ----------
+  // ---------- 工作：外送潛水 ----------
+  function deliveryConfig(s) {
+    return {
+      duration: 45,
+      speedMult: (1 + 0.003 * A(s, 'fit') + 0.002 * A(s, 'swim')) * (1 - 0.15 * Math.min(1, s.soul / SOUL_LIMIT)),
+      payMult: (perk(s).deliveryPay || 1) * worldPay(s, 'delivery') * obeyPay(s) * (0.6 + 0.1 * s.rating),
+      tipMult: socialTip(s), dmgMult: calmMult(s),
+      boats: 3 + Math.floor(s.day / 25),
+    };
+  }
+  function applyDelivery(s, res) {
+    const rep = report(s, '外送潛水');
+    const cr = Math.round(res.cr);
+    const body = Math.round((10 - seasonOf(s).outdoorBody) + 3 * res.hits * calmMult(s));
+    s.cr += cr; s.stats.crEarned += cr;
+    s.body -= body;
+    const sp = addSpark(s, -0.15);
+    s.rating = clamp(s.rating + 0.02 * res.deliveries - 0.08 * res.late, 1, 5);
+    s.stats.deliveries += res.deliveries; s.stats.lateDeliveries += res.late;
+    countAction(s, 'delivery');
+    s.workedToday = true;
+    rep.line('送出 ' + res.deliveries + ' 單，遲到 ' + res.late + ' 單，被船撞 ' + res.hits + ' 次', '');
+    rep.delta('cr', cr); rep.delta('body', -body); rep.delta('spark', sp);
+    if (res.late) rep.gain('c_cold');
+    if (res.late >= 2) rep.gain('c_review');
+    if (rand(s) < 0.5) rep.gain('c_door');
+    train(s, { fit: 1.5, swim: 1.2, calm: 0.5, social: 0.3 }, rep);
+    return rep.done();
+  }
+
+  // ---------- 工作：陰謀論內容農場 ----------
+  // 一則標題的轉發量：組合越煽動、捏造程度越高，轉發越多
+  function farmScore(tiles) {
+    const tags = tiles.flatMap((t) => t.tags);
+    let mult = 1;
+    const combos = [];
+    D.FARM_COMBOS.forEach((c) => {
+      const need = c.need.slice();
+      const pool = tags.slice();
+      const ok = need.every((t) => { const i = pool.indexOf(t); if (i < 0) return false; pool.splice(i, 1); return true; });
+      if (ok) { mult *= c.mult; combos.push(c.name); }
+    });
+    const fake = tiles.reduce((a, t) => a + t.fake, 0) / tiles.length;
+    const truth = tags.filter((t) => t === 'truth').length;
+    const shares = Math.round(900 * mult * (1 + fake * 1.2) * (truth ? 0.5 : 1));
+    return { shares, fake, truth, combos };
+  }
+  function farmConfig(s) {
+    return { duration: 40, payMult: (perk(s).farmPay || 1) * worldPay(s, 'farm') * obeyPay(s), showFake: A(s, 'insight') >= 50 };
+  }
+  function applyFarm(s, res) {
+    const rep = report(s, '陰謀論內容農場');
+    const cr = Math.round(res.cr);
+    s.cr += cr; s.stats.crEarned += cr;
+    s.body -= 4;
+    const sp = addSpark(s, -0.25);
+    s.stats.headlines += res.headlines; s.stats.shares += res.shares;
+    countAction(s, 'farm');
+    s.workedToday = true;
+    rep.line('寫了 ' + res.headlines + ' 則標題，總轉發量 ' + res.shares.toLocaleString(), '');
+    if (res.truth) rep.line('其中 ' + res.truth + ' 則有事實根據，但轉發量較低', '');
+    rep.delta('cr', cr); rep.delta('body', -4); rep.delta('spark', sp);
+    rep.gain(res.shares > 20000 ? 'f_viral' : 'f_war');
+    if (res.truth >= 2) rep.gain('f_truth');
+    addParanoia(s, 1.5 * res.fakeTotal, rep);
+    train(s, { insight: 0.4 + 0.3 * res.truth, craft: 0.5, obey: 1, empathy: -0.5 }, rep);
+    if (res.fakeTotal > 0.3) sin(s, 0.25 * res.fakeTotal, rep, '你製造的恐慌正在城市裡流傳', res.fakeTotal >= 4 ? '寫過的假新聞' : null, 'neon');
+    return rep.done();
+  }
+
+  // ---------- 街頭表演（唯一會增加火花的工作） ----------
+  function buskConfig(s) {
+    return { duration: 45, payMult: (perk(s).buskPay || 1) * worldPay(s, 'busk') * socialTip(s),
+      showTime: Math.max(0.28, 0.5 - 0.002 * A(s, 'rhythm')) };
+  }
+  function applyBusk(s, res) {
+    const rep = report(s, '街頭表演');
+    const cr = Math.round(res.cr);
+    const body = 4 - seasonOf(s).outdoorBody;
+    s.cr += cr; s.stats.crEarned += cr;
+    s.body -= body;
+    const sp = addSpark(s, Math.min(0.8, 0.15 + 0.02 * res.soloNotes + 0.03 * res.rounds));
+    s.stats.buskNotes += res.notes || 0;
+    s.stats.crowdMax = Math.max(s.stats.crowdMax, res.crowdMax);
+    countAction(s, 'busk');
+    rep.line('完成 ' + res.rounds + ' 段點唱，即興彈了 ' + res.soloNotes + ' 個音，最多 ' + res.crowdMax + ' 人圍觀', '');
+    rep.delta('cr', cr); rep.delta('body', -body); rep.delta('spark', sp);
+    rep.gain(res.crowdMax >= 6 ? 'p_clap' : res.soloNotes >= 12 ? 'p_chorus' : 'p_hat');
+    train(s, { rhythm: 1.5, craft: 1, social: 0.8, imag: 0.5, obey: -0.5 }, rep);
+    return rep.done();
+  }
+
+  // ---------- 工作：黑市義體診所 ----------
+  function clinicConfig(s) {
+    return { duration: 45, payMult: (perk(s).clinicPay || 1) * worldPay(s, 'clinic') * obeyPay(s), hint: A(s, 'tech') >= 50,
+      maxPairs: A(s, 'tech') >= 60 ? 4 : 5 };
+  }
+  function applyClinic(s, res) {
+    const rep = report(s, '黑市義體診所');
+    const cr = Math.round(res.cr);
+    s.cr += cr; s.stats.crEarned += cr;
+    s.body -= 5;
+    const sp = addSpark(s, -0.25);
+    s.stats.patients += res.patients; s.stats.illegal += res.illegal;
+    countAction(s, 'clinic');
+    s.workedToday = true;
+    rep.line('完成 ' + res.patients + ' 名病人，其中 ' + res.illegal + ' 件未經登記，接錯線 ' + res.mistakes + ' 次', '');
+    rep.delta('cr', cr); rep.delta('body', -5); rep.delta('spark', sp);
+    rep.gain(res.patients >= 4 ? 'k_pulse' : 'k_oldarm');
+    if (res.illegal) rep.gain('k_suppress');
+    train(s, { tech: 1.5, calm: 1, dex: 0.5 }, rep);
+    if (res.illegal) sin(s, 0.8 * res.illegal, rep, '你裝上了 ' + res.illegal + ' 件沒有登記的義體', res.illegal >= 2 ? '未登記的義體' : null, 'machine');
+    return rep.done();
+  }
+
+  // ---------- 夢境面試（篩選日前兩晚） ----------
+  function interviewQuestions(s) {
+    const idx = D.INTERVIEW_QS.map((_, i) => i);
+    const out = [];
+    while (out.length < 5 && idx.length) out.push(idx.splice(Math.floor(rand(s) * idx.length), 1)[0]);
+    s.interviewSet = out;
+    return out;
+  }
+  // answers：[{ q: 題目索引, a: 答案索引（-1 = 沉默） }]
+  function applyInterview(s, answers) {
+    const rep = report(s, '外星 HR 夢境面試');
+    let score = 0;
+    answers.forEach(({ q, a }) => {
+      const ans = a < 0 ? D.INTERVIEW_TIMEOUT : D.INTERVIEW_QS[q].a[a];
+      score += ans.score;
+      if (ans.stats) train(s, ans.stats, rep);
+      if (ans.sin) sin(s, ans.sin, rep, '你在面試中說了違心的話');
+      if (ans.atone) atone(s, ans.atone, rep, '你在夢裡說了真心話');
+      if (ans.card) rep.gain(ans.card);
+      s.stats.lastReact = ans.react;
+    });
+    const bonus = Math.max(-6000, score * 2500);
+    s.bonusSignal += bonus;
+    s.stats.interviews++; s.stats.interviewScore += score;
+    rep.line('面試評分 ' + (score > 0 ? '+' : '') + score + '，外星訊號 ' + (bonus >= 0 ? '+' : '−') + Math.abs(bonus).toLocaleString(), bonus >= 0 ? 'good' : 'bad');
+    if (score >= 4) rep.gain('i_smile');
+    return rep.done();
+  }
+
+  // ---------- 聊天、義工、休息 ----------
   function chatCost(s) { return perk(s).freeChat ? 0 : 15; }
   function aliveNpcs(s) { return s.npcs.filter((n) => n.alive); }
   function applyChat(s, npcId) {
@@ -336,14 +539,17 @@
     const cost = chatCost(s);
     const outdoor = seasonOf(s).outdoorBody;
     s.cr -= cost;
-    const sp = addSpark(s, 0.4 + 0.1 * Math.min(3, n.friend));
-    s.body = Math.min(100, s.body + 5 + outdoor);
+    const sp = addSpark(s, 0.4 + 0.1 * Math.min(3, Math.max(0, n.friend)) + 0.003 * A(s, 'social') + (perk(s).chatSpark || 0));
+    heal(s, 5 + outdoor);
     n.friend++;
     s.stats.chats++;
+    countAction(s, 'chat');
     if (cost) rep.delta('cr', -cost);
     rep.delta('spark', sp); rep.delta('body', 5 + outdoor);
-    rep.gain(def.cards[(n.friend - 1) % def.cards.length]);
+    rep.gain(def.cards[(Math.max(1, n.friend) - 1) % def.cards.length]);
     if (perk(s).chatExtra) rep.gain(def.cards[n.friend % def.cards.length]);
+    addParanoia(s, -2);
+    train(s, { social: 1.2, empathy: 1, imag: 0.4 }, rep);
     return rep.done();
   }
   function applyVolunteer(s) {
@@ -351,19 +557,24 @@
     s.body -= 6;
     const sp = addSpark(s, 0.2);
     s.stats.volunteer++;
+    countAction(s, 'volunteer');
     rep.delta('body', -6); rep.delta('spark', sp);
-    atone(s, 2.5, rep, '你幫忙分派物資，靈魂輕了一點');
+    atone(s, 2.5 * (perk(s).volunteerAtone || 1), rep, '你幫忙分派物資，靈魂輕了一點');
     rep.gain('v_shelter');
+    train(s, { empathy: 1.5, fit: 0.5 }, rep);
     return rep.done();
   }
   function applyRest(s) {
     const rep = report(s, '休息');
     const b = s.floor === 0 ? 12 : 22;
-    s.body = Math.min(100, s.body + b);
+    heal(s, b);
     const sp = addSpark(s, 0.3);
     s.stats.rests++;
+    countAction(s, 'rest');
     rep.delta('body', b); rep.delta('spark', sp);
-    if (s.spark >= 3.5) { rep.line('你做了一個很奇怪的夢', 'good'); rep.gain(pick(s, D.CARD_POOLS.dream)); }
+    if (s.spark >= 3.5 || (A(s, 'imag') >= 60 && rand(s) < 0.3)) { rep.line('你做了一個很奇怪的夢', 'good'); rep.gain(pick(s, D.CARD_POOLS.dream)); }
+    addParanoia(s, -2);
+    train(s, { imag: 0.4 }, rep);
     return rep.done();
   }
 
@@ -372,7 +583,7 @@
     const cards = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
     const counts = {};
     cards.forEach((c) => c.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
-    const cardChips = cards.reduce((a, c) => a + c.value, 0) * (perk(s).craftChips || 1);
+    const cardChips = cards.reduce((a, c) => a + c.value, 0) * (perk(s).craftChips || 1) * (1 + 0.003 * A(s, 'craft'));
     const combos = [];
     let maxTag = null, maxCount = 0;
     Object.keys(counts).forEach((t) => { if (counts[t] > maxCount) { maxCount = counts[t]; maxTag = t; } });
@@ -395,7 +606,7 @@
     }
     const chips = Math.round(cardChips + combos.reduce((a, c) => a + c.chips, 0));
     const mult = round1(1 + combos.reduce((a, c) => a + c.mult, 0));
-    const base = chips * mult * s.spark;
+    const base = chips * mult * s.spark * (worldMods(s).signalMult || 1);
     const k = kpi(s);
     let kpiMod = 1;
     if (k.tag && counts[k.tag]) kpiMod = k.mod;
@@ -437,13 +648,16 @@
       score: ev.total, raw: ev.raw, medium: bgOf(s).medium, n: ev.cards.length };
     s.works.push(work);
     s.stats.works++;
+    countAction(s, 'create');
     if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
     s.body -= 4;
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     let sparkUp = 0;
-    if (fresh.length) sparkUp = addSpark(s, 0.15);
+    if (fresh.length) sparkUp = addSpark(s, 0.15, true);
     // 把愧疚寫進作品：卸下它的重量
-    const relief = ev.relief ? atone(s, ev.relief, null) : 0;
+    let relief = 0;
+    if (ev.relief) { relief = atone(s, ev.relief, null); s.stats.confessions++; }
+    train(s, { craft: 1.2, imag: 0.5 }, null);
     return { ev, work, fresh, sparkUp, relief };
   }
 
@@ -456,39 +670,50 @@
     for (let i = 0; i < 28; i++) labelCr += labelItemPay(s, i);
     labelCr = Math.round(labelCr);
     const labelSpark = round1(28 * labelItemDrain(s));
+    const tired = s.body > 10 ? null : '身體太差，撐不住了';
     if (!isNight(s)) {
-      list.push({ id: 'label', name: 'AI 數據標註', sub: '教 AI 認貓，好讓它以後不再需要你',
+      list.push({ id: 'label', group: 'work', name: 'AI 數據標註', sub: '教 AI 認貓，好讓它以後不再需要你',
         fx: [['cr', '約 +$' + labelCr], ['body', '−8'], ['spark', '約 −' + labelSpark], ['card', '機械']],
-        enabled: !s.removed.label && !labelLocked,
-        reason: s.removed.label ? '職位已被 AI 取代' : labelLocked });
-      list.push({ id: 'smile', name: '企業情緒陪伴', sub: '陪有錢人說笑、點頭、倒酒，笑得越準越值錢',
-        fx: [['cr', '約 +$150'], ['body', '−6'], ['spark', '約 −' + round1(24 * smileItemDrain(s, 'perfect'))], ['card', '霓虹']],
-        enabled: !s.removed.smile, reason: s.removed.smile ? '已被 AI 情緒伴侶 2.0 取代' : null });
-      list.push({ id: 'dive', name: '舊城潛水', sub: s.flags.divedDay === s.day ? '舊城今天已被搜刮過，收穫會很少' : '用魚叉捕魚，打撈水淹舊城的遺物',
+        reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'label') || labelLocked });
+      list.push({ id: 'smile', group: 'work', name: '企業情緒陪伴', sub: '陪有錢人說笑、點頭、倒酒，笑得越準越值錢',
+        fx: [['cr', '約 +$' + Math.round(150 * worldPay(s, 'smile'))], ['body', '−6'], ['spark', '約 −' + round1(24 * smileItemDrain(s, 'perfect'))], ['card', '霓虹']],
+        reason: s.removed.smile ? '已被 AI 情緒伴侶 2.0 取代' : worldClosed(s, 'smile') });
+      list.push({ id: 'delivery', group: 'work', name: '外送潛水', sub: '在淹水的街道限時送外賣，小心天空區的快艇',
+        fx: [['cr', '約 +$' + Math.round(70 * worldPay(s, 'delivery') * (perk(s).deliveryPay || 1))], ['body', '−' + (10 - outdoor) + ' 起'], ['spark', '−0.15'], ['card', '飢餓・水']],
+        reason: worldClosed(s, 'delivery') || tired });
+      list.push({ id: 'farm', group: 'work', name: '陰謀論內容農場', sub: '拼湊聳動標題，越假越多人轉發',
+        fx: [['cr', '約 +$' + Math.round(80 * worldPay(s, 'farm') * (perk(s).farmPay || 1))], ['spark', '−0.25'], ['soul', '假新聞會變重'], ['card', '霓虹・憤怒']],
+        reason: worldClosed(s, 'farm') });
+      list.push({ id: 'clinic', group: 'work', name: '黑市義體診所', sub: '替病人接駁義體；有些義體沒有登記',
+        fx: [['cr', '約 +$' + Math.round(55 * worldPay(s, 'clinic') * (perk(s).clinicPay || 1))], ['body', '−5'], ['spark', '−0.25'], ['card', '機械']],
+        reason: A(s, 'tech') < 25 ? '技術不足 25，你不懂接駁義體' : worldClosed(s, 'clinic') });
+      list.push({ id: 'dive', group: 'life', name: '舊城潛水', sub: s.flags.divedDay === s.day ? '舊城今天已被搜刮過，收穫會很少' : '用魚叉捕魚，打撈水淹舊城的遺物',
         fx: [['cr', '漁獲 約 +$20'], ['body', '−' + diveBodyCost(s) + ' 起'], ['spark', '+少許'], ['card', '水・記憶']],
-        enabled: s.body > 10, reason: s.body > 10 ? null : '身體太差，下水會有生命危險' });
+        reason: s.body > 10 ? worldClosed(s, 'dive') : '身體太差，下水會有生命危險' });
+      list.push({ id: 'busk', group: 'life', name: '街頭表演', sub: '在天橋下表演，收入很少，但會讓火花變旺',
+        fx: [['cr', '約 +$' + Math.round(25 * worldPay(s, 'busk') * (perk(s).buskPay || 1))], ['body', '−' + (4 - outdoor)], ['spark', '+0.3 起'], ['card', '人情・希望']],
+        reason: worldClosed(s, 'busk') || tired });
       const cost = chatCost(s);
-      list.push({ id: 'chat', name: '找朋友聊天', sub: '還有 ' + aliveNpcs(s).length + ' 個朋友留在浮城',
+      list.push({ id: 'chat', group: 'life', name: '找朋友聊天', sub: '還有 ' + aliveNpcs(s).length + ' 個朋友留在浮城',
         fx: [['cr', cost ? '−$' + cost : '免費'], ['body', '+' + (5 + outdoor)], ['spark', '+0.4 起'], ['card', '人情']],
-        enabled: aliveNpcs(s).length > 0 && s.cr >= cost,
         reason: aliveNpcs(s).length === 0 ? '他們全都被帶走了' : s.cr < cost ? '沒錢請人喝東西' : null });
-      list.push({ id: 'volunteer', name: '到避難所做義工', sub: '幫人不會賺錢，但會讓靈魂變輕',
-        fx: [['soul', '−2.5 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
-        enabled: s.body > 10, reason: s.body > 10 ? null : '你的身體撐不住' });
-      list.push({ id: 'rest', name: '休息', sub: '什麼都不做，也是一種選擇',
-        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']], enabled: true });
+      list.push({ id: 'volunteer', group: 'life', name: '到避難所做義工', sub: '幫人不會賺錢，但會讓靈魂變輕',
+        fx: [['soul', '−' + round1(2.5 * (perk(s).volunteerAtone || 1) * (worldMods(s).atoneMult || 1)) + ' 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
+        reason: tired });
+      list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
+        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
     } else {
       const c = canCreate(s);
-      list.push({ id: 'create', name: '創作', sub: '把今天的經歷變成作品，讓外星人看見',
+      list.push({ id: 'create', group: 'night', name: '創作', sub: '把今天的經歷變成作品，讓外星人看見',
         fx: [['card', '使用 2 至 ' + s.craftSlots + ' 張素材'], ['cr', '材料 −$' + craftCost(2) + ' 起'], ['sig', '訊號 ↑'], ['body', '−4']],
-        enabled: c.ok, reason: c.reason });
-      list.push({ id: 'ot', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
+        reason: c.reason });
+      list.push({ id: 'ot', group: 'night', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
         fx: [['cr', '約 +$' + Math.round(labelCr * 1.5)], ['body', '−14'], ['spark', '約 −' + round1(labelSpark * 1.5)]],
-        enabled: !s.removed.label && !labelLocked && s.body > 14,
-        reason: s.removed.label ? '職位已被 AI 取代' : labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
-      list.push({ id: 'rest', name: '早點睡', sub: '明天又是新的一天',
-        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']], enabled: true });
+        reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'ot') || labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
+      list.push({ id: 'rest', group: 'night', name: '早點睡', sub: '明天又是新的一天',
+        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
     }
+    list.forEach((a) => { a.enabled = !a.reason; });
     return list;
   }
 
@@ -506,6 +731,9 @@
     ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
     items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
       note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
+    if (worldMods(s).eraseShop) {
+      items.push({ id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
+    }
     if (s.floor === 0) {
       const f = Math.floor(s.water) + 1;
       if (f <= 8) items.push({ id: 'rehouse', name: '重新租屋（' + f + ' 樓）', desc: '按金為兩期租金', cost: 2 * rentAmount(s, f), target: f });
@@ -523,12 +751,18 @@
     switch (id) {
       case 'premium': s.premiumUntil = s.day + 4; break;
       case 'supplement':
-        addSpark(s, 1.2);
+        addSpark(s, 1.2, true);
         s.flags.crashDay = s.day + 2; s.flags.crashAmt += 1.6; break;
-      case 'realfood': s.realFoodDay = s.day; s.body = Math.min(100, s.body + 15); addSpark(s, 0.2); break;
+      case 'realfood': s.realFoodDay = s.day; heal(s, 15); addSpark(s, 0.2); break;
       case 'tools': s.craftSlots = 5; break;
       case 'tank': case 'harpoon': case 'bag': case 'monitor': s.gear[id] = true; break;
       case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
+      case 'erase':
+        s.soul = round1(Math.max(0, s.soul - 4));
+        s.conscience = clamp(s.conscience - 0.15, 0, 1);
+        s.cards = s.cards.filter((c) => !c.tags.includes('memory'));
+        train(s, { imag: -4 }, null);
+        break;
       case 'moveup': s.floor += 1; break;
       case 'movedown': s.floor -= 1; break;
       case 'rehouse': s.floor = it.target; s.graceUsed = false; s.debt = 0; break;
@@ -537,16 +771,28 @@
   }
 
   // ---------- 道德抉擇 ----------
-  // 每天早上約六成機會遇到一個；每個抉擇每局只出現一次
+  // 每天早上約四成機會遇到一個；大部分抉擇每局只出現一次，少數可以隔一段時間再出現
   function drawDilemma(s) {
     if (s.dilemmaDay === s.day) return s.dilemma;
     s.dilemmaDay = s.day; s.dilemma = null;
-    if (rand(s) > 0.6) return null;
-    const pool = D.DILEMMAS.filter((d) => !s.usedDilemmas[d.id] && (!d.when || d.when(s)));
+    if (rand(s) > 0.4 + (worldMods(s).dilemmaBoost || 0)) return null;
+    const pool = D.DILEMMAS.filter((d) => {
+      const used = s.usedDilemmas[d.id];
+      const fresh = !used || (d.repeat && s.day - used >= d.repeat);
+      return fresh && (!d.when || d.when(s));
+    });
     if (!pool.length) return null;
     const d = pick(s, pool);
-    s.dilemma = { id: d.id, npc: d.npc ? pick(s, aliveNpcs(s)).id : null };
+    const taken = s.npcs.filter((n) => !n.alive);
+    s.dilemma = { id: d.id, npc: d.npc ? pick(s, aliveNpcs(s)).id : null, taken: d.taken && taken.length ? pick(s, taken).id : null };
     return s.dilemma;
+  }
+  function minReason(s, o) {
+    if (!o.min) return null;
+    for (const k of Object.keys(o.min)) {
+      if (A(s, k) < o.min[k]) return '需要' + D.STATS[k].name + ' ' + o.min[k] + '（你只有 ' + Math.round(A(s, k)) + '）';
+    }
+    return null;
   }
   function optionFx(s, o) {
     const fx = [];
@@ -557,11 +803,13 @@
     if (o.sin) fx.push(['soul', '+' + round1(o.sin * sinFactor(s)) + ' 克']);
     if (o.atone) fx.push(['soul', '−' + round1(Math.min(s.soul, o.atone)) + ' 克']);
     if (o.rating) fx.push(['note', '評分 ' + sign(o.rating)]);
-    if (o.signal) fx.push(['sig', '訊號 +' + o.signal.toLocaleString()]);
+    if (o.signal) fx.push(['sig', '訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(o.signal).toLocaleString()]);
     if (o.rentDiscount) fx.push(['cr', '下期租金減半']);
     if (o.foodFree) fx.push(['cr', '今晚不用付飯錢']);
     if (o.loseCard) fx.push(['card', '失去一張素材']);
-    if (o.takeNpc) fx.push(['note', '一位朋友會被帶走']);
+    if (o.takeNpc || o.takeNamedNpc) fx.push(['note', '一位朋友會被帶走']);
+    if (o.paranoia) fx.push(['note', '偏執 +' + o.paranoia]);
+    if (o.stats) Object.keys(o.stats).forEach((k) => fx.push(['stat', D.STATS[k].name + ' ' + sign(o.stats[k])]));
     if (o.card) fx.push(['card', D.CARDS[o.card].name]);
     if (o.guilt && o.sin >= 1) fx.push(['card', '愧疚：' + o.guilt]);
     return fx;
@@ -570,24 +818,30 @@
     const cur = s.dilemma;
     if (!cur) return null;
     const d = D.DILEMMAS.find((x) => x.id === cur.id);
-    const npcName = cur.npc ? D.NPCS.find((n) => n.id === cur.npc).name : '';
-    return { id: d.id, text: d.text.replace('{npc}', npcName),
-      options: d.options.map((o, i) => ({ i, label: o.label, reason: o.need ? o.need(s) : null, fx: optionFx(s, o) })) };
+    const name = (id) => (id ? D.NPCS.find((n) => n.id === id).name : '');
+    return { id: d.id, text: d.text.replace('{npc}', name(cur.npc)).replace('{taken}', name(cur.taken)),
+      options: d.options.map((o, i) => ({ i, label: o.label, reason: (o.need && o.need(s)) || minReason(s, o), fx: optionFx(s, o) })) };
+  }
+  function takeNpc(s, n, rep) {
+    n.alive = false;
+    s.saturation = Math.max(0.25, s.saturation - 0.15);
+    rep.line('「' + D.NPCS.find((x) => x.id === n.id).name + '」當晚被帶走了', 'bad');
   }
   function resolveDilemma(s, idx) {
     const cur = s.dilemma;
     const d = D.DILEMMAS.find((x) => x.id === cur.id);
     const o = d.options[idx];
-    s.usedDilemmas[d.id] = true;
+    s.usedDilemmas[d.id] = s.day;
     s.dilemma = null;
     const rep = report(s, '抉擇：' + o.label);
     if (o.cr) { s.cr += o.cr; rep.delta('cr', o.cr); }
-    if (o.body) { s.body = Math.min(100, s.body + o.body); rep.delta('body', o.body); }
-    if (o.spark) rep.delta('spark', addSpark(s, o.spark));
-    if (o.rating) { s.rating = clamp(s.rating + o.rating, 1, 5); rep.line('平台評分 ' + (o.rating > 0 ? '+' : '') + o.rating, o.rating > 0 ? 'good' : 'bad'); }
-    if (o.signal) { s.bonusSignal += o.signal; rep.line('外星訊號 +' + o.signal.toLocaleString(), 'good'); }
+    if (o.body) { heal(s, o.body); rep.delta('body', o.body); }
+    if (o.spark) rep.delta('spark', addSpark(s, o.spark, true));
+    if (o.rating) { s.rating = clamp(o.rating === 5 ? 5 : s.rating + o.rating, 1, 5); rep.line('平台評分 ' + (o.rating === 5 ? '變成 5.0' : (o.rating > 0 ? '+' : '') + o.rating), o.rating > 0 ? 'good' : 'bad'); }
+    if (o.signal) { s.bonusSignal += o.signal; rep.line('外星訊號 ' + (o.signal > 0 ? '+' : '−') + Math.abs(o.signal).toLocaleString(), o.signal > 0 ? 'good' : 'bad'); }
     if (o.rentDiscount) { s.rentDiscount = o.rentDiscount; rep.line('下期租金減半', 'good'); }
     if (o.foodFree) s.flags.foodFree = s.day;
+    if (o.flag) s.flags[o.flag] = true;
     if (o.loseCard && s.cards.length) {
       const lost = s.cards.splice(Math.floor(rand(s) * s.cards.length), 1)[0];
       rep.line('你借出了「' + lost.name + '」', '');
@@ -595,26 +849,49 @@
     if (o.friend && cur.npc) s.npcs.find((n) => n.id === cur.npc).friend += o.friend;
     if (o.takeNpc) {
       const alive = s.npcs.filter((n) => n.alive).sort((a, b) => b.signal - a.signal);
-      if (alive.length) {
-        alive[0].alive = false;
-        s.saturation = Math.max(0.25, s.saturation - 0.15);
-        rep.line('「' + D.NPCS.find((x) => x.id === alive[0].id).name + '」當晚被帶走了', 'bad');
-      }
+      if (alive.length) takeNpc(s, alive[0], rep);
     }
+    if (o.takeNamedNpc && cur.npc) takeNpc(s, s.npcs.find((n) => n.id === cur.npc), rep);
     if (o.card) rep.gain(o.card);
+    if (o.stats) train(s, o.stats, rep);
+    if (o.paranoia) addParanoia(s, o.paranoia, rep);
     if (o.sin) sin(s, o.sin, rep, '這件事會一直壓在你心上', o.guilt, o.tag);
     if (o.atone) atone(s, o.atone, rep, '你覺得輕了一點');
     return rep.done();
   }
 
   // ---------- 早上 ----------
+  function startWorldEvent(s, feed) {
+    const pool = D.WORLD_EVENTS.filter((w) => !s.worldsSeen[w.id]);
+    const w = pick(s, pool.length ? pool : D.WORLD_EVENTS);
+    s.world = { id: w.id, until: s.day + w.dur - 1 };
+    s.worldsSeen[w.id] = (s.worldsSeen[w.id] || 0) + 1;
+    feed.unshift({ kind: 'world', text: '【世界事件：' + w.name + '】' + w.news });
+    const fx = w.startFx || {};
+    if (fx.water) s.water = Math.min(8.5, s.water + fx.water);
+    if (fx.auto) s.auto = clamp(s.auto + fx.auto, 0, 100);
+    if (fx.spark) addSpark(s, fx.spark, true);
+    if (fx.crPct) s.cr = Math.round(s.cr * (1 + fx.crPct));
+    if (fx.paranoia) addParanoia(s, fx.paranoia);
+    if (fx.card) addCard(s, fx.card);
+    if (fx.takeNpc) {
+      const alive = s.npcs.filter((n) => n.alive);
+      if (alive.length) { const n = pick(s, alive); n.alive = false; s.saturation = Math.max(0.25, s.saturation - 0.15); }
+    }
+  }
   function morning(s) {
     if (s.morning && s.morning.day === s.day) return s.morning;
     const S = seasonOf(s);
     const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
+    // 世界事件：沒有進行中的事件時，隔一段日子就可能爆發一個
+    if (!s.world && s.day >= s.worldNext && rand(s) < 0.22) startWorldEvent(s, feed);
+    else if (s.world) feed.unshift({ kind: 'world', text: '【世界事件持續：' + worldDef(s).name + '】還有 ' + (s.world.until - s.day + 1) + ' 天。' });
     (s.newsQueue || []).forEach((t) => feed.push({ kind: 'news', text: t }));
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
+    // 偏執太高的人，會在動態裡看見不存在的帖文
+    if (s.paranoia >= 60) feed.push({ kind: 'post', text: pick(s, ['@？？？：它們在你的牆壁裡', '@你自己：不要相信明天的你', '@浮城政府：今天沒有發生任何事', '@阿星：我看得見你']), fake: true });
+    addParanoia(s, 0.6);
     const k = kpi(s);
     feed.push({ kind: 'alien', text: '【星際人才發展局・招募簡報】我們尋找又亮又輕、沒有包袱的人。' + k.name + '：' + k.desc + '。為保護本局神經網絡，靈魂重量上限為 ' + SOUL_LIMIT + ' 克。' });
     if (flooded(s)) feed.push({ kind: 'warn', text: '水已經淹到你住的 ' + s.floor + ' 樓。你可以搬上一層，或者繼續泡在水裡。' });
@@ -632,36 +909,65 @@
         if (rep) rep.line(D.FEED.autoNews[th], 'news');
       }
     });
-    if (s.auto >= 50) s.removed.smile = true;
+    if (s.auto >= 60) s.removed.smile = true;
     if (s.auto >= 100) s.removed.label = true;
   }
 
   // ---------- 一天結束 ----------
+  function nightEvent(s, rep) {
+    const pool = D.EVENTS.filter((e) => (!e.onlySeason || e.onlySeason === s.season) && (!e.when || e.when(s)));
+    const weights = pool.map((e) => e.w * ((e.season && e.season[s.season]) || 1));
+    let r = rand(s) * weights.reduce((a, b) => a + b, 0);
+    let ev = pool[0];
+    for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { ev = pool[i]; break; } }
+    const e = ev.alt && A(s, ev.alt.stat) >= ev.alt.min ? ev.alt : ev;
+    rep.event = e.text;
+    rep.line(e.text, 'event');
+    if (e.body) { const b = e.body < 0 ? Math.round(e.body * calmMult(s)) : e.body; heal(s, b); rep.delta('body', b); }
+    if (e.spark) rep.delta('spark', addSpark(s, e.spark, true));
+    if (e.cr) { s.cr = Math.max(0, s.cr + e.cr); rep.delta('cr', e.cr); }
+    if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * -e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
+    if (e.rentHike) s.rentHike += e.rentHike;
+    if (e.rating) s.rating = clamp(s.rating + e.rating, 1, 5);
+    if (e.flag) s.flags[e.flag] = s.day + 1;
+    if (e.card) rep.gain(e.card);
+    if (e.stats) train(s, e.stats, rep);
+    if (e.paranoia) addParanoia(s, e.paranoia, rep);
+  }
+
   function endDay(s) {
     const S = seasonOf(s);
+    const M = worldMods(s);
     const rep = report(s, '第 ' + s.day + ' 天結算');
-    rep.review = null; rep.ending = null; rep.event = null;
+    rep.review = null; rep.ending = null; rep.event = null; rep.interview = false;
     // 晚餐
+    const food = foodCost(s);
     if (s.flags.fishDinner === s.day) {
-      s.body = Math.min(100, s.body + 6);
+      heal(s, 6);
       rep.line('晚餐：自己抓的魚', 'good', 6, 'body');
     } else if (s.flags.foodFree === s.day) {
       rep.line('晚餐：沒付錢的便當', '');
-    } else if (s.cr >= S.food) {
-      s.cr -= S.food;
-      rep.line(s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -S.food, 'cr');
+    } else if (s.cr >= food) {
+      s.cr -= food;
+      rep.line(s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -food, 'cr');
     } else {
       s.body -= 22; s.stats.hungryDays++;
       addSpark(s, -0.3);
       rep.line('沒錢吃飯，餓著肚子睡覺', 'bad', -22, 'body');
       rep.line('飢餓令你無法思考', 'bad', -0.3, 'spark');
       rep.gain('e_hunger');
+      train(s, { fit: -0.5 }, rep);
     }
     // 睡覺
     if (s.floor === 0) { s.body -= 10; rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
     else if (flooded(s)) { s.body -= 8; rep.line('家裡正在淹水', 'bad', -8, 'body'); }
-    else { s.body = Math.min(100, s.body + 8); rep.line('睡覺', '', 8, 'body'); }
+    else { heal(s, 8); rep.line('睡覺', '', 8, 'body'); }
     if (S.nightBody) { s.body += S.nightBody; rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
+    // 世界事件的每日影響
+    if (M.bodyDaily) { const b = Math.round(M.bodyDaily * calmMult(s)); s.body += b; rep.line('世界事件：' + worldDef(s).name, 'bad', b, 'body'); }
+    if (M.sparkDaily) rep.line('世界事件：' + worldDef(s).name, 'good', addSpark(s, M.sparkDaily, true), 'spark');
+    if (M.paranoiaDaily) addParanoia(s, M.paranoiaDaily);
+    else addParanoia(s, -0.8);
     // 補充劑反彈
     if (s.flags.crashDay === s.day && s.flags.crashAmt) {
       addSpark(s, -s.flags.crashAmt);
@@ -677,37 +983,22 @@
     if (s.rating < 3.5) s.rating = Math.min(3.5, s.rating + 0.05);
     // 全城自動化
     const autoBefore = s.auto;
-    s.auto = clamp(s.auto + 0.8, 0, 100);
+    s.auto = clamp(s.auto + 0.35, 0, 100);
     applyAutomationNews(s, autoBefore, rep);
     // 朋友的訊號
     s.npcs.forEach((n) => {
       if (!n.alive) return;
       const def = D.NPCS.find((x) => x.id === n.id);
-      n.signal += Math.round(def.base * (0.7 + rand(s) * 0.6) * (1 + s.quarter * 0.4));
+      n.signal += Math.round(def.base * (0.7 + rand(s) * 0.6) * (1 + s.quarter * 0.3));
     });
     // 隨機事件
-    if (rand(s) < 0.45) {
-      const pool = D.EVENTS.filter((e) => !e.onlySeason || e.onlySeason === s.season);
-      const weights = pool.map((e) => e.w * ((e.season && e.season[s.season]) || 1));
-      let r = rand(s) * weights.reduce((a, b) => a + b, 0);
-      let ev = pool[0];
-      for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { ev = pool[i]; break; } }
-      rep.event = ev.text;
-      rep.line(ev.text, 'event');
-      if (ev.body) { s.body = Math.min(100, s.body + ev.body); rep.delta('body', ev.body); }
-      if (ev.spark) rep.delta('spark', addSpark(s, ev.spark));
-      if (ev.crPct) { const loss = Math.min(ev.crMax, Math.round(s.cr * -ev.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
-      if (ev.rentHike) s.rentHike += ev.rentHike;
-      if (ev.rating) s.rating = clamp(s.rating + ev.rating, 1, 5);
-      if (ev.flag) s.flags[ev.flag] = s.day + 1;
-      if (ev.card) rep.gain(ev.card);
-    }
+    if (rand(s) < 0.45) nightEvent(s, rep);
     // 水位
     const wasFlooded = flooded(s);
     s.water = Math.min(8.5, s.water + S.water);
     if (!wasFlooded && flooded(s)) rep.line('水位升到 ' + Math.floor(s.water) + ' 樓，淹進你家了！', 'bad');
-    // 交租
-    if (s.day % 5 === 0 && s.floor > 0) {
+    // 交租（每 7 天）
+    if (s.day % D.RENT_EVERY === 0 && s.floor > 0) {
       const due = Math.round(rentAmount(s) * (1 - (s.rentDiscount || 0))) + s.debt;
       if (s.rentDiscount) rep.line('舉報換來的減租', 'good');
       s.rentDiscount = 0;
@@ -734,18 +1025,33 @@
     }
     // 麻木
     if (s.spark <= 0.2) s.numbStreak++; else s.numbStreak = 0;
+    // 世界事件結束
+    if (s.world && s.day >= s.world.until) {
+      rep.line('世界事件結束：' + worldDef(s).name, 'news');
+      s.world = null;
+      s.worldNext = s.day + 4 + Math.floor(rand(s) * 6);
+    }
     // 探射燈
     rep.searchlight = Math.min(1.5, signal(s) / threshold(s));
-    // 篩選日
+    // 篩選日；前兩晚會被傳召入夢面試
     if (s.day === reviewDay(s)) rep.review = makeReview(s);
+    if (s.day === reviewDay(s) - 2) rep.interview = true;
     // 結局判定
-    s.body = Math.min(100, s.body);
+    s.body = Math.min(bodyMax(s), s.body);
     if (s.body <= 0) rep.ending = endingFor(s, 'death');
     else if (s.numbStreak >= 4) rep.ending = endingFor(s, 'grey');
     else if (rep.review && rep.review.pass) rep.ending = endingFor(s, 'recruited');
     else if (rep.review && s.day >= D.DAYS) rep.ending = endingFor(s, rep.review.overweight && rep.review.signalOk ? 'heavy' : 'ordinary');
-    if (rep.ending) s.ended = rep.ending;
-    else { s.day++; s.slot = 0; s.quarter = quarterOf(s.day); }
+    if (rep.ending) { s.ended = rep.ending; rep.interview = false; }
+    else {
+      s.day++; s.slot = 0; s.quarter = quarterOf(s.day);
+      // 季節每 25 天輪替
+      if ((s.day - 1) % D.SEASON_DAYS === 0) {
+        const i = D.SEASON_ORDER.indexOf(s.season);
+        s.season = D.SEASON_ORDER[(i + 1) % D.SEASON_ORDER.length];
+        rep.line('季節轉換：' + seasonOf(s).name + '來了。' + seasonOf(s).desc, 'news');
+      }
+    }
     return rep.done();
   }
 
@@ -805,14 +1111,14 @@
           text: '你沒有死，只是不再思考。浮城多了一個非常有效率的標註員，評分 ' + s.rating.toFixed(1) + ' 星。' };
       case 'ordinary':
         return { type, day: s.day, title: '平凡人',
-          text: '第 30 天。探射燈今晚沒有停在你的窗外。水位升到 ' + Math.floor(s.water) + ' 樓，而你仍然在這裡。'
+          text: '第 ' + D.DAYS + ' 天。探射燈今晚沒有停在你的窗外。水位升到 ' + Math.floor(s.water) + ' 樓，而你仍然在這裡。'
             + (n ? '你留下了 ' + n + ' 件作品，它們會沉入舊城，等待下一個人把它們打撈上來。' : '你沒有留下任何作品，但你撐過來了。') };
       case 'recruited':
         return { type, day: s.day, title: '被選中',
-          text: '第 ' + s.day + ' 天，探射燈停在你的窗外。' + (s.day === 10 ? '破格錄取。' : '') };
+          text: '第 ' + s.day + ' 天，探射燈停在你的窗外。' + (s.day === D.REVIEW_DAYS[0] ? '破格錄取。' : '') };
       case 'heavy':
         return { type, day: s.day, title: '良知太重',
-          text: '第 30 天。探射燈停在你的窗外，光束嘗試把你拉起來，卻拉不動。你的靈魂重 ' + s.soul.toFixed(1)
+          text: '第 ' + D.DAYS + ' 天。探射燈停在你的窗外，光束嘗試把你拉起來，卻拉不動。你的靈魂重 ' + s.soul.toFixed(1)
             + ' 克，超出負載上限 ' + SOUL_LIMIT + ' 克。你留在浮城，背著這份重量繼續生活。' };
       case 'guardian':
         return { type, day: s.day, title: '地球守護者',
@@ -823,7 +1129,7 @@
   }
 
   // ---------- 跨局紀錄 ----------
-  function recordMeta(meta, s, finalType) {
+  function recordMeta(meta, s, finalType, dossier) {
     meta = meta || {};
     meta.runs = (meta.runs || 0) + 1;
     meta.endings = meta.endings || {};
@@ -833,6 +1139,12 @@
     meta.log = meta.log || { fish: {}, relics: {} };
     Object.keys(s.log.fish).forEach((k) => { meta.log.fish[k] = true; });
     Object.keys(s.log.relics).forEach((k) => { meta.log.relics[k] = true; });
+    if (dossier) {
+      meta.archetypes = meta.archetypes || {};
+      meta.archetypes[dossier.archetype.id] = (meta.archetypes[dossier.archetype.id] || 0) + 1;
+      meta.stamps = meta.stamps || {};
+      dossier.stamps.forEach((x) => { meta.stamps[x.id] = true; });
+    }
     meta.relics = meta.relics || [];
     const best = s.stats.bestWork;
     if (best) {
@@ -846,31 +1158,40 @@
 
   // ---------- 工具 ----------
   function report(s, title) {
-    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, cards: [], dropped: [] };
+    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [] };
     return {
       get review() { return r.review; }, set review(v) { r.review = v; },
       get ending() { return r.ending; }, set ending(v) { r.ending = v; },
       get event() { return r.event; }, set event(v) { r.event = v; },
       get rent() { return r.rent; }, set rent(v) { r.rent = v; },
       get searchlight() { return r.searchlight; }, set searchlight(v) { r.searchlight = v; },
-      line(text, kind, v, stat) { r.lines.push({ text, kind: kind || '', v, stat }); if (stat) r.deltas[stat] += v; },
+      get interview() { return r.interview; }, set interview(v) { r.interview = v; },
+      line(text, kind, v, stat) { r.lines.push({ text, kind: kind || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; },
       delta(stat, v) { r.deltas[stat] += v; },
+      stat(k, v) { r.stats[k] = (r.stats[k] || 0) + v; },
       gain(id) {
         const res = addCard(s, id);
         r.cards.push(res.card);
         if (res.dropped) r.dropped.push(res.dropped);
       },
-      done() { r.deltas.spark = round1(r.deltas.spark); r.deltas.soul = round1(r.deltas.soul); return r; },
+      done() {
+        r.deltas.spark = round1(r.deltas.spark); r.deltas.soul = round1(r.deltas.soul);
+        Object.keys(r.stats).forEach((k) => { r.stats[k] = round1(r.stats[k]); if (!r.stats[k]) delete r.stats[k]; });
+        return r;
+      },
     };
   }
 
   IE.Rules = {
     newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX, sparkMax,
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
+    train, bodyMax, worldMods, worldInfo, addParanoia, foodCost,
     quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
     diveConfig, diveBodyCost, applyDive,
+    deliveryConfig, applyDelivery, farmScore, farmConfig, applyFarm, buskConfig, applyBusk,
+    clinicConfig, applyClinic, interviewQuestions, applyInterview,
     chatCost, aliveNpcs, applyChat, applyRest,
     evalCraft, commitCraft, canCreate, craftCost,
     actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
