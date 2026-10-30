@@ -227,6 +227,25 @@
 ### 已知問題
 - 無。
 
+---
 
+## 任務 8：創作之夜的場景（P1）
 
+### 改動摘要
+1. **`game/js/craft.js` 與 `game/css/art.css`**：
+   - 新增創作桌背景層（`.ct-scene-bg`）與舞台中央微縮景觀（`.ct-scene-stage`），按當晚情境自動切換四種場景：
+     - **平常晚上（`desk`）**：深夜木書桌、黃銅鵝頸檯燈與暖光束（`.sc-lamp`、`.sc-lamp-cone`）、手稿與熱咖啡杯（`.sc-desk-items`），以及中央窗景（`.sc-window`），動態反映當前浮城水位（`--water-pct`、水位刻度 `2F–6F` 與波浪動畫）。
+     - **社區小展（`small`）**：舊城社區會堂場景，配紅絨舞台布幕（`.sc-curtain`）、暖白光管（`.sc-tubes`）、三角彩旗（`.sc-bunting`）、木佈告板與摺凳列（`.sc-chairs`）。
+     - **畫廊聯展（`gallery`）**：天空區白盒畫廊場景，配極簡白牆、軌道射燈與三道聚光燈束（`.sc-track`、`.sc-cones`）、三幅抽象畫框（`.sc-frames`）及紅絨圍欄柱（`.sc-stanchion`）。
+     - **外星評審（`boss`）**：母艦飛碟內部評審艙場景，配弧形外星金屬肋骨（`.sc-ufo-ribs`）、頂部牽引光束核心與垂直光柱（`.sc-ufo-core`、`.sc-ufo-beam`）、反重力脈衝光環（`.sc-ufo-rings`）與全息控制台（`.sc-ufo-consoles`）。
+   - **通宵創作漸亮演出（`mode-allnighter`）**：當玩家選擇「通宵創作」時，隨每次下筆推進（`data-dawn="0"` 至 `"4"`，由「子夜 01:00」→「寅時 03:00」→「破曉 04:45」→「魚肚白 05:30」→「天亮 06:30」），背景與窗外天空由深夜星空漸變為破曉晨曦並升起朝陽。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t8-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t8-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t8-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t8-after-mobile.png`
+
+### 已知問題
+- 無。
 

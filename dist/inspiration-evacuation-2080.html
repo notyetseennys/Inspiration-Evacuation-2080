@@ -2092,6 +2092,730 @@ body.ct-open { overflow: hidden; }
   }
 }
 
+/* =========================================================
+   任務 8：創作之夜的場景（深夜書桌與水位窗、社區會堂、白盒畫廊、飛碟內部、通宵天亮）
+   ========================================================= */
+.ct-scene-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.65s ease, opacity 0.65s ease;
+}
+
+/* 1. 平常晚上：深夜書桌與檯燈暖光 */
+.ctable[data-scene="desk"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 18% 54%, rgba(255, 198, 92, 0.18), transparent 44%),
+    radial-gradient(circle at 68% 36%, rgba(55, 195, 214, 0.12), transparent 48%),
+    linear-gradient(180deg, #0d1224 0%, #141024 58%, #1d130e 100%);
+}
+.ctable[data-scene="desk"].scene-flooded .ct-scene-bg {
+  background:
+    radial-gradient(circle at 18% 54%, rgba(255, 198, 92, 0.16), transparent 42%),
+    radial-gradient(circle at 65% 42%, rgba(45, 168, 210, 0.24), transparent 52%),
+    linear-gradient(180deg, #0a1829 0%, #0e2238 58%, #161820 100%);
+}
+
+/* 2. 社區小展：社區會堂（紅絨布幕與暖白光管） */
+.ctable[data-scene="small"] .ct-scene-bg {
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(255, 232, 179, 0.18), transparent 55%),
+    linear-gradient(90deg, rgba(122, 22, 38, 0.35) 0%, transparent 14%, transparent 86%, rgba(122, 22, 38, 0.35) 100%),
+    linear-gradient(180deg, #241520 0%, #171222 60%, #120d18 100%);
+}
+
+/* 3. 畫廊聯展：白盒畫廊（明亮軌道射燈與極簡展牆） */
+.ctable[data-scene="gallery"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 26% 18%, rgba(240, 246, 255, 0.18), transparent 36%),
+    radial-gradient(circle at 50% 18%, rgba(240, 246, 255, 0.2), transparent 38%),
+    radial-gradient(circle at 74% 18%, rgba(240, 246, 255, 0.18), transparent 36%),
+    linear-gradient(180deg, #1f2637 0%, #161c2a 62%, #0e121c 100%);
+}
+
+/* 4. 外星評審：飛碟內部（母艦評審艙與牽引光束） */
+.ctable[data-scene="boss"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(55, 225, 214, 0.22), rgba(195, 139, 255, 0.14) 36%, transparent 65%),
+    repeating-linear-gradient(90deg, rgba(55, 195, 214, 0.04) 0 1px, transparent 1px 48px),
+    linear-gradient(180deg, #061824 0%, #120b29 56%, #050811 100%);
+}
+
+/* 通宵創作：隨下筆進度（data-dawn 0 → 4）背景慢慢天亮 */
+.ctable.mode-allnighter[data-dawn="1"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 20% 54%, rgba(255, 198, 92, 0.16), transparent 44%),
+    linear-gradient(180deg, #141d3b 0%, #24193c 55%, #1d1414 100%);
+}
+.ctable.mode-allnighter[data-dawn="2"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 65% 32%, rgba(255, 136, 168, 0.22), transparent 50%),
+    linear-gradient(180deg, #1f2b52 0%, #41234a 52%, #26181c 100%);
+}
+.ctable.mode-allnighter[data-dawn="3"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 65% 30%, rgba(255, 188, 118, 0.3), transparent 55%),
+    linear-gradient(180deg, #2c4370 0%, #633554 48%, #33201d 100%);
+}
+.ctable.mode-allnighter[data-dawn="4"] .ct-scene-bg {
+  background:
+    radial-gradient(circle at 65% 26%, rgba(255, 224, 140, 0.38), transparent 58%),
+    linear-gradient(180deg, #3b6291 0%, #87505c 46%, #3d2820 100%);
+}
+
+/* 舞台中央場景微縮景觀（.ct-scene-stage） */
+.ct-stage {
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(141, 183, 214, 0.22);
+  background: rgba(10, 12, 22, 0.55);
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.65);
+}
+.ct-scene-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ct-played {
+  position: relative;
+  z-index: 1;
+}
+.ct-total {
+  z-index: 2;
+}
+
+.sc-diorama {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sc-caption {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 5px;
+  z-index: 4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(232, 239, 250, 0.85);
+  text-shadow: 0 1px 3px #000;
+}
+.sc-caption b {
+  color: #7ee8fa;
+}
+.sc-dawn-pill {
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #1e1204;
+  background: linear-gradient(90deg, #ffd36b, #ff9a62);
+  box-shadow: 0 0 10px rgba(255, 194, 71, 0.5);
+}
+
+/* ---- 場景 A：深夜書桌、檯燈與窗外水位 ---- */
+.sc-desk {
+  background: linear-gradient(180deg, rgba(16, 20, 36, 0.82) 0%, rgba(24, 18, 30, 0.88) 76%, #2b1a12 76%, #1c100b 100%);
+}
+.sc-desk-surface {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 25%;
+  background:
+    linear-gradient(90deg, rgba(255, 200, 98, 0.25) 0%, rgba(255, 180, 72, 0.08) 45%, transparent 80%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 18px, rgba(0, 0, 0, 0.08) 18px 36px),
+    linear-gradient(180deg, #3c2417 0%, #24140c 100%);
+  border-top: 2px solid #5e3a24;
+}
+.sc-lamp-cone {
+  position: absolute;
+  left: 24px;
+  top: 18px;
+  width: 320px;
+  height: 150px;
+  background: radial-gradient(ellipse at 18% 12%, rgba(255, 214, 112, 0.42), rgba(255, 184, 77, 0.14) 52%, transparent 76%);
+  transform: rotate(12deg);
+  transform-origin: 18% 12%;
+  z-index: 2;
+}
+.ctable.mode-allnighter[data-dawn="4"] .sc-lamp-cone {
+  opacity: 0.45;
+}
+.sc-lamp {
+  position: absolute;
+  left: 26px;
+  bottom: 22%;
+  width: 68px;
+  height: 96px;
+  z-index: 3;
+}
+.sc-lamp-base {
+  position: absolute;
+  left: 8px;
+  bottom: 0;
+  width: 38px;
+  height: 8px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(90deg, #b88746, #ffd36b, #875e29);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+.sc-lamp-arm {
+  position: absolute;
+  left: 22px;
+  bottom: 7px;
+  width: 24px;
+  height: 68px;
+  border-left: 4px solid #c9974c;
+  border-top: 4px solid #c9974c;
+  border-radius: 18px 0 0 0;
+}
+.sc-lamp-head {
+  position: absolute;
+  left: 36px;
+  top: 14px;
+  width: 30px;
+  height: 18px;
+  border-radius: 14px 14px 4px 4px;
+  background: linear-gradient(135deg, #ffd36b, #9e6d2b);
+  transform: rotate(22deg);
+}
+.sc-lamp-bulb {
+  position: absolute;
+  left: 42px;
+  top: 26px;
+  width: 14px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff6c2;
+  box-shadow: 0 0 18px 6px rgba(255, 214, 107, 0.85);
+}
+
+/* 窗外與水位 */
+.sc-window {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  width: min(440px, 64%);
+  height: 70%;
+  border-radius: 6px;
+  border: 3px solid #2b354d;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7), 0 2px 10px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  z-index: 1;
+}
+.sc-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #070b18 0%, #121d38 65%, #1d2e52 100%);
+  transition: background 0.6s ease;
+}
+.ctable.mode-allnighter[data-dawn="1"] .sc-sky {
+  background: linear-gradient(180deg, #101833 0%, #242954 60%, #44315e 100%);
+}
+.ctable.mode-allnighter[data-dawn="2"] .sc-sky {
+  background: linear-gradient(180deg, #1d2c54 0%, #4e3466 52%, #8c4968 100%);
+}
+.ctable.mode-allnighter[data-dawn="3"] .sc-sky {
+  background: linear-gradient(180deg, #2e4d80 0%, #7c4f70 46%, #d9825b 100%);
+}
+.ctable.mode-allnighter[data-dawn="4"] .sc-sky {
+  background: linear-gradient(180deg, #4b7db3 0%, #9cb5d4 48%, #ffe194 100%);
+}
+.sc-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 18% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 36% 14%, #cbe4ff, transparent),
+    radial-gradient(1.5px 1.5px at 62% 26%, #fff, transparent),
+    radial-gradient(1px 1px at 82% 18%, #ffe7a8, transparent),
+    radial-gradient(1.5px 1.5px at 48% 34%, #fff, transparent);
+  opacity: calc(1 - var(--dawn, 0) * 0.9);
+}
+.sc-moon {
+  position: absolute;
+  right: 22%;
+  top: 12px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: -4px 2px 0 0 #ffe9a8;
+  opacity: calc(1 - var(--dawn, 0) * 0.95);
+  transform: translateY(calc(var(--dawn, 0) * -14px));
+}
+.sc-sun {
+  position: absolute;
+  left: 64%;
+  bottom: 18%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8cc 0%, #ffd36b 55%, rgba(255, 138, 60, 0) 100%);
+  box-shadow: 0 0 24px rgba(255, 200, 92, 0.85);
+  opacity: var(--dawn, 0);
+  transform: translateY(calc((1 - var(--dawn, 0)) * 32px));
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.sc-skyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 75%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 0 12px;
+}
+.sc-skyline span {
+  display: block;
+  width: 14%;
+  background: #0c1324;
+  border-top: 2px solid rgba(55, 195, 214, 0.4);
+  box-shadow: inset 0 6px 0 rgba(255, 79, 180, 0.22);
+}
+.sc-skyline span:nth-child(1) { height: 55%; }
+.sc-skyline span:nth-child(2) { height: 82%; }
+.sc-skyline span:nth-child(3) { height: 64%; }
+.sc-skyline span:nth-child(4) { height: 90%; }
+.sc-skyline span:nth-child(5) { height: 48%; }
+
+.sc-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--water-pct, 42%);
+  background: linear-gradient(180deg, rgba(55, 195, 214, 0.62) 0%, rgba(18, 78, 120, 0.82) 45%, rgba(8, 34, 62, 0.92) 100%);
+  border-top: 2px solid #9ef3ff;
+  box-shadow: 0 -2px 12px rgba(55, 195, 214, 0.55);
+  transition: height 0.5s ease;
+}
+.sc-wave {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: -4px;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, rgba(190, 248, 255, 0.85) 0 14px, transparent 14px 28px);
+  animation: sc-wave-move 3.6s linear infinite;
+}
+@keyframes sc-wave-move {
+  to { transform: translateX(28px); }
+}
+.sc-water-lbl {
+  position: absolute;
+  right: 28px;
+  top: 3px;
+  font-size: 10px;
+  font-weight: 900;
+  color: #e6fcff;
+  background: rgba(6, 24, 42, 0.78);
+  padding: 0 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(158, 243, 255, 0.5);
+}
+.sc-win-frame i:nth-child(1) {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(43, 53, 77, 0.85);
+}
+.sc-win-frame i:nth-child(2) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48%;
+  height: 2px;
+  background: rgba(43, 53, 77, 0.85);
+}
+.sc-win-gauge {
+  position: absolute;
+  right: 4px;
+  top: 6px;
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: var(--font-num);
+  color: rgba(190, 232, 255, 0.8);
+}
+
+.sc-desk-items {
+  position: absolute;
+  right: 36px;
+  bottom: 22%;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  z-index: 3;
+}
+.sc-papers {
+  display: block;
+  width: 44px;
+  height: 12px;
+  background: linear-gradient(180deg, #f3ecdc 0 4px, #d8ceb8 4px 8px, #eee5d3 8px 12px);
+  border: 1px solid #3a2b1c;
+  border-radius: 2px;
+  transform: skewX(-14deg);
+}
+.sc-mug {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 22px;
+  background: linear-gradient(90deg, #d9534f, #a62e2b);
+  border: 1.5px solid #2b1412;
+  border-radius: 2px 2px 5px 5px;
+}
+.sc-mug::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 4px;
+  width: 5px;
+  height: 10px;
+  border: 2px solid #d9534f;
+  border-left: 0;
+  border-radius: 0 5px 5px 0;
+}
+.sc-mug i {
+  position: absolute;
+  left: 5px;
+  top: -10px;
+  width: 6px;
+  height: 8px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.45);
+  border-right: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+}
+
+/* ---- 場景 B：社區小展（社區會堂） ---- */
+.sc-small {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 235, 184, 0.25), transparent 65%),
+    linear-gradient(180deg, #2b1d28 0%, #211824 72%, #38261a 72%, #24170f 100%);
+}
+.sc-curtain {
+  position: absolute;
+  top: 0;
+  bottom: 18%;
+  width: 11%;
+  min-width: 38px;
+  background: repeating-linear-gradient(90deg, #8f1d32 0 10px, #631020 10px 20px, #a8243c 20px 28px);
+  border-bottom: 3px solid #ffd36b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+  z-index: 2;
+}
+.sc-curtain.left { left: 0; border-radius: 0 0 18px 0; }
+.sc-curtain.right { right: 0; border-radius: 0 0 0 18px; }
+.sc-tubes {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 6px;
+  display: flex;
+  justify-content: space-around;
+  z-index: 2;
+}
+.sc-tubes i {
+  display: block;
+  width: 34%;
+  height: 5px;
+  border-radius: 99px;
+  background: #fff9e6;
+  box-shadow: 0 0 16px 4px rgba(255, 230, 168, 0.65);
+}
+.sc-bunting {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 16px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+}
+.sc-bunting i {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 14px solid #ffd36b;
+}
+.sc-bunting i:nth-child(odd) { border-top-color: #37c3d6; }
+.sc-bunting i:nth-child(3n) { border-top-color: #ff4fb4; }
+.sc-hall-board {
+  position: absolute;
+  left: 50%;
+  top: 32px;
+  transform: translateX(-50%);
+  padding: 6px 18px;
+  border-radius: 6px;
+  background: #4e3422;
+  border: 2px solid #c99b62;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+.sc-hall-board b {
+  display: block;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: #fff3d1;
+}
+.sc-hall-board small {
+  font-size: 10px;
+  color: #ffd36b;
+}
+.sc-chairs {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 22px;
+  display: flex;
+  justify-content: space-around;
+  z-index: 2;
+}
+.sc-chairs i {
+  display: block;
+  width: 28px;
+  height: 22px;
+  border: 2px solid #7c8aa6;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, rgba(124, 138, 166, 0.35) 0 45%, transparent 45%);
+}
+
+/* ---- 場景 C：畫廊聯展（白盒畫廊） ---- */
+.sc-gallery {
+  background: linear-gradient(180deg, #dde4f0 0%, #c8d2e3 70%, #8f9bb0 70%, #6d788c 100%);
+}
+.sc-gallery .sc-caption {
+  color: #121826;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  font-weight: 700;
+}
+.sc-gallery .sc-caption b {
+  color: #5b2c91;
+}
+.sc-track {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 6px;
+  height: 4px;
+  background: #1a202c;
+  display: flex;
+  justify-content: space-around;
+  z-index: 3;
+}
+.sc-track i {
+  display: block;
+  width: 14px;
+  height: 10px;
+  background: #1a202c;
+  border-bottom: 3px solid #fff6c2;
+  border-radius: 2px;
+}
+.sc-cones {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 10%;
+  z-index: 1;
+}
+.sc-cones i {
+  display: block;
+  width: 26%;
+  height: 85%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 252, 235, 0.72), rgba(255, 252, 235, 0) 75%);
+}
+.sc-frames {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 24px;
+  display: flex;
+  justify-content: space-around;
+  z-index: 2;
+}
+.sc-art {
+  width: 74px;
+  height: 52px;
+  background: #ffffff;
+  border: 3px solid #1e2433;
+  box-shadow: 0 6px 14px rgba(18, 24, 38, 0.25);
+  position: relative;
+}
+.sc-art.a1::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  background: linear-gradient(135deg, #37c3d6 0 50%, #162238 50%);
+}
+.sc-art.a2::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff4fb4 0 42%, #ffd36b 42% 70%, transparent 70%);
+}
+.sc-art.a3::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  background: repeating-linear-gradient(45deg, #1b2234 0 6px, #c38bff 6px 12px);
+}
+.sc-stanchion {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 3;
+}
+.sc-stanchion i {
+  display: block;
+  width: 6px;
+  height: 26px;
+  background: linear-gradient(90deg, #b59449, #ffe299, #8c6d28);
+  border-radius: 2px;
+}
+.sc-stanchion s {
+  flex: 1;
+  height: 4px;
+  background: #9e1f38;
+  border-radius: 99px;
+  transform: translateY(2px);
+}
+
+/* ---- 場景 D：外星評審（飛碟內部） ---- */
+.sc-boss {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(55, 225, 214, 0.28), rgba(195, 139, 255, 0.16) 44%, rgba(6, 10, 22, 0.95) 80%),
+    linear-gradient(180deg, #05131e 0%, #0d0820 75%, #061824 100%);
+}
+.sc-ufo-ribs {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 6%;
+  z-index: 1;
+}
+.sc-ufo-ribs i {
+  display: block;
+  width: 18px;
+  height: 100%;
+  border-left: 3px solid rgba(55, 195, 214, 0.35);
+  border-right: 3px solid rgba(195, 139, 255, 0.25);
+  transform: skewX(-16deg);
+}
+.sc-ufo-ribs i.r3,
+.sc-ufo-ribs i.r4 {
+  transform: skewX(16deg);
+}
+.sc-ufo-core {
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e2fff9 0%, #37c3d6 52%, #ff4d5e 90%, transparent 100%);
+  box-shadow: 0 0 28px rgba(55, 225, 214, 0.85);
+  z-index: 2;
+}
+.sc-ufo-beam {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 180px;
+  background: linear-gradient(180deg, rgba(126, 248, 240, 0.38) 0%, rgba(55, 195, 214, 0.16) 55%, rgba(255, 77, 94, 0.24) 100%);
+  clip-path: polygon(22% 0%, 78% 0%, 100% 100%, 0% 100%);
+  z-index: 1;
+}
+.sc-ufo-rings i {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1.5px solid rgba(126, 248, 240, 0.65);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(55, 195, 214, 0.55);
+  z-index: 2;
+  animation: ufo-ring-pulse 2.6s ease-in-out infinite alternate;
+}
+.sc-ufo-rings .u1 { top: 34%; width: 120px; height: 22px; }
+.sc-ufo-rings .u2 { top: 62%; width: 156px; height: 28px; animation-delay: 0.8s; }
+@keyframes ufo-ring-pulse {
+  0% { transform: translateX(-50%) scale(0.94); opacity: 0.55; }
+  100% { transform: translateX(-50%) scale(1.05); opacity: 0.95; }
+}
+.sc-ufo-consoles {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+}
+.sc-ufo-consoles .uc {
+  display: flex;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: rgba(6, 24, 38, 0.82);
+  border: 1px solid rgba(55, 195, 214, 0.55);
+  box-shadow: 0 0 12px rgba(55, 195, 214, 0.3);
+}
+.sc-ufo-consoles .uc i {
+  display: block;
+  width: 6px;
+  height: 16px;
+  background: linear-gradient(180deg, #9be36b, #37c3d6);
+  border-radius: 1px;
+}
+.sc-ufo-consoles .uc i:nth-child(2) {
+  background: linear-gradient(180deg, #ff4fb4, #c38bff);
+}
+
+@media (max-width: 640px) {
+  .sc-window { width: 72%; }
+  .sc-lamp { left: 8px; transform: scale(0.82); transform-origin: bottom left; }
+  .sc-desk-items { right: 10px; transform: scale(0.85); transform-origin: bottom right; }
+  .sc-art { width: 52px; height: 38px; }
+  .sc-caption { font-size: 10px; left: 6px; right: 6px; bottom: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-wave,
+  .sc-ufo-rings i {
+    animation: none !important;
+  }
+}
+
+
 
 
 
@@ -18079,7 +18803,7 @@ body.ct-open { overflow: hidden; }
     root.className = 'ctable';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
-    root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
+    root.innerHTML = '<div class="ct-scene-bg" aria-hidden="true"></div><canvas class="ct-fx"></canvas><div class="ct-inner">'
       + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
@@ -18090,7 +18814,7 @@ body.ct-open { overflow: hidden; }
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
       + '<div class="ct-tags"></div>'
-      + '<section class="ct-stage"><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
       + '<p class="ct-hint"></p>'
       + '<section class="ct-hand"></section>'
       + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
@@ -18153,11 +18877,89 @@ body.ct-open { overflow: hidden; }
       ab.classList.add('ping');
     }
   }
+  const DAWN_TIMES = ['子夜 01:00', '寅時 03:00', '破曉 04:45', '魚肚白 05:30', '天亮 06:30'];
+  function renderScene(forceDawn) {
+    if (!root || !st || !st.s) return;
+    const s = st.s, ses = s.session;
+    const g = ses && ses.stage;
+    const scene = g ? (g.kind === 'boss' ? 'boss' : g.kind === 'big' ? 'gallery' : 'small') : 'desk';
+    const isAll = !!(ses && ses.mode === 'allnighter');
+    const donePlays = ses && ses.log ? ses.log.length : 0;
+    const leftPlays = ses ? ses.plays : 0;
+    const totalPlays = Math.max(1, donePlays + leftPlays);
+    const dawn = isAll ? (forceDawn ? 1 : Math.min(1, donePlays / Math.max(3, totalPlays))) : 0;
+    const dawnStep = isAll ? (forceDawn ? 4 : Math.min(4, Math.round(dawn * 4))) : 0;
+    const water = Number(s.water || 1);
+    const floor = Number(s.floor || 0);
+    const flooded = floor > 0 && water >= floor;
+    const waterPct = floor === 0 ? 48 : Math.max(16, Math.min(86, Math.round(28 + (water - (floor - 2)) * 18)));
+    root.dataset.scene = scene;
+    root.dataset.dawn = String(dawnStep);
+    root.classList.toggle('mode-allnighter', isAll);
+    root.classList.toggle('scene-flooded', flooded);
+    root.style.setProperty('--dawn', dawn.toFixed(2));
+    root.style.setProperty('--water-pct', waterPct + '%');
+    const box = $('.ct-scene-stage');
+    if (!box) return;
+    const dawnPill = isAll
+      ? '<span class="sc-dawn-pill">☀ 通宵破曉・' + DAWN_TIMES[dawnStep] + '</span>'
+      : '';
+    if (scene === 'desk') {
+      const locTxt = floor > 0 ? (floor + ' 樓書桌' + (flooded ? '・淹水中' : '')) : '天橋船屋書桌';
+      box.innerHTML = '<div class="sc-diorama sc-desk">'
+        + '<div class="sc-lamp-cone"></div>'
+        + '<div class="sc-window">'
+        + '<div class="sc-sky">'
+        + '<i class="sc-stars"></i>'
+        + '<i class="sc-moon"></i>'
+        + '<i class="sc-sun"></i>'
+        + '<div class="sc-skyline"><span></span><span></span><span></span><span></span><span></span></div>'
+        + '</div>'
+        + '<div class="sc-water"><i class="sc-wave"></i><span class="sc-water-lbl">水位 ' + water.toFixed(1) + 'F</span></div>'
+        + '<div class="sc-win-frame"><i></i><i></i></div>'
+        + '<div class="sc-win-gauge"><span>6F</span><span>4F</span><span>2F</span></div>'
+        + '</div>'
+        + '<div class="sc-lamp"><i class="sc-lamp-head"></i><i class="sc-lamp-bulb"></i><i class="sc-lamp-arm"></i><i class="sc-lamp-base"></i></div>'
+        + '<div class="sc-desk-items"><span class="sc-papers"></span><span class="sc-mug"><i></i></span></div>'
+        + '<div class="sc-desk-surface"></div>'
+        + '<div class="sc-caption"><span>深夜書桌・檯燈｜窗外水位 <b>' + water.toFixed(1) + ' 樓</b>（' + locTxt + '）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else if (scene === 'small') {
+      box.innerHTML = '<div class="sc-diorama sc-small">'
+        + '<div class="sc-curtain left"></div><div class="sc-curtain right"></div>'
+        + '<div class="sc-tubes"><i></i><i></i></div>'
+        + '<div class="sc-bunting"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+        + '<div class="sc-hall-board"><b>舊城社區會堂</b><small>COMMUNITY HALL・第 ' + g.index + ' 關社區小展</small></div>'
+        + '<div class="sc-easels"><i></i><i></i></div>'
+        + '<div class="sc-chairs"><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+        + '<div class="sc-caption"><span>場景：舊城社區會堂（社區小展・摺凳與佈告板）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else if (scene === 'gallery') {
+      box.innerHTML = '<div class="sc-diorama sc-gallery">'
+        + '<div class="sc-track"><i class="sp1"></i><i class="sp2"></i><i class="sp3"></i></div>'
+        + '<div class="sc-cones"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>'
+        + '<div class="sc-frames"><div class="sc-art a1"></div><div class="sc-art a2"></div><div class="sc-art a3"></div></div>'
+        + '<div class="sc-gal-floor"></div>'
+        + '<div class="sc-stanchion"><i></i><s></s><i></i><s></s><i></i></div>'
+        + '<div class="sc-caption"><span>場景：天空區白盒畫廊（畫廊聯展・無影射燈與白牆）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else {
+      box.innerHTML = '<div class="sc-diorama sc-boss">'
+        + '<div class="sc-ufo-ribs"><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="r4"></i></div>'
+        + '<div class="sc-ufo-core"></div>'
+        + '<div class="sc-ufo-beam"></div>'
+        + '<div class="sc-ufo-rings"><i class="u1"></i><i class="u2"></i></div>'
+        + '<div class="sc-ufo-consoles"><div class="uc left"><i></i><i></i><i></i></div><div class="uc right"><i></i><i></i><i></i></div></div>'
+        + '<div class="sc-caption"><span>場景：母艦飛碟內部（外星評審艙・牽引光束核心）</span>' + dawnPill + '</div>'
+        + '</div>';
+    }
+  }
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
     $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
     updateAudioBadge(st.lastNote);
+    renderScene(false);
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
@@ -18911,6 +19713,7 @@ body.ct-open { overflow: hidden; }
   async function endNight() {
     const s = st.s;
     st.busy = true;
+    renderScene(true);
     const before = st.sigStart;
     const res = C().finish(s);
     const w = res.work;

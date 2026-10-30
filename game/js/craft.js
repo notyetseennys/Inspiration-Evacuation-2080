@@ -72,7 +72,7 @@
     root.className = 'ctable';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
-    root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
+    root.innerHTML = '<div class="ct-scene-bg" aria-hidden="true"></div><canvas class="ct-fx"></canvas><div class="ct-inner">'
       + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
@@ -83,7 +83,7 @@
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
       + '<div class="ct-tags"></div>'
-      + '<section class="ct-stage"><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
       + '<p class="ct-hint"></p>'
       + '<section class="ct-hand"></section>'
       + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
@@ -146,11 +146,89 @@
       ab.classList.add('ping');
     }
   }
+  const DAWN_TIMES = ['子夜 01:00', '寅時 03:00', '破曉 04:45', '魚肚白 05:30', '天亮 06:30'];
+  function renderScene(forceDawn) {
+    if (!root || !st || !st.s) return;
+    const s = st.s, ses = s.session;
+    const g = ses && ses.stage;
+    const scene = g ? (g.kind === 'boss' ? 'boss' : g.kind === 'big' ? 'gallery' : 'small') : 'desk';
+    const isAll = !!(ses && ses.mode === 'allnighter');
+    const donePlays = ses && ses.log ? ses.log.length : 0;
+    const leftPlays = ses ? ses.plays : 0;
+    const totalPlays = Math.max(1, donePlays + leftPlays);
+    const dawn = isAll ? (forceDawn ? 1 : Math.min(1, donePlays / Math.max(3, totalPlays))) : 0;
+    const dawnStep = isAll ? (forceDawn ? 4 : Math.min(4, Math.round(dawn * 4))) : 0;
+    const water = Number(s.water || 1);
+    const floor = Number(s.floor || 0);
+    const flooded = floor > 0 && water >= floor;
+    const waterPct = floor === 0 ? 48 : Math.max(16, Math.min(86, Math.round(28 + (water - (floor - 2)) * 18)));
+    root.dataset.scene = scene;
+    root.dataset.dawn = String(dawnStep);
+    root.classList.toggle('mode-allnighter', isAll);
+    root.classList.toggle('scene-flooded', flooded);
+    root.style.setProperty('--dawn', dawn.toFixed(2));
+    root.style.setProperty('--water-pct', waterPct + '%');
+    const box = $('.ct-scene-stage');
+    if (!box) return;
+    const dawnPill = isAll
+      ? '<span class="sc-dawn-pill">☀ 通宵破曉・' + DAWN_TIMES[dawnStep] + '</span>'
+      : '';
+    if (scene === 'desk') {
+      const locTxt = floor > 0 ? (floor + ' 樓書桌' + (flooded ? '・淹水中' : '')) : '天橋船屋書桌';
+      box.innerHTML = '<div class="sc-diorama sc-desk">'
+        + '<div class="sc-lamp-cone"></div>'
+        + '<div class="sc-window">'
+        + '<div class="sc-sky">'
+        + '<i class="sc-stars"></i>'
+        + '<i class="sc-moon"></i>'
+        + '<i class="sc-sun"></i>'
+        + '<div class="sc-skyline"><span></span><span></span><span></span><span></span><span></span></div>'
+        + '</div>'
+        + '<div class="sc-water"><i class="sc-wave"></i><span class="sc-water-lbl">水位 ' + water.toFixed(1) + 'F</span></div>'
+        + '<div class="sc-win-frame"><i></i><i></i></div>'
+        + '<div class="sc-win-gauge"><span>6F</span><span>4F</span><span>2F</span></div>'
+        + '</div>'
+        + '<div class="sc-lamp"><i class="sc-lamp-head"></i><i class="sc-lamp-bulb"></i><i class="sc-lamp-arm"></i><i class="sc-lamp-base"></i></div>'
+        + '<div class="sc-desk-items"><span class="sc-papers"></span><span class="sc-mug"><i></i></span></div>'
+        + '<div class="sc-desk-surface"></div>'
+        + '<div class="sc-caption"><span>深夜書桌・檯燈｜窗外水位 <b>' + water.toFixed(1) + ' 樓</b>（' + locTxt + '）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else if (scene === 'small') {
+      box.innerHTML = '<div class="sc-diorama sc-small">'
+        + '<div class="sc-curtain left"></div><div class="sc-curtain right"></div>'
+        + '<div class="sc-tubes"><i></i><i></i></div>'
+        + '<div class="sc-bunting"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+        + '<div class="sc-hall-board"><b>舊城社區會堂</b><small>COMMUNITY HALL・第 ' + g.index + ' 關社區小展</small></div>'
+        + '<div class="sc-easels"><i></i><i></i></div>'
+        + '<div class="sc-chairs"><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+        + '<div class="sc-caption"><span>場景：舊城社區會堂（社區小展・摺凳與佈告板）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else if (scene === 'gallery') {
+      box.innerHTML = '<div class="sc-diorama sc-gallery">'
+        + '<div class="sc-track"><i class="sp1"></i><i class="sp2"></i><i class="sp3"></i></div>'
+        + '<div class="sc-cones"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>'
+        + '<div class="sc-frames"><div class="sc-art a1"></div><div class="sc-art a2"></div><div class="sc-art a3"></div></div>'
+        + '<div class="sc-gal-floor"></div>'
+        + '<div class="sc-stanchion"><i></i><s></s><i></i><s></s><i></i></div>'
+        + '<div class="sc-caption"><span>場景：天空區白盒畫廊（畫廊聯展・無影射燈與白牆）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else {
+      box.innerHTML = '<div class="sc-diorama sc-boss">'
+        + '<div class="sc-ufo-ribs"><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="r4"></i></div>'
+        + '<div class="sc-ufo-core"></div>'
+        + '<div class="sc-ufo-beam"></div>'
+        + '<div class="sc-ufo-rings"><i class="u1"></i><i class="u2"></i></div>'
+        + '<div class="sc-ufo-consoles"><div class="uc left"><i></i><i></i><i></i></div><div class="uc right"><i></i><i></i><i></i></div></div>'
+        + '<div class="sc-caption"><span>場景：母艦飛碟內部（外星評審艙・牽引光束核心）</span>' + dawnPill + '</div>'
+        + '</div>';
+    }
+  }
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
     $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
     updateAudioBadge(st.lastNote);
+    renderScene(false);
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
@@ -904,6 +982,7 @@
   async function endNight() {
     const s = st.s;
     st.busy = true;
+    renderScene(true);
     const before = st.sigStart;
     const res = C().finish(s);
     const w = res.work;
