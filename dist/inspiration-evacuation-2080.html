@@ -787,7 +787,7 @@ body.ct-open { overflow: hidden; }
 .store-txt { display: flex; flex-direction: column; gap: 2px; font-size: 13px; min-width: 0; }
 .store-txt b { font-size: 14px; }
 .store-open { width: 100%; margin-top: 6px; }
-.chip.stamp { border-color: #ffd36b; color: #ffd36b; }
+.chip.passport { border-color: #ffd36b; color: #ffd36b; }
 /* 機票 */
 .fares { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 8px; }
 .fare { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--deck-2); cursor: pointer; }
@@ -799,6 +799,45 @@ body.ct-open { overflow: hidden; }
 .fare-first { border-color: rgba(255, 211, 107, 0.5); }
 .fare-budget { border-color: rgba(55, 195, 214, 0.4); }
 .deal-tag { display: inline-block; margin-left: 8px; font-size: 12px; vertical-align: middle; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 999px; }
+
+/* ---------- 第五期：行動圖示、評級印章、狀態列跳動、日期字幕 ---------- */
+.act { position: relative; }
+.act-icon { position: absolute; right: 8px; top: 8px; opacity: 0.9; pointer-events: none; }
+.act-icon .px-icon { width: 30px; height: 30px; image-rendering: pixelated; }
+.act:not([disabled]):hover .act-icon { transform: translateY(-2px) rotate(-6deg); transition: transform 0.15s; }
+.act .act-name { padding-right: 34px; }
+.modal.ranked { position: relative; }
+.rank-stamp { position: absolute; right: 14px; top: 12px; display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border: 3px solid var(--c); border-radius: 8px; color: var(--c);
+  transform: rotate(8deg); animation: stamp-in 0.45s cubic-bezier(.2,1.6,.4,1) both; background: rgba(10, 14, 23, 0.6); }
+.rank-stamp b { font-family: var(--font-pixel); font-size: 30px; line-height: 1; }
+.rank-stamp span { font-size: 12px; font-weight: 900; }
+.rank-stamp small { font-size: 10px; color: var(--mute); }
+.rank-stamp.r-SS { box-shadow: 0 0 22px rgba(255, 211, 107, 0.55); }
+.rank-stamp.r-SS b, .rank-stamp.r-S b { text-shadow: 0 0 10px var(--c); }
+@keyframes stamp-in { from { transform: rotate(-20deg) scale(2.4); opacity: 0; } to { transform: rotate(8deg) scale(1); opacity: 1; } }
+.modal.ranked h2 { padding-right: 90px; }
+.meter { position: relative; }
+.meter.flash-up { animation: flash-up 0.9s ease-out; }
+.meter.flash-down { animation: flash-down 0.9s ease-out; }
+@keyframes flash-up { 0% { box-shadow: 0 0 0 2px var(--alien), 0 0 18px rgba(155, 227, 107, 0.6); } 100% { box-shadow: none; } }
+@keyframes flash-down { 0% { box-shadow: 0 0 0 2px var(--danger), 0 0 18px rgba(255, 77, 94, 0.6); } 100% { box-shadow: none; } }
+.float-delta { position: absolute; right: 8px; top: -4px; font-family: var(--font-num); font-size: 20px; pointer-events: none; animation: float-up 1.4s ease-out forwards; text-shadow: 0 1px 0 #000; }
+.float-delta.up { color: var(--alien); }
+.float-delta.down { color: var(--danger); }
+@keyframes float-up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-26px); opacity: 0; } }
+.day-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; z-index: 5;
+  background: radial-gradient(ellipse at center, rgba(5, 7, 12, 0.75), rgba(5, 7, 12, 0.2) 70%); animation: day-card 2.2s ease-in-out forwards; }
+.day-card .px { font-size: 14px; color: var(--sea); letter-spacing: 0.3em; }
+.day-card b { font-family: var(--font-num); font-weight: 400; font-size: 84px; line-height: 0.9; color: #fff; text-shadow: 0 0 18px rgba(255, 79, 180, 0.7); }
+.day-card small { font-size: 14px; color: var(--fg); margin-top: 6px; }
+.day-card.review b { color: var(--danger); text-shadow: 0 0 22px rgba(255, 77, 94, 0.8); }
+@keyframes day-card { 0% { opacity: 0; transform: scale(1.15); } 15% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+.near-miss { text-align: center; font-size: 14px; color: var(--fg); background: var(--deck-2); border-radius: var(--r); padding: 8px; }
+.near-miss b { color: var(--danger); font-size: 18px; }
+.gacha-result.miss { box-shadow: 0 0 0 1px var(--line); }
+.gacha-result .miss-text { font-size: 14px; color: var(--mute); }
+.ur-odds { color: #ffd36b; }
+@media (prefers-reduced-motion: reduce) { .rank-stamp, .meter.flash-up, .meter.flash-down, .float-delta, .day-card { animation-duration: 0.01s; } }
 </style>
 </head>
 <body>
@@ -1027,7 +1066,7 @@ body.ct-open { overflow: hidden; }
   const SOUL_LIMIT = 21;
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
-  const THRESHOLDS = [1300000, 3600000, 8000000, 14000000, 24000000];
+  const THRESHOLDS = [2700000, 7600000, 17000000, 29000000, 50000000];
 
   // ---------- 十二項能力值 ----------
   // 0–100。做甚麼，就會變成甚麼：每個行動都會令相關能力值成長或退化。
@@ -1080,11 +1119,11 @@ body.ct-open { overflow: hidden; }
     },
     busker: {
       name: '街頭樂手', short: '街頭樂手',
-      desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢；街頭表演收入 +30%',
-      cr: 60, spark: 2.7, floor: 2, medium: '寫了一首歌',
+      desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢；街頭表演收入 +15%',
+      cr: 60, spark: 2.4, floor: 2, medium: '寫了一首歌',
       soul: 4, conscience: 1, past: '你唱的歌從沒傷害過任何人。',
       cards: ['b_guitar', 'b_coins', 'b_song', 'b_echo'],
-      perk: { freeChat: true, buskPay: 1.3 },
+      perk: { freeChat: true, buskPay: 1.15 },
       stats: st(35, 35, 65, 25, 15, 50, 45, 60, 30, 30, 50, 15),
     },
     courier: {
@@ -2884,9 +2923,9 @@ body.ct-open { overflow: hidden; }
     },
     monk: {
       name: '還俗的僧人', short: '還俗僧人', rarity: 'SR',
-      desc: '寺廟被改建成數據中心之後，下山了。', perkText: '贖罪效果 +50%；休息時火花額外 +0.25；但每件虧心事重三成',
+      desc: '寺廟被改建成數據中心之後，下山了。', perkText: '贖罪效果 +50%；休息時火花額外 +0.1；但每件虧心事重三成',
       cr: 40, spark: 1.6, floor: 2, medium: '抄了一段經', soul: 0, conscience: 1, past: '你為很多不認識的人念過經。',
-      cards: ['c_beads', 'c_sutra'], perk: { atoneMult: 1.5, restSpark: 0.25, sinMult: 1.3 },
+      cards: ['c_beads', 'c_sutra'], perk: { atoneMult: 1.5, restSpark: 0.1, sinMult: 1.3 },
       stats: st(40, 30, 35, 25, 15, 40, 35, 50, 55, 75, 70, 30),
       unlock: { text: '得到「地球守護者」結局', test: (m) => !!meta(m, 'endings').guardian },
     },
@@ -2909,7 +2948,7 @@ body.ct-open { overflow: hidden; }
     octopoet: {
       name: '章魚星人詩人', short: '章魚詩人', rarity: 'UR', alien: true,
       desc: '外星觀光團的團員，在浮城迷了路，決定留下來寫詩。', perkText: '八隻觸手：創作手牌 +1；水性極高；但身體上限 −20%',
-      cr: 80, spark: 2.1, floor: 2, medium: '用八隻觸手寫了一首', soul: 3, conscience: 0.9, past: '你們的星球沒有「工作」這個詞。',
+      cr: 80, spark: 1.9, floor: 2, medium: '用八隻觸手寫了一首', soul: 3, conscience: 0.9, past: '你們的星球沒有「工作」這個詞。',
       cards: ['c_ink', 'c_tentpoem'], perk: { handBonus: 1, bodyMult: 0.8 },
       stats: st(30, 60, 45, 85, 20, 35, 45, 55, 40, 45, 50, 15),
       unlock: { text: '跨局發現 40 個具名組合', test: (m) => count(m, 'recipes') >= 40 },
@@ -2932,9 +2971,9 @@ body.ct-open { overflow: hidden; }
     },
     mushroom: {
       name: '蘑菇星交換生', short: '蘑菇星人', rarity: 'UR', alien: true,
-      desc: '來地球交流的真菌，覺得浮城的濕度剛剛好。', perkText: '在淹水的家裡反而長得好（淹水時睡覺身體 +10，永不發霉）；飯錢減半；和朋友聊天多得一張素材',
+      desc: '來地球交流的真菌，覺得浮城的濕度剛剛好。', perkText: '在淹水的家裡反而長得好（淹水時睡覺身體 +10，永不發霉）；飯錢減半',
       cr: 120, spark: 2.1, floor: 1, medium: '長出了一件', soul: 2, conscience: 1, past: '你的祖先在一場雨裡來到地球。',
-      cards: ['c_spore', 'c_dampwall'], perk: { floodHeal: true, moldImmune: true, foodMult: 0.5, chatExtra: true },
+      cards: ['c_spore', 'c_dampwall'], perk: { floodHeal: true, moldImmune: true, foodMult: 0.5 },
       stats: st(40, 25, 40, 60, 15, 55, 45, 65, 35, 60, 65, 25),
       unlock: { text: '跨局在淹水的家裡度過 10 晚', test: (m) => (m.floodNights || 0) >= 10 },
     },
@@ -2960,21 +2999,43 @@ body.ct-open { overflow: hidden; }
     m.lastTickets = earned;
     return m;
   }
-  // 抽一次：只會抽到未解鎖的角色（SR 與 UR 的機會是 4 比 1）
+  // 抽一次：UR 1.5%、SR 10%，其餘是「銘謝惠顧」之類的安慰獎；抽到的稀有度已經全部解鎖時，也只會得到安慰獎。
+  // 保底（「星際勞工保障條例」）：連續 80 次沒有抽到 UR，第 80 次必定是 UR（如果還有未解鎖的 UR）。
+  const ODDS = { UR: 0.015, SR: 0.1 };
+  const PITY = 80;
+  const CONSOLATION = [
+    { id: 'nothing', w: 62, text: '銘謝惠顧。星際人才發展局感謝你對地球人才市場的支持。' },
+    { id: 'self', w: 8, text: '扭蛋裡是一張你自己的照片。恭喜你：你抽到了你自己。' },
+    { id: 'refund', w: 18, text: '扭蛋裡有一張扭蛋券。（退回 1 張）' },
+    { id: 'antique', w: 12, text: '扭蛋裡是一件古董。下一局開始時，它會在你的素材庫裡。' },
+  ];
   function pull(m, rnd) {
-    const pool = Object.keys(D.BACKGROUNDS).filter((id) => !unlocked(m, id));
-    if (!pool.length || (m.tickets || 0) < GACHA_COST) return null;
-    const total = pool.reduce((a, id) => a + RARITY[D.BACKGROUNDS[id].rarity].w, 0);
-    let r = (rnd == null ? Math.random() : rnd) * total, pick = pool[pool.length - 1];
-    for (const id of pool) { r -= RARITY[D.BACKGROUNDS[id].rarity].w; if (r <= 0) { pick = id; break; } }
+    const roll = rnd == null ? Math.random : () => rnd;
+    if ((m.tickets || 0) < GACHA_COST) return null;
     m.tickets -= GACHA_COST;
-    m.chars = m.chars || {};
-    m.chars[pick] = true;
     m.pulls = (m.pulls || 0) + 1;
-    return pick;
+    m.pity = (m.pity || 0) + 1;
+    const locked = (r) => Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === r && !unlocked(m, id));
+    const r = roll();
+    let tier = m.pity >= PITY && locked('UR').length ? 'UR' : r < ODDS.UR ? 'UR' : r < ODDS.UR + ODDS.SR ? 'SR' : null;
+    if (tier && !locked(tier).length) tier = null;
+    if (tier) {
+      const pool = locked(tier);
+      const id = pool[Math.floor(roll() * pool.length) % pool.length];
+      m.chars = m.chars || {};
+      m.chars[id] = true;
+      if (tier === 'UR') m.pity = 0;
+      return { type: 'char', id, rarity: tier };
+    }
+    let w = roll() * CONSOLATION.reduce((a, c) => a + c.w, 0), c = CONSOLATION[0];
+    for (const x of CONSOLATION) { w -= x.w; if (w <= 0) { c = x; break; } }
+    if (c.id === 'refund') m.tickets += 1;
+    let card = null;
+    if (c.id === 'antique') { const a = D.ANTIQUES; card = a[Math.floor(roll() * a.length) % a.length]; m.nextStart = (m.nextStart || []).concat(card); }
+    return { type: 'consolation', id: c.id, text: c.text, card };
   }
   D.CHAR_RARITY = RARITY;
-  IE.Roster = { RARITY, GACHA_COST, unlocked, list, settle, pull };
+  IE.Roster = { RARITY, GACHA_COST, ODDS, PITY, unlocked, list, settle, pull };
 });
 
 // ---- js/rules.js ----
@@ -3235,6 +3296,8 @@ body.ct-open { overflow: hidden; }
     }
     bg.cards.forEach((id) => addCard(s, id));
     // 時間旅人：帶著一件來自未來的極稀有素材
+    // 扭蛋機的安慰獎：下一局帶著一件古董
+    ((opts.meta && opts.meta.nextStart) || []).forEach((id) => { if (D.CARDS[id]) addCard(s, id); });
     if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
     D.STARTER.forEach((id) => addCard(s, id));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
@@ -3720,6 +3783,16 @@ body.ct-open { overflow: hidden; }
     return rep.done();
   }
 
+  // ---------- 小遊戲結果：套用規則，再按表現評級（分級獎勵見 jobs2.js） ----------
+  function applyMicro(s, kind, res) {
+    const J = IE.Jobs2;
+    const fn = { label: () => applyLabel(s, res), ot: () => applyLabel(s, res, { ot: true }), smile: () => applySmile(s, res), dive: () => applyDive(s, res),
+      delivery: () => applyDelivery(s, res), farm: () => applyFarm(s, res), busk: () => applyBusk(s, res), clinic: () => applyClinic(s, res),
+      garden: () => J.applyGarden(s, res), salvage: () => J.applySalvage(s, res), haggle: () => J.applyHaggle(s, res) }[kind];
+    const r = fn();
+    return J && !['garden', 'salvage', 'haggle'].includes(kind) ? J.grade(s, kind, res, r) : r;
+  }
+
   // ---------- 聊天、義工、休息 ----------
   function chatCost(s) { return perk(s).freeChat ? 0 : 15; }
   function aliveNpcs(s) { return s.npcs.filter((n) => n.alive); }
@@ -3821,6 +3894,7 @@ body.ct-open { overflow: hidden; }
       list.push({ id: 'volunteer', group: 'life', name: '到避難所做義工', sub: '幫人不會賺錢，但會讓靈魂變輕',
         fx: [['soul', '−' + round1(2.5 * (perk(s).volunteerAtone || 1) * (worldMods(s).atoneMult || 1)) + ' 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
         reason: tired });
+      if (IE.Jobs2) list.push(...IE.Jobs2.actions(s));
       list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
         fx: [['body', '+' + ((s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
     } else {
@@ -3843,7 +3917,7 @@ body.ct-open { overflow: hidden; }
     }
     // 危險提示：外出的致命機會、身體撐不住、過勞與連續通宵
     const risk = outdoorRisk(s);
-    const BODY = { label: 8, ot: 14, smile: 6, delivery: 10, farm: 4, clinic: 5, dive: diveBodyCost(s), busk: 4, volunteer: 6, create: 4, allnighter: 15 };
+    const BODY = { label: 8, ot: 14, smile: 6, delivery: 10, farm: 4, clinic: 5, dive: diveBodyCost(s), busk: 4, volunteer: 6, create: 4, allnighter: 15, garden: 3, salvage: 10, haggle: 4 };
     list.forEach((a) => {
       if (risk > 0 && D.OUTDOOR.includes(a.id)) a.fx.push(['danger', '致命 ' + Math.round(risk * 1000) / 10 + '%']);
       if (s.conds.fracture && D.OUTDOOR.includes(a.id)) a.fx.push(['danger', '骨折：身體額外 −8']);
@@ -4179,7 +4253,10 @@ body.ct-open { overflow: hidden; }
     rep.review = null; rep.ending = null; rep.event = null; rep.interview = false;
     // 晚餐
     const food = Math.round(foodCost(s) * (s.trip ? 1.5 : 1));
-    if (s.flags.fishDinner === s.day) {
+    if (s.flags.vegDinner === s.day && s.flags.fishDinner !== s.day) {
+      heal(s, 4);
+      rep.line('晚餐：天台種的菜', 'good', 4, 'body');
+    } else if (s.flags.fishDinner === s.day) {
       heal(s, 6);
       rep.line('晚餐：自己抓的魚', 'good', 6, 'body');
     } else if (s.flags.foodFree === s.day) {
@@ -4350,6 +4427,7 @@ body.ct-open { overflow: hidden; }
     const plastic = s.spark > 3.5 ? 'C' : s.spark >= 2 ? 'A' : s.spark >= 1 ? 'B' : 'D';
     const plasticNote = s.spark > 3.5 ? '火花過盛，難以管理' : s.spark >= 2 ? '容易塑造' : s.spark >= 1 ? '尚可' : '沒有可塑造的部分';
     const signalOk = sig >= th;
+    s.stats.bestRatio = Math.max(s.stats.bestRatio || 0, sig / th);
     const overweight = s.soul > SOUL_LIMIT;
     const pass = signalOk && !overweight;
     let taken = null;
@@ -4451,6 +4529,8 @@ body.ct-open { overflow: hidden; }
     meta.rares = meta.rares || {};
     Object.keys(s.rares || {}).forEach((k) => { meta.rares[k] = true; });
     meta.sales = (meta.sales || 0) + (s.stats.sales || 0);
+    meta.lastRatio = s.stats.bestRatio || 0;
+    meta.bestRatio = Math.max(meta.bestRatio || 0, s.stats.bestRatio || 0);
     meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
     meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
     if (IE.Roster) IE.Roster.settle(meta, finalType);
@@ -4511,7 +4591,7 @@ body.ct-open { overflow: hidden; }
     chatCost, aliveNpcs, applyChat, applyRest,
     teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, SHOP_CATS, morning, endDay, epitaph, endingFor, recordMeta,
-    report, heal, outdoorHazard, MAX_CARDS,
+    report, heal, outdoorHazard, applyMicro, MAX_CARDS,
   };
 });
 
@@ -5303,6 +5383,215 @@ body.ct-open { overflow: hidden; }
     antiqueOffers, buyAntique, cardPrice, sellCards, sellCard,
     tripCost, flightRisk, tripMult, deal, stamps, stampBonus, souvenirs, buySouvenir, siteBody, siteRisk, destInfo, worldList, startTrip, tripActions, applySite, tripRest, flyHome, leaveTrip, tripNight, rareHint, rareList,
   };
+});
+
+// ---- js/jobs2.js ----
+// 《靈感撤離 2080》第五期：三份新工作（天台菜園、拆樓打撈、夜市擺地攤），以及所有小遊戲共用的「分級獎勵」：
+// 每局小遊戲按表現評為 SS、S、A、B、C、D 六級，再加上每個小遊戲各自的特別成就，得到很多種不同的獎勵。純邏輯，瀏覽器與 Node 共用。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA, R = IE.Rules;
+  const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+  const n = (v) => (Number.isFinite(v) ? v : 0);
+
+  // ---------- 獎勵素材 ----------
+  const C = (name, tags, value) => ({ name, tags, value });
+  Object.assign(D.CARDS, {
+    // 天台菜園
+    g_sprout: C('第一棵芽', ['hope', 'water'], 20), g_tomato: C('天台番茄', ['hunger', 'warmth'], 22), g_golden: C('金色的南瓜', ['hope', 'neon'], 34),
+    g_mutant: C('酸雨裡長出的怪菜', ['anger', 'water'], 26), g_pigeon: C('偷菜的白鴿', ['rebel', 'warmth'], 24), g_feast: C('整棟大廈的晚飯', ['warmth', 'hunger'], 32),
+    // 拆樓打撈
+    v_brick: C('舊城的紅磚', ['memory', 'anger'], 20), v_safe: C('打不開的夾萬', ['machine', 'hunger'], 28), v_photo: C('牆縫裡的全家福', ['memory', 'warmth'], 30),
+    v_neon: C('拆下來的霓虹招牌', ['neon', 'memory'], 30), v_perfect: C('一錘定音', ['anger', 'hope'], 34), v_dust: C('一口灰塵', ['hunger', 'anger'], 14),
+    // 夜市擺地攤
+    h_coin: C('皺巴巴的鈔票', ['hunger', 'neon'], 18), h_regular: C('熟客', ['warmth', 'memory'], 26), h_lie: C('說得像真的一樣', ['neon', 'guilt'], 24),
+    h_walkaway: C('掉頭就走的背影', ['anger', 'memory'], 20), h_master: C('砍價大師', ['rebel', 'hunger'], 32),
+    // 舊小遊戲的分級獎勵
+    q_label: C('零錯誤的標註紀錄', ['machine', 'rebel'], 30), q_label2: C('被 AI 誇獎', ['machine', 'neon'], 26),
+    q_smile: C('客人的五星評語', ['neon', 'warmth'], 28), q_smile2: C('一滴真心的眼淚', ['warmth', 'guilt'], 30),
+    q_dive: C('無傷打撈', ['water', 'hope'], 30), q_dive2: C('舊城的寶藏地圖', ['water', 'memory'], 32),
+    q_delivery: C('全部準時', ['hunger', 'hope'], 28), q_delivery2: C('客人的道謝', ['warmth', 'water'], 26),
+    q_farm: C('全城都在轉發', ['neon', 'anger'], 30), q_farm2: C('你自己也信了', ['anger', 'guilt'], 24),
+    q_busk: C('全場大合唱', ['hope', 'warmth'], 32), q_busk2: C('有人為你哭了', ['warmth', 'memory'], 30),
+    q_clinic: C('完美的接駁', ['machine', 'hope'], 30), q_clinic2: C('病人的新手', ['machine', 'warmth'], 28),
+    q_fail: C('今天搞砸了', ['anger', 'memory'], 16),
+  });
+  Object.assign(D.TEACH, { garden: 'poem', salvage: 'mural', haggle: 'novel' });
+  // 浮城地圖上的新地點
+  if (D.PLACES) D.PLACES.push({ id: 'rooftop', name: '天台菜園', x: 128, y: 80, act: 'garden', icon: 'garden' },
+    { id: 'demolition', name: '拆樓工地', x: 30, y: 110, act: 'salvage', icon: 'crane' },
+    { id: 'nightmarket', name: '夜市', x: 170, y: 118, act: 'haggle', icon: 'stall' });
+
+  // ---------- 評級 ----------
+  const RANKS = [
+    { id: 'SS', min: 0.95, name: '神乎其技', color: '#ffd36b' }, { id: 'S', min: 0.85, name: '出色', color: '#ff8fd1' },
+    { id: 'A', min: 0.7, name: '很好', color: '#9be36b' }, { id: 'B', min: 0.5, name: '合格', color: '#37c3d6' },
+    { id: 'C', min: 0.3, name: '勉強', color: '#8d99b4' }, { id: 'D', min: -1, name: '搞砸了', color: '#ff4d5e' },
+  ];
+  const rankOf = (p) => RANKS.find((r) => p >= r.min);
+  const LIFE = ['dive', 'busk', 'garden'];
+  // 每個小遊戲的表現（0 至 1）與特別成就
+  const PERF = {
+    label: (r) => clamp01(n(r.correct) / Math.max(1, n(r.correct) + n(r.wrong)) * 0.7 + Math.min(1, n(r.maxCombo) / 25) * 0.3 - n(r.caught) * 0.1),
+    ot: (r) => PERF.label(r),
+    smile: (r) => clamp01(n(r.satisfaction) - n(r.trapHits) * 0.03),
+    dive: (r) => clamp01((r.relics ? r.relics.length : 0) * 0.22 + Object.values(r.fish || {}).reduce((a, b) => a + b, 0) * 0.07 - n(r.hits) * 0.12 - (r.drowned ? 0.4 : 0)),
+    delivery: (r) => clamp01(n(r.deliveries) / 8 - n(r.late) * 0.06 - n(r.hits) * 0.1),
+    farm: (r) => clamp01(n(r.shares) / 45000 + n(r.headlines) * 0.02),
+    busk: (r) => clamp01(n(r.rounds) / 7 * 0.5 + n(r.soloNotes) / 26 * 0.3 + n(r.crowdMax) / 12 * 0.2),
+    clinic: (r) => clamp01(n(r.patients) / 6 - n(r.mistakes) * 0.08),
+    garden: (r) => clamp01(n(r.harvest) / 14 - n(r.stolen) * 0.03 - n(r.wilted) * 0.03 + n(r.golden) * 0.1),
+    salvage: (r) => clamp01(n(r.floors) / 10 + n(r.perfect) * 0.02 - n(r.misses) * 0.04),
+    haggle: (r) => clamp01(n(r.total) / 160 + n(r.deals) * 0.02 - n(r.walkaways) * 0.03),
+  };
+  // 特別成就：條件 → 獎勵（每個小遊戲兩至三個）
+  const SPECIAL = {
+    label: [{ test: (r) => n(r.wrong) === 0 && n(r.correct) >= 20, text: '零錯誤', card: 'q_label', stats: { obey: 1 } },
+      { test: (r) => n(r.maxCombo) >= 30, text: '連擊 30 以上，AI 誇獎了你', card: 'q_label2' }],
+    smile: [{ test: (r) => n(r.endorsed) === 0 && n(r.satisfaction) >= 0.8, text: '一句偏見都沒有附和，客人仍然很滿意', card: 'q_smile2', atone: 1 },
+      { test: (r) => n(r.perfect) >= 18, text: '十八個完美表情', card: 'q_smile' }],
+    dive: [{ test: (r) => n(r.hits) === 0 && (r.relics || []).length >= 2, text: '無傷打撈', card: 'q_dive' },
+      { test: (r) => (r.relics || []).length >= 4, text: '一次撈到四件遺物', card: 'q_dive2', obj: ['oldmap', 'collectorbox'] }],
+    delivery: [{ test: (r) => n(r.late) === 0 && n(r.deliveries) >= 6, text: '全部準時送達', card: 'q_delivery', rating: 0.2 },
+      { test: (r) => n(r.hits) === 0 && n(r.deliveries) >= 4, text: '沒有被快艇撞到', card: 'q_delivery2' }],
+    farm: [{ test: (r) => n(r.shares) >= 60000, text: '全城都在轉發你的標題', card: 'q_farm', paranoia: 4 },
+      { test: (r) => n(r.truth) >= 3, text: '你偷偷寫了三個真標題', card: 'q_farm2', atone: 0.5 }],
+    busk: [{ test: (r) => n(r.crowdMax) >= 10, text: '全場大合唱', card: 'q_busk' },
+      { test: (r) => n(r.rounds) >= 7, text: '連續七段點唱', card: 'q_busk2', spark: 0.2 }],
+    clinic: [{ test: (r) => n(r.mistakes) === 0 && n(r.patients) >= 4, text: '沒有接錯一條線', card: 'q_clinic' },
+      { test: (r) => n(r.patients) >= 6 && !n(r.illegal), text: '全部是合法手術', card: 'q_clinic2', atone: 0.5 }],
+    garden: [{ test: (r) => n(r.golden) > 0, text: '收成了金色的南瓜', card: 'g_golden' },
+      { test: (r) => n(r.stolen) === 0 && n(r.harvest) >= 8, text: '一棵菜都沒有被白鴿偷走', card: 'g_pigeon' },
+      { test: (r) => n(r.harvest) >= 16, text: '菜多得可以請整棟大廈吃飯', card: 'g_feast', atone: 1 }],
+    salvage: [{ test: (r) => n(r.perfect) >= 5, text: '五次一錘定音', card: 'v_perfect' },
+      { test: (r) => n(r.misses) === 0 && n(r.floors) >= 6, text: '沒有一錘落空', card: 'v_neon' }],
+    haggle: [{ test: (r) => n(r.lies) === 0 && n(r.deals) >= 5, text: '老老實實地賣出五件貨', card: 'h_regular', atone: 0.5 },
+      { test: (r) => n(r.best) >= 60, text: '一件貨賣出 $60 以上', card: 'h_master' }],
+  };
+  SPECIAL.ot = SPECIAL.label;
+  // 每一級的獎勵：越高越多，D 級有懲罰
+  const TIER = {
+    SS: { spark: 0.3, crPct: 0.25, cards: 2, objChance: 0.25 }, S: { spark: 0.2, crPct: 0.15, cards: 1, objChance: 0.08 },
+    A: { spark: 0.1, crPct: 0.08, cards: 1 }, B: { crPct: 0.03 }, C: {}, D: { spark: -0.1, rating: -0.1, card: 'q_fail' },
+  };
+  const POOL = {
+    label: ['q_label2', 'l_cat', 'l_screen'], ot: ['q_label2', 'l_cat'], smile: ['q_smile', 's_truth', 's_wine'], dive: ['q_dive2', 'd_vinyl', 'd_crayon'],
+    delivery: ['q_delivery2', 'k_ticket', 'k_bag'], farm: ['q_farm', 'f_viral', 'f_truth'], busk: ['q_busk2', 'p_clap', 'p_chorus'],
+    clinic: ['q_clinic2', 'k_pulse'], garden: ['g_tomato', 'g_sprout', 'g_feast'], salvage: ['v_photo', 'v_safe', 'v_neon'], haggle: ['h_regular', 'h_coin', 'h_master'],
+  };
+  // 把評級與特別成就加到一份已完成的報告上
+  function grade(s, kind, res, r) {
+    if (!PERF[kind] || !r || s.body <= 0) return r;
+    const perf = PERF[kind](res || {});
+    const rk = rankOf(perf);
+    const T = TIER[rk.id];
+    r.rank = { id: rk.id, name: rk.name, color: rk.color, perf: Math.round(perf * 100) };
+    s.stats.ranks = s.stats.ranks || {};
+    s.stats.ranks[rk.id] = (s.stats.ranks[rk.id] || 0) + 1;
+    const line = (text, kind2, v, stat) => { r.lines.push({ text, kind: kind2 || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; };
+    const gain = (id) => { if (!D.CARDS[id]) return; const x = R.addCard(s, id); r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped); };
+    line('評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
+    if (T.crPct && r.deltas.cr > 0) { const b = Math.round(r.deltas.cr * T.crPct); s.cr += b; line('評級獎金', 'good', b, 'cr'); }
+    // 工作做得好不會令火花變旺（那是工作）；只有生活類的小遊戲會
+    if (T.spark && (T.spark < 0 || LIFE.includes(kind))) { const v = R.addSpark(s, T.spark, true); if (v) line(T.spark > 0 ? '你對自己很滿意' : '你對自己很失望', T.spark > 0 ? 'good' : 'bad', v, 'spark'); }
+    if (T.rating) s.rating = Math.max(1, Math.min(5, s.rating + T.rating));
+    if (T.card) gain(T.card);
+    for (let i = 0; i < (T.cards || 0); i++) gain(R.pick(s, POOL[kind]));
+    if (T.objChance && R.rand(s) < T.objChance) {
+      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.unlock && !o.souvenir && !s.objects.includes(o.id) && !s.objStash.includes(o.id)).map((o) => o.id);
+      if (pool.length) { const id = R.pick(s, pool); R.gainObject(s, id, null); r.objs.push(id); line('表現太出色，有人送了你一件靈感物件', 'legend'); }
+    }
+    (SPECIAL[kind] || []).forEach((sp) => {
+      if (!sp.test(res || {})) return;
+      line('特別成就：' + sp.text, 'legend');
+      if (sp.card) gain(sp.card);
+      if (sp.atone) { const g = R.atone(s, sp.atone, null); if (g) line('靈魂輕了一點', 'good', -g, 'soul'); }
+      if (sp.spark) line('火花', 'good', R.addSpark(s, sp.spark, true), 'spark');
+      if (sp.stats) R.train(s, sp.stats, null);
+      if (sp.paranoia) R.addParanoia(s, sp.paranoia, null);
+      if (sp.rating) s.rating = Math.min(5, s.rating + sp.rating);
+      if (sp.obj && R.rand(s) < 0.35) { const id = R.pick(s, sp.obj); if (R.gainObject(s, id, null)) r.objs.push(id); }
+    });
+    r.deltas.spark = Math.round(r.deltas.spark * 10) / 10; r.deltas.soul = Math.round(r.deltas.soul * 10) / 10;
+    return r;
+  }
+
+  // ---------- 三份新工作 ----------
+  const rooftop = (s) => s.floor > 0 && !s.trip;
+  function actions(s) {
+    if (s.trip || R.isNight(s)) return [];
+    const tired = s.body > 10 ? null : '身體太差，撐不住了';
+    const closed = (j) => { const e = R.eventsInfo(s).find((w) => { const def = R.evDef(w.id); return def.mods && def.mods.closed && def.mods.closed.includes(j); }); return e ? '事件：' + e.name : null; };
+    return [
+      { id: 'garden', group: 'life', name: '天台菜園', sub: '在大廈天台種菜：澆水、收成、趕走偷菜的白鴿',
+        fx: [['body', '−3'], ['spark', '+0.1 起'], ['cr', '收成好就不用付飯錢'], ['card', '希望・人情']],
+        reason: !rooftop(s) ? '你沒有家，也沒有天台' : R.eventActive(s, 'toxicrain') ? '毒雨期間不能上天台' : null },
+      { id: 'salvage', group: 'work', name: '拆樓打撈', sub: '替重建計劃拆舊樓，看準弱點落錘，牆裡可能藏著舊世界的東西',
+        fx: [['cr', '約 +$' + Math.round(60 * (R.eventActive(s, 'gentrify') ? 1.5 : 1))], ['body', '−10'], ['spark', '−0.15'], ['card', '記憶・機械']],
+        reason: tired || closed('salvage') || (s.body <= 10 ? '身體撐不住了' : null) },
+      { id: 'haggle', group: 'work', name: '夜市擺地攤', sub: '把撿回來的舊物賣給遊客：開價太高客人會走，吹噓可以賣貴一點',
+        fx: [['cr', '約 +$70'], ['body', '−4'], ['spark', '−0.1'], ['soul', '吹噓會變重'], ['card', '飢餓・人情']],
+        reason: closed('haggle') },
+    ];
+  }
+  const gardenConfig = (s) => ({ duration: 32, acid: s.season === 'acid', heat: s.season === 'heat', pigeons: 1 + (R.eventActive(s, 'famine') ? 1 : 0) });
+  function applyGarden(s, res) {
+    const rep = R.report(s, '天台菜園');
+    const h = n(res.harvest);
+    R.hurt(s, 3, 'garden'); rep.delta('body', -3);
+    rep.delta('spark', R.addSpark(s, 0.1 + 0.02 * h));
+    rep.line('收成了 ' + h + ' 棵菜' + (res.stolen ? '，被白鴿偷走 ' + res.stolen + ' 棵' : '') + (res.wilted ? '，枯死了 ' + res.wilted + ' 棵' : ''), '');
+    if (h >= 3) { s.flags.vegDinner = s.day; rep.line('今晚吃自己種的菜，不用付飯錢', 'good'); }
+    if (h > 6) { const cr = (h - 6) * 4; s.cr += cr; s.stats.crEarned += cr; rep.line('把多出來的菜賣給鄰居', 'good', cr, 'cr'); }
+    if (h > 0) rep.gain(h >= 10 ? 'g_tomato' : 'g_sprout');
+    if (res.mutant) rep.gain('g_mutant');
+    R.train(s, { empathy: 0.6, calm: 0.8, imag: 0.5, fit: 0.3 }, rep);
+    R.teach(s, 'garden', 0.35, rep);
+    s.stats.actions.garden = (s.stats.actions.garden || 0) + 1;
+    return grade(s, 'garden', res, rep.done());
+  }
+  const salvageConfig = (s) => ({ floors: 12, swing: 1 + (R.eventActive(s, 'gentrify') ? 0.2 : 0), duration: 36 });
+  function applySalvage(s, res) {
+    const rep = R.report(s, '拆樓打撈');
+    const cr = Math.round(n(res.cr) * (R.eventActive(s, 'gentrify') ? 1.5 : 1));
+    s.cr += cr; s.stats.crEarned += cr;
+    rep.delta('cr', cr);
+    const body = 10 + 3 * Math.min(5, n(res.injured));
+    R.hurt(s, body, 'salvage'); rep.delta('body', -body);
+    rep.delta('spark', R.addSpark(s, -0.15));
+    s.workedToday = true;
+    rep.line('拆了 ' + n(res.floors) + ' 層樓' + (res.injured ? '，被落下的碎石打中 ' + res.injured + ' 次' : ''), '');
+    (res.items || []).slice(0, 3).forEach((id) => rep.gain(id));
+    if (!(res.items || []).length) rep.gain('v_dust');
+    R.train(s, { fit: 1, dex: 0.8, obey: 0.4, imag: -0.3 }, rep);
+    R.teach(s, 'salvage', 0.25, rep);
+    if (R.rand(s) < 0.25) R.sin(s, 0.8, rep, '你拆掉的樓裡，還有人沒有搬走', '拆掉的家', 'memory');
+    s.stats.actions.salvage = (s.stats.actions.salvage || 0) + 1;
+    return grade(s, 'salvage', res, rep.done());
+  }
+  const haggleConfig = (s) => ({ customers: 6, insight: s.attr.insight, tourists: R.eventActive(s, 'tourists') || R.eventActive(s, 'nightmarket') });
+  function applyHaggle(s, res) {
+    const rep = R.report(s, '夜市擺地攤');
+    const cr = Math.round(n(res.total));
+    s.cr += cr; s.stats.crEarned += cr; rep.delta('cr', cr);
+    R.hurt(s, 4, 'haggle'); rep.delta('body', -4);
+    rep.delta('spark', R.addSpark(s, -0.1));
+    s.workedToday = true;
+    rep.line('賣出 ' + n(res.deals) + ' 件貨' + (res.walkaways ? '，' + res.walkaways + ' 個客人掉頭走了' : ''), '');
+    rep.gain(n(res.deals) >= 4 ? 'h_coin' : 'h_walkaway');
+    if (res.lies) R.sin(s, 0.5 * res.lies, rep, '你把浮城製造的東西說成真古董 ' + res.lies + ' 次', res.lies >= 2 ? '說得像真的一樣' : null, 'neon');
+    if (res.exposed) { s.rating = Math.max(1, s.rating - 0.2); rep.line('有客人當場拆穿你：平台評分 −0.2', 'bad'); }
+    R.train(s, { social: 1, insight: 0.6, obey: -0.3 }, rep);
+    R.teach(s, 'haggle', 0.3, rep);
+    s.stats.actions.haggle = (s.stats.actions.haggle || 0) + 1;
+    return grade(s, 'haggle', res, rep.done());
+  }
+
+  IE.Jobs2 = { RANKS, rankOf, PERF, SPECIAL, grade, actions, gardenConfig, applyGarden, salvageConfig, applySalvage, haggleConfig, applyHaggle };
 });
 
 // ---- js/dossier.js ----
@@ -6108,6 +6397,9 @@ body.ct-open { overflow: hidden; }
     harpoon: { a: '#8a5a3b', b: '#8e9bb0', c: '#ffffff' }, backpack: { a: '#37c3d6', b: '#1f6b7a', c: '#bff3fb' }, monitor: { a: '#37c3d6', b: '#26334d', c: '#e8fdff' },
     brush: { a: '#ff4fb4', b: '#8a5a3b', c: '#ffffff' }, key: { a: '#e8c25a', b: '#8a6a1f', c: '#fff2c4' }, house: { a: '#d6334a', b: '#8a5a3b', c: '#eef1f7', w: '#37c3d6' },
     gem: { a: '#a89a82', b: '#5c5448', c: '#e9dcc4' }, shredder: { a: '#8e9bb0', b: '#4a5568', c: '#ffffff' },
+    mask: { a: '#ff4fb4', b: '#a3206b', c: '#ffd36b' }, guitar: { a: '#c98d5e', b: '#6b3a1e', c: '#ffd36b' }, cup: { a: '#8a5a3b', b: '#3b2a1e', c: '#e8edf6' },
+    bowl: { a: '#ff8fb1', b: '#a34a6b', c: '#ffe0ec' }, lamp: { a: '#ffc247', b: '#8a6a1f', c: '#fff2c4' }, clock: { a: '#9be36b', b: '#2b3a5c', c: '#ffffff' },
+    map: { a: '#e8c25a', b: '#3fb6d9', c: '#fff2c4' }, card: { a: '#9be36b', b: '#2b3a5c', c: '#ffffff' },
     d_bed: { a: '#37c3d6', b: '#8a5a3b', w: '#ffffff' }, d_ac: { a: '#9be36b', b: '#9aa7c7', c: '#bff3fb', w: '#eef1f7' }, d_pump: { a: '#37c3d6', b: '#4a5568', c: '#9be36b' },
     d_lock: { a: '#8e9bb0', b: '#4a5568' }, d_plant: { a: '#c46a1e', c: '#6cc070' }, d_aquarium: { a: '#1e7f99', b: '#3b2a1e', c: '#37c3d6', w: '#ffc247' },
     d_bookshelf: { a: '#d6334a', b: '#37c3d6', c: '#ffc247', w: '#9be36b' }, d_easel: { a: '#ff4fb4', c: '#37c3d6', w: '#eef1f7' }, d_telescope: { a: '#c9d1dc', c: '#37c3d6' },
@@ -6978,6 +7270,9 @@ body.ct-open { overflow: hidden; }
     market: ['########', '#.#.#.#.', '########', '.#....#.', '.#.##.#.', '.#.##.#.', '.#....#.', '.######.'],
     plane: ['...#....', '...##...', '#..##...', '########', '#..##...', '...##...', '...#....', '........'],
     shop: ['..####..', '.#....#.', '########', '#......#', '#.#..#.#', '#......#', '#......#', '########'],
+    garden: ['...##...', '..#..#..', '...##...', '.#.##.#.', '..####..', '########', '#.#.#.#.', '########'],
+    crane: ['########', '#.....#.', '#.....#.', '#.....#.', '#....###', '#....###', '#.......', '###.....'],
+    stall: ['########', '#.#.#.#.', '########', '.#....#.', '.######.', '.#.##.#.', '.#....#.', '.#....#.'],
   };
   function MAP_ICON(c, id, x, y, col) {
     const rows = MI[id] || MI.home;
@@ -10050,6 +10345,348 @@ body.ct-open { overflow: hidden; }
   IE.Micro.register('interview', Interview);
 })(window.IE = window.IE || {});
 
+// ---- js/micro-extra.js ----
+// 第五期的三個小遊戲：天台菜園、拆樓打撈、夜市擺地攤。獎勵按表現分級（見 jobs2.js）。
+(function (IE) {
+  'use strict';
+  const P = IE.Pixel, A = IE.Audio, C = IE.Micro.C;
+  const J = () => IE.Jobs2, G = () => IE.Game;
+  const rect = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h); };
+
+  // =====================================================================
+  // 天台菜園：九塊菜田。缺水要澆、熟了要收、白鴿來了要趕
+  // =====================================================================
+  function Garden(opts, onDone) {
+    const s = G().state;
+    const cfg = J().gardenConfig(s);
+    const fx = P.particles();
+    const plots = [];
+    for (let i = 0; i < 9; i++) plots.push({ i, x: 64 + (i % 3) * 66, y: 62 + Math.floor(i / 3) * 34, st: 'empty', t: 0.3 + Math.random() * 1.2, gold: false, mutant: false, pigeon: null });
+    const st = { t: -1.2, phase: 'intro', endT: 0, banner: null, harvest: 0, golden: 0, stolen: 0, wilted: 0, watered: 0, mutant: 0, pigeonT: 4, rainT: 7, msg: null };
+    C.banner(st, '開工', '#9be36b', '澆水・收成・趕白鴿');
+    const say = (text, color) => { st.msg = { text, color: color || '#ffffff', t: 0 }; };
+    function tap(i) {
+      const p = plots[i];
+      if (!p || st.phase !== 'play') return;
+      if (p.pigeon && p.pigeon.landed) { p.pigeon = null; A.sfx('click'); fx.burst(p.x + 24, p.y, 8, { color: '#eef1f7', speed: 40, life: 0.6 }); say('白鴿飛走了', '#9fdcff'); return; }
+      if (p.st === 'thirsty') { p.st = 'grow'; p.t = 1.6 + Math.random() * 1.6; st.watered++; A.note(1); fx.burst(p.x + 24, p.y + 8, 10, { color: '#37c3d6', speed: 30, life: 0.5 }); return; }
+      if (p.st === 'ripe') {
+        st.harvest++; if (p.gold) st.golden++; if (p.mutant) st.mutant++;
+        A.sfx(p.gold ? 'combo' : 'pickup');
+        fx.burst(p.x + 24, p.y + 6, p.gold ? 30 : 12, { color: p.gold ? '#ffd36b' : '#ff6b6b', speed: 50, life: 0.8, up: 30 });
+        if (p.gold) say('金色的南瓜！', '#ffd36b');
+        p.st = 'empty'; p.t = 0.6 + Math.random(); p.gold = false; p.mutant = false; p.pigeon = null;
+      }
+    }
+    function finish() { if (st.phase === 'end') return; st.phase = 'end'; st.endT = 0; C.banner(st, '收工', '#ffc247', '收成 ' + st.harvest + ' 棵'); }
+    const endTick = C.ender(st, () => ({ harvest: st.harvest, golden: st.golden, stolen: st.stolen, wilted: st.wilted, watered: st.watered, mutant: st.mutant }), onDone);
+    const KEYS = '123456789';
+    return {
+      kind: 'garden',
+      controls: plots.map((p) => ({ id: 'g' + p.i, label: String(p.i + 1), key: String(p.i + 1) })),
+      hint: '菜田出現水滴就按一下澆水；發光的菜按一下收成（拖太久會爛掉）；白鴿落在菜田上就按一下趕走，否則菜會被偷。鍵盤 1 至 9。',
+      control(id, down) { if (down) tap(Number(id.slice(1))); },
+      key(k, down) { if (down && KEYS.includes(k)) tap(KEYS.indexOf(k)); },
+      pointer(type, x, y) { if (type !== 'down') return; plots.forEach((p) => { if (x >= p.x - 4 && x <= p.x + 52 && y >= p.y - 18 && y <= p.y + 26) tap(p.i); }); },
+      update(dt) {
+        st.t += dt;
+        if (st.banner) st.banner.t += dt;
+        if (st.msg) { st.msg.t += dt; if (st.msg.t > 1.8) st.msg = null; }
+        fx.update(dt);
+        if (st.phase === 'intro' && st.t >= 0) st.phase = 'play';
+        if (st.phase === 'play') {
+          plots.forEach((p) => {
+            p.t -= dt * (cfg.heat ? 1.3 : 1);
+            if (p.t > 0) return;
+            if (p.st === 'empty') { p.st = 'grow'; p.t = 1.4 + Math.random() * 1.6; }
+            else if (p.st === 'grow') {
+              if (Math.random() < 0.55 && !p.wateredOnce) { p.st = 'thirsty'; p.t = 3; p.wateredOnce = true; }
+              else { p.st = 'ripe'; p.t = 4; p.gold = Math.random() < 0.06; }
+            } else if (p.st === 'thirsty' || p.st === 'ripe') { st.wilted++; p.st = 'empty'; p.t = 1; p.wateredOnce = false; p.gold = false; p.pigeon = null; A.sfx('wrong'); }
+            if (p.st === 'empty') p.wateredOnce = false;
+          });
+          // 白鴿：飛向熟了的菜，落地之後兩秒就偷走
+          st.pigeonT -= dt;
+          if (st.pigeonT <= 0) {
+            st.pigeonT = (3.2 + Math.random() * 2.4) / cfg.pigeons;
+            const ripe = plots.filter((p) => p.st === 'ripe' && !p.pigeon);
+            if (ripe.length) { const p = ripe[Math.floor(Math.random() * ripe.length)]; p.pigeon = { t: 0, landed: false, fromX: Math.random() < 0.5 ? -10 : 330 }; }
+          }
+          plots.forEach((p) => {
+            if (!p.pigeon) return;
+            p.pigeon.t += dt;
+            if (!p.pigeon.landed && p.pigeon.t > 1.1) { p.pigeon.landed = true; p.pigeon.t = 0; A.sfx('ad'); }
+            else if (p.pigeon.landed && p.pigeon.t > 2.1) { st.stolen++; p.pigeon = null; p.st = 'empty'; p.t = 1; p.gold = false; say('白鴿偷走了一棵菜', '#ff4d5e'); }
+          });
+          // 酸雨季：酸雨令一塊田長出怪菜
+          if (cfg.acid) {
+            st.rainT -= dt;
+            if (st.rainT <= 0) { st.rainT = 6 + Math.random() * 4; const g = plots.filter((p) => p.st === 'grow' || p.st === 'ripe'); if (g.length) { g[Math.floor(Math.random() * g.length)].mutant = true; say('酸雨落在菜田上', '#c4e04a'); } }
+          }
+          if (st.t >= cfg.duration) finish();
+        }
+        endTick(dt);
+      },
+      draw(c) {
+        const g = c.createLinearGradient(0, 0, 0, 180); g.addColorStop(0, '#ffb38a'); g.addColorStop(1, '#5b6b90');
+        c.fillStyle = g; c.fillRect(0, 0, 320, 180);
+        for (let i = 0; i < 8; i++) rect(c, i * 42, 30 + (i % 3) * 8, 34, 30, '#3a4562');
+        rect(c, 0, 50, 320, 130, '#6b6f80'); rect(c, 0, 50, 320, 3, '#8e9bb0');
+        rect(c, 268, 20, 30, 34, '#8e9bb0'); rect(c, 270, 18, 26, 4, '#c9d1dc'); rect(c, 18, 14, 2, 40, '#4a5568'); rect(c, 12, 14, 14, 2, '#4a5568');
+        plots.forEach((p) => {
+          rect(c, p.x, p.y, 48, 22, '#5a3a22'); rect(c, p.x, p.y, 48, 2, '#8a5a3b');
+          for (let k = 0; k < 5; k++) rect(c, p.x + 3 + k * 9, p.y + 8, 6, 1, '#3b2a1e');
+          const cx = p.x + 24, cy = p.y + 4;
+          if (p.st === 'grow' || p.st === 'thirsty') { rect(c, cx - 1, cy - 6, 2, 8, '#3d8b5a'); rect(c, cx - 5, cy - 6, 4, 3, '#6cc070'); rect(c, cx + 1, cy - 8, 4, 3, '#6cc070'); }
+          if (p.st === 'thirsty') { const b = Math.round(Math.sin(st.t * 8) * 2); rect(c, cx + 8, cy - 18 + b, 6, 8, '#37c3d6'); rect(c, cx + 9, cy - 21 + b, 4, 3, '#37c3d6'); }
+          if (p.st === 'ripe') {
+            const glow = 0.4 + 0.3 * Math.sin(st.t * 6 + p.i);
+            c.fillStyle = p.gold ? 'rgba(255,211,107,' + glow + ')' : 'rgba(255,255,255,' + glow * 0.4 + ')'; c.beginPath(); c.arc(cx, cy - 6, 12, 0, Math.PI * 2); c.fill();
+            rect(c, cx - 1, cy - 10, 2, 10, '#3d8b5a');
+            const col = p.gold ? '#ffd36b' : p.mutant ? '#c4e04a' : '#ff4d5e';
+            rect(c, cx - 7, cy - 12, 6, 6, col); rect(c, cx + 1, cy - 14, 6, 6, col); rect(c, cx - 3, cy - 6, 6, 6, col);
+            if (p.t < 1.2 && Math.floor(st.t * 8) % 2) rect(c, p.x, p.y - 2, 48, 1, '#ff4d5e');
+          }
+          if (p.pigeon) {
+            const k = p.pigeon.landed ? 1 : Math.min(1, p.pigeon.t / 1.1);
+            const px = p.pigeon.fromX + (cx + 12 - p.pigeon.fromX) * k, py = (p.pigeon.landed ? cy - 12 : 10 + (cy - 22) * k) + (p.pigeon.landed ? 0 : Math.sin(st.t * 20) * 2);
+            rect(c, px - 4, py, 9, 5, '#eef1f7'); rect(c, px + 3, py - 3, 4, 4, '#eef1f7'); rect(c, px + 7, py - 2, 2, 1, '#ffc247'); rect(c, px + 5, py - 2, 1, 1, '#1b1b28');
+            if (!p.pigeon.landed || Math.sin(st.t * 30) > 0) { rect(c, px - 3, py - 3, 5, 3, '#c9d1dc'); }
+            if (p.pigeon.landed) { c.fillStyle = 'rgba(255,77,94,0.6)'; c.fillRect(p.x, p.y + 22, 48 * Math.max(0, 1 - p.pigeon.t / 2.1), 2); }
+          }
+        });
+        if (cfg.acid) { c.fillStyle = 'rgba(196,224,74,0.4)'; for (let i = 0; i < 30; i++) c.fillRect((i * 37 + st.t * 40) % 320, (i * 23 + st.t * 160) % 180, 1, 3); }
+        P.sprite(c, IE.Chars.spr(s), 20, 140, { scale: 2 });
+        fx.draw(c);
+        C.topBar(c, Math.max(0, st.t) / cfg.duration, '#9be36b');
+      },
+      drawText() {
+        P.text('收成 ' + st.harvest + (st.golden ? '（金 ' + st.golden + '）' : ''), 6, 1, { size: 8, color: '#9be36b' });
+        P.text('被偷 ' + st.stolen + '　爛掉 ' + st.wilted, 314, 1, { size: 7, color: '#ff8fb1', align: 'right' });
+        plots.forEach((p) => P.text(String(p.i + 1), p.x + 2, p.y + 13, { size: 6, color: '#c98d5e' }));
+        if (st.msg) P.text(st.msg.text, 160, 40, { size: 8, align: 'center', weight: 900, color: st.msg.color, stroke: '#0d1430' });
+        C.drawBanner(st);
+      },
+    };
+  }
+
+  // =====================================================================
+  // 拆樓打撈：吊臂上的鐵球左右擺動，看準每一層的弱點落錘
+  // =====================================================================
+  const LOOT = ['v_brick', 'v_safe', 'v_photo', 'v_neon'];
+  function Salvage(opts, onDone) {
+    const s = G().state;
+    const cfg = J().salvageConfig(s);
+    const fx = P.particles();
+    const st = { t: -1.2, phase: 'intro', endT: 0, banner: null, floors: cfg.floors, broken: 0, perfect: 0, misses: 0, injured: 0, items: [], cr: 0,
+      swing: 0, speed: 1.6 * cfg.swing, drop: null, weak: 0, msg: null, debris: [], cool: 0 };
+    const BX = 150, BW = 120, FLOOR = 10, BASE = 168;
+    const newWeak = () => { st.weak = BX + 10 + Math.random() * (BW - 20); };
+    newWeak();
+    C.banner(st, '開工', '#ffc247', '看準紅色的弱點落錘');
+    const say = (text, color) => { st.msg = { text, color: color || '#ffffff', t: 0 }; };
+    const ballX = () => BX + BW / 2 + Math.sin(st.swing) * (BW / 2 + 10);
+    function press() {
+      if (st.phase !== 'play' || st.drop || st.cool > 0) return;
+      st.drop = { x: ballX(), t: 0 };
+      A.sfx('click');
+    }
+    function land() {
+      const d = Math.abs(st.drop.x - st.weak);
+      const top = BASE - st.floors * FLOOR;
+      if (d < 12) {
+        const perfect = d < 4;
+        st.broken++; st.floors--; st.cr += 6 + (perfect ? 2 : 0);
+        if (perfect) st.perfect++;
+        P.view.shake = perfect ? 8 : 5;
+        A.sfx(perfect ? 'combo' : 'boom');
+        fx.burst(st.drop.x, top + 4, perfect ? 30 : 18, { color: '#a8865a', speed: 70, life: 0.9, g: 120 });
+        if (Math.random() < (perfect ? 0.6 : 0.3)) {
+          const id = Math.random() < 0.06 ? IE.DATA.ANTIQUES[Math.floor(Math.random() * IE.DATA.ANTIQUES.length)] : LOOT[Math.floor(Math.random() * LOOT.length)];
+          st.items.push(id); say('牆裡有東西：「' + IE.DATA.CARDS[id].name + '」', '#ffd36b');
+        } else say(perfect ? '一錘定音！' : '打穿了', perfect ? '#ffd36b' : '#e8edf6');
+        st.speed *= 1.08;
+        newWeak();
+        if (st.floors <= 0) finish();
+      } else {
+        st.misses++; A.sfx('wrong'); P.view.shake = 3;
+        for (let i = 0; i < 4; i++) st.debris.push({ x: st.drop.x + (Math.random() - 0.5) * 20, y: top, vy: 0, t: 0 });
+        if (Math.random() < 0.35) { st.injured++; say('碎石打中了你', '#ff4d5e'); } else say('落空了', '#8d99b4');
+      }
+      st.drop = null;
+      st.cool = 0.55;
+    }
+    function finish() { if (st.phase === 'end') return; st.phase = 'end'; st.endT = 0; C.banner(st, '收工', '#ffc247', '拆了 ' + st.broken + ' 層'); }
+    const endTick = C.ender(st, () => ({ floors: st.broken, perfect: st.perfect, misses: st.misses, injured: st.injured, items: st.items, cr: st.cr }), onDone);
+    return {
+      kind: 'salvage',
+      controls: [{ id: 'drop', label: '落錘', key: '空白鍵' }],
+      hint: '鐵球會左右擺動。在它經過紅色弱點的時候按「落錘」：打得越準，越有機會在牆裡找到東西；落空的話，碎石可能打中你。',
+      control(id, down) { if (down) press(); },
+      key(k, down) { if (down && (k === ' ' || k === 'Enter' || k === 'ArrowDown')) press(); },
+      pointer(type) { if (type === 'down') press(); },
+      update(dt) {
+        st.t += dt;
+        if (st.banner) st.banner.t += dt;
+        if (st.msg) { st.msg.t += dt; if (st.msg.t > 1.6) st.msg = null; }
+        fx.update(dt);
+        st.debris.forEach((d) => { d.t += dt; d.vy += 300 * dt; d.y += d.vy * dt; });
+        st.debris = st.debris.filter((d) => d.y < 180);
+        if (st.phase === 'intro' && st.t >= 0) st.phase = 'play';
+        if (st.phase === 'play') {
+          st.cool = Math.max(0, st.cool - dt);
+          if (!st.drop) st.swing += dt * st.speed;
+          else { st.drop.t += dt; if (st.drop.t > 0.3) land(); }
+          if (st.t >= cfg.duration) finish();
+        }
+        endTick(dt);
+      },
+      draw(c) {
+        const g = c.createLinearGradient(0, 0, 0, 180); g.addColorStop(0, '#5b6b90'); g.addColorStop(1, '#c98d5e');
+        c.fillStyle = g; c.fillRect(0, 0, 320, 180);
+        for (let i = 0; i < 6; i++) rect(c, i * 26, 80 + (i % 2) * 14, 20, 100, '#3a4562');
+        rect(c, 0, BASE, 320, 12, '#3b2a1e');
+        // 大廈
+        for (let f = 0; f < st.floors; f++) {
+          const y = BASE - (f + 1) * FLOOR;
+          rect(c, BX, y, BW, FLOOR, f % 2 ? '#8e7a6a' : '#9a8676'); rect(c, BX, y, BW, 1, '#6b5a4a');
+          for (let w = 0; w < 6; w++) rect(c, BX + 6 + w * 19, y + 3, 8, 5, f === st.floors - 1 ? '#2a2f45' : '#3a3a48');
+        }
+        // 弱點
+        if (st.floors > 0) {
+          const top = BASE - st.floors * FLOOR;
+          const pulse = Math.floor(st.t * 6) % 2;
+          c.strokeStyle = pulse ? '#ff4d5e' : '#ffc247'; c.lineWidth = 1;
+          c.beginPath(); c.moveTo(st.weak - 4, top - 1); c.lineTo(st.weak + 4, top + 7); c.moveTo(st.weak + 4, top - 1); c.lineTo(st.weak - 4, top + 7); c.stroke();
+        }
+        // 吊臂與鐵球
+        rect(c, 30, 10, 6, 160, '#ffc247'); rect(c, 30, 10, 270, 5, '#ffc247'); for (let x = 36; x < 300; x += 8) rect(c, x, 11, 2, 3, '#8a6a1f');
+        const bx = st.drop ? st.drop.x : ballX();
+        const by = st.drop ? 40 + st.drop.t / 0.3 * (BASE - st.floors * FLOOR - 48) : 40;
+        c.strokeStyle = '#1b1b28'; c.beginPath(); c.moveTo(bx, 15); c.lineTo(bx, by); c.stroke();
+        c.fillStyle = '#2a2f45'; c.beginPath(); c.arc(bx, by + 6, 7, 0, Math.PI * 2); c.fill();
+        rect(c, bx - 3, by + 2, 2, 2, '#8e9bb0');
+        st.debris.forEach((d) => rect(c, d.x, d.y, 3, 3, '#6b5a4a'));
+        P.sprite(c, IE.Chars.spr(s), 70, 144, { scale: 2 });
+        rect(c, 66, 140, 24, 5, '#ffc247');
+        fx.draw(c);
+        C.topBar(c, Math.max(0, st.t) / cfg.duration, '#ffc247');
+      },
+      drawText() {
+        P.text('$ +' + st.cr, 6, 1, { size: 9, font: 'num', color: '#8be28f', weight: 400 });
+        P.text('拆了 ' + st.broken + ' 層・一錘定音 ' + st.perfect + '・找到 ' + st.items.length + ' 件', 314, 1, { size: 7, color: '#ffc247', align: 'right' });
+        if (st.msg) P.text(st.msg.text, 160, 26, { size: 8, align: 'center', weight: 900, color: st.msg.color, stroke: '#0d1430' });
+        C.drawBanner(st);
+      },
+    };
+  }
+
+  // =====================================================================
+  // 夜市擺地攤：指針在價錢條上來回擺動，按一下開價；開得太高客人會走
+  // =====================================================================
+  const GOODS = ['舊城撈上來的黑膠', '一部壞了的菲林相機', '褪色的明信片', '生鏽的打字機', '沒有指針的手錶', '一盒舊硬幣', '缺了一隻耳的公仔', '手寫的食譜'];
+  function Haggle(opts, onDone) {
+    const s = G().state;
+    const cfg = J().haggleConfig(s);
+    const st = { t: -1.2, phase: 'intro', endT: 0, banner: null, i: 0, cust: null, needle: 0, dir: 1, speed: 0.9, total: 0, deals: 0, walkaways: 0, lies: 0, exposed: 0, best: 0, msg: null, wait: 0, coins: [] };
+    const MAXP = 70;
+    C.banner(st, '開檔', '#ff4fb4', '開價太高，客人會走');
+    const say = (text, color) => { st.msg = { text, color: color || '#ffffff', t: 0 }; };
+    function nextCustomer() {
+      if (st.i >= cfg.customers) { finish(); return; }
+      st.i++;
+      const tourist = cfg.tourists && Math.random() < 0.5;
+      const max = Math.round((10 + Math.random() * 30) * (tourist ? 1.5 : 1));
+      st.cust = { max, good: GOODS[Math.floor(Math.random() * GOODS.length)], tries: 0, lie: false, sharp: Math.random(), tourist,
+        look: { skin: ['#f2c6a0', '#d9a070', '#8a5a3b', '#9be36b'][Math.floor(Math.random() * 4)], hair: ['#2b2140', '#c9a227', '#8d99b4', '#ff8fd1'][Math.floor(Math.random() * 4)], shirt: ['#37c3d6', '#ff8a3c', '#9b8cff', '#eef1f7'][Math.floor(Math.random() * 4)], smile: 6, shades: tourist } };
+      st.speed = 0.9 + st.i * 0.12;
+      say((tourist ? '外星遊客' : '客人') + '看中了「' + st.cust.good + '」', '#ffd36b');
+    }
+    const price = () => Math.round(st.needle * MAXP);
+    function offer() {
+      if (st.phase !== 'play' || !st.cust || st.wait > 0) return;
+      const p = price(), c = st.cust;
+      const max = c.max * (c.lie ? 1.6 : 1);
+      if (c.lie && c.sharp > 0.8) { st.exposed++; st.walkaways++; A.sfx('wrong'); say('「這是浮城製造的！」客人當場拆穿你', '#ff4d5e'); c.look.frown = true; st.wait = 1.2; st.cust = null; return; }
+      if (p <= max) {
+        st.total += p; st.deals++; st.best = Math.max(st.best, p);
+        A.sfx(p >= max * 0.85 ? 'combo' : 'coin');
+        for (let k = 0; k < Math.min(10, 2 + p / 6); k++) st.coins.push({ x: 160, y: 96, vx: (Math.random() - 0.5) * 80, vy: -60 - Math.random() * 40, t: 0 });
+        say(p >= max * 0.85 ? '成交！賣得剛剛好（$' + p + '）' : '成交：$' + p + (p < max * 0.5 ? '（賣得太便宜了）' : ''), p >= max * 0.85 ? '#ffd36b' : '#8be28f');
+        st.wait = 1; st.cust = null;
+      } else if (c.tries === 0) {
+        c.tries++; c.look.angry = true; st.speed *= 1.3; A.sfx('wrong');
+        say('「太貴了吧？」再給你一次機會', '#ff8fb1');
+      } else {
+        st.walkaways++; A.sfx('wrong'); say('客人掉頭走了', '#ff4d5e'); st.wait = 1; st.cust = null;
+      }
+    }
+    function brag() {
+      if (st.phase !== 'play' || !st.cust || st.cust.lie) return;
+      st.cust.lie = true; st.lies++; A.sfx('ad');
+      say('「這是真正的舊世界古董。」（客人願意出更多，但可能會被拆穿）', '#c38bff');
+    }
+    function finish() { if (st.phase === 'end') return; st.phase = 'end'; st.endT = 0; C.banner(st, '收檔', '#ffc247', '今晚賺了 $' + st.total); }
+    const endTick = C.ender(st, () => ({ total: st.total, deals: st.deals, walkaways: st.walkaways, lies: st.lies, exposed: st.exposed, best: st.best }), onDone);
+    return {
+      kind: 'haggle',
+      controls: [{ id: 'offer', label: '開價', key: '空白鍵' }, { id: 'brag', label: '吹噓', key: 'B' }],
+      hint: '指針在價錢條上來回擺動，按「開價」停下。客人心裡有一個價：開得剛好最賺，太高他會不滿，第二次太高就會走。「吹噓」說是真古董，客人願意多付六成，但眼尖的客人會拆穿你，靈魂也會變重。洞察越高，越看得出客人的底價。',
+      control(id, down) { if (!down) return; if (id === 'offer') offer(); else brag(); },
+      key(k, down) { if (!down) return; if (k === ' ' || k === 'Enter') offer(); if (k === 'b' || k === 'B') brag(); },
+      pointer(type, x, y) { if (type === 'down') (y > 150 && x > 230 ? brag() : offer()); },
+      update(dt) {
+        st.t += dt;
+        if (st.banner) st.banner.t += dt;
+        if (st.msg) { st.msg.t += dt; if (st.msg.t > 2.2) st.msg = null; }
+        st.coins.forEach((c) => { c.t += dt; c.vy += 240 * dt; c.x += c.vx * dt; c.y += c.vy * dt; });
+        st.coins = st.coins.filter((c) => c.t < 1.4);
+        if (st.phase === 'intro' && st.t >= 0) { st.phase = 'play'; nextCustomer(); }
+        if (st.phase === 'play') {
+          st.needle += st.dir * st.speed * dt;
+          if (st.needle >= 1) { st.needle = 1; st.dir = -1; } if (st.needle <= 0) { st.needle = 0; st.dir = 1; }
+          if (st.wait > 0) { st.wait -= dt; if (st.wait <= 0) nextCustomer(); }
+        }
+        endTick(dt);
+      },
+      draw(c) {
+        rect(c, 0, 0, 320, 180, '#120b24');
+        for (let i = 0; i < 14; i++) { const on = Math.sin(st.t * 3 + i) > -0.5; rect(c, 8 + i * 23, 10, 10, 8, on ? ['#ff4fb4', '#ffd36b', '#37c3d6'][i % 3] : '#2a2240'); }
+        c.strokeStyle = '#4a3a60'; c.beginPath(); c.moveTo(0, 14); c.lineTo(320, 14); c.stroke();
+        // 攤檔
+        rect(c, 60, 108, 200, 30, '#8a5a3b'); rect(c, 60, 106, 200, 4, '#c98d5e');
+        for (let i = 0; i < 8; i++) rect(c, 70 + i * 23, 98, 14, 9, ['#e8c25a', '#37c3d6', '#c9d1dc', '#ff8fb1', '#9be36b', '#8e9bb0', '#ffd36b', '#c38bff'][i]);
+        rect(c, 56, 40, 208, 6, '#d6334a'); for (let i = 0; i < 13; i++) rect(c, 56 + i * 16, 46, 8, 5, i % 2 ? '#d6334a' : '#eef1f7');
+        if (st.cust) C.face(c, 146, 58, Object.assign({ nod: Math.sin(st.t * 3) }, st.cust.look));
+        P.sprite(c, IE.Chars.spr(s), 24, 100, { scale: 3 });
+        // 價錢條
+        rect(c, 30, 150, 260, 12, '#1b1b28'); rect(c, 31, 151, 258, 10, '#2a2f45');
+        for (let k = 0; k <= 7; k++) rect(c, 31 + k * 258 / 7, 151, 1, 10, '#4a5568');
+        // 洞察高的人看得出底價大概在哪裡
+        if (st.cust && cfg.insight >= 35) {
+          const m = Math.min(1, st.cust.max * (st.cust.lie ? 1.6 : 1) / MAXP), fuzz = Math.max(0.03, 0.25 - cfg.insight / 400);
+          c.fillStyle = 'rgba(155,227,107,0.25)'; c.fillRect(31 + 258 * Math.max(0, m - fuzz), 151, 258 * fuzz, 10);
+        }
+        const nx = 31 + st.needle * 258;
+        rect(c, nx - 1, 146, 3, 20, '#ffd36b');
+        st.coins.forEach((co) => rect(c, co.x, co.y, 3, 3, '#ffd36b'));
+      },
+      drawText() {
+        P.text('$ +' + st.total, 6, 22, { size: 9, font: 'num', color: '#8be28f', weight: 400 });
+        P.text('客人 ' + Math.min(st.i, cfg.customers) + ' / ' + cfg.customers + '　成交 ' + st.deals + '　吹噓 ' + st.lies, 314, 22, { size: 7, color: '#ffc247', align: 'right' });
+        P.text('$' + price(), 31 + st.needle * 258, 136, { size: 9, align: 'center', font: 'num', color: '#ffd36b', weight: 400 });
+        if (st.cust && st.cust.lie) P.text('（說是真古董）', 160, 96, { size: 6, align: 'center', color: '#c38bff' });
+        if (st.msg) P.text(st.msg.text, 160, 30, { size: 7, align: 'center', weight: 900, color: st.msg.color, stroke: '#0d1430' });
+        C.drawBanner(st);
+      },
+    };
+  }
+
+  IE.Micro.register('garden', Garden);
+  IE.Micro.register('salvage', Salvage);
+  IE.Micro.register('haggle', Haggle);
+})(window.IE = window.IE || {});
+
 // ---- js/ui.js ----
 // 介面：狀態列、行動卡、手機、結算、考績表、結局。這裡只負責組合 HTML，流程在 main.js。
 (function (IE) {
@@ -10093,6 +10730,28 @@ body.ct-open { overflow: hidden; }
   const pips = (v) => { const n = Math.round(v * 5); return '●'.repeat(n) + '○'.repeat(5 - n); };
 
   // ---------- 狀態列 ----------
+  // 狀態列的數值一變，就閃一下並飄出變化量
+  let lastHud = null;
+  function hudFlash(s) {
+    const now = { cash: Math.round(s.cr), body: Math.round(s.body), spark: Math.round(s.spark * 10) / 10, soul: Math.round(s.soul * 10) / 10, signal: R().signal(s) };
+    const prev = lastHud && lastHud.day === s.day - (s.slot === 0 && lastHud.slot === 2 ? 1 : 0) ? lastHud : lastHud;
+    lastHud = Object.assign({ day: s.day, slot: s.slot }, now);
+    if (!prev) return;
+    const fmtD = { cash: (v) => (v > 0 ? '+$' : '−$') + fmt(Math.abs(v)), body: (v) => (v > 0 ? '+' : '−') + Math.abs(v), spark: (v) => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1),
+      soul: (v) => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '克', signal: (v) => '+' + kfmt(v) };
+    Object.keys(now).forEach((k) => {
+      const d = Math.round((now[k] - prev[k]) * 10) / 10;
+      if (!d) return;
+      const el = $('#hud .m-' + k);
+      if (!el) return;
+      const good = k === 'soul' ? d < 0 : d > 0;
+      el.classList.add(good ? 'flash-up' : 'flash-down');
+      const f = document.createElement('span');
+      f.className = 'float-delta ' + (good ? 'up' : 'down');
+      f.textContent = fmtD[k](d);
+      el.appendChild(f);
+    });
+  }
   function renderHud(s) {
     const hud = $('#hud');
     hud.hidden = false;
@@ -10112,7 +10771,7 @@ body.ct-open { overflow: hidden; }
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
       + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
-      + (IE.World && IE.World.stamps(s) ? '<span class="chip stamp" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
+      + (IE.World && IE.World.stamps(s) ? '<span class="chip passport" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
       + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
       + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
     const bmax = R().bodyMax(s);
@@ -10146,6 +10805,7 @@ body.ct-open { overflow: hidden; }
       + '<span class="' + (flooded ? 'bad' : '') + '">水位 <b>' + s.water.toFixed(1) + ' 樓</b> · 你住在 <b>' + (s.floor ? s.floor + ' 樓' : '天橋下') + '</b>' + (flooded ? '（正在淹水）' : '') + '</span>'
       + '<span>本季 KPI <b>' + esc(R().kpi(s).name) + '</b></span>'
       + '</div>';
+      hudFlash(s);
   }
 
   // ---------- 面板與對話框 ----------
@@ -10210,6 +10870,10 @@ body.ct-open { overflow: hidden; }
   }
 
   // ---------- 行動 ----------
+  // 行動卡的像素圖示
+  const ACT_ICON = { label: 'monitor', ot: 'clock', smile: 'mask', delivery: 'backpack', farm: 'phone', clinic: 'medkit', dive: 'tank', busk: 'guitar',
+    chat: 'cup', volunteer: 'bowl', rest: 'd_bed', create: 'brush', allnighter: 'lamp', garden: 'd_plant', salvage: 'helmet', haggle: 'gift', tripback: 'paper' };
+  const actIcon = (id) => IE.Icons.item(ACT_ICON[id] || (id.startsWith('site:') ? 'map' : 'card'), 30);
   const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上', trip: '旅行：探索、找素材' };
   function actionsPanel(s, list) {
     const night = R().isNight(s);
@@ -10224,7 +10888,7 @@ body.ct-open { overflow: hidden; }
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
           i++;
           return '<button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled') + '>'
-            + '<span class="act-key">' + (i % 10) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
+            + '<span class="act-key">' + (i % 10) + '</span><span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
             + '<span class="fx">' + fxHtml(a.fx) + '</span>' + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>';
         }).join('') + '</div>').join('')
       + invHtml(s);
@@ -10301,8 +10965,11 @@ body.ct-open { overflow: hidden; }
     if (rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
   }
+  function rankHtml(rk) {
+    return rk ? '<div class="rank-stamp r-' + rk.id + '" style="--c:' + rk.color + '"><b>' + rk.id + '</b><span>' + esc(rk.name) + '</span><small>表現 ' + rk.perf + '%</small></div>' : '';
+  }
   function reportModal(rep, btnLabel) {
-    return '<div class="modal"><h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -10405,22 +11072,24 @@ body.ct-open { overflow: hidden; }
   }
   // 人才扭蛋機：星際人才發展局出品，抽出你的下一世
   function gachaModal(meta, result, spinning) {
-    const RA = D().CHAR_RARITY;
-    const locked = IE.Roster.list(meta).filter((c) => !c.open);
-    const t = (meta && meta.tickets) || 0, cost = IE.Roster.GACHA_COST;
-    const w = locked.reduce((a, c) => a + RA[c.rarity].w, 0);
-    const odds = ['SR', 'UR'].map((r) => { const n = locked.filter((c) => c.rarity === r).reduce((a, c) => a + RA[c.rarity].w, 0); return r + ' ' + (w ? Math.round(n / w * 100) : 0) + '%'; }).join('・');
+    const RO = IE.Roster;
+    const locked = RO.list(meta).filter((c) => !c.open);
+    const t = (meta && meta.tickets) || 0, cost = RO.GACHA_COST;
     let res = '';
-    if (result) {
-      const b = D().BACKGROUNDS[result];
-      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+    if (result && result.type === 'char') {
+      const b = D().BACKGROUNDS[result.id];
+      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+    } else if (result) {
+      res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
     }
+    const left = Math.max(0, RO.PITY - ((meta && meta.pity) || 0));
     return '<div class="modal gacha"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
-      + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券（被選中或留下來守護地球得到更多）。每次扭蛋 ' + cost + ' 張，只會抽到你還沒有的角色。機會率：' + (locked.length ? odds : '—') + '。本局保證：你抽到的就是你。</p>'
+      + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券。每次扭蛋 ' + cost + ' 張。機會率：<b class="ur-odds">UR ' + (RO.ODDS.UR * 100) + '%</b>・SR ' + (RO.ODDS.SR * 100) + '%・銘謝惠顧及其他 ' + Math.round((1 - RO.ODDS.UR - RO.ODDS.SR) * 1000) / 10 + '%。'
+      + '已解鎖的稀有度不會重複抽中。根據《星際勞工保障條例》，連續 ' + RO.PITY + ' 次沒有 UR，下一次必定是 UR（還差 ' + left + ' 次）。</p>'
       + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
       + res
-      + '<p class="tickets">扭蛋券 <b>' + t + '</b> 張・未解鎖角色 <b>' + locked.length + '</b> 個</p>'
-      + '<div class="btn-row"><button class="btn primary" type="button" data-do="pull"' + (t >= cost && locked.length && !spinning ? '' : ' disabled') + '>扭一次（' + cost + ' 張）</button>'
+      + '<p class="tickets">扭蛋券 <b>' + t + '</b> 張・已扭 ' + ((meta && meta.pulls) || 0) + ' 次・未解鎖角色 <b>' + locked.length + '</b> 個</p>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="pull"' + (t >= cost && !spinning ? '' : ' disabled') + '>扭一次（' + cost + ' 張）</button>'
       + '<button class="btn" type="button" data-do="close"' + (spinning ? ' disabled' : '') + '>離開</button></div></div>';
   }
   // 浮城百貨：分類貨架，每件貨品都有像素模組
@@ -10499,6 +11168,8 @@ body.ct-open { overflow: hidden; }
         + '<div class="obj-txt"><b>新靈感物件：' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span><span class="mute">解鎖條件：' + esc(D().OBJ[id].unlock.text) + '</span></div></div>').join('') + '</div>' : '')
       + ((meta.lastChars || []).length ? '<div class="unlocks"><h3>新角色解鎖</h3>' + meta.lastChars.map((id) => { const b = D().BACKGROUNDS[id]; return '<div class="obj-row r-' + b.rarity + '">' + IE.Chars.img(id, 4)
         + '<div class="obj-txt"><b><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + esc(b.name) + '</b><span>' + esc(b.perkText) + '</span><span class="mute">解鎖條件：' + esc(b.unlock.text) + '</span></div></div>'; }).join('') + '</div>' : '')
+      + (meta.lastRatio ? '<p class="near-miss">這一局，你的訊號最接近的一次達到篩選門檻的 <b>' + Math.round(meta.lastRatio * 100) + '%</b>'
+        + (meta.lastRatio < 1 ? '：只差 ' + Math.max(1, Math.round((1 - meta.lastRatio) * 100)) + '%。' : '。') + '（你的最佳紀錄：' + Math.round((meta.bestRatio || 0) * 100) + '%）</p>' : '')
       + (meta.lastTickets ? '<p class="tickets-note">星際人才發展局發給你 <b>' + meta.lastTickets + '</b> 張人才扭蛋券（現有 ' + (meta.tickets || 0) + ' 張）。</p>' : '')
       + '<div class="btn-row"><button class="btn" type="button" data-do="copy">複製檔案</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
       + '<p class="mute" style="font-size:12px;text-align:center">結局 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '・人類模組 ' + seen + '/' + DS.ARCHETYPES.length + '</p>'
@@ -10703,7 +11374,7 @@ body.ct-open { overflow: hidden; }
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
-    placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, gachaModal, storeModal, souvenirModal, rosterHtml,
+    rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, gachaModal, storeModal, souvenirModal, rosterHtml,
   };
 })(window.IE = window.IE || {});
 
@@ -11418,18 +12089,19 @@ body.ct-open { overflow: hidden; }
   function openGacha(after) {
     const render = (result, spinning) => UI.modal(UI.gachaModal(Game.meta, result, spinning), {
       pull() {
-        const id = IE.Roster.pull(Game.meta);
-        if (!id) return;
+        const res = IE.Roster.pull(Game.meta);
+        if (!res) return;
         store.set(KEY_META, Game.meta);
         A.sfx('beam');
         render(null, true);
         setTimeout(() => {
-          const r = D.BACKGROUNDS[id].rarity;
-          A.sfx(r === 'UR' ? 'combo' : 'pickup');
-          if (r === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
-          render(id, false);
-          Game.setup.bg = id;
-        }, 1400);
+          if (res.type === 'char') {
+            A.sfx(res.rarity === 'UR' ? 'combo' : 'pickup');
+            if (res.rarity === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
+            Game.setup.bg = res.id;
+          } else A.sfx(res.id === 'refund' || res.id === 'antique' ? 'coin' : 'wrong');
+          render(res, false);
+        }, res.type === 'char' && res.rarity === 'UR' ? 2400 : 1400);
       },
       close() { UI.closeModal(); if (after) after(); },
     }, { dismiss: () => { if (after) after(); } });
@@ -11450,6 +12122,7 @@ body.ct-open { overflow: hidden; }
   function newGame(bg, season) {
     A.init();
     Game.state = R.newRun({ bg, season, meta: Game.meta });
+    if (Game.meta.nextStart && Game.meta.nextStart.length) { Game.meta.nextStart = []; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
     startDay();
@@ -11474,8 +12147,19 @@ body.ct-open { overflow: hidden; }
     UI.setPanel('<p class="mute">早上。你的手機震了幾下。</p>');
     save();
     openPhone(true);
+    dayCard(s);
     if (s.day === R.reviewDay(s)) UI.toast('今晚是篩選日。累積訊號必須超過 ' + UI.fmt(R.threshold(s)) + '。', 'bad');
     else if (m.astar) UI.toast('阿星傳來了訊息。');
+  }
+  // 每天開始：全畫面的日期字幕
+  function dayCard(s) {
+    const el = document.createElement('div');
+    const toReview = R.reviewDay(s) - s.day;
+    el.className = 'day-card' + (toReview === 0 ? ' review' : '');
+    el.innerHTML = '<span class="px">DAY</span><b>' + s.day + '</b><small>' + D.SEASONS[s.season].name + '・' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後')
+      + (s.trip ? '・你在' + D.DEST[s.trip.dest].name : '') + '</small>';
+    stage().appendChild(el);
+    setTimeout(() => el.remove(), 2200);
   }
   function openPhone(morning) {
     const s = Game.state;
@@ -11556,6 +12240,7 @@ body.ct-open { overflow: hidden; }
     const s = Game.state;
     switch (id) {
       case 'label': case 'ot': case 'smile': case 'dive': case 'delivery': case 'farm': case 'busk': case 'clinic':
+      case 'garden': case 'salvage': case 'haggle':
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
@@ -11697,6 +12382,7 @@ body.ct-open { overflow: hidden; }
     const m = IE.Micro.create(kind, {}, done);
     Game.micro = m;
     renderViews(false);
+    document.querySelectorAll('.day-card').forEach((el) => el.remove());
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
     // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
@@ -11721,15 +12407,7 @@ body.ct-open { overflow: hidden; }
   Game.applyMicroResult = function (kind, result) {
     const s = Game.state;
     Game.microToken = null; Game.micro = null;
-    let rep;
-    if (kind === 'label' || kind === 'ot') rep = R.applyLabel(s, result, { ot: kind === 'ot' });
-    else if (kind === 'smile') rep = R.applySmile(s, result);
-    else if (kind === 'dive') rep = R.applyDive(s, result);
-    else if (kind === 'delivery') rep = R.applyDelivery(s, result);
-    else if (kind === 'farm') rep = R.applyFarm(s, result);
-    else if (kind === 'busk') rep = R.applyBusk(s, result);
-    else if (kind === 'clinic') rep = R.applyClinic(s, result);
-    else if (kind === 'interview') rep = R.applyInterview(s, result.answers);
+    const rep = kind === 'interview' ? R.applyInterview(s, result.answers) : R.applyMicro(s, kind, result);
     setScene(viewScene(currentView()));
     afterAction(rep);
   };

@@ -211,7 +211,7 @@
   const SOUL_LIMIT = 21;
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
-  const THRESHOLDS = [1300000, 3600000, 8000000, 14000000, 24000000];
+  const THRESHOLDS = [2700000, 7600000, 17000000, 29000000, 50000000];
 
   // ---------- 十二項能力值 ----------
   // 0–100。做甚麼，就會變成甚麼：每個行動都會令相關能力值成長或退化。
@@ -264,11 +264,11 @@
     },
     busker: {
       name: '街頭樂手', short: '街頭樂手',
-      desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢；街頭表演收入 +30%',
-      cr: 60, spark: 2.7, floor: 2, medium: '寫了一首歌',
+      desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢；街頭表演收入 +15%',
+      cr: 60, spark: 2.4, floor: 2, medium: '寫了一首歌',
       soul: 4, conscience: 1, past: '你唱的歌從沒傷害過任何人。',
       cards: ['b_guitar', 'b_coins', 'b_song', 'b_echo'],
-      perk: { freeChat: true, buskPay: 1.3 },
+      perk: { freeChat: true, buskPay: 1.15 },
       stats: st(35, 35, 65, 25, 15, 50, 45, 60, 30, 30, 50, 15),
     },
     courier: {

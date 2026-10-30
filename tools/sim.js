@@ -11,10 +11,11 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'rules.js', 'create.js', 'world.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR, World: W } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
+if (process.env.THRESH_MULT) D.THRESHOLDS = D.THRESHOLDS.map((x) => Math.round(x * Number(process.env.THRESH_MULT)));
 
 // ---------- 小遊戲表現模型（大約是一個普通玩家） ----------
 function simLabel(s, ot, rng) {
@@ -172,16 +173,28 @@ function runCreate(s, mode) {
   return CR.finish(s);
 }
 
+// 新工作的普通玩家模型
+function simGarden(s, rng) { const harvest = Math.floor(4 + rng() * 10); return { harvest, stolen: Math.floor(rng() * 3), wilted: Math.floor(rng() * 2), golden: rng() < 0.12 ? 1 : 0, mutant: s.season === 'acid' && rng() < 0.4 }; }
+function simSalvage(s, rng) {
+  const floors = Math.floor(4 + rng() * 7), perfect = Math.floor(rng() * floors * 0.6), misses = Math.floor(rng() * 3);
+  const items = []; for (let i = 0; i < floors; i++) if (rng() < 0.3) items.push(['v_brick', 'v_safe', 'v_photo', 'v_neon'][Math.floor(rng() * 4)]);
+  return { floors, perfect, misses, injured: rng() < 0.3 ? 1 : 0, items, cr: floors * 6 + perfect * 2 };
+}
+function simHaggle(s, rng, moral) {
+  let total = 0, deals = 0, walkaways = 0, lies = 0, best = 0;
+  for (let i = 0; i < 6; i++) {
+    const lie = moral === 'shameless' || (moral === 'pragmatist' && rng() < 0.3);
+    if (lie) lies++;
+    if (rng() < 0.75) { const p = Math.round((8 + rng() * 22) * (lie ? 1.5 : 1)); total += p; deals++; best = Math.max(best, p); } else walkaways++;
+  }
+  return { total, deals, walkaways, lies, best, exposed: lies && rng() < 0.15 };
+}
 function act(s, id, rng, moral) {
+  const micro = { label: () => simLabel(s, false, rng), ot: () => simLabel(s, true, rng), smile: () => simSmile(s, rng, moral), dive: () => simDive(s, rng, moral),
+    delivery: () => simDelivery(s, rng), farm: () => simFarm(s, rng, moral), busk: () => simBusk(s, rng), clinic: () => simClinic(s, rng, moral),
+    garden: () => simGarden(s, rng), salvage: () => simSalvage(s, rng), haggle: () => simHaggle(s, rng, moral) }[id];
+  if (micro) return R.applyMicro(s, id, micro());
   switch (id) {
-    case 'label': return R.applyLabel(s, simLabel(s, false, rng));
-    case 'ot': return R.applyLabel(s, simLabel(s, true, rng), { ot: true });
-    case 'smile': return R.applySmile(s, simSmile(s, rng, moral));
-    case 'dive': return R.applyDive(s, simDive(s, rng, moral));
-    case 'delivery': return R.applyDelivery(s, simDelivery(s, rng));
-    case 'farm': return R.applyFarm(s, simFarm(s, rng, moral));
-    case 'busk': return R.applyBusk(s, simBusk(s, rng));
-    case 'clinic': return R.applyClinic(s, simClinic(s, rng, moral));
     case 'chat': {
       const alive = R.aliveNpcs(s);
       return R.applyChat(s, alive[Math.floor(rng() * alive.length)].id);
@@ -293,10 +306,10 @@ function balancedAct(s, moral) {
   // 火花太低就先救火花，否則會陷入「為交租而無限標註」的死循環
   if (s.spark < 1.2 && s.cr > R.foodCost(s) * 2) return firstEnabled(s, ['busk', 'chat', 'rest']);
   if (s.cr < need) {
-    const jobs = moral === 'saint' ? ['delivery', 'clinic', 'label', 'smile'] : moral === 'shameless' ? ['farm', 'smile', 'clinic', 'label'] : ['clinic', 'delivery', 'smile', 'label', 'farm'];
+    const jobs = moral === 'saint' ? ['delivery', 'clinic', 'salvage', 'label', 'smile'] : moral === 'shameless' ? ['farm', 'smile', 'haggle', 'clinic', 'label'] : ['clinic', 'haggle', 'delivery', 'salvage', 'smile', 'label', 'farm'];
     return firstEnabled(s, s.body > 40 ? jobs : jobs.filter((j) => j !== 'delivery'));
   }
-  if (s.spark < 1.8) return firstEnabled(s, ['busk', 'chat', 'rest']);
+  if (s.spark < 1.8) return firstEnabled(s, s.cr < R.foodCost(s) * 3 ? ['garden', 'busk', 'chat', 'rest'] : ['busk', 'chat', 'garden', 'rest']);
   if (s.cards.length < 6) return firstEnabled(s, s.body > 45 ? (s.slot === 0 ? ['dive', 'busk'] : ['busk', 'dive', 'chat']) : ['chat', 'rest']);
   return firstEnabled(s, s.slot === 1 ? ['busk', 'chat', 'dive'] : ['chat', 'dive', 'busk']);
 }

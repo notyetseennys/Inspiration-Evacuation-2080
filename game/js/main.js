@@ -102,18 +102,19 @@
   function openGacha(after) {
     const render = (result, spinning) => UI.modal(UI.gachaModal(Game.meta, result, spinning), {
       pull() {
-        const id = IE.Roster.pull(Game.meta);
-        if (!id) return;
+        const res = IE.Roster.pull(Game.meta);
+        if (!res) return;
         store.set(KEY_META, Game.meta);
         A.sfx('beam');
         render(null, true);
         setTimeout(() => {
-          const r = D.BACKGROUNDS[id].rarity;
-          A.sfx(r === 'UR' ? 'combo' : 'pickup');
-          if (r === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
-          render(id, false);
-          Game.setup.bg = id;
-        }, 1400);
+          if (res.type === 'char') {
+            A.sfx(res.rarity === 'UR' ? 'combo' : 'pickup');
+            if (res.rarity === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
+            Game.setup.bg = res.id;
+          } else A.sfx(res.id === 'refund' || res.id === 'antique' ? 'coin' : 'wrong');
+          render(res, false);
+        }, res.type === 'char' && res.rarity === 'UR' ? 2400 : 1400);
       },
       close() { UI.closeModal(); if (after) after(); },
     }, { dismiss: () => { if (after) after(); } });
@@ -134,6 +135,7 @@
   function newGame(bg, season) {
     A.init();
     Game.state = R.newRun({ bg, season, meta: Game.meta });
+    if (Game.meta.nextStart && Game.meta.nextStart.length) { Game.meta.nextStart = []; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
     startDay();
@@ -158,8 +160,19 @@
     UI.setPanel('<p class="mute">早上。你的手機震了幾下。</p>');
     save();
     openPhone(true);
+    dayCard(s);
     if (s.day === R.reviewDay(s)) UI.toast('今晚是篩選日。累積訊號必須超過 ' + UI.fmt(R.threshold(s)) + '。', 'bad');
     else if (m.astar) UI.toast('阿星傳來了訊息。');
+  }
+  // 每天開始：全畫面的日期字幕
+  function dayCard(s) {
+    const el = document.createElement('div');
+    const toReview = R.reviewDay(s) - s.day;
+    el.className = 'day-card' + (toReview === 0 ? ' review' : '');
+    el.innerHTML = '<span class="px">DAY</span><b>' + s.day + '</b><small>' + D.SEASONS[s.season].name + '・' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後')
+      + (s.trip ? '・你在' + D.DEST[s.trip.dest].name : '') + '</small>';
+    stage().appendChild(el);
+    setTimeout(() => el.remove(), 2200);
   }
   function openPhone(morning) {
     const s = Game.state;
@@ -240,6 +253,7 @@
     const s = Game.state;
     switch (id) {
       case 'label': case 'ot': case 'smile': case 'dive': case 'delivery': case 'farm': case 'busk': case 'clinic':
+      case 'garden': case 'salvage': case 'haggle':
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
@@ -381,6 +395,7 @@
     const m = IE.Micro.create(kind, {}, done);
     Game.micro = m;
     renderViews(false);
+    document.querySelectorAll('.day-card').forEach((el) => el.remove());
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
     // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
@@ -405,15 +420,7 @@
   Game.applyMicroResult = function (kind, result) {
     const s = Game.state;
     Game.microToken = null; Game.micro = null;
-    let rep;
-    if (kind === 'label' || kind === 'ot') rep = R.applyLabel(s, result, { ot: kind === 'ot' });
-    else if (kind === 'smile') rep = R.applySmile(s, result);
-    else if (kind === 'dive') rep = R.applyDive(s, result);
-    else if (kind === 'delivery') rep = R.applyDelivery(s, result);
-    else if (kind === 'farm') rep = R.applyFarm(s, result);
-    else if (kind === 'busk') rep = R.applyBusk(s, result);
-    else if (kind === 'clinic') rep = R.applyClinic(s, result);
-    else if (kind === 'interview') rep = R.applyInterview(s, result.answers);
+    const rep = kind === 'interview' ? R.applyInterview(s, result.answers) : R.applyMicro(s, kind, result);
     setScene(viewScene(currentView()));
     afterAction(rep);
   };

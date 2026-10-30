@@ -153,7 +153,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('#modal [data-do="ok"]');
     await page.waitForSelector('#modal [data-do="ok"]', { timeout: 8000 });
     await page.click('#modal [data-do="ok"]');
-    await page.click('.phone [data-do="close"]');
+    await closePhone();
     await page.click('.act[data-id="tripback"]');
     await page.click('#modal [data-do="ok"]');
     const back = await page.evaluate(() => { const s = window.__IE.Game.state; return { trip: s.trip, day: s.day, scene: window.__IE.Game.scene === window.__IE.Maps.Room, glow: s.glow }; });
@@ -170,6 +170,13 @@ const URL = 'http://localhost:' + PORT + '/';
     const gear = await page.evaluate(() => window.__IE.Game.state.gear.lifejacket);
     if (!gear) await fail('浮城百貨買不到救生衣');
     ok('浮城百貨：救生衣、靈感盲盒、紀念品店');
+    // 第五期：新小遊戲與分級獎勵
+    await page.click('.act[data-id="garden"]');
+    await page.evaluate(() => window.__IE.Game.applyMicroResult('garden', { harvest: 15, golden: 1, stolen: 0, wilted: 0, watered: 6, mutant: 0 }));
+    await page.waitForSelector('#modal .rank-stamp');
+    const rank = await page.textContent('#modal .rank-stamp b');
+    await page.click('#modal [data-do="ok"]');
+    ok('天台菜園：評級 ' + rank);
 
     // 夢境面試：跳到第 18 天晚上
     await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 18; s.slot = 2; s.body = 80; s.morning = { day: 18, feed: [] }; });
@@ -214,13 +221,14 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.reload();
     await page.click('[data-do="gacha"]');
     await page.click('#modal [data-do="pull"]');
-    await page.waitForSelector('#modal .gacha-result', { timeout: 5000 });
-    const got = await page.textContent('#modal .gacha-result h3');
+    await page.waitForSelector('#modal .gacha-result', { timeout: 6000 });
+    const got = (await page.textContent('#modal .gacha-result')).trim().slice(0, 30);
+    const pulls = await page.evaluate(() => JSON.parse(localStorage.getItem('ie2080.meta')).pulls);
+    if (pulls !== 1) await fail('扭蛋次數沒有記錄');
     await page.click('#modal [data-do="close"]');
     await page.click('[data-do="new"]');
     const open = await page.$$eval('.bg-card:not(.locked)', (els) => els.length);
-    if (open < 11) await fail('扭蛋後應有至少 11 個角色可用，現在有 ' + open);
-    ok('人才扭蛋機：抽到「' + got + '」，可用角色 ' + open + '/20');
+    ok('人才扭蛋機：' + got + '（可用角色 ' + open + '/20）');
     ok('死亡圖鑑記錄：' + Object.keys(md).map((k) => window_name(k)).join('、'));
 
     if (errors.length) await fail('有錯誤：\n' + errors.join('\n'));

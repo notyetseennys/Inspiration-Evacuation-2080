@@ -40,6 +40,28 @@
   const pips = (v) => { const n = Math.round(v * 5); return '●'.repeat(n) + '○'.repeat(5 - n); };
 
   // ---------- 狀態列 ----------
+  // 狀態列的數值一變，就閃一下並飄出變化量
+  let lastHud = null;
+  function hudFlash(s) {
+    const now = { cash: Math.round(s.cr), body: Math.round(s.body), spark: Math.round(s.spark * 10) / 10, soul: Math.round(s.soul * 10) / 10, signal: R().signal(s) };
+    const prev = lastHud && lastHud.day === s.day - (s.slot === 0 && lastHud.slot === 2 ? 1 : 0) ? lastHud : lastHud;
+    lastHud = Object.assign({ day: s.day, slot: s.slot }, now);
+    if (!prev) return;
+    const fmtD = { cash: (v) => (v > 0 ? '+$' : '−$') + fmt(Math.abs(v)), body: (v) => (v > 0 ? '+' : '−') + Math.abs(v), spark: (v) => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1),
+      soul: (v) => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '克', signal: (v) => '+' + kfmt(v) };
+    Object.keys(now).forEach((k) => {
+      const d = Math.round((now[k] - prev[k]) * 10) / 10;
+      if (!d) return;
+      const el = $('#hud .m-' + k);
+      if (!el) return;
+      const good = k === 'soul' ? d < 0 : d > 0;
+      el.classList.add(good ? 'flash-up' : 'flash-down');
+      const f = document.createElement('span');
+      f.className = 'float-delta ' + (good ? 'up' : 'down');
+      f.textContent = fmtD[k](d);
+      el.appendChild(f);
+    });
+  }
   function renderHud(s) {
     const hud = $('#hud');
     hud.hidden = false;
@@ -59,7 +81,7 @@
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
       + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
-      + (IE.World && IE.World.stamps(s) ? '<span class="chip stamp" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
+      + (IE.World && IE.World.stamps(s) ? '<span class="chip passport" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
       + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
       + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
     const bmax = R().bodyMax(s);
@@ -93,6 +115,7 @@
       + '<span class="' + (flooded ? 'bad' : '') + '">水位 <b>' + s.water.toFixed(1) + ' 樓</b> · 你住在 <b>' + (s.floor ? s.floor + ' 樓' : '天橋下') + '</b>' + (flooded ? '（正在淹水）' : '') + '</span>'
       + '<span>本季 KPI <b>' + esc(R().kpi(s).name) + '</b></span>'
       + '</div>';
+      hudFlash(s);
   }
 
   // ---------- 面板與對話框 ----------
@@ -157,6 +180,10 @@
   }
 
   // ---------- 行動 ----------
+  // 行動卡的像素圖示
+  const ACT_ICON = { label: 'monitor', ot: 'clock', smile: 'mask', delivery: 'backpack', farm: 'phone', clinic: 'medkit', dive: 'tank', busk: 'guitar',
+    chat: 'cup', volunteer: 'bowl', rest: 'd_bed', create: 'brush', allnighter: 'lamp', garden: 'd_plant', salvage: 'helmet', haggle: 'gift', tripback: 'paper' };
+  const actIcon = (id) => IE.Icons.item(ACT_ICON[id] || (id.startsWith('site:') ? 'map' : 'card'), 30);
   const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上', trip: '旅行：探索、找素材' };
   function actionsPanel(s, list) {
     const night = R().isNight(s);
@@ -171,7 +198,7 @@
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
           i++;
           return '<button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled') + '>'
-            + '<span class="act-key">' + (i % 10) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
+            + '<span class="act-key">' + (i % 10) + '</span><span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
             + '<span class="fx">' + fxHtml(a.fx) + '</span>' + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>';
         }).join('') + '</div>').join('')
       + invHtml(s);
@@ -248,8 +275,11 @@
     if (rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
   }
+  function rankHtml(rk) {
+    return rk ? '<div class="rank-stamp r-' + rk.id + '" style="--c:' + rk.color + '"><b>' + rk.id + '</b><span>' + esc(rk.name) + '</span><small>表現 ' + rk.perf + '%</small></div>' : '';
+  }
   function reportModal(rep, btnLabel) {
-    return '<div class="modal"><h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -352,22 +382,24 @@
   }
   // 人才扭蛋機：星際人才發展局出品，抽出你的下一世
   function gachaModal(meta, result, spinning) {
-    const RA = D().CHAR_RARITY;
-    const locked = IE.Roster.list(meta).filter((c) => !c.open);
-    const t = (meta && meta.tickets) || 0, cost = IE.Roster.GACHA_COST;
-    const w = locked.reduce((a, c) => a + RA[c.rarity].w, 0);
-    const odds = ['SR', 'UR'].map((r) => { const n = locked.filter((c) => c.rarity === r).reduce((a, c) => a + RA[c.rarity].w, 0); return r + ' ' + (w ? Math.round(n / w * 100) : 0) + '%'; }).join('・');
+    const RO = IE.Roster;
+    const locked = RO.list(meta).filter((c) => !c.open);
+    const t = (meta && meta.tickets) || 0, cost = RO.GACHA_COST;
     let res = '';
-    if (result) {
-      const b = D().BACKGROUNDS[result];
-      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+    if (result && result.type === 'char') {
+      const b = D().BACKGROUNDS[result.id];
+      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+    } else if (result) {
+      res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
     }
+    const left = Math.max(0, RO.PITY - ((meta && meta.pity) || 0));
     return '<div class="modal gacha"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
-      + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券（被選中或留下來守護地球得到更多）。每次扭蛋 ' + cost + ' 張，只會抽到你還沒有的角色。機會率：' + (locked.length ? odds : '—') + '。本局保證：你抽到的就是你。</p>'
+      + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券。每次扭蛋 ' + cost + ' 張。機會率：<b class="ur-odds">UR ' + (RO.ODDS.UR * 100) + '%</b>・SR ' + (RO.ODDS.SR * 100) + '%・銘謝惠顧及其他 ' + Math.round((1 - RO.ODDS.UR - RO.ODDS.SR) * 1000) / 10 + '%。'
+      + '已解鎖的稀有度不會重複抽中。根據《星際勞工保障條例》，連續 ' + RO.PITY + ' 次沒有 UR，下一次必定是 UR（還差 ' + left + ' 次）。</p>'
       + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
       + res
-      + '<p class="tickets">扭蛋券 <b>' + t + '</b> 張・未解鎖角色 <b>' + locked.length + '</b> 個</p>'
-      + '<div class="btn-row"><button class="btn primary" type="button" data-do="pull"' + (t >= cost && locked.length && !spinning ? '' : ' disabled') + '>扭一次（' + cost + ' 張）</button>'
+      + '<p class="tickets">扭蛋券 <b>' + t + '</b> 張・已扭 ' + ((meta && meta.pulls) || 0) + ' 次・未解鎖角色 <b>' + locked.length + '</b> 個</p>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="pull"' + (t >= cost && !spinning ? '' : ' disabled') + '>扭一次（' + cost + ' 張）</button>'
       + '<button class="btn" type="button" data-do="close"' + (spinning ? ' disabled' : '') + '>離開</button></div></div>';
   }
   // 浮城百貨：分類貨架，每件貨品都有像素模組
@@ -446,6 +478,8 @@
         + '<div class="obj-txt"><b>新靈感物件：' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span><span class="mute">解鎖條件：' + esc(D().OBJ[id].unlock.text) + '</span></div></div>').join('') + '</div>' : '')
       + ((meta.lastChars || []).length ? '<div class="unlocks"><h3>新角色解鎖</h3>' + meta.lastChars.map((id) => { const b = D().BACKGROUNDS[id]; return '<div class="obj-row r-' + b.rarity + '">' + IE.Chars.img(id, 4)
         + '<div class="obj-txt"><b><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + esc(b.name) + '</b><span>' + esc(b.perkText) + '</span><span class="mute">解鎖條件：' + esc(b.unlock.text) + '</span></div></div>'; }).join('') + '</div>' : '')
+      + (meta.lastRatio ? '<p class="near-miss">這一局，你的訊號最接近的一次達到篩選門檻的 <b>' + Math.round(meta.lastRatio * 100) + '%</b>'
+        + (meta.lastRatio < 1 ? '：只差 ' + Math.max(1, Math.round((1 - meta.lastRatio) * 100)) + '%。' : '。') + '（你的最佳紀錄：' + Math.round((meta.bestRatio || 0) * 100) + '%）</p>' : '')
       + (meta.lastTickets ? '<p class="tickets-note">星際人才發展局發給你 <b>' + meta.lastTickets + '</b> 張人才扭蛋券（現有 ' + (meta.tickets || 0) + ' 張）。</p>' : '')
       + '<div class="btn-row"><button class="btn" type="button" data-do="copy">複製檔案</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
       + '<p class="mute" style="font-size:12px;text-align:center">結局 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '・人類模組 ' + seen + '/' + DS.ARCHETYPES.length + '</p>'
@@ -650,6 +684,6 @@
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
-    placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, gachaModal, storeModal, souvenirModal, rosterHtml,
+    rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, gachaModal, storeModal, souvenirModal, rosterHtml,
   };
 })(window.IE = window.IE || {});

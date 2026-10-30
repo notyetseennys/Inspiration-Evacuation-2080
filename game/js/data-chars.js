@@ -73,9 +73,9 @@
     },
     monk: {
       name: '還俗的僧人', short: '還俗僧人', rarity: 'SR',
-      desc: '寺廟被改建成數據中心之後，下山了。', perkText: '贖罪效果 +50%；休息時火花額外 +0.25；但每件虧心事重三成',
+      desc: '寺廟被改建成數據中心之後，下山了。', perkText: '贖罪效果 +50%；休息時火花額外 +0.1；但每件虧心事重三成',
       cr: 40, spark: 1.6, floor: 2, medium: '抄了一段經', soul: 0, conscience: 1, past: '你為很多不認識的人念過經。',
-      cards: ['c_beads', 'c_sutra'], perk: { atoneMult: 1.5, restSpark: 0.25, sinMult: 1.3 },
+      cards: ['c_beads', 'c_sutra'], perk: { atoneMult: 1.5, restSpark: 0.1, sinMult: 1.3 },
       stats: st(40, 30, 35, 25, 15, 40, 35, 50, 55, 75, 70, 30),
       unlock: { text: '得到「地球守護者」結局', test: (m) => !!meta(m, 'endings').guardian },
     },
@@ -98,7 +98,7 @@
     octopoet: {
       name: '章魚星人詩人', short: '章魚詩人', rarity: 'UR', alien: true,
       desc: '外星觀光團的團員，在浮城迷了路，決定留下來寫詩。', perkText: '八隻觸手：創作手牌 +1；水性極高；但身體上限 −20%',
-      cr: 80, spark: 2.1, floor: 2, medium: '用八隻觸手寫了一首', soul: 3, conscience: 0.9, past: '你們的星球沒有「工作」這個詞。',
+      cr: 80, spark: 1.9, floor: 2, medium: '用八隻觸手寫了一首', soul: 3, conscience: 0.9, past: '你們的星球沒有「工作」這個詞。',
       cards: ['c_ink', 'c_tentpoem'], perk: { handBonus: 1, bodyMult: 0.8 },
       stats: st(30, 60, 45, 85, 20, 35, 45, 55, 40, 45, 50, 15),
       unlock: { text: '跨局發現 40 個具名組合', test: (m) => count(m, 'recipes') >= 40 },
@@ -121,9 +121,9 @@
     },
     mushroom: {
       name: '蘑菇星交換生', short: '蘑菇星人', rarity: 'UR', alien: true,
-      desc: '來地球交流的真菌，覺得浮城的濕度剛剛好。', perkText: '在淹水的家裡反而長得好（淹水時睡覺身體 +10，永不發霉）；飯錢減半；和朋友聊天多得一張素材',
+      desc: '來地球交流的真菌，覺得浮城的濕度剛剛好。', perkText: '在淹水的家裡反而長得好（淹水時睡覺身體 +10，永不發霉）；飯錢減半',
       cr: 120, spark: 2.1, floor: 1, medium: '長出了一件', soul: 2, conscience: 1, past: '你的祖先在一場雨裡來到地球。',
-      cards: ['c_spore', 'c_dampwall'], perk: { floodHeal: true, moldImmune: true, foodMult: 0.5, chatExtra: true },
+      cards: ['c_spore', 'c_dampwall'], perk: { floodHeal: true, moldImmune: true, foodMult: 0.5 },
       stats: st(40, 25, 40, 60, 15, 55, 45, 65, 35, 60, 65, 25),
       unlock: { text: '跨局在淹水的家裡度過 10 晚', test: (m) => (m.floodNights || 0) >= 10 },
     },
@@ -149,19 +149,41 @@
     m.lastTickets = earned;
     return m;
   }
-  // 抽一次：只會抽到未解鎖的角色（SR 與 UR 的機會是 4 比 1）
+  // 抽一次：UR 1.5%、SR 10%，其餘是「銘謝惠顧」之類的安慰獎；抽到的稀有度已經全部解鎖時，也只會得到安慰獎。
+  // 保底（「星際勞工保障條例」）：連續 80 次沒有抽到 UR，第 80 次必定是 UR（如果還有未解鎖的 UR）。
+  const ODDS = { UR: 0.015, SR: 0.1 };
+  const PITY = 80;
+  const CONSOLATION = [
+    { id: 'nothing', w: 62, text: '銘謝惠顧。星際人才發展局感謝你對地球人才市場的支持。' },
+    { id: 'self', w: 8, text: '扭蛋裡是一張你自己的照片。恭喜你：你抽到了你自己。' },
+    { id: 'refund', w: 18, text: '扭蛋裡有一張扭蛋券。（退回 1 張）' },
+    { id: 'antique', w: 12, text: '扭蛋裡是一件古董。下一局開始時，它會在你的素材庫裡。' },
+  ];
   function pull(m, rnd) {
-    const pool = Object.keys(D.BACKGROUNDS).filter((id) => !unlocked(m, id));
-    if (!pool.length || (m.tickets || 0) < GACHA_COST) return null;
-    const total = pool.reduce((a, id) => a + RARITY[D.BACKGROUNDS[id].rarity].w, 0);
-    let r = (rnd == null ? Math.random() : rnd) * total, pick = pool[pool.length - 1];
-    for (const id of pool) { r -= RARITY[D.BACKGROUNDS[id].rarity].w; if (r <= 0) { pick = id; break; } }
+    const roll = rnd == null ? Math.random : () => rnd;
+    if ((m.tickets || 0) < GACHA_COST) return null;
     m.tickets -= GACHA_COST;
-    m.chars = m.chars || {};
-    m.chars[pick] = true;
     m.pulls = (m.pulls || 0) + 1;
-    return pick;
+    m.pity = (m.pity || 0) + 1;
+    const locked = (r) => Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === r && !unlocked(m, id));
+    const r = roll();
+    let tier = m.pity >= PITY && locked('UR').length ? 'UR' : r < ODDS.UR ? 'UR' : r < ODDS.UR + ODDS.SR ? 'SR' : null;
+    if (tier && !locked(tier).length) tier = null;
+    if (tier) {
+      const pool = locked(tier);
+      const id = pool[Math.floor(roll() * pool.length) % pool.length];
+      m.chars = m.chars || {};
+      m.chars[id] = true;
+      if (tier === 'UR') m.pity = 0;
+      return { type: 'char', id, rarity: tier };
+    }
+    let w = roll() * CONSOLATION.reduce((a, c) => a + c.w, 0), c = CONSOLATION[0];
+    for (const x of CONSOLATION) { w -= x.w; if (w <= 0) { c = x; break; } }
+    if (c.id === 'refund') m.tickets += 1;
+    let card = null;
+    if (c.id === 'antique') { const a = D.ANTIQUES; card = a[Math.floor(roll() * a.length) % a.length]; m.nextStart = (m.nextStart || []).concat(card); }
+    return { type: 'consolation', id: c.id, text: c.text, card };
   }
   D.CHAR_RARITY = RARITY;
-  IE.Roster = { RARITY, GACHA_COST, unlocked, list, settle, pull };
+  IE.Roster = { RARITY, GACHA_COST, ODDS, PITY, unlocked, list, settle, pull };
 });

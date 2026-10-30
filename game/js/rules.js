@@ -255,6 +255,8 @@
     }
     bg.cards.forEach((id) => addCard(s, id));
     // 時間旅人：帶著一件來自未來的極稀有素材
+    // 扭蛋機的安慰獎：下一局帶著一件古董
+    ((opts.meta && opts.meta.nextStart) || []).forEach((id) => { if (D.CARDS[id]) addCard(s, id); });
     if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
     D.STARTER.forEach((id) => addCard(s, id));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
@@ -740,6 +742,16 @@
     return rep.done();
   }
 
+  // ---------- 小遊戲結果：套用規則，再按表現評級（分級獎勵見 jobs2.js） ----------
+  function applyMicro(s, kind, res) {
+    const J = IE.Jobs2;
+    const fn = { label: () => applyLabel(s, res), ot: () => applyLabel(s, res, { ot: true }), smile: () => applySmile(s, res), dive: () => applyDive(s, res),
+      delivery: () => applyDelivery(s, res), farm: () => applyFarm(s, res), busk: () => applyBusk(s, res), clinic: () => applyClinic(s, res),
+      garden: () => J.applyGarden(s, res), salvage: () => J.applySalvage(s, res), haggle: () => J.applyHaggle(s, res) }[kind];
+    const r = fn();
+    return J && !['garden', 'salvage', 'haggle'].includes(kind) ? J.grade(s, kind, res, r) : r;
+  }
+
   // ---------- 聊天、義工、休息 ----------
   function chatCost(s) { return perk(s).freeChat ? 0 : 15; }
   function aliveNpcs(s) { return s.npcs.filter((n) => n.alive); }
@@ -841,6 +853,7 @@
       list.push({ id: 'volunteer', group: 'life', name: '到避難所做義工', sub: '幫人不會賺錢，但會讓靈魂變輕',
         fx: [['soul', '−' + round1(2.5 * (perk(s).volunteerAtone || 1) * (worldMods(s).atoneMult || 1)) + ' 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
         reason: tired });
+      if (IE.Jobs2) list.push(...IE.Jobs2.actions(s));
       list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
         fx: [['body', '+' + ((s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
     } else {
@@ -863,7 +876,7 @@
     }
     // 危險提示：外出的致命機會、身體撐不住、過勞與連續通宵
     const risk = outdoorRisk(s);
-    const BODY = { label: 8, ot: 14, smile: 6, delivery: 10, farm: 4, clinic: 5, dive: diveBodyCost(s), busk: 4, volunteer: 6, create: 4, allnighter: 15 };
+    const BODY = { label: 8, ot: 14, smile: 6, delivery: 10, farm: 4, clinic: 5, dive: diveBodyCost(s), busk: 4, volunteer: 6, create: 4, allnighter: 15, garden: 3, salvage: 10, haggle: 4 };
     list.forEach((a) => {
       if (risk > 0 && D.OUTDOOR.includes(a.id)) a.fx.push(['danger', '致命 ' + Math.round(risk * 1000) / 10 + '%']);
       if (s.conds.fracture && D.OUTDOOR.includes(a.id)) a.fx.push(['danger', '骨折：身體額外 −8']);
@@ -1199,7 +1212,10 @@
     rep.review = null; rep.ending = null; rep.event = null; rep.interview = false;
     // 晚餐
     const food = Math.round(foodCost(s) * (s.trip ? 1.5 : 1));
-    if (s.flags.fishDinner === s.day) {
+    if (s.flags.vegDinner === s.day && s.flags.fishDinner !== s.day) {
+      heal(s, 4);
+      rep.line('晚餐：天台種的菜', 'good', 4, 'body');
+    } else if (s.flags.fishDinner === s.day) {
       heal(s, 6);
       rep.line('晚餐：自己抓的魚', 'good', 6, 'body');
     } else if (s.flags.foodFree === s.day) {
@@ -1370,6 +1386,7 @@
     const plastic = s.spark > 3.5 ? 'C' : s.spark >= 2 ? 'A' : s.spark >= 1 ? 'B' : 'D';
     const plasticNote = s.spark > 3.5 ? '火花過盛，難以管理' : s.spark >= 2 ? '容易塑造' : s.spark >= 1 ? '尚可' : '沒有可塑造的部分';
     const signalOk = sig >= th;
+    s.stats.bestRatio = Math.max(s.stats.bestRatio || 0, sig / th);
     const overweight = s.soul > SOUL_LIMIT;
     const pass = signalOk && !overweight;
     let taken = null;
@@ -1471,6 +1488,8 @@
     meta.rares = meta.rares || {};
     Object.keys(s.rares || {}).forEach((k) => { meta.rares[k] = true; });
     meta.sales = (meta.sales || 0) + (s.stats.sales || 0);
+    meta.lastRatio = s.stats.bestRatio || 0;
+    meta.bestRatio = Math.max(meta.bestRatio || 0, s.stats.bestRatio || 0);
     meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
     meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
     if (IE.Roster) IE.Roster.settle(meta, finalType);
@@ -1531,6 +1550,6 @@
     chatCost, aliveNpcs, applyChat, applyRest,
     teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, SHOP_CATS, morning, endDay, epitaph, endingFor, recordMeta,
-    report, heal, outdoorHazard, MAX_CARDS,
+    report, heal, outdoorHazard, applyMicro, MAX_CARDS,
   };
 });

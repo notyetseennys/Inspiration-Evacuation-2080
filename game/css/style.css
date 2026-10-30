@@ -775,7 +775,7 @@ body.ct-open { overflow: hidden; }
 .store-txt { display: flex; flex-direction: column; gap: 2px; font-size: 13px; min-width: 0; }
 .store-txt b { font-size: 14px; }
 .store-open { width: 100%; margin-top: 6px; }
-.chip.stamp { border-color: #ffd36b; color: #ffd36b; }
+.chip.passport { border-color: #ffd36b; color: #ffd36b; }
 /* 機票 */
 .fares { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 8px; }
 .fare { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--deck-2); cursor: pointer; }
@@ -787,3 +787,42 @@ body.ct-open { overflow: hidden; }
 .fare-first { border-color: rgba(255, 211, 107, 0.5); }
 .fare-budget { border-color: rgba(55, 195, 214, 0.4); }
 .deal-tag { display: inline-block; margin-left: 8px; font-size: 12px; vertical-align: middle; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 999px; }
+
+/* ---------- 第五期：行動圖示、評級印章、狀態列跳動、日期字幕 ---------- */
+.act { position: relative; }
+.act-icon { position: absolute; right: 8px; top: 8px; opacity: 0.9; pointer-events: none; }
+.act-icon .px-icon { width: 30px; height: 30px; image-rendering: pixelated; }
+.act:not([disabled]):hover .act-icon { transform: translateY(-2px) rotate(-6deg); transition: transform 0.15s; }
+.act .act-name { padding-right: 34px; }
+.modal.ranked { position: relative; }
+.rank-stamp { position: absolute; right: 14px; top: 12px; display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border: 3px solid var(--c); border-radius: 8px; color: var(--c);
+  transform: rotate(8deg); animation: stamp-in 0.45s cubic-bezier(.2,1.6,.4,1) both; background: rgba(10, 14, 23, 0.6); }
+.rank-stamp b { font-family: var(--font-pixel); font-size: 30px; line-height: 1; }
+.rank-stamp span { font-size: 12px; font-weight: 900; }
+.rank-stamp small { font-size: 10px; color: var(--mute); }
+.rank-stamp.r-SS { box-shadow: 0 0 22px rgba(255, 211, 107, 0.55); }
+.rank-stamp.r-SS b, .rank-stamp.r-S b { text-shadow: 0 0 10px var(--c); }
+@keyframes stamp-in { from { transform: rotate(-20deg) scale(2.4); opacity: 0; } to { transform: rotate(8deg) scale(1); opacity: 1; } }
+.modal.ranked h2 { padding-right: 90px; }
+.meter { position: relative; }
+.meter.flash-up { animation: flash-up 0.9s ease-out; }
+.meter.flash-down { animation: flash-down 0.9s ease-out; }
+@keyframes flash-up { 0% { box-shadow: 0 0 0 2px var(--alien), 0 0 18px rgba(155, 227, 107, 0.6); } 100% { box-shadow: none; } }
+@keyframes flash-down { 0% { box-shadow: 0 0 0 2px var(--danger), 0 0 18px rgba(255, 77, 94, 0.6); } 100% { box-shadow: none; } }
+.float-delta { position: absolute; right: 8px; top: -4px; font-family: var(--font-num); font-size: 20px; pointer-events: none; animation: float-up 1.4s ease-out forwards; text-shadow: 0 1px 0 #000; }
+.float-delta.up { color: var(--alien); }
+.float-delta.down { color: var(--danger); }
+@keyframes float-up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-26px); opacity: 0; } }
+.day-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; z-index: 5;
+  background: radial-gradient(ellipse at center, rgba(5, 7, 12, 0.75), rgba(5, 7, 12, 0.2) 70%); animation: day-card 2.2s ease-in-out forwards; }
+.day-card .px { font-size: 14px; color: var(--sea); letter-spacing: 0.3em; }
+.day-card b { font-family: var(--font-num); font-weight: 400; font-size: 84px; line-height: 0.9; color: #fff; text-shadow: 0 0 18px rgba(255, 79, 180, 0.7); }
+.day-card small { font-size: 14px; color: var(--fg); margin-top: 6px; }
+.day-card.review b { color: var(--danger); text-shadow: 0 0 22px rgba(255, 77, 94, 0.8); }
+@keyframes day-card { 0% { opacity: 0; transform: scale(1.15); } 15% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+.near-miss { text-align: center; font-size: 14px; color: var(--fg); background: var(--deck-2); border-radius: var(--r); padding: 8px; }
+.near-miss b { color: var(--danger); font-size: 18px; }
+.gacha-result.miss { box-shadow: 0 0 0 1px var(--line); }
+.gacha-result .miss-text { font-size: 14px; color: var(--mute); }
+.ur-odds { color: #ffd36b; }
+@media (prefers-reduced-motion: reduce) { .rank-stamp, .meter.flash-up, .meter.flash-down, .float-delta, .day-card { animation-duration: 0.01s; } }
