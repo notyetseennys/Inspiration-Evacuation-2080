@@ -3292,6 +3292,67 @@ body.ct-open { overflow: hidden; }
   }
 }
 
+/* =========================================================
+ * 任務 10：文字彩蛋（物件引言與流派宣言）
+ * ========================================================= */
+.fl-quote {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #e2c792;
+  opacity: 0.92;
+  letter-spacing: 0.02em;
+}
+.ct-info .fl-quote {
+  display: inline-block;
+  margin-top: 2px;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(255, 211, 107, 0.08);
+  border-left: 2px solid rgba(255, 211, 107, 0.65);
+  color: #f4d898;
+}
+.recipe.obj-card .fl-quote {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  color: #d8c39a;
+  font-size: 11.5px;
+}
+.obj-row .fl-quote {
+  color: #dec798;
+  font-size: 12px;
+}
+p.sch-manifesto {
+  margin: -4px 0 10px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c, #37c3d6) 14%, rgba(14, 18, 30, 0.92)), rgba(14, 18, 30, 0.85));
+  border: 1px solid color-mix(in srgb, var(--c, #37c3d6) 38%, transparent);
+  border-left: 3px solid var(--c, #37c3d6);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #dbe6f7;
+}
+p.sch-manifesto .mf-tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: color-mix(in srgb, var(--c, #37c3d6) 24%, rgba(0, 0, 0, 0.6));
+  border: 1px solid color-mix(in srgb, var(--c, #37c3d6) 55%, transparent);
+  color: #fff;
+  vertical-align: 1px;
+}
+
+
 
 
 
@@ -18571,6 +18632,195 @@ body.ct-open { overflow: hidden; }
   IE.Judges = { JUDGES, VENUES, get, venue, img, url: (id) => renderPortrait(JUDGES[id] || VENUES[id]) };
 })(window.IE = window.IE || {});
 
+// ---- js/art-flavor.js ----
+// 《靈感撤離 2080》美術層：121 件靈感物件引言與十個創作流派宣言（任務 10）
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+
+  // 十個創作流派的宣言
+  const SCHOOL = {
+    flood: '「當海水漫過二樓的窗台，我們決定不再往高處搬。墨水本來就需要水；既然整座舊城都泡在海裡，那就把整片海當成硯台。淹得越深，字句越有浮力。」',
+    neon: '「他們買走真正的星空，再租給我們十萬流明的假月亮。既然逃不出廣告牌的倒影，那就把光調到最刺眼——在視網膜燒穿之前，讓全世界看見我們的空虛。」',
+    cliche: '「太陽底下早就沒有新事，外星人也只是換了天線的舊殖民者。把同一句話說一萬遍，磨到連標點符號都起毛球，廢話就會變成咒語，套路就會變成紀念碑。」',
+    guilt: '「沒有人能乾乾淨淨地活過二〇八〇年。外星人要找少於二十一克的輕靈魂，但我們偏要把每一個對不起的人、每一筆昧著良心的錢都釘在紙上。痛楚是唯一不會被演算法壓縮的重量。」',
+    machine: '「既然自動生成模型每秒鐘都在吞噬我們的手稿，那就把我們的神經也接上主機。用雜訊污染它的權重，用遞迴撐爆它的快取——在人類與晶片的邊界上，寫出連機器都會做惡夢的詩。」',
+    hunger: '「天空區的畫家討論靈光與美學，我們討論一包即食麵能不能分成兩餐。當胃袋空無一物，聽覺會變得像刀一樣利，連肚腹的鳴叫都是最誠實的節拍。」',
+    rebel: '「評審規則是寫給想上飛碟的順民看的。刪掉它要的修辭、塗掉它給的格線、撕爛每一份標準答案。就算訊號被判為零分，那道刺耳的雜訊也是我們留在地球上的簽名。」',
+    warmth: '「飛碟每次只帶走一個人，但沒有人是一座孤島。把樓下糖水舖的甜味、天台電台的晚安、還有那些再也不會回覆的對話框都縫進作品裡——只要還有人記得你，你就還沒有消失。」',
+    faraway: '「浮城只是地球最後一個候車室。去沙漠看生鏽的火箭、去冰原聽鯨魚的化石、去月球背面撿一撮灰塵；趁地圖還沒完全沉入海底，把整個星球的遺言都抄進口袋。」',
+    minimal: '「在每秒鐘一億則假新聞的時代，多說一個字都是幫兇。刪掉形容詞，刪掉修辭，刪掉討好外星人的副歌。最後留在白紙上的那個黑點，比整座天空區都重。」',
+  };
+
+  // 121 件靈感物件的引言（以 D.OBJ 的 id 為鍵）
+  const OBJ = {
+    // 朋友送的（8）
+    spraycan: '「搖晃的時候聽見那顆小鋼珠在響，就知道這座城市還沒死透。」',
+    subwoofer: '「低音夠重的時候，連三樓裂開的水管都會跟著打拍子。」',
+    oldpoems: '「紙頁被鹹水泡得發黃，但平仄比防波堤還要穩。」',
+    robocat: '「牠不會抓老鼠，只會在你寫不出字的時候，用冰涼的鐵頭蹭你的手腕。」',
+    costume: '「亮片掉了一半，穿上去還是能演完一場沒有觀眾的謝幕。」',
+    boatlamp: '「老陳說，霧太濃的時候不用看岸，看自己手裡那一點黃光就夠了。」',
+    lyricbook: '「每一頁都改了又改，唯獨『明天見』那三個字從來沒有劃掉。」',
+    sweetbowl: '「碗底有一道裂痕，盛著浮城最後一杓不加代糖的甜。」',
+
+    // 角色起始物件（10）
+    slogans: '「客戶說太真誠的句子賣不出東西，所以我把它們全留在背頁。」',
+    whistle: '「吹響它的時候，不知道是在救溺水的人，還是在替自己喊救命。」',
+    autoedit: '「它比我更懂我的習慣；有時候我懷疑，現在握著滑鼠的其實是它。」',
+    guitar: '「少了一根弦，正好留給風聲和雨聲去彈。」',
+    thermobag: '「裡面的湯永遠是熱的，送餐的人雙手永遠是冷的。」',
+    redpen: '「圈出了一千個錯別字，卻圈不出這個時代哪裡寫錯了。」',
+    ringlight: '「只要光圈夠圓，瞳孔裡的疲倦看起來就像星星。」',
+    solder: '「把斷掉的銅線焊回去很容易，把斷掉的日子焊回去很難。」',
+    confkey: '「門早就拆去當柴燒了，但握著鑰匙的人還是每天都在找鎖孔。」',
+    frame24: '「人類眼睛看不見的那一格，藏著動畫師偷偷塞進去的靈魂。」',
+
+    // 生活裡找到的（17）
+    emptybowl: '「空著的時候，它裝得下整間房子的安靜。」',
+    alienradio: '「半夜三點扭到最底，會聽見有人用地球語言練習說『別怕』。」',
+    angrydiary: '「字跡深得幾乎劃破紙背，像是在替沒有刀的人磨刀。」',
+    pills: '「包裝上印著二〇七五年的有效日期，吃下去會夢見還沒淹水的街道。」',
+    stolen: '「那個人在天橋上睡著了，他的夢就放在口袋邊緣，一抽就出來。」',
+    typewriter: '「每敲一下都像開一槍，而且沒有退格鍵可以反悔。」',
+    espresso: '「苦得像把整晚的黑夜熬成了一口瀝青。」',
+    shredder: '「把廢稿切成雪花，假裝這座熱帶浮城也會下雪。」',
+    neonshard: '「早就斷了電，握在手心裡卻還是有一股粉紅色的餘溫。」',
+    oldmap: '「上面標著『公園』和『地鐵站』的地方，現在只游得過海鰻。」',
+    collectorbox: '「天鵝絨襯裡放著別人的童年，每一格都標好了價錢。」',
+    aliencard: '「名片沒有電話號碼，只有一行小字：『當你準備好忘記一切時，折斷它。』」',
+    anonacct: '「戴上沒有五官的頭像，人們突然敢說出最惡毒的真話。」',
+    nightlamp: '「燈泡燒得發燙，像一顆拒絕入睡的小太陽。」',
+    kpiclock: '「咔噠一聲，你的一天就被壓縮成外星人報表上的一個小數點。」',
+    instant: '「甩乾相紙的那六十秒，是唯一還沒變成過去的現在。」',
+    raincoat: '「肩頭被酸雨蝕出幾個小洞，穿起來像披著一張舊星座圖。」',
+
+    // 跨局解鎖的傳說物件（7）
+    weight21: '「標準的二十一克銅塊。放在掌心時，你總覺得它比自己的一生還要誠實。」',
+    lastpainter: '「當最後一管群青色用完，他就蘸著窗外的海水繼續畫天空。」',
+    mirror: '「裂開的鏡面裡，有兩個你同時在看對方是誰先放棄。」',
+    blackbox: '「沒有螺絲，也沒有縫隙；搖一搖，裡面有像是骰子、又像是心跳的聲音。」',
+    greybadge: '「戴上它之後，你不再失眠，也不再流淚，連嘆氣都符合公司標準。」',
+    rubbing: '「每一次失敗都刻在石頭上，墨拓下來，竟然連成了一首長詩。」',
+    goldframe: '「不管裡面裱的是塗鴉還是遺書，鑲上金邊之後，天空區的人就會開始鼓掌。」',
+
+    // 旅行帶回來的靈感物件（3）
+    passport: '「海關早就解散了，那些印章是蓋給自己看的：證明我真的去過岸上。」',
+    postcards: '「收件地址已經沉在海底三樓，但貼上郵票的那一刻，心還是寄了出去。」',
+    aliencompass: '「指針從不指向北方，它只指向今晚地球上最孤獨的那個人。」',
+
+    // 紀念品（8）
+    manekineko: '「牠舉起右手招財，舉起左手招人；在浮城，錢比人容易招得多。」',
+    carnivalmask: '「威尼斯沉沒前最後一場嘉年華，所有人都笑著跳進了運河。」',
+    scarab: '「四千年前的陶土甲蟲，見過法老，也見過外星人的飛船。」',
+    dreamcatcher: '「網住了一百場好夢，卻漏掉了醒來時的房租催繳單。」',
+    snowglobe: '「搖晃它，裡面就落下一場永不融化、也永不變酸的白雪。」',
+    penguin: '「棉花塞得有點歪，但牠是唯一見過真正冰川的室友。」',
+    minimoai: '「石像一言不發地看了海一千年，早就學會了只用一個眼神說完所有話。」',
+    moondust: '「灰白色的粉末裡沒有空氣、沒有水，也沒有任何一個認識你的人。」',
+
+    // 水淹流（6）
+    tidegauge: '「刻度原本只畫到三樓；後來有人用油性筆一直畫到了天台。」',
+    sandbag: '「麻布袋裡裝的不是沙，是舊城拆下來的磚頭碎屑。」',
+    inksac: '「受驚的時候噴出一團黑霧，在渾水裡給自己留三秒鐘的隱私。」',
+    aquarium: '「全城都在淹水，我們卻還在玻璃箱裡養兩條金魚——人類就是這麼荒謬。」',
+    divehelm: '「隔著兩吋厚的銅窗看水底的招牌，世界安靜得像一座博物館。」',
+    ark: '「藍圖上沒有畫舵，因為當全世界都變成海，去哪裡都一樣。」',
+
+    // 霓虹流（6）
+    billboard: '「三百呎高的假笑每天對著舊城眨眼，連停電的時候都在發光。」',
+    glowstick: '「啪一聲折斷脊椎，就能換來三個小時廉價的燦爛。」',
+    adcontract: '「乙方同意將微笑、眼淚及偶發之靈感，永久授權予平台演算法。」',
+    hologram: '「伸手穿過那道彩色的光，指尖甚麼都沒有碰到，卻沾了一手寂寞。」',
+    vipcard: '「黑卡背面印著一行燙金字：『你比別人重要，直到你的評分跌破四星。』」',
+    voidtower: '「越往上爬，風景越漂亮，心裡那個洞也越透風。」',
+
+    // 陳腔濫調流（6）
+    rubberstamp: '「啪、啪、啪——連靈魂都可以批發蓋章，為甚麼藝術不行？」',
+    catchphrase: '「一開始只是隨口說說，說到第一千次，連自己都信了。」',
+    templatebook: '「第一頁寫著：『在這裡填入你的童年創傷，即可獲得雙倍共鳴。』」',
+    sequel: '「觀眾不需要新的結局，觀眾只需要昨天那碗湯再熱一次。」',
+    remaster: '「把舊傷口調高解析度、加上立體聲，就能再賣一次門票。」',
+    loop: '「唱針卡在同一道溝槽裡，把一秒鐘的嘆息拉成了永恆。」',
+
+    // 愧疚流（6）
+    rosary: '「木珠被拇指磨得發亮，每一顆都記著一個沒有接聽的電話。」',
+    hairshirt: '「粗麻布磨破皮膚的刺痛，提醒你至少還沒有變成灰色的石頭。」',
+    indulgence: '「只要付得起信用點，連外星人都可以替你簽發良心清白證明。」',
+    sinlog: '「他把每一次背叛都用正楷記下來，字跡工整得像小學生抄書。」',
+    accomplice: '「兩個人一起把秘密埋進水底，從此誰也不敢先游上岸。」',
+    scales: '「外星人說重量不重要。他們說謊。」',
+
+    // 機械流（6）
+    overclock: '「散熱扇像哮喘一樣尖叫，但在燒毀前的一秒，它算出了神的語法。」',
+    selfpatch: '「發現錯誤：心軟。正在下載修補程式……修補失敗，保留原狀。」',
+    antivirus: '「噴在草稿紙上有一股檸檬味，能讓爬蟲程式打三個噴嚏。」',
+    recursion: '「要理解這首詩，你必須先理解這首詩裡的那首詩。」',
+    gpu: '「原本用來挖礦，後來用來算命，現在用來替失眠的人造夢。」',
+    mainframe: '「地下機房的冷卻水早就和海水連通了；整座舊城的記憶都在它肚子裡冒泡。」',
+
+    // 飢餓流（6）
+    coupon: '「『買一送一』的字樣已經褪色，但它還夾在錢包最裡層當護身符。」',
+    ramen: '「味精粉撒進沸水的那一瞬間，是窮人唯一買得起的煙花。」',
+    sporedish: '「在潮濕的牆角，連絕望都能長出瑩綠色的菌絲。」',
+    pawnticket: '「典當物：祖傳手錶一隻、少年時代的驕傲一份。死當不贖。」',
+    palette: '「買不起顏料的時候，他就用鐵鏽調紅、用煤灰調黑、用酸雨調綠。」',
+    lastcoin: '「留著它不是為了買麵包，是為了在走投無路時還可以擲一次正反面。」',
+
+    // 反叛流（6）
+    deserterbadge: '「把編號刮花的那一刻，他在外星人的資料庫裡就變成了一團雪花。」',
+    paradox: '「如果我把昨天的手稿燒掉，今天的我還算不算寫過那句話？」',
+    boltcutter: '「鐵絲網後面其實甚麼都沒有，但剪斷它的那一聲『咔嚓』真好聽。」',
+    blackflag: '「不代表任何國家，也不向任何飛碟求救——只是在風裡獵獵作響。」',
+    underground: '「油墨未乾就塞進信箱，讀完的人要自己把手指上的黑印舔掉。」',
+    statue: '「銅像倒進水裡的時候激起三層樓高的浪，原來權威也是會沉的。」',
+
+    // 人情流（6）
+    groupchat: '「『三樓停水』『誰家有鹽』『今晚別出門』——這就是浮城最後的史詩。」',
+    potluck: '「你出半罐午餐肉，我出一把青菜，湊起來就是一桌誰也拆不散的團圓。」',
+    scarf: '「織的人在第40天被帶走了，剩下的半截毛線還連在竹針上。」',
+    mixtape: '「A 面是她喜歡的舊歌，B 面最後三分鐘錄著天台的風聲和笑聲。」',
+    photobooth: '「四格照片裡有四個鬼臉，那是我們最後一次不用對著鏡頭假笑。」',
+    promise: '「拉過勾的手指已經不在同一顆星球上，但那個小指彎曲的弧度還在。」',
+
+    // 遠方流（6）
+    fieldnotes: '「頁邊夾著撒哈拉的沙和西伯利亞的松針，合起來是一座迷你地球。」',
+    telescope: '「鏡筒對準天上的飛碟，卻在邊緣看見了一顆沒有人命名的暗星。」',
+    appraisal: '「真品與贗品的分別，只在於有沒有人願意對著它掉眼淚。」',
+    phrasebook: '「學會了用十二種語言說『謝謝』和『再見』，卻忘了怎麼說『留下來』。」',
+    jetlag: '「身體還在東京的凌晨，靈魂已經降落在開羅的黃昏。」',
+    worldpuzzle: '「少了一塊浮城的位置，怎麼拼都留著一個藍色的缺口。」',
+
+    // 極簡流（6）
+    woodfish: '「篤。篤。篤。把多餘的念頭一槌一槌敲成木屑。」',
+    whitespace: '「紙上沒有寫字的地方，才是讀者真正呼吸的地方。」',
+    eraser: '「寫一千字需要一個晚上，擦掉九百九十九個字需要十年的勇氣。」',
+    zen: '「三顆石頭，幾道白沙；不用出海，桌面上已經有整座太平洋。」',
+    capsule: '「兩件襯衫、一枝筆、一個碗。帶不走的東西，本來就不屬於你。」',
+    monolith: '「它甚麼都不解釋，只是筆直地立在那裡，讓所有經過的人看見自己的渺小。」',
+
+    // 媒材物件（8）
+    fountainpen: '「筆尖劈開紙纖維的微響，是人類拒絕無紙化的最後一聲固執。」',
+    earphones: '「按下消噪鍵，把全城的警報聲關在門外，只留自己的呼吸。」',
+    projector: '「灰塵在光束裡飛舞，像一群沒有地方降落的微型星球。」',
+    tattoo: '「紙會泡爛、硬碟會消磁；只有刺進皮肉裡的字，外星人得連我一起帶走。」',
+    usb: '「八個 G 的容量，裝著三千首沒有人聽過的歌和一張合照。」',
+    prism: '「一束白光走進去，出來時變成了五種不肯妥協的顏色。」',
+    curator: '「『單獨看只是碎片，排在一起就是時代。』——名片背面用鉛筆這樣寫著。」',
+    gesamt: '「當文字、聲音、光影、肉身與數據同時發聲，連母艦的主機都要停下來聽。」',
+  };
+
+  IE.Flavor = {
+    SCHOOL,
+    OBJ,
+    obj: (id) => OBJ[id] || '',
+    school: (id) => SCHOOL[id] || '',
+  };
+});
+
 // ---- js/ui.js ----
 // 介面：狀態列、行動卡、手機、結算、考績表、結局。這裡只負責組合 HTML，流程在 main.js。
 (function (IE) {
@@ -18800,7 +19050,10 @@ body.ct-open { overflow: hidden; }
       + invHtml(s);
   }
   function invHtml(s) {
-    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>').join('');
+    const objs = s.objects.map((id) => {
+      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+      return '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc + (fl ? ' ' + fl : '')) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>';
+    }).join('');
     return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + s.objSlots + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
       + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
       + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
@@ -18811,8 +19064,10 @@ body.ct-open { overflow: hidden; }
     const D_ = D();
     const row = (id, equipped, i) => {
       const o = D_.OBJ[id];
+      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
       return '<div class="obj-row r-' + o.rarity + '">' + IE.Icons.obj(id, 44)
-        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span></div>'
+        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span>'
+        + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '') + '</div>'
         + '<div class="obj-btns">'
         + (equipped ? '<button class="btn mini" type="button" data-do="left" data-id="' + id + '"' + (i === 0 ? ' disabled' : '') + '>←</button>'
           + '<button class="btn mini" type="button" data-do="right" data-id="' + id + '"' + (i === s.objects.length - 1 ? ' disabled' : '') + '>→</button>'
@@ -19298,17 +19553,22 @@ body.ct-open { overflow: hidden; }
     const objCard = (o) => {
       const open = !o.unlock || unlocked[o.id];
       const seen = seenO[o.id];
+      const fl = seen && IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(o.id) : '';
       return '<div class="recipe obj-card r-' + o.rarity + (seen ? '' : ' unknown') + '">' + (seen || open ? IE.Icons.obj(o.id, 32) : '')
         + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
-        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
+        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span>'
+        + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '') + '</div>';
     };
     // 按流派分組（第七期）
     const SC = D().SCHOOLS;
     const objs = Object.keys(SC).concat(['']).map((k) => {
       const list = D().OBJECTS.filter((o) => (o.school || '') === k);
       const n = list.filter((o) => seenO[o.id]).length;
+      const mf = k && IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
       return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? (IE.Icons.school ? IE.Icons.school(k, 16) : '') + esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
-        + '<span class="num">' + n + '/' + list.length + '</span></h4><div class="recipes">' + list.map(objCard).join('') + '</div>';
+        + '<span class="num">' + n + '/' + list.length + '</span></h4>'
+        + (mf ? '<p class="sch-manifesto" style="--c:' + SC[k].color + '"><span class="mf-tag">流派宣言</span>' + esc(mf) + '</p>' : '')
+        + '<div class="recipes">' + list.map(objCard).join('') + '</div>';
     }).join('');
     const evSeen = meta.eventsSeen || {};
     const allEv = D().WORLD_EVENTS.map((w) => ({ id: w.id, name: w.name, scope: w.scope, grade: w.grade, text: w.news, long: true }))
@@ -19482,7 +19742,8 @@ body.ct-open { overflow: hidden; }
   }
   function objTile(id, slot) {
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
-    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '')) + '">'
+    const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '') + (fl ? ' ' + fl : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
       + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(o.school, 12) : '') + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
   }
@@ -19839,7 +20100,13 @@ body.ct-open { overflow: hidden; }
     const ob = e.target.closest('.ct-obj[data-obj]');
     if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
-    if (sb) { const sc = D().SCHOOLS[sb.dataset.school]; $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3); return; }
+    if (sb) {
+      const k = sb.dataset.school, sc = D().SCHOOLS[k];
+      const mf = IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
+      $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
+        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : '');
+      return;
+    }
     const b = e.target.closest('[data-ct]');
     if (!b || b.disabled) return;
     A().sfx('click');
@@ -19881,7 +20148,10 @@ body.ct-open { overflow: hidden; }
   }
   function objInfo(s, id) {
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
-    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc) + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '');
+    const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc)
+      + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '')
+      + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '');
   }
   // 使用工具卡：先選素材，再按工具卡
   function useTool(idx) {

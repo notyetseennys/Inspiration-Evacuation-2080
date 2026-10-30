@@ -226,7 +226,10 @@
       + invHtml(s);
   }
   function invHtml(s) {
-    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>').join('');
+    const objs = s.objects.map((id) => {
+      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+      return '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc + (fl ? ' ' + fl : '')) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>';
+    }).join('');
     return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + s.objSlots + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
       + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
       + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
@@ -237,8 +240,10 @@
     const D_ = D();
     const row = (id, equipped, i) => {
       const o = D_.OBJ[id];
+      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
       return '<div class="obj-row r-' + o.rarity + '">' + IE.Icons.obj(id, 44)
-        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span></div>'
+        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span>'
+        + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '') + '</div>'
         + '<div class="obj-btns">'
         + (equipped ? '<button class="btn mini" type="button" data-do="left" data-id="' + id + '"' + (i === 0 ? ' disabled' : '') + '>←</button>'
           + '<button class="btn mini" type="button" data-do="right" data-id="' + id + '"' + (i === s.objects.length - 1 ? ' disabled' : '') + '>→</button>'
@@ -724,17 +729,22 @@
     const objCard = (o) => {
       const open = !o.unlock || unlocked[o.id];
       const seen = seenO[o.id];
+      const fl = seen && IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(o.id) : '';
       return '<div class="recipe obj-card r-' + o.rarity + (seen ? '' : ' unknown') + '">' + (seen || open ? IE.Icons.obj(o.id, 32) : '')
         + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
-        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
+        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span>'
+        + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '') + '</div>';
     };
     // 按流派分組（第七期）
     const SC = D().SCHOOLS;
     const objs = Object.keys(SC).concat(['']).map((k) => {
       const list = D().OBJECTS.filter((o) => (o.school || '') === k);
       const n = list.filter((o) => seenO[o.id]).length;
+      const mf = k && IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
       return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? (IE.Icons.school ? IE.Icons.school(k, 16) : '') + esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
-        + '<span class="num">' + n + '/' + list.length + '</span></h4><div class="recipes">' + list.map(objCard).join('') + '</div>';
+        + '<span class="num">' + n + '/' + list.length + '</span></h4>'
+        + (mf ? '<p class="sch-manifesto" style="--c:' + SC[k].color + '"><span class="mf-tag">流派宣言</span>' + esc(mf) + '</p>' : '')
+        + '<div class="recipes">' + list.map(objCard).join('') + '</div>';
     }).join('');
     const evSeen = meta.eventsSeen || {};
     const allEv = D().WORLD_EVENTS.map((w) => ({ id: w.id, name: w.name, scope: w.scope, grade: w.grade, text: w.news, long: true }))

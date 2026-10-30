@@ -47,7 +47,8 @@
   }
   function objTile(id, slot) {
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
-    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '')) + '">'
+    const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '') + (fl ? ' ' + fl : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
       + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(o.school, 12) : '') + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
   }
@@ -404,7 +405,13 @@
     const ob = e.target.closest('.ct-obj[data-obj]');
     if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
-    if (sb) { const sc = D().SCHOOLS[sb.dataset.school]; $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3); return; }
+    if (sb) {
+      const k = sb.dataset.school, sc = D().SCHOOLS[k];
+      const mf = IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
+      $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
+        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : '');
+      return;
+    }
     const b = e.target.closest('[data-ct]');
     if (!b || b.disabled) return;
     A().sfx('click');
@@ -446,7 +453,10 @@
   }
   function objInfo(s, id) {
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
-    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc) + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '');
+    const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc)
+      + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '')
+      + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '');
   }
   // 使用工具卡：先選素材，再按工具卡
   function useTool(idx) {

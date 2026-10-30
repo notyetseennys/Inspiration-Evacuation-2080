@@ -275,4 +275,27 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 10：文字彩蛋（P1）
+
+### 改動摘要
+1. **`game/js/art-flavor.js`（新增，並於 `game/index.html` 載入）**：
+   - 新增 `IE.Flavor.OBJ`，為全部 **121 件靈感物件**（含朋友贈物 8 件、角色起始物件 10 件、生活物件 17 件、跨局傳說物件 7 件、旅行物件 3 件、地區紀念品 8 件、十個流派各 6 件共 60 件、媒材物件 8 件）撰寫專屬繁體中文書面語引言（例如 `scales`：「外星人說重量不重要。他們說謊。」）。
+   - 新增 `IE.Flavor.SCHOOL`，為 **10 個創作流派**（`flood` 水淹流、`neon` 霓虹流、`cliche` 陳腔濫調流、`guilt` 愧疚流、`machine` 機械流、`hunger` 飢餓流、`rebel` 反叛流、`warmth` 人情流、`faraway` 遠方流、`minimal` 極簡流）各撰寫一段流派宣言。
+2. **`game/js/craft.js`、`game/js/ui.js` 與 `game/css/art.css`**：
+   - 在創作桌點擊物件或流派欄時，於 `.ct-info` 顯示物件引言（`.fl-quote`）或流派宣言（`.sch-manifesto`），並將物件引言加入物件格與背包物件的懸停提示。
+   - 在收藏頁（`collectionModal`）已見過的靈感物件卡片下方顯示物件引言（`.recipe.obj-card .fl-quote`），並在每個流派標題下方展示流派宣言橫幅（`p.sch-manifesto`）。
+   - 在管理物件視窗（`objectsModal`）的物件列同步顯示物件引言。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t10-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t10-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t10-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t10-after-mobile.png`
+
+### 已知問題
+- 無。
+
+
 
