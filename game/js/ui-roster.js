@@ -67,7 +67,7 @@
     const bodyMax = Math.round((70 + 0.3 * b.stats.fit) * (b.perk.bodyMult || 1)) - (b.perk.bodyMinus || 0);
     const detail = open
       ? '<div class="sd-head"><div class="sd-por' + (mast(sel.bg) >= 4 ? ' gold' : '') + '">' + IE.Chars.img(sel.bg, 7) + '</div><div class="sd-id">'
-        + '<span class="rar r-' + b.rarity + '">' + b.rarity + '</span><h3>' + esc(b.name) + (mast(sel.bg) >= 5 ? '<small class="title">大師</small>' : '') + '</h3>'
+        + '<span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + UI.stakeBadgeHtml(IE.Meta.stakeCleared(meta, sel.bg), true) + '<h3>' + esc(b.name) + (mast(sel.bg) >= 5 ? '<small class="title">大師</small>' : '') + '</h3>'
         + '<p class="mute">' + esc(b.desc + b.past) + '</p>'
         + '<div class="sd-chips"><span style="--c:var(--cash)">$' + b.cr + '</span><span style="--c:var(--spark)">火花 ×' + b.spark.toFixed(1) + '</span><span style="--c:var(--stone)">靈魂 ' + b.soul + ' 克</span>'
         + '<span>良知 ' + Math.round(b.conscience * 100) + '%</span><span>身體 ' + bodyMax + '</span><span>住 ' + b.floor + ' 樓</span>'
@@ -97,10 +97,13 @@
   function gachaModal(meta, result, spinning, type) {
     const RO = IE.Roster;
     const lockedOf = (r) => RO.list(meta).filter((c) => !c.open && c.rarity === r).length;
-    let res = '';
+    let res = '', isUR = false;
     if (result && result.type === 'char') {
       const b = D().BACKGROUNDS[result.id], A = D().ABILITIES[result.id];
-      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3>'
+      isUR = b.rarity === 'UR';
+      res = '<div class="gacha-result r-' + b.rarity + (isUR ? ' ur-reveal' : '') + '">'
+        + (isUR ? '<div class="ur-fanfare"><div class="ur-rays"></div><span class="ur-banner">★ 特級非地球樣本・UR 降臨 ★</span></div>' : '')
+        + '<span class="rar r-' + b.rarity + '">' + b.rarity + '</span><div class="gacha-por">' + IE.Chars.img(result.id, 8) + '</div><h3>' + esc(b.name) + '</h3>'
         + (A ? '<p><b>招牌能力・' + esc(A.name) + '</b>：' + esc(A.desc) + '</p>' : '') + '<p class="mute">' + esc(b.desc) + '</p></div>';
     } else if (result) {
       res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
@@ -108,7 +111,7 @@
     const left = Math.max(0, RO.PITY - (meta.pity || 0));
     const cards = tickets(meta).map((x) => '<div class="g-tk' + (type === x.k ? ' on' : '') + '" style="--c:' + x.T.color + '"><div class="g-tk-h"><i></i><b>' + esc(x.T.name) + '</b><span class="num">× ' + x.n + '</span></div>'
       + '<p>' + esc(x.T.desc) + '</p><button class="btn' + (x.n >= x.T.cost ? ' primary' : '') + '" type="button" data-do="pull" data-id="' + x.k + '"' + (x.n >= x.T.cost && !spinning ? '' : ' disabled') + '>抽一次（' + x.T.cost + ' 張）</button></div>').join('');
-    return '<div class="modal gacha g8"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
+    return '<div class="modal gacha g8' + (isUR ? ' ur-hit' : '') + '"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
       + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '" style="--c:' + (type ? RO.TICKETS[type].color : '#ff8fd1') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
       + res
       + '<div class="g-tks">' + cards + '</div>'

@@ -21,12 +21,14 @@
     const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
     if (dark) return '<button type="button" class="cc dark" data-uid="' + c.uid + '"><span class="cc-name">？？？</span><span class="cc-tags"><span class="t">停電</span></span><span class="cc-foot"><b class="cc-val num">?</b></span></button>';
     const off = C().forbidden(s, c), blocked = SR && !off && SR.blocked(c);
-    const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
-    const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
+    const medKey = D_.mediumOf(c);
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    const stripes = c.tags.map((t) => '<i class="tag-' + t + '" style="--c:' + D_.TAGS[t].color + '"></i>').join('');
+    const tags = c.tags.map((t) => '<span class="t tag-' + t + '" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
-    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
-      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+    return '<button type="button" class="cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
+      + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'
@@ -45,9 +47,10 @@
   }
   function objTile(id, slot) {
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
-    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '')) + '">'
+    const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '') + (fl ? ' ' + fl : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
-      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
+      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(o.school, 12) : '') + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
   }
   // 流派加成：裝備中每個流派的件數，兩件觸發、三件更強
   function schoolsHtml(s) {
@@ -57,31 +60,126 @@
     return ids.map((id) => {
       const sc = D().SCHOOLS[id], k = n[id];
       const txt = k >= 3 ? sc.b2 + '；' + sc.b3 : k >= 2 ? sc.b2 + '（三件：' + sc.b3 + '）' : '再多一件：' + sc.b2;
-      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '"><b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
+      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
     }).join('');
+  }
+
+  // ---------- 互動教學（任務 15：選牌 → 看預計分數 → 下筆 → 改稿 → 媒材 → 流派） ----------
+  const TUT_STEPS = [
+    {
+      id: 'pick',
+      short: '選牌',
+      title: '步驟 1/6：選牌（挑選 1 至 5 張素材）',
+      desc: '點選手牌中的素材卡（或按數字鍵 1–9）。相同標籤出現得越多，作品形式越高級；湊齊特定標籤還能觸發「具名組合」。',
+      action: '試著點選 1 張手牌，或按「下一步」',
+      target: '.ct-hand',
+    },
+    {
+      id: 'est',
+      short: '看預計分數',
+      title: '步驟 2/6：看預計分數（籌碼 × 倍率 × 火花）',
+      desc: '選牌後，計分板會即時預覽作品形式、籌碼與倍率，下方亦會顯示「預計得分」及「只差一張」的組合提示。',
+      action: '檢視中央計分板與預計得分，再按「下一步」',
+      target: '.ct-score, .ct-est',
+    },
+    {
+      id: 'play',
+      short: '下筆',
+      title: '步驟 3/6：下筆（每晚可下筆 3 次）',
+      desc: '選好素材後按「下筆」，素材會逐張計分並觸發靈感物件。每晚三次下筆的分數加總，就是今晚完成的作品訊號！',
+      action: '按下右下角「下筆」，或按「下一步」',
+      target: '.ct-play',
+    },
+    {
+      id: 'discard',
+      short: '改稿',
+      title: '步驟 4/6：改稿（換掉不合用的素材）',
+      desc: '手牌不順時，選中不要的素材再按「改稿」，即可棄掉重抽（每晚預設 2 次）。改稿前可按右上角「牌庫」查看剩餘素材。',
+      action: '可選牌試試「改稿」，或按「下一步」',
+      target: '.ct-discard',
+    },
+    {
+      id: 'media',
+      short: '媒材',
+      title: '步驟 5/6：媒材（紙・聲・影・身・數）',
+      desc: '每張素材右上角標有媒材。下筆 4 張同媒材觸發「連作」，5 種媒材各一觸發「跨界」；5 張同媒材的小說或史詩更會昇華為「三部曲」與「傑作」！',
+      action: '留意手牌右上角的媒材標記，再按「下一步」',
+      target: '.ct-hand',
+    },
+    {
+      id: 'school',
+      short: '流派',
+      title: '步驟 6/6：靈感物件與流派（2 件 / 3 件加成）',
+      desc: '上方是已裝備的靈感物件，分屬十個創作流派。裝備 2 件同流派即可啟動流派加成，湊滿 3 件效果更強並亮起流光外框！',
+      action: '點選靈感物件或流派可查看詳情與引言',
+      target: '.ct-objs, .ct-schools',
+    },
+  ];
+
+  function renderTutorial() {
+    if (!root || !st) return;
+    const tutEl = $('.ct-tut');
+    if (!tutEl) return;
+    root.querySelectorAll('.tut-focus, .tut-focus-med').forEach((el) => {
+      el.classList.remove('tut-focus', 'tut-focus-med');
+    });
+    if (st.tutStep == null || st.tutStep < 0 || st.tutStep >= TUT_STEPS.length) {
+      tutEl.hidden = true;
+      tutEl.innerHTML = '';
+      root.classList.remove('tut-active');
+      return;
+    }
+    const idx = st.tutStep;
+    const step = TUT_STEPS[idx];
+    root.classList.add('tut-active');
+    tutEl.hidden = false;
+    root.querySelectorAll(step.target).forEach((el) => el.classList.add('tut-focus'));
+    if (step.id === 'media') {
+      const h = $('.ct-hand');
+      if (h) h.classList.add('tut-focus-med');
+    }
+    const pills = TUT_STEPS.map((s, i) => '<button type="button" class="tut-pill' + (i === idx ? ' on' : i < idx ? ' done' : '') + '" data-tut-go="' + i + '"><i>' + (i + 1) + '</i>' + esc(s.short) + '</button>').join('');
+    tutEl.innerHTML = '<div class="ct-tut-head">'
+      + '<span class="tut-badge">✦ 創作互動導覽</span>'
+      + '<div class="tut-pills">' + pills + '</div>'
+      + '<button type="button" class="btn mini tut-skip" data-tut="skip">跳過教學</button>'
+      + '</div>'
+      + '<div class="ct-tut-body">'
+      + '<div class="tut-txt"><strong>' + esc(step.title) + '</strong><p>' + esc(step.desc) + '</p><small class="tut-act">👉 ' + esc(step.action) + '</small></div>'
+      + '<div class="tut-btns">'
+      + (idx > 0 ? '<button type="button" class="btn mini" data-tut="prev">上一步</button>' : '')
+      + (idx < TUT_STEPS.length - 1
+        ? '<button type="button" class="btn primary mini" data-tut="next">下一步 →</button>'
+        : '<button type="button" class="btn primary mini" data-tut="done">完成教學 ✓</button>')
+      + '</div></div>';
   }
 
   // ---------- 開啟 ----------
   function open(s, onDone) {
+    const meta = IE.Game.meta || {};
+    const needTut = !meta.craftTutorial;
+    if (needTut) meta.craftTutorial = true;
     st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
-      fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0 };
+      fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0,
+      tutStep: needTut ? 0 : -1 };
     root = document.createElement('div');
     root.id = 'ctable';
     root.className = 'ctable';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
-    root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
-      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span></div>'
+    root.innerHTML = '<div class="ct-scene-bg" aria-hidden="true"></div><canvas class="ct-fx"></canvas><div class="ct-inner">'
+      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
       + '<div class="ct-stagebar" hidden></div>'
+      + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
       + '<div class="ct-tags"></div>'
-      + '<section class="ct-stage"><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
       + '<p class="ct-hint"></p>'
       + '<section class="ct-hand"></section>'
       + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
@@ -93,13 +191,12 @@
     root.addEventListener('click', onClick);
     root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
     fxInit();
+    const stg = s.session && s.session.stage;
+    if (stg && stg.kind === 'boss') A().setMode('boss', 88);
+    else if (stg) A().setMode('stage', 84);
+    else A().setMode('alien', 80);
     render();
-    A().setMode('alien', 80);
-    const meta = IE.Game.meta || {};
-    if (!meta.craftTutorial) {
-      meta.craftTutorial = true;
-      UI().pushModal(tutorialHtml(), { close: UI().closeModal }, { dismiss: () => {} });
-    }
+    if (stg) showStageIntro(stg);
   }
   function close(result) {
     fxStop();
@@ -124,11 +221,106 @@
     else cards.sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a));
     return cards;
   }
+  const MED_SOUND_DESC = { paper: '紙・沙沙聲', sound: '聲・琴音', image: '影・快門', body: '身・心跳', data: '數・撥號音' };
+  const SCH_SOUND_DESC = { flood: '水淹・氣泡音', neon: '霓虹・電流聲', cliche: '陳腔・磁帶回聲', guilt: '愧疚・低音鐘鳴', machine: '機械・數據滴答', hunger: '飢餓・陶碗低鳴', rebel: '反叛・失真和弦', warmth: '人情・木結他琶音', faraway: '遠方・空靈風鈴', minimal: '極簡・清脆木魚' };
+  function updateAudioBadge(note) {
+    if (!root) return;
+    const ab = $('.ct-audio-badge');
+    if (!ab) return;
+    const ses = st && st.s && st.s.session;
+    const g = ses && ses.stage;
+    const bgm = g ? (g.kind === 'boss' ? '♪ 評審變調・D和聲小調＋鼓層' : '♪ 展場編曲・附加鼓層') : '♪ 創作夜曲';
+    ab.innerHTML = '<i class="eq-bars"><s></s><s></s><s></s></i><span>' + esc(note ? bgm + '｜' + note : bgm) + '</span>';
+    if (note) {
+      ab.classList.remove('ping');
+      void ab.offsetWidth;
+      ab.classList.add('ping');
+    }
+  }
+  const DAWN_TIMES = ['子夜 01:00', '寅時 03:00', '破曉 04:45', '魚肚白 05:30', '天亮 06:30'];
+  function renderScene(forceDawn) {
+    if (!root || !st || !st.s) return;
+    const s = st.s, ses = s.session;
+    const g = ses && ses.stage;
+    const scene = g ? (g.kind === 'boss' ? 'boss' : g.kind === 'big' ? 'gallery' : 'small') : 'desk';
+    const isAll = !!(ses && ses.mode === 'allnighter');
+    const donePlays = ses && ses.log ? ses.log.length : 0;
+    const leftPlays = ses ? ses.plays : 0;
+    const totalPlays = Math.max(1, donePlays + leftPlays);
+    const dawn = isAll ? (forceDawn ? 1 : Math.min(1, donePlays / Math.max(3, totalPlays))) : 0;
+    const dawnStep = isAll ? (forceDawn ? 4 : Math.min(4, Math.round(dawn * 4))) : 0;
+    const water = Number(s.water || 1);
+    const floor = Number(s.floor || 0);
+    const flooded = floor > 0 && water >= floor;
+    const waterPct = floor === 0 ? 48 : Math.max(16, Math.min(86, Math.round(28 + (water - (floor - 2)) * 18)));
+    root.dataset.scene = scene;
+    root.dataset.dawn = String(dawnStep);
+    root.classList.toggle('mode-allnighter', isAll);
+    root.classList.toggle('scene-flooded', flooded);
+    root.style.setProperty('--dawn', dawn.toFixed(2));
+    root.style.setProperty('--water-pct', waterPct + '%');
+    const box = $('.ct-scene-stage');
+    if (!box) return;
+    const dawnPill = isAll
+      ? '<span class="sc-dawn-pill">☀ 通宵破曉・' + DAWN_TIMES[dawnStep] + '</span>'
+      : '';
+    if (scene === 'desk') {
+      const locTxt = floor > 0 ? (floor + ' 樓書桌' + (flooded ? '・淹水中' : '')) : '天橋船屋書桌';
+      box.innerHTML = '<div class="sc-diorama sc-desk">'
+        + '<div class="sc-lamp-cone"></div>'
+        + '<div class="sc-window">'
+        + '<div class="sc-sky">'
+        + '<i class="sc-stars"></i>'
+        + '<i class="sc-moon"></i>'
+        + '<i class="sc-sun"></i>'
+        + '<div class="sc-skyline"><span></span><span></span><span></span><span></span><span></span></div>'
+        + '</div>'
+        + '<div class="sc-water"><i class="sc-wave"></i><span class="sc-water-lbl">水位 ' + water.toFixed(1) + 'F</span></div>'
+        + '<div class="sc-win-frame"><i></i><i></i></div>'
+        + '<div class="sc-win-gauge"><span>6F</span><span>4F</span><span>2F</span></div>'
+        + '</div>'
+        + '<div class="sc-lamp"><i class="sc-lamp-head"></i><i class="sc-lamp-bulb"></i><i class="sc-lamp-arm"></i><i class="sc-lamp-base"></i></div>'
+        + '<div class="sc-desk-items"><span class="sc-papers"></span><span class="sc-mug"><i></i></span></div>'
+        + '<div class="sc-desk-surface"></div>'
+        + '<div class="sc-caption"><span>深夜書桌・檯燈｜窗外水位 <b>' + water.toFixed(1) + ' 樓</b>（' + locTxt + '）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else if (scene === 'small') {
+      box.innerHTML = '<div class="sc-diorama sc-small">'
+        + '<div class="sc-curtain left"></div><div class="sc-curtain right"></div>'
+        + '<div class="sc-tubes"><i></i><i></i></div>'
+        + '<div class="sc-bunting"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+        + '<div class="sc-hall-board"><b>舊城社區會堂</b><small>COMMUNITY HALL・第 ' + g.index + ' 關社區小展</small></div>'
+        + '<div class="sc-easels"><i></i><i></i></div>'
+        + '<div class="sc-chairs"><i></i><i></i><i></i><i></i><i></i><i></i></div>'
+        + '<div class="sc-caption"><span>場景：舊城社區會堂（社區小展・摺凳與佈告板）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else if (scene === 'gallery') {
+      box.innerHTML = '<div class="sc-diorama sc-gallery">'
+        + '<div class="sc-track"><i class="sp1"></i><i class="sp2"></i><i class="sp3"></i></div>'
+        + '<div class="sc-cones"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>'
+        + '<div class="sc-frames"><div class="sc-art a1"></div><div class="sc-art a2"></div><div class="sc-art a3"></div></div>'
+        + '<div class="sc-gal-floor"></div>'
+        + '<div class="sc-stanchion"><i></i><s></s><i></i><s></s><i></i></div>'
+        + '<div class="sc-caption"><span>場景：天空區白盒畫廊（畫廊聯展・無影射燈與白牆）</span>' + dawnPill + '</div>'
+        + '</div>';
+    } else {
+      box.innerHTML = '<div class="sc-diorama sc-boss">'
+        + '<div class="sc-ufo-ribs"><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="r4"></i></div>'
+        + '<div class="sc-ufo-core"></div>'
+        + '<div class="sc-ufo-beam"></div>'
+        + '<div class="sc-ufo-rings"><i class="u1"></i><i class="u2"></i></div>'
+        + '<div class="sc-ufo-consoles"><div class="uc left"><i></i><i></i><i></i></div><div class="uc right"><i></i><i></i><i></i></div></div>'
+        + '<div class="sc-caption"><span>場景：母艦飛碟內部（外星評審艙・牽引光束核心）</span>' + dawnPill + '</div>'
+        + '</div>';
+    }
+  }
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
     $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : ses.mode === 'sketch' ? '・速寫（只下筆一次）' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
     $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
+    updateAudioBadge(st.lastNote);
+    renderScene(false);
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
@@ -148,6 +340,7 @@
     pb.disabled = st.busy || (ses.plays > 0 && !st.sel.length);
     db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length);
     renderPreview();
+    renderTutorial();
   }
   // 工具卡欄
   function renderTools() {
@@ -170,10 +363,10 @@
     const b = (k, label, extra) => { const why = C().abilityState(s, k); return '<button type="button" class="ab-btn" data-ab="' + k + '"' + (why || st.busy ? ' disabled' : '') + ' title="' + esc(why || A.desc) + '">' + label + (extra ? '<small>' + extra + '</small>' : '') + '</button>'; };
     let btns = '';
     switch (s.bg) {
-      case 'copywriter': btns = ses.packaged ? '<span class="ab-on">已包裝：今晚符合 KPI</span>' : b('package', '包裝', '靈魂 +1 克'); break;
-      case 'teacher': btns = b('mark', '批改選中的一張', '籌碼 +6'); break;
-      case 'busker': btns = b('encore', '安哥', '重播上一筆 ×0.6') + (!ses.log.length && D().BACKGROUNDS[s.bg].perk.noEarlyDiscard ? '<span class="ab-note">即興：第一筆之前不准改稿</span>' : ''); break;
-      case 'influencer': btns = ses.live ? '<span class="ab-on live">● 直播中</span>' : b('live', '開直播', '×1.6／兩成翻車'); break;
+      case 'copywriter': btns = ses.packaged ? '<span class="ab-on">已包裝：今晚符合 KPI</span>' : b('package', '包裝', '每期一次・靈魂 +1 克'); break;
+      case 'teacher': btns = b('mark', '批改選中的一張', '籌碼 +4'); break;
+      case 'busker': btns = b('encore', '安哥', '重播上一筆 ×0.4') + (!ses.log.length && D().BACKGROUNDS[s.bg].perk.noEarlyDiscard ? '<span class="ab-note">即興：第一筆之前不准改稿</span>' : ''); break;
+      case 'influencer': btns = ses.live ? '<span class="ab-on live">● 直播中</span>' : b('live', '開直播', '×1.8／一成半翻車'); break;
       case 'animator': btns = b('frames', '逐格', '看牌庫頂三張'); break;
       case 'skyheir': btns = b('buyPlay', '買下筆', '$' + C().buyPrice(s, 'play')) + b('buyDiscard', '買改稿', '$' + C().buyPrice(s, 'discard')); break;
       case 'greydeserter': btns = b('bribe', '賄賂評審', '$' + C().bribePrice(s)); break;
@@ -236,6 +429,55 @@
     render();
     if ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)) await endNight();
   }
+  // 關卡之夜登場演出（外星評審肖像滑入、規則蓋章、低沉音效；小展與聯展顯示場地字卡）
+  function showStageIntro(g) {
+    if (!root || !IE.Judges) return;
+    const J = IE.Judges;
+    const el = document.createElement('div');
+    const isBoss = g.kind === 'boss';
+    el.className = 'ct-stage-intro ' + (isBoss ? 'boss' : 'venue') + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    el.style.setProperty('--c', g.color);
+    if (isBoss) {
+      const rules = g.rules.map((id) => IE.Stages.BOSS[id]).filter(Boolean);
+      el.innerHTML = '<div class="si-card">'
+        + '<span class="si-eyebrow">第 ' + g.index + ' 關・外星評審降臨</span>'
+        + '<h2>目標訊號：<span class="num">' + fmt(g.target) + '</span></h2>'
+        + '<div class="si-judges n-' + rules.length + '">'
+        + rules.map((b) => {
+          const j = J.get(b.id);
+          return '<div class="si-judge">'
+            + '<div class="si-por-wrap">' + (j ? J.img(b.id, 72) : '') + '</div>'
+            + '<div class="si-jtxt">'
+            + (j ? '<b class="si-jname">' + esc(j.name) + '</b><small class="si-jtitle">' + esc(j.title) + '</small>' : '')
+            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(b.desc) + '</span></div>'
+            + (j ? '<p class="si-quote">' + esc(j.intro) + '</p>' : '')
+            + '</div></div>';
+        }).join('')
+        + '</div>'
+        + '<small class="si-skip">點擊任意處跳過</small></div>';
+      A().sfx('judge');
+    } else {
+      const v = J.venue(g.kind);
+      el.innerHTML = '<div class="si-card">'
+        + '<span class="si-eyebrow">第 ' + g.index + ' 關・' + esc(g.name) + '</span>'
+        + '<div class="si-venue-top">' + (v ? J.img(g.kind, 64) : '')
+        + '<div><h2>' + esc(v ? v.venue : g.name) + '</h2>'
+        + '<p class="si-target">目標分數：<b class="num">' + fmt(g.target) + '</b></p></div></div>'
+        + (v ? '<p class="si-quote">' + esc(v.intro) + '</p>' : '')
+        + '<small class="si-skip">點擊任意處跳過</small></div>';
+      A().sfx('combo');
+    }
+    root.appendChild(el);
+    let gone = false;
+    const dismiss = () => {
+      if (gone) return;
+      gone = true;
+      el.classList.add('out');
+      setTimeout(() => { if (el.parentNode) el.remove(); }, 220);
+    };
+    root.addEventListener('pointerdown', dismiss, { capture: true, once: true });
+    setTimeout(dismiss, 2000);
+  }
 
   // 關卡之夜：目標分數與評審規則
   function renderStage() {
@@ -245,10 +487,33 @@
     bar.hidden = false;
     const sc = IE.Stages.stageScore(ses);
     const rules = g.rules.map((id) => IE.Stages.BOSS[id]);
+    const J = IE.Judges;
     bar.style.setProperty('--c', g.color);
+    let extra = '';
+    if (J) {
+      if (g.kind === 'boss' && rules.length) {
+        extra = '<div class="sb-judges n-' + rules.length + '">' + rules.map((b) => {
+          const j = J.get(b.id);
+          return '<div class="sb-judge">'
+            + (j ? J.img(b.id, 44) : '')
+            + '<div class="sb-jbody">'
+            + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
+            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
+            + (j ? '<p class="sb-jquote">' + esc(j.intro) + '</p>' : '')
+            + '</div></div>';
+        }).join('') + '</div>';
+      } else {
+        const v = J.venue(g.kind);
+        if (v) {
+          extra = '<div class="sb-venue">' + J.img(g.kind, 36)
+            + '<div class="sb-vtxt"><b>' + esc(v.venue) + '</b><span>' + esc(v.intro) + '</span></div></div>';
+        }
+      }
+    }
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
       + '<div class="bar"><i style="width:' + Math.min(100, sc / g.target * 100) + '%"></i></div>'
-      + (rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
+      + extra
+      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
       + (sc >= g.target ? '<div class="sb-pass">已達標！</div>' : '');
   }
   function renderGoal(extra) {
@@ -299,6 +564,23 @@
   // ---------- 輸入 ----------
   function onClick(e) {
     if (!st) return;
+    const tutGo = e.target.closest('[data-tut-go]');
+    if (tutGo) {
+      st.tutStep = Number(tutGo.dataset.tutGo);
+      A().sfx('click');
+      renderTutorial();
+      return;
+    }
+    const tutBtn = e.target.closest('[data-tut]');
+    if (tutBtn) {
+      const act = tutBtn.dataset.tut;
+      A().sfx('click');
+      if (act === 'next') st.tutStep = Math.min(TUT_STEPS.length - 1, st.tutStep + 1);
+      else if (act === 'prev') st.tutStep = Math.max(0, st.tutStep - 1);
+      else st.tutStep = -1;
+      renderTutorial();
+      return;
+    }
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
@@ -308,7 +590,13 @@
     const ob = e.target.closest('.ct-obj[data-obj]');
     if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
-    if (sb) { const sc = D().SCHOOLS[sb.dataset.school]; $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3); return; }
+    if (sb) {
+      const k = sb.dataset.school, sc = D().SCHOOLS[k];
+      const mf = IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
+      $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
+        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : '');
+      return;
+    }
     const b = e.target.closest('[data-ct]');
     if (!b || b.disabled) return;
     A().sfx('click');
@@ -330,7 +618,15 @@
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
     else if (c && C().forbidden(s0(), c)) { $('.ct-info').textContent = c.guilt && D().BACKGROUNDS[s0().bg].perk.noGuilt ? '你沒有良知：「愧疚」不能下筆。' : '外星評審：這張素材不能用。'; return; }
-    else if (st.sel.length < C().maxCards(s0())) st.sel.push(uid);
+    else if (st.sel.length < C().maxCards(s0())) {
+      st.sel.push(uid);
+      if (c && A().medium) {
+        const mk = D().mediumOf(c);
+        A().medium(mk);
+        st.lastNote = '媒材音：' + (MED_SOUND_DESC[mk] || mk);
+      }
+      if (st.tutStep === 0 && st.sel.length > 0) st.tutStep = 1;
+    }
     else { $('.ct-info').textContent = '每次最多下筆 ' + C().maxCards(s0()) + ' 張。'; return; }
     A().fx('card', st.sel.length * 2);
     render();
@@ -344,7 +640,10 @@
   }
   function objInfo(s, id) {
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
-    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc) + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '');
+    const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc)
+      + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '')
+      + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '');
   }
   // 使用工具卡：先選素材，再按工具卡
   function useTool(idx) {
@@ -370,7 +669,7 @@
       + '<div class="dk-bar"><i style="width:' + counts[g] / max * 100 + '%;background:' + D().TAGS[g].color + '"></i></div><b class="num">' + counts[g] + '</b></div>').join('');
     const M = D().MEDIA, mc = {};
     left.forEach((c) => { const m = D().mediumOf(c); mc[m] = (mc[m] || 0) + 1; });
-    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '"><b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
+    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '">' + (IE.Icons.media ? IE.Icons.media(m, 14) : '') + '<b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
     return '<div class="modal wide"><h2>牌庫</h2><p class="mute" style="font-size:13px">還沒抽到的素材有 ' + left.length + ' 張（用過的 ' + ses.used.length + ' 張會在牌庫抽完後洗回去）。改稿前看看接下來最可能抽到甚麼。</p>'
       + '<h3>標籤</h3><div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
       + '<h3>媒材</h3><div class="dk-media">' + media + '</div>'
@@ -499,6 +798,93 @@
       fx.ps.push({ x: r.x, y: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 160, life: 0.6 + Math.random() * 0.7, age: 0, size: 3 + Math.random() * 4, col });
     }
   }
+  // 打破最高單筆紀錄或破百萬時的煙花粒子
+  function fireworks(waves) {
+    if (!fx || IE.Pixel.reducedMotion) return;
+    const cols = ['#ffd36b', '#ff4fb4', '#37c3d6', '#9be36b', '#c38bff', '#ff8a3c'];
+    for (let w = 0; w < (waves || 4); w++) {
+      setTimeout(() => {
+        if (!fx) return;
+        const cx = innerWidth * (0.2 + Math.random() * 0.6);
+        const cy = innerHeight * (0.18 + Math.random() * 0.42);
+        const col = cols[w % cols.length];
+        for (let i = 0; i < 42; i++) {
+          const a = (Math.PI * 2 * i) / 42 + (Math.random() - 0.5) * 0.12;
+          const sp = 90 + Math.random() * 190;
+          fx.ps.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, g: 130, life: 0.75 + Math.random() * 0.65, age: 0, size: 4 + Math.random() * 4, col: i % 3 === 0 ? '#ffffff' : col });
+        }
+      }, (w * 180) / Math.min(2, speedK()));
+    }
+  }
+  // 重複觸發（again: true）時卡片上方彈出「再一次！」
+  function popAgain(el) {
+    if (!root || !el) return;
+    const r = rectOf(el);
+    const p = document.createElement('div');
+    p.className = 'ct-again-pop';
+    p.textContent = '再一次！';
+    p.style.left = r.x + 'px';
+    p.style.top = (r.top - 14) + 'px';
+    root.appendChild(p);
+    const dur = 760 / Math.min(2, speedK());
+    p.animate([
+      { transform: 'translate(-50%, 6px) scale(0.4) rotate(-8deg)', opacity: 0 },
+      { transform: 'translate(-50%, -10px) scale(1.18) rotate(3deg)', opacity: 1, offset: 0.3 },
+      { transform: 'translate(-50%, -26px) scale(1) rotate(0deg)', opacity: 0 },
+    ], { duration: dur, easing: 'cubic-bezier(.2,1.6,.4,1)' });
+    setTimeout(() => p.remove(), dur);
+  }
+  // 流派觸發時掃過流派光帶
+  function sweepSchool(el, schoolId) {
+    const sc = D().SCHOOLS && D().SCHOOLS[schoolId];
+    const col = (sc && sc.color) || '#37c3d6';
+    const bar = $('.ct-schools');
+    if (bar) {
+      bar.style.setProperty('--sc-col', col);
+      bar.classList.remove('sweeping');
+      void bar.offsetWidth;
+      bar.classList.add('sweeping');
+      setTimeout(() => { if (bar) bar.classList.remove('sweeping'); }, 650);
+    }
+    if (el) {
+      el.classList.remove('sch-hit');
+      void el.offsetWidth;
+      el.classList.add('sch-hit');
+      burst(el, 22, 0.9, col);
+      setTimeout(() => { if (el) el.classList.remove('sch-hit'); }, 650);
+    }
+    if (A().school) A().school(schoolId);
+    if (st && SCH_SOUND_DESC[schoolId]) {
+      st.lastNote = '流派音：' + SCH_SOUND_DESC[schoolId];
+      updateAudioBadge(st.lastNote);
+    }
+  }
+  // 傳說組合全屏字卡（點擊可跳過）
+  function showLegendCard(x) {
+    if (!root) return Promise.resolve();
+    const r = D().RECIPES.find((rc) => rc.id === x.id || rc.name === x.name);
+    const card = document.createElement('div');
+    card.className = 'ct-legend-card' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    card.innerHTML = '<div class="lc-inner">'
+      + '<span class="lc-eyebrow">★ 傳說組合達成 ★</span>'
+      + '<h2>《' + esc(x.name) + '》</h2>'
+      + '<p class="lc-hint">' + esc((r && r.hint) || '隱藏在浮城深處的傳說共鳴') + '</p>'
+      + '<div class="lc-bonus">+' + x.chips + ' 籌碼　+' + x.mult + ' 倍率' + (x.xmult ? '　×' + x.xmult : '') + '</div>'
+      + '<small class="lc-skip">點擊任意處跳過</small></div>';
+    root.appendChild(card);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        card.classList.add('out');
+        setTimeout(() => { if (card.parentNode) card.remove(); }, 180);
+        resolve();
+      };
+      root.addEventListener('pointerdown', finish, { capture: true, once: true });
+      setTimeout(finish, 950 / speedK());
+    });
+  }
   function fxStop() {
     if (!fx) return;
     cancelAnimationFrame(fx.raf);
@@ -513,6 +899,7 @@
     const s = st.s, ses = s.session;
     if (!st.busy && ses.plays <= 0) { await endNight(); return; }
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
+    if (st.tutStep >= 0 && st.tutStep <= 2) st.tutStep = 3;
     st.busy = true; st.fast = false; st.chipN = 0;
     const uids = st.sel.slice();
     st.sel = [];
@@ -569,7 +956,15 @@
           break;
         case 'card': {
           const el = stageCard(x.uid);
-          bump(el);
+          const cObj = s.cards.find((c) => c.uid === x.uid);
+          if (cObj && A().medium) {
+            const mk = D().mediumOf(cObj);
+            A().medium(mk);
+            st.lastNote = '媒材音：' + (MED_SOUND_DESC[mk] || mk);
+            updateAudioBadge(st.lastNote);
+          }
+          bump(el, x.again ? 1.2 : 1.12);
+          if (x.again) popAgain(el);
           floatText(el, '+' + x.chips, 'chips');
           setBoxes(x.C, x.M);
           pulse(chipsEl);
@@ -589,7 +984,17 @@
         case 'obj': {
           const el = objEl(x.slot);
           wiggle(el);
-          if (x.uid != null) bump(x.held ? root.querySelector('.ct-hand .cc[data-uid="' + x.uid + '"]') : stageCard(x.uid), 1.06);
+          if (x.uid != null) {
+            const targetCard = x.held ? root.querySelector('.ct-hand .cc[data-uid="' + x.uid + '"]') : stageCard(x.uid);
+            bump(targetCard, x.held ? 1.14 : 1.06);
+            if (x.held && targetCard) {
+              targetCard.classList.remove('held-glow');
+              void targetCard.offsetWidth;
+              targetCard.classList.add('held-glow');
+              burst(targetCard, 18, 0.75, '#ffd36b');
+              floatText(targetCard, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult : '+' + x.chips, x.xmult ? 'xmult' : 'mult');
+            }
+          }
           floatText(el, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
           setBoxes(x.C, x.M);
           pulse(x.chips && !x.mult ? chipsEl : multEl);
@@ -601,11 +1006,12 @@
         case 'school': {
           const el = root.querySelector('.ct-schools .sch[data-school="' + x.school + '"]');
           wiggle(el);
+          sweepSchool(el, x.school);
           if (x.uid != null) bump(stageCard(x.uid), 1.06);
           floatText(el || multEl, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
           setBoxes(x.C, x.M);
           pulse(x.chips && !x.mult ? chipsEl : multEl);
-          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (!A().school) A().fx(x.xmult ? 'xmult' : 'mult', ++n);
           if (x.xmult) shake(5);
           await wait(x.xmult ? 440 : 320);
           break;
@@ -620,7 +1026,7 @@
             shake(14);
             burst($('.ct-tags'), 80, 1.4, '#ffd36b');
             flash('#ffd36b');
-            await wait(900);
+            await showLegendCard(x);
           } else {
             A().fx(x.isNew ? 'xmult' : 'mult', ++n);
             if (x.isNew) burst($('.ct-tags'), 30, 0.8, '#ffd36b');
@@ -708,8 +1114,13 @@
   async function showTotal(res) {
     const s = st.s;
     const el = $('.ct-total');
+    const stg = $('.ct-stage');
     el.hidden = false;
-    const size = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
+    const tier = res.total >= 1e6 ? 3 : res.total >= 1e5 ? 2 : res.total >= 1e4 ? 1 : 0;
+    el.className = 'ct-total num' + (tier ? ' tier-' + tier : '');
+    el.dataset.tier = tier === 3 ? '★ 破百萬・超新星爆發 ★' : tier === 2 ? '✦ 破十萬・訊號狂潮 ✦' : tier === 1 ? '◆ 破萬・靈感湧現 ◆' : '';
+    const baseSize = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
+    const size = tier === 3 ? Math.max(baseSize, 96) : tier === 2 ? Math.max(baseSize, 84) : tier === 1 ? Math.max(baseSize, 72) : baseSize;
     el.style.fontSize = size + 'px';
     const record = res.total > st.best;
     const steps = 18;
@@ -721,15 +1132,29 @@
     }
     el.textContent = fmt(res.total);
     A().fx('total', Math.min(12, Math.round(Math.log10(Math.max(10, res.total)) * 2)));
-    el.animate([{ transform: 'translate(-50%,-50%) scale(1.6)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 280, easing: 'cubic-bezier(.2,2,.4,1)' });
+    const peakScale = tier === 3 ? 1.95 : tier === 2 ? 1.78 : tier === 1 ? 1.65 : 1.5;
+    el.animate([{ transform: 'translate(-50%,-50%) scale(' + peakScale + ')' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 340, easing: 'cubic-bezier(.2,2,.4,1)' });
     const mag = Math.log10(Math.max(10, res.total));
-    shake(Math.min(18, mag * 2.5));
-    burst(el, Math.min(120, Math.round(mag * 14)), Math.min(1.6, mag / 3));
+    const shakeMag = tier === 3 ? 28 : tier === 2 ? 22 : tier === 1 ? 16 : Math.min(14, mag * 2.2);
+    const pCount = tier === 3 ? 320 : tier === 2 ? 220 : tier === 1 ? 150 : Math.min(100, Math.round(mag * 12));
+    const pPower = tier === 3 ? 2.2 : tier === 2 ? 1.85 : tier === 1 ? 1.55 : Math.min(1.4, mag / 3);
+    const pCol = tier === 3 ? '#ffd36b' : tier === 2 ? '#ff4fb4' : tier === 1 ? '#37c3d6' : undefined;
+    shake(shakeMag);
+    burst(el, pCount, pPower, pCol);
+    if (tier === 3 && stg) {
+      stg.classList.add('million-closeup');
+      flash('#ffd36b');
+      fireworks(3);
+      setTimeout(() => { if (stg) stg.classList.remove('million-closeup'); }, 900 / Math.min(2, speedK()));
+    } else if (tier === 2) {
+      flash('rgba(255, 79, 180, 0.45)');
+    }
     if (record) {
       st.best = res.total;
       tag('新紀錄！', 'legend');
       flash('#ff4fb4');
       A().sfx('boom');
+      fireworks(5);
     }
     // 數字飛向「今晚」
     const night = $('.ct-night b');
@@ -747,6 +1172,7 @@
     const s = st.s, ses = s.session;
     if (st.busy || !st.sel.length || ses.discards <= 0) return;
     if (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length) { $('.ct-info').textContent = '即興：第一筆之前不准改稿。'; A().sfx('wrong'); return; }
+    if (st.tutStep === 3) st.tutStep = 4;
     st.busy = true;
     const uids = st.sel.slice();
     root.querySelectorAll('.ct-hand .cc').forEach((el) => {
@@ -763,9 +1189,28 @@
     });
   }
 
-  function stageResultHtml(g) {
+  function stageResultHtml(g, sesStage) {
+    const J = IE.Judges;
+    let quotes = '';
+    if (J) {
+      if (g.kind === 'boss' && sesStage && sesStage.rules) {
+        quotes = '<div class="sr-judges">' + sesStage.rules.map((id) => {
+          const j = J.get(id);
+          if (!j) return '';
+          return '<div class="sr-judge">' + J.img(id, 40)
+            + '<div><b>' + esc(j.name) + '</b><p>' + esc(g.pass ? j.pass : j.fail) + '</p></div></div>';
+        }).join('') + '</div>';
+      } else {
+        const v = J.venue(g.kind);
+        if (v) {
+          quotes = '<div class="sr-judges"><div class="sr-judge">' + J.img(g.kind, 36)
+            + '<div><b>' + esc(v.venue) + '</b><p>' + esc(g.pass ? v.pass : v.fail) + '</p></div></div></div>';
+        }
+      }
+    }
     return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '入選' : '落選') + '</span>'
       + '<b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+      + quotes
       + (g.lines.length ? '<small>' + esc(g.lines.join('・')) + '</small>' : '')
       + (g.tools.length ? '<small>工具卡：' + g.tools.map((id) => esc(IE.Stages.TOOL[id].name)).join('、') + '</small>' : '')
       + (g.objs.length ? '<small>靈感物件：' + g.objs.map((id) => esc(D().OBJ[id].name)).join('、') + '</small>' : '') + '</div>';
@@ -774,6 +1219,7 @@
   async function endNight() {
     const s = st.s;
     st.busy = true;
+    renderScene(true);
     const before = st.sigStart;
     const res = C().finish(s);
     const w = res.work;
@@ -792,7 +1238,7 @@
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
       + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
-      + (res.stage ? stageResultHtml(res.stage) : '')
+      + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
       + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
@@ -811,6 +1257,9 @@
     if (closed) return;
     sc.textContent = fmt(total);
     A().sfx('boom');
+    if (res.stage) {
+      setTimeout(() => A().sfx(res.stage.pass ? 'stagePass' : 'stageFail'), 220);
+    }
     burst(sc, 100, 1.4);
     shake(10);
     panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';

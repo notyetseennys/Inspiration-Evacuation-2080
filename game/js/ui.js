@@ -13,13 +13,15 @@
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
 
   function tagsHtml(tags) {
-    return tags.map((t) => '<span class="tag" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
+    return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
   }
   function cardHtml(c, o) {
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    const medKey = D().mediumOf ? D().mediumOf(c) : 'paper';
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
       + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
@@ -104,7 +106,7 @@
       + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
-      + '<button class="icon-btn" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
+      + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
       + '</div></div>'
       + '<div class="hud-meters">'
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
@@ -161,10 +163,16 @@
   const modalOpen = () => !$('#modal').hidden;
   function bindDelegation() {
     const route = (root, getHandlers) => root.addEventListener('click', (e) => {
+      const red = e.target.closest('.redact');
+      if (red && root.contains(red)) { red.classList.toggle('revealed'); IE.Audio.sfx('click'); return; }
       const el = e.target.closest('[data-do]');
       if (!el || !root.contains(el) || el.disabled) return;
       const fn = getHandlers()[el.dataset.do];
       if (fn) { IE.Audio.sfx('click'); fn(el, e); }
+    });
+    // 不是按鈕的可點擊卡片（例如每日挑戰卡片）也可以用鍵盤開啟
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-do]')) { e.preventDefault(); e.target.click(); }
     });
     route($('#panel'), () => panelHandlers);
     route($('#modal'), () => modalHandlers);
@@ -183,6 +191,20 @@
     el.textContent = text;
     $('#toasts').appendChild(el);
     setTimeout(() => el.remove(), 2600);
+  }
+  let lastAchToastKey = '';
+  function achToast(a, delayMs) {
+    if (!a) return;
+    setTimeout(() => {
+      const box = $('#toasts');
+      if (!box) return;
+      const el = document.createElement('div');
+      el.className = 'toast good ach-toast';
+      el.innerHTML = '<span class="ach-ico">🏆</span><div class="ach-body"><small>成就解鎖・ACHIEVEMENT UNLOCKED</small><b>'
+        + esc(a.name) + '</b><span>' + esc(a.desc) + '</span></div><em class="ach-reward">+' + a.t + ' 扭蛋券</em>';
+      box.appendChild(el);
+      setTimeout(() => { if (el.parentNode) el.remove(); }, 4200);
+    }, delayMs || 0);
   }
 
   // ---------- 行動 ----------
@@ -213,7 +235,10 @@
       + invHtml(s);
   }
   function invHtml(s) {
-    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>').join('');
+    const objs = s.objects.map((id) => {
+      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
+      return '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc + (fl ? ' ' + fl : '')) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>';
+    }).join('');
     return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + R().slotsOf(s) + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
       + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
       + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
@@ -224,8 +249,10 @@
     const D_ = D();
     const row = (id, equipped, i) => {
       const o = D_.OBJ[id];
+      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
       return '<div class="obj-row r-' + o.rarity + '">' + IE.Icons.obj(id, 44)
-        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span></div>'
+        + '<div class="obj-txt"><b>' + esc(o.name) + '</b><span class="mute">' + D_.RARITY[o.rarity] + '</span><span>' + esc(o.desc) + '</span>'
+        + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '') + '</div>'
         + '<div class="obj-btns">'
         + (equipped ? '<button class="btn mini" type="button" data-do="left" data-id="' + id + '"' + (i === 0 ? ' disabled' : '') + '>←</button>'
           + '<button class="btn mini" type="button" data-do="right" data-id="' + id + '"' + (i === s.objects.length - 1 ? ' disabled' : '') + '>→</button>'
@@ -252,7 +279,14 @@
       + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button></div>';
   }
   function controlsPanel(game) {
-    return '<div class="controls"><p class="hint">' + esc(game.hint) + '</p><div class="ctrl-row">'
+    const meta = (game && game.meta) || (IE.Micro && IE.Micro.META && IE.Micro.META[game.kind]) || null;
+    const head = meta
+      ? '<div class="micro-hud-head" style="--mc:' + meta.color + '">'
+        + '<div class="mh-top"><span class="mh-code">' + esc(meta.code) + '</span><strong class="mh-title">' + esc(meta.title) + '</strong><span class="mh-badge">操作台 HUD</span></div>'
+        + '<div class="micro-steps">' + meta.steps.map((st, i) => '<span class="micro-step"><i>' + (i + 1) + '</i>' + esc(st) + '</span>').join('') + '</div>'
+        + '</div>'
+      : '';
+    return '<div class="controls" style="--mc:' + (meta ? meta.color : '#37c3d6') + '">' + head + '<p class="hint">' + esc(game.hint) + '</p><div class="ctrl-row">'
       + game.controls.map((c) => '<button class="btn ' + c.id + '" type="button" data-ctrl="' + c.id + '">' + c.label + ' <small>' + esc(c.key) + '</small></button>').join('')
       + '</div></div>';
   }
@@ -285,7 +319,15 @@
     return h;
   }
   function rankHtml(rk) {
-    return rk ? '<div class="rank-stamp r-' + rk.id + '" style="--c:' + rk.color + '"><b>' + rk.id + '</b><span>' + esc(rk.name) + '</span><small>表現 ' + rk.perf + '%</small></div>' : '';
+    if (!rk) return '';
+    if (IE.Audio && IE.Audio.sfx) setTimeout(() => IE.Audio.sfx('stamp'), 90);
+    return '<div class="rank-stamp r-' + rk.id + '" style="--c:' + rk.color + '" data-rank="' + rk.id + '">'
+      + '<i class="rs-ring" aria-hidden="true"></i>'
+      + '<em class="rs-tag">SHIFT EVAL</em>'
+      + '<b>' + rk.id + '</b>'
+      + '<span>' + esc(rk.name) + '</span>'
+      + '<small>表現 ' + rk.perf + '%</small>'
+      + '</div>';
   }
   function reportModal(rep, btnLabel) {
     return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
@@ -332,19 +374,89 @@
   }
 
   // ---------- 標題、開局、結局 ----------
+  const REDACT_WORDS = [
+    '又亮又輕', '良知', '宇宙大家庭', '被篩走的樣本分攤', '會「燒」的那種',
+    '不想要有包袱的員工', '1.5%', '文化不契合的回收資產', '我們沒有淚腺',
+    '篩選下一批地球人', '兩者的關係', '表現符合預期', '最亮的人帶走',
+    '關上窗戶', '輪迴了很多次',
+  ];
+  function classifiedMemoHtml(text, idx, unlocked) {
+    const code = 'HR-' + String((idx || 0) + 1).padStart(3, '0');
+    if (!unlocked) {
+      return '<div class="memo classified unknown">'
+        + '<div class="memo-head"><span class="memo-code">FILE // ' + code + '</span><span class="memo-stamp locked">未授權存取</span></div>'
+        + '<p class="memo-body"><span class="redact-bar">████████████</span>　【備忘錄 #' + String((idx || 0) + 1).padStart(3, '0') + '】人才檔案升到 Lv.' + ((idx || 0) + 2) + ' 解鎖　<span class="redact-bar">████████</span></p>'
+        + '</div>';
+    }
+    let body = esc(text);
+    // 打字機逐字出現與機密塗黑標記
+    let charIdx = 0;
+    const w = REDACT_WORDS[idx] || REDACT_WORDS.find((rw) => text.includes(rw));
+    if (w && text.includes(w)) {
+      const parts = text.split(w);
+      const wrapChars = (str) => Array.from(str).map((ch) => '<i class="tw-c" style="--i:' + (charIdx++) + '">' + esc(ch) + '</i>').join('');
+      body = wrapChars(parts[0])
+        + '<span class="redact" tabindex="0" title="機密塗黑（點擊或懸停解密）">' + wrapChars(w) + '</span>'
+        + wrapChars(parts.slice(1).join(w));
+    } else {
+      body = Array.from(text).map((ch) => '<i class="tw-c" style="--i:' + (charIdx++) + '">' + esc(ch) + '</i>').join('');
+    }
+    return '<div class="memo classified">'
+      + '<div class="memo-head"><span class="memo-code">FILE // ' + code + '・星際人才發展局內部備忘錄</span><span class="memo-stamp">機密檔案・TOP SECRET</span></div>'
+      + '<p class="memo-body">' + body + '<span class="tw-cursor" aria-hidden="true">▌</span></p>'
+      + '<small class="memo-foot">提示：點擊或懸停塗黑字詞可解密閱覽</small>'
+      + '</div>';
+  }
+  function stakeBadgeHtml(n, open) {
+    if (!n) return open ? '<span class="stake-badge s-0" title="尚未通過外星評級">未評級</span>' : '';
+    const M = IE.Meta;
+    const st = M && M.STAKES && M.STAKES[n - 1];
+    return '<span class="stake-badge s-' + n + '" title="已通過最高外星評級：' + n + (st ? '（' + st.name + '）' : '') + '">'
+      + (IE.Icons && IE.Icons.stake ? IE.Icons.stake(n, 13) : '')
+      + '<b>評級 ' + n + (st ? '・' + esc(st.name) : '') + '</b></span>';
+  }
   // 人才檔案等級：經驗條、下一級獎勵、成就數
   function metaResultHtml(meta) {
     const M = IE.Meta;
     let h = '<div class="meta-result"><div class="mr-xp">人才檔案經驗 <b>+' + (meta.lastXp || 0) + '</b></div>' + profileHtml(meta);
-    (meta.lastLevels || []).forEach((l) => { h += '<div class="mr-level"><b>升到 Lv.' + l.level + '！</b>' + esc(l.text) + (l.memo ? '<p class="memo">' + esc(l.memo) + '</p>' : '') + '</div>'; });
-    if (meta.lastStake) h += '<div class="mr-stake">通過外星評級 ' + meta.lastStake + '：這個角色解鎖了評級 ' + Math.min(8, meta.lastStake + 1) + '</div>';
-    (meta.lastAch || []).forEach((id) => { const a = M.ACH.find((x) => x.id === id); if (a) h += '<div class="mr-ach">成就「' + esc(a.name) + '」：' + esc(a.desc) + '<b>+' + a.t + ' 扭蛋券</b></div>'; });
+    const lvls = meta.lastLevels || [];
+    const achs = meta.lastAch || [];
+    if (lvls.length && IE.Audio) {
+      setTimeout(() => IE.Audio.sfx('levelUp'), 150);
+      if (lvls.some((l) => l.memo)) {
+        [0, 65, 130, 195, 260].forEach((ms) => setTimeout(() => IE.Audio.sfx('typewriter'), 420 + ms));
+      }
+    }
+    if (achs.length) {
+      if (IE.Audio) setTimeout(() => IE.Audio.sfx('ach'), lvls.length ? 360 : 160);
+      const key = (meta.runs || 0) + ':' + achs.join(',');
+      if (lastAchToastKey !== key) {
+        lastAchToastKey = key;
+        achs.forEach((id, idx) => {
+          const a = M.ACH.find((x) => x.id === id);
+          if (a) achToast(a, 180 + idx * 380);
+        });
+      }
+    }
+    lvls.forEach((l) => {
+      h += '<div class="mr-level levelup-banner">'
+        + '<div class="lu-head"><span class="lu-flare">✦ TALENT FILE LEVEL UP ✦</span>'
+        + '<div class="lu-lvl"><span class="old">Lv.' + (l.level - 1) + '</span><span class="arr">→</span><b class="new">升到 Lv.' + l.level + '！</b></div></div>'
+        + '<div class="lu-reward"><span class="lu-tag">解鎖權限</span><b>' + esc(l.text) + '</b></div>'
+        + (l.memo ? classifiedMemoHtml(l.memo, l.level - 2, true) : '')
+        + '</div>';
+    });
+    if (meta.lastStake) {
+      h += '<div class="mr-stake">' + stakeBadgeHtml(meta.lastStake, true)
+        + '<span>通過外星評級 ' + meta.lastStake + '：這個角色解鎖了評級 ' + Math.min(8, meta.lastStake + 1) + '</span></div>';
+    }
+    achs.forEach((id) => { const a = M.ACH.find((x) => x.id === id); if (a) h += '<div class="mr-ach"><span class="ach-pill">🏆 成就</span>成就「' + esc(a.name) + '」：' + esc(a.desc) + '<b>+' + a.t + ' 扭蛋券</b></div>'; });
     return h + IE.UI.metaRunHtml(meta) + '</div>';
   }
   function profileHtml(meta) {
     const M = IE.Meta, L = M.levelInfo(meta);
-    return '<div class="profile"><div class="pf-top"><b>人才檔案 Lv.' + L.level + '</b><span>成就 ' + Object.keys(meta.ach || {}).length + '/' + M.ACH.length + '・備忘錄 ' + Math.min(M.MEMOS.length, L.level - 1) + '/' + M.MEMOS.length + '</span></div>'
-      + '<div class="bar"><i style="width:' + Math.min(100, L.xp / L.need * 100) + '%"></i></div>'
+    return '<div class="profile"><div class="pf-top"><span class="pf-lv-wrap"><span class="pf-lv-badge">Lv.' + L.level + '</span><b>人才檔案 Lv.' + L.level + '</b></span><span>成就 ' + Object.keys(meta.ach || {}).length + '/' + M.ACH.length + '・備忘錄 ' + Math.min(M.MEMOS.length, L.level - 1) + '/' + M.MEMOS.length + '</span></div>'
+      + '<div class="bar pf-bar"><i style="width:' + Math.min(100, L.xp / L.need * 100) + '%"></i></div>'
       + '<small>經驗 ' + L.xp + ' / ' + L.need + '・下一級：' + esc(L.next.text) + '</small></div>';
   }
   function dailyText(meta) {
@@ -354,6 +466,25 @@
   function weeklyText(meta) {
     const w = IE.Meta.weekly(IE.Meta.weekKey()), rec = meta.weekly && meta.weekly[w.key];
     return IE.Meta.WEEKLY_MODS[w.mod].name + (rec ? '・已完成' : '・未完成');
+  }
+  function dailyCardHtml(meta) {
+    const M = IE.Meta, k = M.dateKey(), d = M.daily(k);
+    const open = M.perks(meta).daily;
+    const bg = D().BACKGROUNDS[d.bg], sea = D().SEASONS[d.season];
+    const rec = meta.daily && meta.daily[k];
+    return '<div class="daily-card' + (open ? ' open' : ' locked') + '"' + (open ? ' role="button" tabindex="0" data-do="daily"' : '') + '>'
+      + '<div class="dc-head"><span class="dc-eyebrow">★ 每日挑戰・DAILY SCREENING #' + k + '</span>'
+      + '<span class="dc-status">' + (open ? esc(dailyText(meta)) : '人才檔案 Lv.5 開放') + '</span></div>'
+      + '<div class="dc-body">'
+      + '<div class="dc-por">' + IE.Chars.img(d.bg, 3, !open) + '</div>'
+      + '<div class="dc-info"><b>今日指定樣本：' + esc(bg.name) + '</b>'
+      + '<div class="dc-chips">'
+      + '<span class="dc-chip">' + esc(sea.name) + '</span>'
+      + '<span class="dc-chip stake">' + (IE.Icons.stake ? IE.Icons.stake(d.stake, 12) : '') + '外星評級 ' + d.stake + '・' + esc(M.STAKES[d.stake - 1].name) + '</span>'
+      + '<span class="dc-chip seed">種子 #' + d.seed + '</span>'
+      + '</div></div>'
+      + '<span class="btn ' + (open ? 'primary ' : '') + 'mini dc-cta">' + (open ? (rec ? '再次挑戰' : '開始挑戰') : 'Lv.5 解鎖') + '</span>'
+      + '</div></div>';
   }
   function titlePanel(meta, hasSave) {
     const endings = meta.endings ? Object.keys(meta.endings).length : 0;
@@ -368,9 +499,9 @@
       + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button>'
       + '<button class="btn gacha-btn" type="button" data-do="gacha">人才扭蛋機' + IE.UI.ticketChips(meta) + '</button>'
-      + (IE.Meta.perks(meta).daily ? '<button class="btn daily-btn" type="button" data-do="daily">每日挑戰<small>' + dailyText(meta) + '</small></button>' : '')
       + (IE.Meta.perks(meta).weekly ? '<button class="btn weekly-btn" type="button" data-do="weekly">每週挑戰<small>' + weeklyText(meta) + '</small></button>' : '')
       + ((meta.history || []).length ? '<button class="btn" type="button" data-do="history">對局紀錄</button>' : '') + '</div>'
+      + dailyCardHtml(meta)
       + profileHtml(meta)
       + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>死法 <b>' + Object.keys(meta.deaths || {}).length + '/' + D().DEATHS.length + '</b></span><span>事件 <b>' + Object.keys(meta.eventsSeen || {}).length + '/' + (D().WORLD_EVENTS.length + D().EVENTS.length) + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span><span>角色 <b>' + IE.Roster.list(meta).filter((c) => c.open).length + '/' + Object.keys(D().BACKGROUNDS).length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
@@ -396,7 +527,7 @@
     const cur = Math.min(sel.stake || 1, max);
     return '<div class="panel-head"><h2>外星評級</h2><p>難度階梯：每一級都疊加上一級的規則。用這個角色以某一級撐到最後（沒有死亡、沒有灰化），就解鎖下一級。這個角色最高通過：' + (cleared ? '評級 ' + cleared : '還沒有') + '。</p></div>'
       + '<div class="seg stakes">' + M.STAKES.map((k) => '<button type="button" class="' + (cur === k.n ? 'sel' : '') + (k.n <= cleared ? ' cleared' : '') + '" data-do="stake" data-id="' + k.n + '"' + (k.n > max ? ' disabled' : '') + ' title="' + esc(k.desc) + '">'
-        + k.n + '・' + k.name + '</button>').join('') + '</div>'
+        + (IE.Icons && IE.Icons.stake ? IE.Icons.stake(k.n, 14) : '') + k.n + '・' + k.name + '</button>').join('') + '</div>'
       + '<p class="mute stake-rules">' + M.STAKES.filter((k) => k.n <= cur).map((k) => k.n + '. ' + k.desc).join('　') + '</p>';
   }
   // 浮城百貨：分類貨架，每件貨品都有像素模組
@@ -464,8 +595,9 @@
       + '<div class="dossier">'
       + '<div class="d-head"><span>星際人才發展局・人類樣本檔案</span><span class="num">' + esc(dos.sampleId) + '</span></div>'
       + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status) + '</span></div>'
-      + '<div class="d-class"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
-      + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div>'
+      + '<div class="d-class d-with-por"><div class="d-por">' + IE.Chars.img(s.bg, 5) + '<small>' + esc(D().BACKGROUNDS[s.bg].name) + '</small></div>'
+      + '<div class="d-ctxt"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
+      + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
       + '<div class="d-cols"><div><span class="d-k">觀察筆記</span><ol class="d-notes">' + dos.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ol></div>'
       + '<div><span class="d-k">能力讀數</span>' + statBars(dos.attr, { compact: true }) + '</div></div>'
       + '<div class="d-stamps">' + stamps + '</div>'
@@ -564,17 +696,22 @@
     const objCard = (o) => {
       const open = !o.unlock || unlocked[o.id];
       const seen = seenO[o.id];
+      const fl = seen && IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(o.id) : '';
       return '<div class="recipe obj-card r-' + o.rarity + (seen ? '' : ' unknown') + '">' + (seen || open ? IE.Icons.obj(o.id, 32) : '')
         + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
-        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
+        + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span>'
+        + (fl ? '<em class="fl-quote">' + esc(fl) + '</em>' : '') + '</div>';
     };
     // 按流派分組（第七期）
     const SC = D().SCHOOLS;
     const objs = Object.keys(SC).concat(['']).map((k) => {
       const list = D().OBJECTS.filter((o) => (o.school || '') === k);
       const n = list.filter((o) => seenO[o.id]).length;
-      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
-        + '<span class="num">' + n + '/' + list.length + '</span></h4><div class="recipes">' + list.map(objCard).join('') + '</div>';
+      const mf = k && IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
+      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? (IE.Icons.school ? IE.Icons.school(k, 16) : '') + esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
+        + '<span class="num">' + n + '/' + list.length + '</span></h4>'
+        + (mf ? '<p class="sch-manifesto" style="--c:' + SC[k].color + '"><span class="mf-tag">流派宣言</span>' + esc(mf) + '</p>' : '')
+        + '<div class="recipes">' + list.map(objCard).join('') + '</div>';
     }).join('');
     const evSeen = meta.eventsSeen || {};
     const allEv = D().WORLD_EVENTS.map((w) => ({ id: w.id, name: w.name, scope: w.scope, grade: w.grade, text: w.news, long: true }))
@@ -589,7 +726,7 @@
     const M = IE.Meta, achs = meta.ach || {};
     const achHtml = '<h3>成就（' + Object.keys(achs).length + '/' + M.ACH.length + '）</h3><div class="recipes">' + M.ACH.map((a) => '<div class="recipe' + (achs[a.id] ? ' legend' : ' unknown') + '"><b>' + esc(a.name) + '</b><span class="mute">' + esc(a.desc) + '・' + a.t + ' 張扭蛋券</span></div>').join('') + '</div>';
     const nMemo = Math.min(M.MEMOS.length, M.levelOf(meta) - 1);
-    const memoHtml = '<h3>外星 HR 內部備忘錄（' + nMemo + '/' + M.MEMOS.length + '）</h3><div class="memos">' + M.MEMOS.map((m, i) => '<p class="memo' + (i < nMemo ? '' : ' unknown') + '">' + (i < nMemo ? esc(m) : '【備忘錄 #' + String(i + 1).padStart(3, '0') + '】人才檔案升到 Lv.' + (i + 2) + ' 解鎖') + '</p>').join('') + '</div>';
+    const memoHtml = '<h3>外星 HR 內部備忘錄（' + nMemo + '/' + M.MEMOS.length + '）</h3><div class="memos">' + M.MEMOS.map((m, i) => classifiedMemoHtml(m, i, i < nMemo)).join('') + '</div>';
     return '<div class="modal wide"><h2>收藏</h2>' + profileHtml(meta) + achHtml + memoHtml + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
       + worldCodexHtml(meta)
@@ -693,7 +830,7 @@
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
-    titlePanel, stakeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
+    titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };
 })(window.IE = window.IE || {});
