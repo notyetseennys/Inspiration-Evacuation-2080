@@ -31,7 +31,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 2 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 3 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   function setCityFilter() {
@@ -117,10 +117,25 @@
           if (r.ok) A.sfx('coin');
           UI.renderHud(s); A.setSpark(s.spark); save(); render();
         },
-        close() { UI.closeModal(); showHub(); },
+        close() { UI.closeModal(); if (morning) morningDilemma(); else showHub(); },
       }, morning ? null : { dismiss: () => showHub() });
     };
     render();
+  }
+  // 早上的道德抉擇：做了選擇才開始一天
+  function morningDilemma() {
+    const s = Game.state;
+    if (!R.drawDilemma(s)) { showHub(); return; }
+    save();
+    UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
+    UI.modal(UI.dilemmaModal(R.dilemmaView(s), s), {
+      pick(el) {
+        const rep = R.resolveDilemma(s, Number(el.dataset.i));
+        A.sfx(rep.deltas.soul > 0 ? 'wrong' : 'pickup');
+        UI.renderHud(s); A.setSpark(s.spark); save();
+        UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); showHub(); } });
+      },
+    });
   }
   function showHub() {
     const s = Game.state;
@@ -142,6 +157,8 @@
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
+      case 'volunteer':
+        return afterAction(R.applyVolunteer(s));
       case 'chat':
         return UI.setPanel(UI.chatPanel(s), {
           npc(el) { afterAction(R.applyChat(s, el.dataset.id)); },
@@ -226,7 +243,9 @@
     setScene(S.City);
     UI.setPanel('<p class="mute">晚上。外星人的探射燈又出來掃視城市。</p>');
     save();
-    const lock = !!(rep.review && rep.review.pass);
+    // 訊號達標，探射燈就會停在窗外；但靈魂太重的話，光束拉不動你
+    const lock = !!(rep.review && rep.review.signalOk);
+    const heavy = !!(rep.review && rep.review.overweight && rep.review.signalOk);
     S.City.searchlight(rep.searchlight || 0, lock, () => {
       UI.modal(UI.settleModal(rep, s), {
         ok() {
@@ -236,7 +255,7 @@
             UI.modal(UI.reviewModal(rep.review), {
               ok() {
                 UI.closeModal();
-                if (rep.ending && rep.ending.type === 'recruited') recruit();
+                if (rep.ending && rep.ending.type === 'recruited') chooseToGo();
                 else if (rep.ending) finishRun(rep.ending);
                 else { setCityFilter(); startDay(); }
               },
@@ -245,10 +264,21 @@
           else startDay();
         },
       });
-    });
+    }, heavy);
   }
 
   // ---------- 被選中 ----------
+  function chooseToGo() {
+    const s = Game.state;
+    UI.modal(UI.stayModal(s), {
+      go() { UI.closeModal(); recruit(); },
+      stay() {
+        UI.closeModal();
+        A.sfx('stamp');
+        finishRun(R.endingFor(s, 'guardian'));
+      },
+    });
+  }
   function recruit() {
     const s = Game.state;
     UI.setPanel('<p class="mute">光。很多很多光。</p>');
@@ -274,8 +304,9 @@
         } else {
           const self = res.selfJudged === false ? '你也沒有錄取「樣本 #2080」，一個很像你的人。指引就是指引。'
             : res.selfJudged === true ? '你錄取了「樣本 #2080」。違反指引，已記錄在案。' : '';
-          e = { kind: 'agent', title: '星際特工',
-            text: '你被選中了。第一份工作是篩選地球人，準確度 ' + pct + '%，員工評分 ★' + stars + '。' + self + '阿星就坐在隔壁，沒有抬頭看你。' };
+          const light = s.conscience < 0.3 ? '你的靈魂只有 ' + s.soul.toFixed(1) + ' 克，輕得像一張表格。你篩選地球人時，一點也不猶豫。' : '';
+          e = { kind: 'agent', title: s.conscience < 0.3 ? '完美員工' : '星際特工',
+            text: '你被選中了。第一份工作是篩選地球人，準確度 ' + pct + '%，員工評分 ★' + stars + '。' + self + light + '阿星就坐在隔壁，沒有抬頭看你。' };
         }
         S.City.enter('hub');
         finishRun(e);

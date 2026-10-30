@@ -39,6 +39,7 @@
           + (ev.kpiMod !== 1 ? '<span class="op">×</span><span class="term t-kpi"><small>KPI</small>' + ev.kpiMod + '</span>' : '')
           + '<span class="op">=</span><span class="term t-total"><small>作品分</small>' + UI().fmt(ev.total) + '</span></div>'
           + '<div class="combos">' + (ev.combos.length ? ev.combos.map((c) => comboHtml(s, c)).join('') : '<span class="mute" style="font-size:13px">沒有組合。試試選擇同一標籤，或者搭配不同標籤。</span>') + '</div>'
+          + (ev.relief ? '<p class="relief">把愧疚寫進作品：靈魂 −' + ev.relief + ' 克（' + s.soul.toFixed(1) + ' → ' + Math.max(0, s.soul - ev.relief).toFixed(1) + ' 克）</p>' : '')
         : '<p class="mute" style="font-size:14px">選擇 2 至 ' + s.craftSlots + ' 張素材。同一標籤出現 3 張或以上會「同調」，特定標籤組合會觸發具名組合。</p>';
       UI().modal('<div class="modal wide craft">'
         + '<div class="panel-head"><h2>創作</h2><p>火花 ×' + s.spark.toFixed(1) + '・本季 KPI：' + UI().esc(k.name) + '（' + UI().esc(k.desc) + '）</p></div>'
@@ -144,6 +145,7 @@
       $('rv-work').hidden = false;
       const after = R().signal(s);
       const extra = [];
+      if (res.relief) extra.push('<p class="relief">你把愧疚寫了出來。靈魂輕了 ' + res.relief + ' 克，現在重 ' + s.soul.toFixed(1) + ' 克。</p>');
       if (res.fresh.length) extra.push('<p class="new">靈光一閃！發現新組合：' + res.fresh.map((c) => c.name).join('、') + (res.sparkUp ? '（火花 +' + res.sparkUp + '）' : '') + '</p>');
       if (ev.kpiMod === 0) extra.push('<p style="color:#ff9aa6">外星人不計算這件作品：' + UI().esc(ev.kpi.desc) + '</p>');
       extra.push('<p class="mute">訊號 ' + UI().fmt(before) + ' → <b style="color:#ffd6ef">' + UI().fmt(after) + '</b> / ' + UI().fmt(R().threshold(s)) + '</p>');

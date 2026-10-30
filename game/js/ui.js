@@ -18,18 +18,21 @@
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
+      + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
-    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '' };
+    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
       return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
     }).join('');
   }
+
+  const pips = (v) => { const n = Math.round(v * 5); return '●'.repeat(n) + '○'.repeat(5 - n); };
 
   // ---------- 狀態列 ----------
   function renderHud(s) {
@@ -58,9 +61,11 @@
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
       + '<div class="meter m-body"><span class="lbl">身體</span><div class="bar"><i style="width:' + Math.max(0, s.body) + '%"></i></div><b class="num">' + Math.max(0, Math.round(s.body)) + '</b></div>'
       + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">' + (s.spark < 1 ? '麻木' : '火花') + '</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">×' + s.spark.toFixed(1) + '</b></div>'
+      + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + '<small>克</small></b></div>'
       + '<div class="meter m-signal"><span class="lbl">訊號</span><div class="bar"><i style="width:' + Math.min(100, sig / th * 100) + '%"></i></div><b class="num">' + kfmt(sig) + '/' + kfmt(th) + '</b></div>'
       + '</div>'
       + '<div class="hud-sub">'
+      + '<span>良知 <b class="pips">' + pips(s.conscience) + '</b> <b>' + Math.round(s.conscience * 100) + '%</b>・火花上限 <b>×' + R().sparkMax(s).toFixed(1) + '</b></span>'
       + '<span>平台評分 <b>★' + s.rating.toFixed(1) + '</b></span>'
       + '<span>全城自動化 <b>' + s.auto.toFixed(0) + '%</b></span>'
       + '<span class="' + (flooded ? 'bad' : '') + '">水位 <b>' + s.water.toFixed(1) + ' 樓</b> · 你住在 <b>' + (s.floor ? s.floor + ' 樓' : '天橋下') + '</b>' + (flooded ? '（正在淹水）' : '') + '</span>'
@@ -156,12 +161,13 @@
     if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + signed(d.cr) + '</span></div>');
     if (d.body) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
+    if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
     return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
   }
   function linesHtml(lines) {
     if (!lines.length) return '';
     return '<ul class="lines">' + lines.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
-      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' ? signed(l.v, 1) : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
+      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
   }
   function gainedHtml(rep) {
     let h = '';
@@ -200,10 +206,12 @@
       + '<div class="r-head"><span>星際人才發展局・天賦對齊流程</span><span>第 ' + (rv.quarter + 1) + ' 季考績</span></div>'
       + '<h2>候選人季度表現評估</h2>'
       + '<table>' + rv.grades.map((g) => '<tr><td>' + g.k + '</td><td class="g">' + g.g + '</td><td class="n">' + esc(g.note) + '</td></tr>').join('') + '</table>'
-      + '<p class="verdict">' + (rv.pass ? '恭喜！你已通過天賦對齊流程。請保持窗戶打開。' : '感謝你的申請。你已被納入人才庫，我們會保留你的資料十二個月。') + '</p>'
+      + '<p class="verdict">' + (rv.pass ? '恭喜！你已通過天賦對齊流程。請保持窗戶打開。'
+        : rv.overweight && rv.signalOk ? '你的訊號已經達標，但靈魂重量超出牽引光束的負載上限。為保護本局神經網絡，暫不錄取。'
+          : '感謝你的申請。你已被納入人才庫，我們會保留你的資料十二個月。') + '</p>'
       + (rv.taken ? '<p>同區候選人「' + esc(rv.taken) + '」已獲錄取，並完成人才優化遷移。</p>' : '')
       + '<p style="font-size:12px;color:#5b6b90">本季 KPI：' + esc(rv.kpi) + '。我們不是一個組織，我們是一個宇宙大家庭。</p>'
-      + '<span class="stamp ' + (rv.pass ? 'pass' : 'fail') + '">' + (rv.pass ? '錄取' : '人才庫') + '</span>'
+      + '<span class="stamp ' + (rv.pass ? 'pass' : 'fail') + '">' + (rv.pass ? '錄取' : rv.overweight && rv.signalOk ? '超重' : '人才庫') + '</span>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (rv.pass ? '……' : '繼續生活') + '</button></div></div>';
   }
 
@@ -213,13 +221,13 @@
     const recipes = meta.recipes ? Object.keys(meta.recipes).length : 0;
     return '<div class="title-menu">'
       + '<p class="tagline">工作越做越<em>爽</em>，靈魂越做越少。</p>'
-      + '<p class="lede">2080 年，海平面暴漲，浮城越高越富有、越低越淹水。靈感強的人一個接一個被外星人帶走。你要打工撐過每一期租金，同時守住心中的火花，讓它燒得夠旺，旺到外星人看得見。</p>'
+      + '<p class="lede">2080 年，海平面暴漲，浮城越高越富有、越低越淹水。靈感強的人一個接一個被外星人帶走。外星人只要又亮又輕、沒有包袱的人：你的火花要夠旺，靈魂又不能超過 21 克。可是在這個城市，活下去本身就會讓靈魂變重。</p>'
       + '<div class="btn-row">'
       + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button>' : '')
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button></div>'
-      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/5</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
+      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
       + '<p class="mute" style="font-size:12px;margin:0">自動存檔，無法讀檔重來。建議開啟聲音。</p>'
       + '</div>';
@@ -230,14 +238,16 @@
       + '<div class="bg-grid">' + Object.keys(bgs).map((k) => {
         const b = bgs[k];
         return '<button class="bg-card' + (sel.bg === k ? ' sel' : '') + '" type="button" data-do="bg" data-id="' + k + '">'
-          + '<span class="n">' + b.name + '</span><span class="d">' + b.desc + '</span><span class="p">' + b.perkText + '</span>'
+          + '<span class="n">' + b.name + '</span><span class="d">' + b.desc + b.past + '</span><span class="p">' + b.perkText + '</span>'
+          + '<span class="d">靈魂 ' + b.soul + ' 克・良知 ' + Math.round(b.conscience * 100) + '%</span>'
           + '<span class="s"><span style="color:var(--cash)">$' + b.cr + '</span><span style="color:#ffb3b3">身體 ' + b.body + '</span><span style="color:var(--spark)">火花 ×' + b.spark.toFixed(1) + '</span></span></button>';
       }).join('') + '</div>'
       + '<div class="panel-head"><h2>季節</h2><p>' + esc(seasons[sel.season].desc) + '</p></div>'
       + '<div class="seg">' + Object.keys(seasons).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + seasons[k].name + '</button>').join('') + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button><button class="btn primary big" type="button" data-do="start">出發</button></div>';
   }
-  const ENDING_KIND = { death: 'DEATH', grey: 'GREYED OUT', ordinary: 'ORDINARY', agent: 'RECRUITED', returned: 'RETURNED' };
+  const ENDING_KIND = { death: 'DEATH', grey: 'GREYED OUT', ordinary: 'ORDINARY', agent: 'RECRUITED', returned: 'RETURNED', heavy: 'TOO HEAVY', guardian: 'STAYED' };
+  const ENDING_COUNT = Object.keys(ENDING_KIND).length;
   function endingModal(e, s, meta) {
     const best = s.stats.bestWork;
     return '<div class="modal"><div class="ending ' + e.kind + '">'
@@ -249,11 +259,12 @@
       + '<div class="e-stat"><span class="k">累積訊號</span><span class="num">' + kfmt(R().signal(s)) + '</span></div>'
       + '<div class="e-stat"><span class="k">標註</span><span class="num">' + fmt(s.stats.labels) + '</span></div>'
       + '<div class="e-stat"><span class="k">捕魚</span><span class="num">' + (s.stats.fish || 0) + '</span></div>'
-      + '<div class="e-stat"><span class="k">挨餓</span><span class="num">' + s.stats.hungryDays + '</span></div>'
+      + '<div class="e-stat"><span class="k">靈魂</span><span class="num">' + s.soul.toFixed(1) + '<small>克</small></span></div>'
+      + '<div class="e-stat"><span class="k">良知</span><span class="num">' + Math.round(s.conscience * 100) + '%</span></div>'
       + '</div>'
       + (best ? '<p class="mute" style="font-size:14px">最好的作品：《' + esc(best.name) + '》（' + fmt(best.raw) + ' 分）。它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
       + '<div class="btn-row" style="width:100%"><button class="btn" type="button" data-do="copy">複製墓誌銘</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
-      + '<p class="mute" style="font-size:12px">結局收集 ' + Object.keys(meta.endings || {}).length + '/5</p>'
+      + '<p class="mute" style="font-size:12px">結局收集 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '</p>'
       + '</div></div>';
   }
   function helpModal() {
@@ -267,12 +278,18 @@
       + '<li><b>AI 數據標註</b>：依照左邊的指引把圖片分為「是」或「否」。指引每 15 秒更新，越來越荒謬。連續答對 15 張會進入心流狀態：收入加倍，火花消耗也加倍。主管巡查時出錯會被記錄。</li>'
       + '<li><b>企業情緒陪伴</b>：黃色音符按「笑」，長條要一直按住；藍綠色按「點頭」；客人講傷心事（藍色）也要點頭，笑出來會被罰款。客人的杯空了就按住「倒酒」，在綠色範圍內放手，倒滿會瀉。</li>'
       + '<li><b>舊城潛水</b>：用魚叉捕魚，打撈遺物，撬開儲物櫃。舊街、地鐵站、舊商場越深越暗，收穫也越好。霓虹鰻會衝過來咬人，水母碰到會螫。背包越重游得越慢，氧氣用完之前要浮上水面。抓到大魚當晚餐，當晚不用買飯。</li></ul>'
+      + '<h3>靈魂重量與良知</h3><ul>'
+      + '<li>外星人的牽引光束最多只能拉起 <b>21 克</b>的靈魂。太重的人會污染他們的神經網絡，訊號再高也不會被帶走。</li>'
+      + '<li>活下去很容易讓靈魂變重：標註數據令別人失業、附和有錢人的偏見、撬別人的儲物櫃，還有每天早上的道德抉擇。</li>'
+      + '<li><b>良知是負重</b>：同一件虧心事，良知越強就越重。可是每做一次，良知都會被磨損，你會越來越麻木，下一件事就越來越輕。</li>'
+      + '<li>良知也決定你的感受力：火花上限 = 2 + 2 × 良知。麻木的人很輕，但也燒不起來。</li>'
+      + '<li>減輕的方法：到避難所做義工、在抉擇中選擇良心、把「愧疚」素材寫進作品（懺悔），或者像天空區的人一樣購買「業力抵銷額度」。</li></ul>'
       + '<h3>創作</h3><p>作品分 = 素材籌碼 × 組合倍率 × 火花 × 外星 KPI。素材來自生活：工作、潛水、聊天，甚至挨餓。同一標籤的素材越多越有共鳴，特定的標籤組合會觸發具名組合。</p>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動。標註用 ← →；陪伴用 ←（點頭）、→（笑）、空白鍵（倒酒）；潛水用方向鍵或 WASD 游泳，滑鼠點擊或空白鍵發射魚叉。手機：直接按畫面或下方的按鈕。</p>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
   function collectionModal(meta) {
-    const names = { agent: '星際特工', returned: '被遣返', ordinary: '平凡人', death: '死亡', grey: '灰化' };
+    const names = { agent: '星際特工', returned: '被遣返', guardian: '地球守護者', heavy: '良知太重', ordinary: '平凡人', death: '死亡', grey: '灰化' };
     const has = (k) => meta.endings && meta.endings[k];
     const endings = Object.keys(names).map((k) => '<div class="recipe' + (has(k) ? '' : ' unknown') + '"><b>' + (has(k) ? names[k] : '？？？') + '</b>'
       + (has(k) ? '<span class="mute">達成 ' + meta.endings[k] + ' 次</span>' : '') + '</div>').join('');
@@ -294,10 +311,28 @@
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
   }
 
+  // ---------- 道德抉擇 ----------
+  function dilemmaModal(v, s) {
+    return '<div class="modal dilemma"><span class="eyebrow">早上的抉擇</span>'
+      + '<p class="d-text">' + esc(v.text) + '</p>'
+      + '<div class="d-opts">' + v.options.map((o) => '<button class="d-opt" type="button" data-do="pick" data-i="' + o.i + '"' + (o.reason ? ' disabled' : '') + '>'
+        + '<span class="d-label">' + esc(o.label) + '</span><span class="fx">' + fxHtml(o.fx) + '</span>'
+        + (o.reason ? '<span class="act-why">' + esc(o.reason) + '</span>' : '') + '</button>').join('') + '</div>'
+      + '<p class="mute" style="font-size:12px">你的良知 ' + Math.round(s.conscience * 100) + '%：每件虧心事的重量 ×' + R().sinFactor(s).toFixed(2)
+      + '。靈魂現在重 ' + s.soul.toFixed(1) + ' 克，上限 ' + R().SOUL_LIMIT + ' 克。</p></div>';
+  }
+  function stayModal(s) {
+    return '<div class="modal dilemma"><span class="eyebrow">第 ' + s.day + ' 天・晚上</span>'
+      + '<p class="d-text">探射燈停在你的窗外。光束在等你。</p>'
+      + '<p class="mute">走進光裡，你會成為星際人才發展局的一員。關上窗戶，你會留在浮城。</p>'
+      + '<div class="d-opts"><button class="d-opt" type="button" data-do="go"><span class="d-label">走進光裡</span><span class="fx"><span class="fx-sig">被外星人帶走</span></span></button>'
+      + '<button class="d-opt" type="button" data-do="stay"><span class="d-label">關上窗戶</span><span class="fx"><span class="fx-note">留下來</span></span></button></div></div>';
+  }
+
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, closeModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
-    titlePanel, setupPanel, endingModal, helpModal, collectionModal,
+    titlePanel, setupPanel, endingModal, helpModal, collectionModal, dilemmaModal, stayModal,
   };
 })(window.IE = window.IE || {});

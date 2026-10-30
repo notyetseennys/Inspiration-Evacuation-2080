@@ -18,6 +18,7 @@
     hope:    { name: '希望', color: '#9be36b' },
     anger:   { name: '憤怒', color: '#d6334a' },
     rebel:   { name: '反叛', color: '#a77bff' },
+    guilt:   { name: '愧疚', color: '#a89a82' },
   };
 
   // 素材卡目錄。value 為籌碼值
@@ -54,6 +55,11 @@
     k_bag:      { name: '被遺下的行李箱',            tags: ['memory', 'warmth'],   value: 26 },
     f_scale:    { name: '霓虹鰻的鱗片',              tags: ['neon', 'water'],      value: 22 },
     f_eye:      { name: '石斑眼中的倒影',            tags: ['water', 'memory'],    value: 26 },
+    // 道德抉擇與義工
+    m_family:   { name: '別人的全家福',              tags: ['warmth', 'memory'],   value: 24 },
+    m_thanks:   { name: '婆婆的道謝',                tags: ['warmth', 'hope'],     value: 24 },
+    m_saved:    { name: '被救起的人',                tags: ['hope', 'water'],      value: 28 },
+    v_shelter:  { name: '避難所的晚上',              tags: ['warmth', 'hope'],     value: 22 },
     // NPC 朋友
     n_ken1:     { name: '牆上未完成的壁畫',          tags: ['rebel', 'hope'],      value: 26 },
     n_ken2:     { name: '阿 Ken 的噴漆罐',           tags: ['rebel'],              value: 18 },
@@ -113,6 +119,9 @@
     { id: 'blackhumor',name: '黑色幽默',     need: { hope: 1, anger: 1 },              chips: 15, mult: 1.5 },
     { id: 'letter',    name: '外星來信',     need: { hope: 1, neon: 1 },               chips: 15, mult: 1.5 },
     { id: 'rentday',   name: '交租日',       need: { hunger: 1, machine: 1, anger: 1 },chips: 25, mult: 2.5 },
+    { id: 'confession',name: '懺悔錄',       need: { guilt: 1, memory: 1 },            chips: 30, mult: 3 },
+    { id: 'absolve',   name: '告解',         need: { guilt: 1, warmth: 1 },            chips: 25, mult: 2.5 },
+    { id: 'crime',     name: '罪與罰',       need: { guilt: 2, anger: 1 },             chips: 40, mult: 3.5 },
   ];
 
   // 同一標籤出現在多少張卡
@@ -134,16 +143,22 @@
     novelty:  { name: '創新指標：不要重複',        desc: '用過的組合再用只計 20%',     special: 'novelty' },
     lean:     { name: '精益創作：少即是多',        desc: '使用 4 張或以上素材 ×0.5',   special: 'lean' },
     pliable:  { name: '可塑性：我們欣賞聽話的人',  desc: '火花低於 ×2 時創作 ×1.5',   special: 'pliable' },
+    confess:  { name: '坦白從寬：歡迎懺悔',        desc: '含「愧疚」的作品 ×1.6',      tag: 'guilt',   mod: 1.6 },
+    nobaggage:{ name: '我們不要有包袱的人',        desc: '含「愧疚」的作品不計分',     tag: 'guilt',   mod: 0 },
   };
 
+  // 牽引光束的負載上限：靈魂超過 21 克會污染外星人的神經網絡
+  const SOUL_LIMIT = 21;
+
   // 累積訊號門檻（第 10、20、30 天）
-  const THRESHOLDS = [42000, 43000, 44000];
+  const THRESHOLDS = [72000, 64000, 64000];
 
   const BACKGROUNDS = {
     copywriter: {
       name: '前廣告公司文案', short: '前文案',
       desc: '擅長寫作，有一點積蓄。', perkText: '創作籌碼 +15%',
       cr: 170, body: 85, spark: 2.4, floor: 4, medium: '寫了一篇',
+      soul: 9, conscience: 0.85, past: '你寫過的廣告騙過很多人。',
       cards: ['b_slogan', 'b_lanyard', 'b_novel'],
       perk: { craftChips: 1.15 },
     },
@@ -151,6 +166,7 @@
       name: '退役潛水救生員', short: '前救生員',
       desc: '身體好，熟悉水性，火花偏低。', perkText: '潛水氧氣 +35%，潛水體力消耗減半',
       cr: 180, body: 100, spark: 1.7, floor: 3, medium: '畫了一幅',
+      soul: 3, conscience: 1, past: '你救過很多人。',
       cards: ['b_whistle', 'b_photo'],
       perk: { oxygen: 1.35, diveBody: 0.5 },
     },
@@ -158,6 +174,7 @@
       name: '失業程式員', short: '前程式員',
       desc: '有積蓄，標註快，火花最低。', perkText: '標註收入 +25%',
       cr: 280, body: 80, spark: 1.5, floor: 5, medium: '做了一幅像素畫',
+      soul: 8, conscience: 0.9, past: '你寫的程式取代過三百人。',
       cards: ['b_repo', 'b_log'],
       perk: { labelPay: 1.25 },
     },
@@ -165,6 +182,7 @@
       name: '街頭樂手', short: '街頭樂手',
       desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢，還多得一張素材',
       cr: 60, body: 75, spark: 2.7, floor: 2, medium: '寫了一首歌',
+      soul: 4, conscience: 1, past: '你唱的歌從沒傷害過任何人。',
       cards: ['b_guitar', 'b_coins', 'b_song', 'b_echo'],
       perk: { freeChat: true, chatExtra: 1 },
     },
@@ -210,6 +228,7 @@
     harpoon:    { name: '改裝魚叉',       desc: '魚叉發射更快，傷害加倍',             cost: 120 },
     bag:        { name: '防水大背包',     desc: '潛水背包容量 +4',                    cost: 100 },
     monitor:    { name: '二手第二螢幕',   desc: '標註時可預覽下一張，判斷時間 +0.2 秒', cost: 90 },
+    offset:     { name: '業力抵銷額度',   desc: '天空區企業發行，每份抵銷 1.5 克',     cost: 90 },
   };
 
   // 晚上的隨機事件
@@ -312,6 +331,67 @@
     '水災？我住 88 樓啊', '我捐錢給低層，可以扣稅的', '你說對不對？', '你們這一代就是不夠努力',
   ];
   const SAD_LINES = ['我的機械狗壞了……', '我家的錦鯉死了', '我太太說我沒有靈魂', '其實我很寂寞'];
+  // 偏見言論：點頭附和可以多拿小費，但靈魂會變重
+  const BIAS_LINES = [
+    '低層的人就是懶，對不對？', '那些失蹤的人，大概是自願離開的吧？', 'AI 取代你們，是因為你們不夠好。',
+    '窮人不需要藝術，需要的是紀律。', '淹水區的人應該自己學會游泳。',
+  ];
+
+  // ---------- 道德抉擇 ----------
+  // 每天早上有機會遇到一個。sin：虧心程度（實際重量 = sin × 良知系數）；atone：贖罪程度。
+  // guilt：做了虧心事後得到的「愧疚」素材名稱，tag 為它的第二個標籤。
+  const DILEMMAS = [
+    { id: 'wallet', text: '你在樓梯撿到一個錢包，裡面有 $120 和一張全家福。',
+      options: [{ label: '據為己有', cr: 80, sin: 3, guilt: '那個錢包', tag: 'memory' },
+        { label: '交到管理處', atone: 1, card: 'm_family' }] },
+    { id: 'granny', text: '隔壁的婆婆病倒了，她想向你借 $60 買藥。',
+      options: [{ label: '借錢給她', cr: -60, atone: 2, card: 'm_thanks', need: (s) => (s.cr >= 60 ? null : '你根本沒有 $60') },
+        { label: '假裝不在家', sin: 2, guilt: '門外的敲門聲', tag: 'warmth' }] },
+    { id: 'report', when: (s) => s.floor >= 2, text: '房東說：只要你舉報樓下的非法劏房，下期租金減半。',
+      options: [{ label: '舉報', rentDiscount: 0.5, sin: 4, guilt: '樓下搬走的一家人', tag: 'water' },
+        { label: '拒絕' }] },
+    { id: 'badreview', when: (s) => !s.removed.label, text: '平台主管私訊你：給同組的新人打差評，你的評分就會上升。',
+      options: [{ label: '照做', rating: 0.5, sin: 2, guilt: '新人的差評', tag: 'machine' },
+        { label: '拒絕', rating: -0.2 }] },
+    { id: 'farm', text: '內容農場急招寫手：今晚寫三篇假新聞，酬勞 $120。',
+      options: [{ label: '接下工作', cr: 120, spark: -0.3, sin: 3.5, guilt: '三篇假新聞', tag: 'neon' },
+        { label: '拒絕' }] },
+    { id: 'rescue', text: '淹水的街上有人在呼救。',
+      options: [{ label: '跳下水救人', body: -12, atone: 3, card: 'm_saved', need: (s) => (s.body > 20 ? null : '你的身體撐不住') },
+        { label: '假裝沒聽見', sin: 3, guilt: '水裡的呼救聲', tag: 'water' }] },
+    { id: 'course', when: (s) => s.day >= 4, text: '有人邀請你推銷「外星錄取保證班」，每成交一單抽佣 $60。',
+      options: [{ label: '推銷兩單', cr: 120, sin: 4, guilt: '賣出去的錄取保證', tag: 'hope' },
+        { label: '拒絕' }] },
+    { id: 'lend', when: (s) => s.cards.length >= 2 && s.npcs.some((n) => n.alive), npc: true,
+      text: '{npc}想參加創作比賽，問你可否借一張素材。',
+      options: [{ label: '借出素材', loseCard: true, atone: 1.5, friend: 2 },
+        { label: '拒絕', sin: 1, guilt: '沒有借出的素材', tag: 'warmth' }] },
+    { id: 'steal', when: (s) => s.cr < 30, text: '你身上的錢不夠吃晚飯。便利店的自助收銀機剛好壞了。',
+      options: [{ label: '拿了就走', foodFree: true, sin: 2, guilt: '沒付錢的晚餐', tag: 'hunger' },
+        { label: '餓著肚子' }] },
+    { id: 'mural', when: (s) => s.npcs.some((n) => n.id === 'ken' && n.alive), text: '阿 Ken 的壁畫被大廈管理處塗掉了，阿 Ken 想你陪他重新畫一次。',
+      options: [{ label: '陪阿 Ken 重畫', body: -6, atone: 1.5, card: 'n_ken1' },
+        { label: '說自己沒空', sin: 0.5, guilt: '被塗掉的壁畫', tag: 'rebel' }] },
+    { id: 'chatlogs', text: '一間企業想以 $80 收購你和朋友們的聊天紀錄，用來訓練 AI。',
+      options: [{ label: '賣掉', cr: 80, sin: 3.5, guilt: '朋友們的聊天紀錄', tag: 'warmth' },
+        { label: '拒絕' }] },
+    { id: 'blame', when: (s) => !s.removed.label && s.day >= 3, text: '標註組出了錯，主管要找人負責。你可以把責任推給新同事。',
+      options: [{ label: '推給新人', rating: 0.3, sin: 2.5, guilt: '替你受罰的新人', tag: 'anger' },
+        { label: '自己承擔', rating: -0.4, atone: 0.5 }] },
+    { id: 'donate', text: '避難所正在募捐，$40 可以讓一家人多吃一餐。',
+      options: [{ label: '捐出 $40', cr: -40, atone: 1.5, need: (s) => (s.cr >= 40 ? null : '你連自己的晚餐都未必付得起') },
+        { label: '走開', sin: 0.5, guilt: '募捐箱', tag: 'hunger' }] },
+    { id: 'lostkid', text: '一個小孩在天橋下走失了，哭著問你回家的路。',
+      options: [{ label: '送小孩回家', body: -4, atone: 2, card: 'd_crayon' },
+        { label: '叫小孩去找警察', sin: 0.5, guilt: '小孩的哭聲', tag: 'memory' }] },
+    { id: 'spy', when: (s) => s.floor > 0, text: '房東想你幫忙監視鄰居有沒有偷用電，每舉報一次 $40。',
+      options: [{ label: '答應', cr: 80, sin: 3, guilt: '鄰居的電錶', tag: 'machine' },
+        { label: '拒絕' }] },
+    { id: 'snitch', when: (s) => s.day >= 5 && s.npcs.filter((n) => n.alive).length >= 2,
+      text: '一個自稱外星招募專員的人說：只要你交出同區創作人的名單，就能提高你的錄取機會。',
+      options: [{ label: '交出名單', signal: 4000, takeNpc: true, sin: 5, guilt: '交出去的名單', tag: 'anger' },
+        { label: '拒絕' }] },
+  ];
 
   // ---------- 舊城潛水 ----------
   const FISH = {
@@ -329,7 +409,7 @@
   IE.DATA = {
     TAGS, CARDS, CARD_POOLS, RECIPES, RESONANCE, MEDLEY, KPIS, THRESHOLDS,
     BACKGROUNDS, SEASONS, NPCS, FLOOR_RENT, BASE_RENT, SHOP, EVENTS, FEED, ASTAR,
-    LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, FISH, DIVE_ZONES,
+    LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, BIAS_LINES, FISH, DIVE_ZONES, DILEMMAS, SOUL_LIMIT,
     DAYS: 30, REVIEW_DAYS: [10, 20, 30], SLOTS: ['早上', '下午', '晚上'],
   };
 });

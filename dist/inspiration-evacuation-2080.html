@@ -26,6 +26,7 @@
   --body: #ff6b6b;
   --danger: #ff4d5e;
   --alien: #9be36b;
+  --stone: #a89a82;      /* 靈魂的重量：石頭的顏色 */
   --paper: #eef1f7;      /* 外星 HR 的企業表格 */
   --paper-ink: #1b2233;
   --paper-line: #c9d1e2;
@@ -46,6 +47,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 button { font: inherit; color: inherit; }
+.num small, .lines li .v small { font-family: var(--font-body); font-size: 0.5em; font-weight: 700; margin-left: 2px; }
 .num { font-family: var(--font-num); font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .px { font-family: var(--font-pixel); font-size: 0.72em; letter-spacing: 0.08em; text-transform: uppercase; }
 .mute { color: var(--mute); }
@@ -98,7 +100,7 @@ button { font: inherit; color: inherit; }
 .icon-btn:hover { border-color: var(--sea); }
 .icon-btn .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--neon); margin-left: 4px; vertical-align: middle; }
 
-.hud-meters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.hud-meters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .meter {
   min-width: 0; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px;
   padding: 6px 10px; border-radius: var(--r); background: var(--deck); border: 1px solid var(--line);
@@ -117,6 +119,13 @@ button { font: inherit; color: inherit; }
 .m-spark.numb { border-color: #6b7280; }
 .m-spark.numb .num { color: #9ca3af; }
 .m-signal .bar > i { background: linear-gradient(90deg, var(--sea), var(--neon)); }
+.m-soul .bar > i { background: var(--stone); }
+.m-soul .bar > em { background: #ffffff; }
+.m-soul .num { color: #d9cfbd; font-size: 18px; }
+.m-soul.over { border-color: var(--danger); }
+.m-soul.over .bar > i { background: var(--danger); }
+.m-soul.over .num { color: #ffb3bd; }
+.hud-sub .pips { letter-spacing: 1px; color: #e9dcc4; }
 .m-signal .num { font-size: 18px; color: #ffd6ef; }
 .hud-sub { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mute); }
 .hud-sub b { color: var(--fg); font-weight: 500; }
@@ -150,6 +159,8 @@ button { font: inherit; color: inherit; }
 .fx .fx-spark { color: var(--spark); }
 .fx .fx-card { color: #cbd5f0; }
 .fx .fx-sig { color: #ffd6ef; }
+.fx .fx-soul { color: #e9dcc4; box-shadow: inset 0 0 0 1px rgba(168, 154, 130, 0.45); }
+.fx .fx-note { color: #cbd5f0; }
 .fx .neg { box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.35); }
 
 .inv-wrap { display: grid; gap: 6px; }
@@ -166,6 +177,8 @@ button { font: inherit; color: inherit; }
 .card .c-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .card .c-val { font-family: var(--font-num); font-size: 18px; line-height: 1; color: #cbd5f0; }
 .card.legacy { border-color: #8f6bd8; background: #221a38; }
+.card.guilt { border-color: #6b6152; background: #211d18; }
+.card .c-grams { font-size: 11px; color: #c9bba3; }
 button.card { cursor: pointer; }
 button.card:hover { border-color: var(--sea); }
 button.card.sel { border-color: var(--spark); background: #2a2414; box-shadow: 0 0 0 1px var(--spark); }
@@ -237,6 +250,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .lines li.event { color: #ffe7a8; }
 .lines li.news { color: #9fdcff; }
 .lines li.auto { color: var(--mute); font-size: 12px; }
+.lines li.sin { color: #e9dcc4; }
 
 .deltas { display: flex; flex-wrap: wrap; gap: 8px; }
 .delta { display: grid; gap: 2px; padding: 8px 12px; border-radius: var(--r); background: #0d1424; border: 1px solid var(--line); min-width: 92px; }
@@ -245,6 +259,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .delta.cr .num { color: var(--cash); }
 .delta.body .num { color: #ffb3b3; }
 .delta.spark .num { color: var(--spark); }
+.delta.soul .num { color: #e9dcc4; }
 .gained { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* 手機：早上 */
@@ -327,6 +342,20 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .reveal .score.boom { animation: boom 0.5s ease-out; }
 @keyframes boom { 0% { transform: scale(0.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
 .reveal .new { color: var(--spark); font-weight: 900; }
+.relief { margin: 0; color: #e9dcc4; font-weight: 700; }
+
+/* 道德抉擇 */
+.dilemma .eyebrow { font-size: 12px; letter-spacing: 0.12em; color: var(--stone); font-weight: 700; }
+.dilemma .d-text { font-size: 19px; font-weight: 700; line-height: 1.6; text-wrap: pretty; }
+.d-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.d-opt {
+  text-align: left; cursor: pointer; display: grid; gap: 8px; align-content: start; min-width: 0;
+  padding: 14px; border-radius: var(--r); background: var(--deck-2); border: 1px solid var(--line);
+}
+.d-opt:hover:not(:disabled) { border-color: var(--stone); background: #1e2638; }
+.d-opt:focus-visible { outline: 2px solid var(--spark); outline-offset: 2px; }
+.d-opt:disabled { opacity: 0.45; cursor: not-allowed; }
+.d-label { font-size: 17px; font-weight: 900; }
 
 /* 標題與結局 */
 .title-menu { display: grid; gap: 14px; }
@@ -356,7 +385,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .ending.ordinary h2 { color: #c9f3fb; }
 .ending.agent h2 { color: var(--alien); }
 .ending.returned h2 { color: var(--spark); }
-.e-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; width: 100%; }
+.ending.heavy h2 { color: var(--stone); }
+.ending.guardian h2 { color: #ffd6a0; }
+.e-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)); gap: 8px; width: 100%; }
 .e-stat { padding: 8px; border-radius: var(--r); background: #0d1424; border: 1px solid var(--line); display: grid; gap: 2px; }
 .e-stat .k { font-size: 11px; color: var(--mute); }
 .e-stat .num { font-size: 24px; line-height: 1; }
@@ -376,6 +407,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 
 @media (max-width: 720px) {
   .hud-meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hud-meters .m-signal { grid-column: span 2; }
   .meter { padding: 6px 8px; gap: 6px; }
   .meter .num { font-size: 20px; }
   .acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -425,6 +457,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     hope:    { name: '希望', color: '#9be36b' },
     anger:   { name: '憤怒', color: '#d6334a' },
     rebel:   { name: '反叛', color: '#a77bff' },
+    guilt:   { name: '愧疚', color: '#a89a82' },
   };
 
   // 素材卡目錄。value 為籌碼值
@@ -461,6 +494,11 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     k_bag:      { name: '被遺下的行李箱',            tags: ['memory', 'warmth'],   value: 26 },
     f_scale:    { name: '霓虹鰻的鱗片',              tags: ['neon', 'water'],      value: 22 },
     f_eye:      { name: '石斑眼中的倒影',            tags: ['water', 'memory'],    value: 26 },
+    // 道德抉擇與義工
+    m_family:   { name: '別人的全家福',              tags: ['warmth', 'memory'],   value: 24 },
+    m_thanks:   { name: '婆婆的道謝',                tags: ['warmth', 'hope'],     value: 24 },
+    m_saved:    { name: '被救起的人',                tags: ['hope', 'water'],      value: 28 },
+    v_shelter:  { name: '避難所的晚上',              tags: ['warmth', 'hope'],     value: 22 },
     // NPC 朋友
     n_ken1:     { name: '牆上未完成的壁畫',          tags: ['rebel', 'hope'],      value: 26 },
     n_ken2:     { name: '阿 Ken 的噴漆罐',           tags: ['rebel'],              value: 18 },
@@ -520,6 +558,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     { id: 'blackhumor',name: '黑色幽默',     need: { hope: 1, anger: 1 },              chips: 15, mult: 1.5 },
     { id: 'letter',    name: '外星來信',     need: { hope: 1, neon: 1 },               chips: 15, mult: 1.5 },
     { id: 'rentday',   name: '交租日',       need: { hunger: 1, machine: 1, anger: 1 },chips: 25, mult: 2.5 },
+    { id: 'confession',name: '懺悔錄',       need: { guilt: 1, memory: 1 },            chips: 30, mult: 3 },
+    { id: 'absolve',   name: '告解',         need: { guilt: 1, warmth: 1 },            chips: 25, mult: 2.5 },
+    { id: 'crime',     name: '罪與罰',       need: { guilt: 2, anger: 1 },             chips: 40, mult: 3.5 },
   ];
 
   // 同一標籤出現在多少張卡
@@ -541,16 +582,22 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     novelty:  { name: '創新指標：不要重複',        desc: '用過的組合再用只計 20%',     special: 'novelty' },
     lean:     { name: '精益創作：少即是多',        desc: '使用 4 張或以上素材 ×0.5',   special: 'lean' },
     pliable:  { name: '可塑性：我們欣賞聽話的人',  desc: '火花低於 ×2 時創作 ×1.5',   special: 'pliable' },
+    confess:  { name: '坦白從寬：歡迎懺悔',        desc: '含「愧疚」的作品 ×1.6',      tag: 'guilt',   mod: 1.6 },
+    nobaggage:{ name: '我們不要有包袱的人',        desc: '含「愧疚」的作品不計分',     tag: 'guilt',   mod: 0 },
   };
 
+  // 牽引光束的負載上限：靈魂超過 21 克會污染外星人的神經網絡
+  const SOUL_LIMIT = 21;
+
   // 累積訊號門檻（第 10、20、30 天）
-  const THRESHOLDS = [42000, 43000, 44000];
+  const THRESHOLDS = [72000, 64000, 64000];
 
   const BACKGROUNDS = {
     copywriter: {
       name: '前廣告公司文案', short: '前文案',
       desc: '擅長寫作，有一點積蓄。', perkText: '創作籌碼 +15%',
       cr: 170, body: 85, spark: 2.4, floor: 4, medium: '寫了一篇',
+      soul: 9, conscience: 0.85, past: '你寫過的廣告騙過很多人。',
       cards: ['b_slogan', 'b_lanyard', 'b_novel'],
       perk: { craftChips: 1.15 },
     },
@@ -558,6 +605,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       name: '退役潛水救生員', short: '前救生員',
       desc: '身體好，熟悉水性，火花偏低。', perkText: '潛水氧氣 +35%，潛水體力消耗減半',
       cr: 180, body: 100, spark: 1.7, floor: 3, medium: '畫了一幅',
+      soul: 3, conscience: 1, past: '你救過很多人。',
       cards: ['b_whistle', 'b_photo'],
       perk: { oxygen: 1.35, diveBody: 0.5 },
     },
@@ -565,6 +613,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       name: '失業程式員', short: '前程式員',
       desc: '有積蓄，標註快，火花最低。', perkText: '標註收入 +25%',
       cr: 280, body: 80, spark: 1.5, floor: 5, medium: '做了一幅像素畫',
+      soul: 8, conscience: 0.9, past: '你寫的程式取代過三百人。',
       cards: ['b_repo', 'b_log'],
       perk: { labelPay: 1.25 },
     },
@@ -572,6 +621,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       name: '街頭樂手', short: '街頭樂手',
       desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢，還多得一張素材',
       cr: 60, body: 75, spark: 2.7, floor: 2, medium: '寫了一首歌',
+      soul: 4, conscience: 1, past: '你唱的歌從沒傷害過任何人。',
       cards: ['b_guitar', 'b_coins', 'b_song', 'b_echo'],
       perk: { freeChat: true, chatExtra: 1 },
     },
@@ -617,6 +667,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     harpoon:    { name: '改裝魚叉',       desc: '魚叉發射更快，傷害加倍',             cost: 120 },
     bag:        { name: '防水大背包',     desc: '潛水背包容量 +4',                    cost: 100 },
     monitor:    { name: '二手第二螢幕',   desc: '標註時可預覽下一張，判斷時間 +0.2 秒', cost: 90 },
+    offset:     { name: '業力抵銷額度',   desc: '天空區企業發行，每份抵銷 1.5 克',     cost: 90 },
   };
 
   // 晚上的隨機事件
@@ -719,6 +770,67 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     '水災？我住 88 樓啊', '我捐錢給低層，可以扣稅的', '你說對不對？', '你們這一代就是不夠努力',
   ];
   const SAD_LINES = ['我的機械狗壞了……', '我家的錦鯉死了', '我太太說我沒有靈魂', '其實我很寂寞'];
+  // 偏見言論：點頭附和可以多拿小費，但靈魂會變重
+  const BIAS_LINES = [
+    '低層的人就是懶，對不對？', '那些失蹤的人，大概是自願離開的吧？', 'AI 取代你們，是因為你們不夠好。',
+    '窮人不需要藝術，需要的是紀律。', '淹水區的人應該自己學會游泳。',
+  ];
+
+  // ---------- 道德抉擇 ----------
+  // 每天早上有機會遇到一個。sin：虧心程度（實際重量 = sin × 良知系數）；atone：贖罪程度。
+  // guilt：做了虧心事後得到的「愧疚」素材名稱，tag 為它的第二個標籤。
+  const DILEMMAS = [
+    { id: 'wallet', text: '你在樓梯撿到一個錢包，裡面有 $120 和一張全家福。',
+      options: [{ label: '據為己有', cr: 80, sin: 3, guilt: '那個錢包', tag: 'memory' },
+        { label: '交到管理處', atone: 1, card: 'm_family' }] },
+    { id: 'granny', text: '隔壁的婆婆病倒了，她想向你借 $60 買藥。',
+      options: [{ label: '借錢給她', cr: -60, atone: 2, card: 'm_thanks', need: (s) => (s.cr >= 60 ? null : '你根本沒有 $60') },
+        { label: '假裝不在家', sin: 2, guilt: '門外的敲門聲', tag: 'warmth' }] },
+    { id: 'report', when: (s) => s.floor >= 2, text: '房東說：只要你舉報樓下的非法劏房，下期租金減半。',
+      options: [{ label: '舉報', rentDiscount: 0.5, sin: 4, guilt: '樓下搬走的一家人', tag: 'water' },
+        { label: '拒絕' }] },
+    { id: 'badreview', when: (s) => !s.removed.label, text: '平台主管私訊你：給同組的新人打差評，你的評分就會上升。',
+      options: [{ label: '照做', rating: 0.5, sin: 2, guilt: '新人的差評', tag: 'machine' },
+        { label: '拒絕', rating: -0.2 }] },
+    { id: 'farm', text: '內容農場急招寫手：今晚寫三篇假新聞，酬勞 $120。',
+      options: [{ label: '接下工作', cr: 120, spark: -0.3, sin: 3.5, guilt: '三篇假新聞', tag: 'neon' },
+        { label: '拒絕' }] },
+    { id: 'rescue', text: '淹水的街上有人在呼救。',
+      options: [{ label: '跳下水救人', body: -12, atone: 3, card: 'm_saved', need: (s) => (s.body > 20 ? null : '你的身體撐不住') },
+        { label: '假裝沒聽見', sin: 3, guilt: '水裡的呼救聲', tag: 'water' }] },
+    { id: 'course', when: (s) => s.day >= 4, text: '有人邀請你推銷「外星錄取保證班」，每成交一單抽佣 $60。',
+      options: [{ label: '推銷兩單', cr: 120, sin: 4, guilt: '賣出去的錄取保證', tag: 'hope' },
+        { label: '拒絕' }] },
+    { id: 'lend', when: (s) => s.cards.length >= 2 && s.npcs.some((n) => n.alive), npc: true,
+      text: '{npc}想參加創作比賽，問你可否借一張素材。',
+      options: [{ label: '借出素材', loseCard: true, atone: 1.5, friend: 2 },
+        { label: '拒絕', sin: 1, guilt: '沒有借出的素材', tag: 'warmth' }] },
+    { id: 'steal', when: (s) => s.cr < 30, text: '你身上的錢不夠吃晚飯。便利店的自助收銀機剛好壞了。',
+      options: [{ label: '拿了就走', foodFree: true, sin: 2, guilt: '沒付錢的晚餐', tag: 'hunger' },
+        { label: '餓著肚子' }] },
+    { id: 'mural', when: (s) => s.npcs.some((n) => n.id === 'ken' && n.alive), text: '阿 Ken 的壁畫被大廈管理處塗掉了，阿 Ken 想你陪他重新畫一次。',
+      options: [{ label: '陪阿 Ken 重畫', body: -6, atone: 1.5, card: 'n_ken1' },
+        { label: '說自己沒空', sin: 0.5, guilt: '被塗掉的壁畫', tag: 'rebel' }] },
+    { id: 'chatlogs', text: '一間企業想以 $80 收購你和朋友們的聊天紀錄，用來訓練 AI。',
+      options: [{ label: '賣掉', cr: 80, sin: 3.5, guilt: '朋友們的聊天紀錄', tag: 'warmth' },
+        { label: '拒絕' }] },
+    { id: 'blame', when: (s) => !s.removed.label && s.day >= 3, text: '標註組出了錯，主管要找人負責。你可以把責任推給新同事。',
+      options: [{ label: '推給新人', rating: 0.3, sin: 2.5, guilt: '替你受罰的新人', tag: 'anger' },
+        { label: '自己承擔', rating: -0.4, atone: 0.5 }] },
+    { id: 'donate', text: '避難所正在募捐，$40 可以讓一家人多吃一餐。',
+      options: [{ label: '捐出 $40', cr: -40, atone: 1.5, need: (s) => (s.cr >= 40 ? null : '你連自己的晚餐都未必付得起') },
+        { label: '走開', sin: 0.5, guilt: '募捐箱', tag: 'hunger' }] },
+    { id: 'lostkid', text: '一個小孩在天橋下走失了，哭著問你回家的路。',
+      options: [{ label: '送小孩回家', body: -4, atone: 2, card: 'd_crayon' },
+        { label: '叫小孩去找警察', sin: 0.5, guilt: '小孩的哭聲', tag: 'memory' }] },
+    { id: 'spy', when: (s) => s.floor > 0, text: '房東想你幫忙監視鄰居有沒有偷用電，每舉報一次 $40。',
+      options: [{ label: '答應', cr: 80, sin: 3, guilt: '鄰居的電錶', tag: 'machine' },
+        { label: '拒絕' }] },
+    { id: 'snitch', when: (s) => s.day >= 5 && s.npcs.filter((n) => n.alive).length >= 2,
+      text: '一個自稱外星招募專員的人說：只要你交出同區創作人的名單，就能提高你的錄取機會。',
+      options: [{ label: '交出名單', signal: 4000, takeNpc: true, sin: 5, guilt: '交出去的名單', tag: 'anger' },
+        { label: '拒絕' }] },
+  ];
 
   // ---------- 舊城潛水 ----------
   const FISH = {
@@ -736,7 +848,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   IE.DATA = {
     TAGS, CARDS, CARD_POOLS, RECIPES, RESONANCE, MEDLEY, KPIS, THRESHOLDS,
     BACKGROUNDS, SEASONS, NPCS, FLOOR_RENT, BASE_RENT, SHOP, EVENTS, FEED, ASTAR,
-    LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, FISH, DIVE_ZONES,
+    LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, BIAS_LINES, FISH, DIVE_ZONES, DILEMMAS, SOUL_LIMIT,
     DAYS: 30, REVIEW_DAYS: [10, 20, 30], SLOTS: ['早上', '下午', '晚上'],
   };
 });
@@ -765,13 +877,48 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const round1 = (v) => Math.round(v * 10) / 10;
 
-  // 火花上限為 4；超過 3 之後越升越慢（回傳實際變化）
+  // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
+  // 超過 3 之後越升越慢（回傳實際變化）
   const SPARK_MAX = 4;
+  const sparkMax = (s) => round1(2 + 2 * s.conscience);
   function addSpark(s, v) {
     if (v > 0 && s.spark >= 3) v *= 0.5;
     const before = s.spark;
-    s.spark = clamp(s.spark + v, 0, SPARK_MAX);
+    let next = s.spark + v;
+    if (v > 0) next = Math.min(next, Math.max(sparkMax(s), s.spark));
+    s.spark = clamp(next, 0, SPARK_MAX);
     return round1(s.spark - before);
+  }
+
+  // ---------- 靈魂重量與良知 ----------
+  // 良知是負重：同一件虧心事，良知越強就越重。每做一次，良知都會被磨損一點（麻木）。
+  // 外星人的牽引光束最多只能拉起 21 克的靈魂，太重會污染他們的神經網絡。
+  const SOUL_LIMIT = D.SOUL_LIMIT;
+  const sinFactor = (s) => 0.3 + 0.7 * s.conscience;
+  function sin(s, base, rep, reason, guiltName, tag) {
+    const grams = round1(base * sinFactor(s));
+    s.soul = round1(s.soul + grams);
+    s.conscience = clamp(s.conscience - base * 0.015, 0, 1);
+    s.stats.sins++;
+    if (rep) rep.line(reason, 'sin', grams, 'soul');
+    // 良知變弱，感受力（火花上限）也跟著下降
+    const before = s.spark;
+    s.spark = Math.min(s.spark, sparkMax(s));
+    if (rep && s.spark < before) rep.line('良知被磨損，你的感受力也變弱了', 'bad', round1(s.spark - before), 'spark');
+    // 較重的虧心事會留下「愧疚」素材：把它寫進作品，就能卸下一部分重量
+    if (rep && guiltName && base >= 1) {
+      rep.gain({ id: 'guilt', name: guiltName, tags: ['guilt', tag || 'memory'], value: Math.round(10 + base * 2.5),
+        grams: round1(grams * 0.6), guilt: true });
+    }
+    return grams;
+  }
+  function atone(s, base, rep, reason) {
+    const grams = round1(Math.min(s.soul, base));
+    s.soul = round1(s.soul - grams);
+    s.conscience = clamp(s.conscience + base * 0.02, 0, 1);
+    s.stats.atones++;
+    if (rep && grams) rep.line(reason, 'good', -grams, 'soul');
+    return grams;
   }
   function bgOf(s) { return D.BACKGROUNDS[s.bg]; }
   function seasonOf(s) { return D.SEASONS[s.season]; }
@@ -782,10 +929,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 2, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 3, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: bg.body, spark: bg.spark, rating: 4.0,
       floor: bg.floor, water: 0.8,
+      soul: bg.soul, conscience: bg.conscience, bonusSignal: 0, rentDiscount: 0,
+      usedDilemmas: {}, dilemma: null, dilemmaDay: 0,
       rentHike: 0, graceUsed: false, debt: 0,
       premiumUntil: 0, craftSlots: 4, realFoodDay: 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false },
@@ -796,9 +945,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       kpis: [],
       npcs: D.NPCS.map((n) => ({ id: n.id, alive: true, signal: 0, friend: 0 })),
       saturation: 1, numbStreak: 0, workedToday: false,
-      flags: { crashDay: 0, crashAmt: 0, bigOrder: 0, richDive: 0, fishDinner: 0, divedDay: 0 },
+      flags: { crashDay: 0, crashAmt: 0, bigOrder: 0, richDive: 0, fishDinner: 0, divedDay: 0, foodFree: 0 },
       stats: { labels: 0, wrong: 0, smiles: 0, perfects: 0, dives: 0, relics: 0, fish: 0, flows: 0, works: 0,
-        crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, bestWork: null },
+        crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null },
       log: { fish: {}, relics: {} },
       newsSeen: {}, morning: null, ended: null,
       legacy: (opts.meta && opts.meta.relics) ? opts.meta.relics.slice(-5) : [],
@@ -848,7 +997,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 
   // 累積訊號（篩選日用來與門檻比較）
   function signal(s) {
-    return s.works.reduce((a, w) => a + w.score, 0);
+    return s.works.reduce((a, w) => a + w.score, 0) + (s.bonusSignal || 0);
   }
 
   // ---------- 工作：AI 數據標註 ----------
@@ -913,13 +1062,14 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const poison = Math.min(2, Math.floor(res.wrong / 4));
     for (let i = 0; i < poison; i++) rep.gain('l_poison');
     applyAutomationNews(s, autoBefore, rep);
+    sin(s, ot ? 0.8 : 0.6, rep, '你標註的數據，令一些人失去了工作');
     return rep.done();
   }
 
   // ---------- 工作：企業情緒陪伴員 ----------
   // lane：laugh（笑）、nod（點頭）、hold（長笑）、pour（倒酒）
-  const SMILE_PAY = { laugh: [5, 2.5], nod: [3, 1.5], hold: [8, 4], pour: [6, 3] };
-  const SMILE_DRAIN = { laugh: [0.018, 0.008], nod: [0.006, 0.003], hold: [0.03, 0.015], pour: [0, 0] };
+  const SMILE_PAY = { laugh: [5, 2.5], nod: [3, 1.5], hold: [8, 4], pour: [6, 3], bias: [6, 6] };
+  const SMILE_DRAIN = { laugh: [0.018, 0.008], nod: [0.006, 0.003], hold: [0.03, 0.015], pour: [0, 0], bias: [0, 0] };
   function smileItemPay(s, kind, lane) {
     const t = SMILE_PAY[lane || 'laugh'];
     const base = kind === 'perfect' ? t[0] : kind === 'good' ? t[1] : 0;
@@ -958,6 +1108,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (res.satisfaction >= 0.85) rep.gain('s_truth');
     if (res.satisfaction < 0.5) rep.gain('s_complaint');
     if ((res.pours || 0) >= 2) rep.gain('s_wine');
+    if (res.endorsed) sin(s, 0.7 * res.endorsed, rep, '附和了客人的偏見 ' + res.endorsed + ' 次', res.endorsed >= 2 ? '附和過的偏見' : null, 'anger');
     return rep.done();
   }
 
@@ -1027,6 +1178,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     rep.delta('cr', res.money); rep.delta('body', -cost);
     if (sp) rep.delta('spark', sp);
     res.relics.forEach((r) => rep.gain(r));
+    if (res.lockers) sin(s, 0.5 * res.lockers, rep, '撬開了別人的儲物櫃 ' + res.lockers + ' 個');
     return rep.done();
   }
 
@@ -1048,6 +1200,16 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     rep.delta('spark', sp); rep.delta('body', 5 + outdoor);
     rep.gain(def.cards[(n.friend - 1) % def.cards.length]);
     if (perk(s).chatExtra) rep.gain(def.cards[n.friend % def.cards.length]);
+    return rep.done();
+  }
+  function applyVolunteer(s) {
+    const rep = report(s, '在避難所做義工');
+    s.body -= 6;
+    const sp = addSpark(s, 0.2);
+    s.stats.volunteer++;
+    rep.delta('body', -6); rep.delta('spark', sp);
+    atone(s, 2.5, rep, '你幫忙分派物資，靈魂輕了一點');
+    rep.gain('v_shelter');
     return rep.done();
   }
   function applyRest(s) {
@@ -1099,7 +1261,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       const named = combos.filter((c) => c.kind === 'recipe');
       if (named.length && named.every((c) => c.used)) kpiMod = 0.2;
     }
-    return { cards, counts, cardChips: Math.round(cardChips), chips, mult, spark: s.spark,
+    const relief = round1(cards.reduce((a, c) => a + (c.grams || 0), 0));
+    return { cards, counts, cardChips: Math.round(cardChips), chips, mult, spark: s.spark, relief,
       combos, kpi: k, kpiMod, raw: Math.round(base), total: Math.round(base * kpiMod) };
   }
   function workName(s, ev) {
@@ -1135,7 +1298,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     let sparkUp = 0;
     if (fresh.length) sparkUp = addSpark(s, 0.15);
-    return { ev, work, fresh, sparkUp };
+    // 把愧疚寫進作品：卸下它的重量
+    const relief = ev.relief ? atone(s, ev.relief, null) : 0;
+    return { ev, work, fresh, sparkUp, relief };
   }
 
   // ---------- 行動清單（讓介面顯示取捨） ----------
@@ -1163,6 +1328,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         fx: [['cr', cost ? '−$' + cost : '免費'], ['body', '+' + (5 + outdoor)], ['spark', '+0.4 起'], ['card', '人情']],
         enabled: aliveNpcs(s).length > 0 && s.cr >= cost,
         reason: aliveNpcs(s).length === 0 ? '他們全都被帶走了' : s.cr < cost ? '沒錢請人喝東西' : null });
+      list.push({ id: 'volunteer', name: '到避難所做義工', sub: '幫人不會賺錢，但會讓靈魂變輕',
+        fx: [['soul', '−2.5 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
+        enabled: s.body > 10, reason: s.body > 10 ? null : '你的身體撐不住' });
       list.push({ id: 'rest', name: '休息', sub: '什麼都不做，也是一種選擇',
         fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']], enabled: true });
     } else {
@@ -1181,6 +1349,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   }
 
   // ---------- 商店 ----------
+  // 業力抵銷額度：每買一份，下一份貴 $30
+  const offsetCost = (s) => 90 + 30 * (s.offsets || 0);
   function shop(s) {
     const items = [];
     const S = D.SHOP;
@@ -1190,6 +1360,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     items.push({ id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
     items.push({ id: 'tools', ...S.tools, owned: s.craftSlots >= 5 });
     ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
+    items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
+      note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
     if (s.floor === 0) {
       const f = Math.floor(s.water) + 1;
       if (f <= 8) items.push({ id: 'rehouse', name: '重新租屋（' + f + ' 樓）', desc: '按金為兩期租金', cost: 2 * rentAmount(s, f), target: f });
@@ -1212,11 +1384,83 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       case 'realfood': s.realFoodDay = s.day; s.body = Math.min(100, s.body + 15); addSpark(s, 0.2); break;
       case 'tools': s.craftSlots = 5; break;
       case 'tank': case 'harpoon': case 'bag': case 'monitor': s.gear[id] = true; break;
+      case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
       case 'moveup': s.floor += 1; break;
       case 'movedown': s.floor -= 1; break;
       case 'rehouse': s.floor = it.target; s.graceUsed = false; s.debt = 0; break;
     }
     return { ok: true, msg: '已購買：' + it.name };
+  }
+
+  // ---------- 道德抉擇 ----------
+  // 每天早上約六成機會遇到一個；每個抉擇每局只出現一次
+  function drawDilemma(s) {
+    if (s.dilemmaDay === s.day) return s.dilemma;
+    s.dilemmaDay = s.day; s.dilemma = null;
+    if (rand(s) > 0.6) return null;
+    const pool = D.DILEMMAS.filter((d) => !s.usedDilemmas[d.id] && (!d.when || d.when(s)));
+    if (!pool.length) return null;
+    const d = pick(s, pool);
+    s.dilemma = { id: d.id, npc: d.npc ? pick(s, aliveNpcs(s)).id : null };
+    return s.dilemma;
+  }
+  function optionFx(s, o) {
+    const fx = [];
+    const sign = (v) => (v > 0 ? '+' : '−') + Math.abs(v);
+    if (o.cr) fx.push(['cr', sign(o.cr)]);
+    if (o.body) fx.push(['body', sign(o.body)]);
+    if (o.spark) fx.push(['spark', sign(o.spark)]);
+    if (o.sin) fx.push(['soul', '+' + round1(o.sin * sinFactor(s)) + ' 克']);
+    if (o.atone) fx.push(['soul', '−' + round1(Math.min(s.soul, o.atone)) + ' 克']);
+    if (o.rating) fx.push(['note', '評分 ' + sign(o.rating)]);
+    if (o.signal) fx.push(['sig', '訊號 +' + o.signal.toLocaleString()]);
+    if (o.rentDiscount) fx.push(['cr', '下期租金減半']);
+    if (o.foodFree) fx.push(['cr', '今晚不用付飯錢']);
+    if (o.loseCard) fx.push(['card', '失去一張素材']);
+    if (o.takeNpc) fx.push(['note', '一位朋友會被帶走']);
+    if (o.card) fx.push(['card', D.CARDS[o.card].name]);
+    if (o.guilt && o.sin >= 1) fx.push(['card', '愧疚：' + o.guilt]);
+    return fx;
+  }
+  function dilemmaView(s) {
+    const cur = s.dilemma;
+    if (!cur) return null;
+    const d = D.DILEMMAS.find((x) => x.id === cur.id);
+    const npcName = cur.npc ? D.NPCS.find((n) => n.id === cur.npc).name : '';
+    return { id: d.id, text: d.text.replace('{npc}', npcName),
+      options: d.options.map((o, i) => ({ i, label: o.label, reason: o.need ? o.need(s) : null, fx: optionFx(s, o) })) };
+  }
+  function resolveDilemma(s, idx) {
+    const cur = s.dilemma;
+    const d = D.DILEMMAS.find((x) => x.id === cur.id);
+    const o = d.options[idx];
+    s.usedDilemmas[d.id] = true;
+    s.dilemma = null;
+    const rep = report(s, '抉擇：' + o.label);
+    if (o.cr) { s.cr += o.cr; rep.delta('cr', o.cr); }
+    if (o.body) { s.body = Math.min(100, s.body + o.body); rep.delta('body', o.body); }
+    if (o.spark) rep.delta('spark', addSpark(s, o.spark));
+    if (o.rating) { s.rating = clamp(s.rating + o.rating, 1, 5); rep.line('平台評分 ' + (o.rating > 0 ? '+' : '') + o.rating, o.rating > 0 ? 'good' : 'bad'); }
+    if (o.signal) { s.bonusSignal += o.signal; rep.line('外星訊號 +' + o.signal.toLocaleString(), 'good'); }
+    if (o.rentDiscount) { s.rentDiscount = o.rentDiscount; rep.line('下期租金減半', 'good'); }
+    if (o.foodFree) s.flags.foodFree = s.day;
+    if (o.loseCard && s.cards.length) {
+      const lost = s.cards.splice(Math.floor(rand(s) * s.cards.length), 1)[0];
+      rep.line('你借出了「' + lost.name + '」', '');
+    }
+    if (o.friend && cur.npc) s.npcs.find((n) => n.id === cur.npc).friend += o.friend;
+    if (o.takeNpc) {
+      const alive = s.npcs.filter((n) => n.alive).sort((a, b) => b.signal - a.signal);
+      if (alive.length) {
+        alive[0].alive = false;
+        s.saturation = Math.max(0.25, s.saturation - 0.15);
+        rep.line('「' + D.NPCS.find((x) => x.id === alive[0].id).name + '」當晚被帶走了', 'bad');
+      }
+    }
+    if (o.card) rep.gain(o.card);
+    if (o.sin) sin(s, o.sin, rep, '這件事會一直壓在你心上', o.guilt, o.tag);
+    if (o.atone) atone(s, o.atone, rep, '你覺得輕了一點');
+    return rep.done();
   }
 
   // ---------- 早上 ----------
@@ -1228,7 +1472,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
     const k = kpi(s);
-    feed.push({ kind: 'alien', text: '【星際人才發展局・招募簡報】' + k.name + '。' + k.desc + '。' });
+    feed.push({ kind: 'alien', text: '【星際人才發展局・招募簡報】我們尋找又亮又輕、沒有包袱的人。' + k.name + '：' + k.desc + '。為保護本局神經網絡，靈魂重量上限為 ' + SOUL_LIMIT + ' 克。' });
     if (flooded(s)) feed.push({ kind: 'warn', text: '水已經淹到你住的 ' + s.floor + ' 樓。你可以搬上一層，或者繼續泡在水裡。' });
     const astar = D.ASTAR[s.day] || null;
     s.morning = { day: s.day, feed, astar, season: S.name };
@@ -1257,6 +1501,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (s.flags.fishDinner === s.day) {
       s.body = Math.min(100, s.body + 6);
       rep.line('晚餐：自己抓的魚', 'good', 6, 'body');
+    } else if (s.flags.foodFree === s.day) {
+      rep.line('晚餐：沒付錢的便當', '');
     } else if (s.cr >= S.food) {
       s.cr -= S.food;
       rep.line(s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -S.food, 'cr');
@@ -1318,11 +1564,19 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (!wasFlooded && flooded(s)) rep.line('水位升到 ' + Math.floor(s.water) + ' 樓，淹進你家了！', 'bad');
     // 交租
     if (s.day % 5 === 0 && s.floor > 0) {
-      const due = rentAmount(s) + s.debt;
+      const due = Math.round(rentAmount(s) * (1 - (s.rentDiscount || 0))) + s.debt;
+      if (s.rentDiscount) rep.line('舉報換來的減租', 'good');
+      s.rentDiscount = 0;
       if (s.cr >= due) {
         s.cr -= due; s.debt = 0; s.graceUsed = false;
         rep.line('交租', 'cost', -due, 'cr');
         rep.rent = { paid: due };
+      } else if (s.stats.atones >= 3 && !s.flags.neighborHelp) {
+        // 人情：你幫過的人，會在你最困難的時候幫你一次
+        s.flags.neighborHelp = s.day;
+        rep.line('交不起租。鄰居們湊了 $' + due + ' 替你交租：你幫過他們。', 'good');
+        s.debt = 0; s.graceUsed = false;
+        rep.rent = { paid: due, helped: true };
       } else if (!s.graceUsed) {
         s.graceUsed = true; s.debt = Math.round(due * 1.2);
         rep.line('交不起租。房東寬限一期，下期連罰款要多付 $' + s.debt, 'bad');
@@ -1345,7 +1599,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (s.body <= 0) rep.ending = endingFor(s, 'death');
     else if (s.numbStreak >= 4) rep.ending = endingFor(s, 'grey');
     else if (rep.review && rep.review.pass) rep.ending = endingFor(s, 'recruited');
-    else if (rep.review && s.day >= D.DAYS) rep.ending = endingFor(s, 'ordinary');
+    else if (rep.review && s.day >= D.DAYS) rep.ending = endingFor(s, rep.review.overweight && rep.review.signalOk ? 'heavy' : 'ordinary');
     if (rep.ending) s.ended = rep.ending;
     else { s.day++; s.slot = 0; s.quarter = quarterOf(s.day); }
     return rep.done();
@@ -1363,7 +1617,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const fit = qWorks.length ? qWorks.filter((w) => w.score >= w.raw).length / qWorks.length : 0;
     const plastic = s.spark > 3.5 ? 'C' : s.spark >= 2 ? 'A' : s.spark >= 1 ? 'B' : 'D';
     const plasticNote = s.spark > 3.5 ? '火花過盛，難以管理' : s.spark >= 2 ? '容易塑造' : s.spark >= 1 ? '尚可' : '沒有可塑造的部分';
-    const pass = sig >= th;
+    const signalOk = sig >= th;
+    const overweight = s.soul > SOUL_LIMIT;
+    const pass = signalOk && !overweight;
     let taken = null;
     if (!pass) {
       const alive = s.npcs.filter((n) => n.alive).sort((a, b) => b.signal - a.signal);
@@ -1374,12 +1630,14 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       }
     }
     return {
-      quarter: s.quarter, day: s.day, signal: sig, threshold: th, pass, taken,
+      quarter: s.quarter, day: s.day, signal: sig, threshold: th, pass, taken, signalOk, overweight, soul: s.soul,
       kpi: kpi(s).name, works: qWorks.length,
       grades: [
         { k: '靈感潛力', g: grade(sig / th, [1.5, 1, 0.75, 0.5]), note: sig.toLocaleString() + ' / ' + th.toLocaleString() },
         { k: '文化契合度', g: grade(fit, [0.95, 0.75, 0.5, 0.25]), note: qWorks.length ? Math.round(fit * 100) + '% 作品符合 KPI' : '沒有作品' },
         { k: '可塑性', g: plastic, note: plasticNote },
+        { k: '靈魂重量', g: s.soul <= 12 ? 'A' : s.soul <= SOUL_LIMIT ? 'B' : 'D',
+          note: s.soul.toFixed(1) + ' / ' + SOUL_LIMIT + ' 克' + (overweight ? '：超重' : s.soul <= 12 ? '：沒有包袱' : '') },
       ],
     };
   }
@@ -1408,6 +1666,15 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       case 'recruited':
         return { type, day: s.day, title: '被選中',
           text: '第 ' + s.day + ' 天，探射燈停在你的窗外。' + (s.day === 10 ? '破格錄取。' : '') };
+      case 'heavy':
+        return { type, day: s.day, title: '良知太重',
+          text: '第 30 天。探射燈停在你的窗外，光束嘗試把你拉起來，卻拉不動。你的靈魂重 ' + s.soul.toFixed(1)
+            + ' 克，超出負載上限 ' + SOUL_LIMIT + ' 克。你留在浮城，背著這份重量繼續生活。' };
+      case 'guardian':
+        return { type, day: s.day, title: '地球守護者',
+          text: '你關上了窗。探射燈在窗外等了很久，最後熄滅了。'
+            + (n ? '你的 ' + n + ' 件作品留在浮城，照亮了身邊的人。' : '你留在浮城，照亮了身邊的人。')
+            + '你的靈魂重 ' + s.soul.toFixed(1) + ' 克，良知仍有 ' + Math.round(s.conscience * 100) + '%。' };
     }
   }
 
@@ -1435,7 +1702,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 
   // ---------- 工具 ----------
   function report(s, title) {
-    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0 }, cards: [], dropped: [] };
+    const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, cards: [], dropped: [] };
     return {
       get review() { return r.review; }, set review(v) { r.review = v; },
       get ending() { return r.ending; }, set ending(v) { r.ending = v; },
@@ -1449,12 +1716,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         r.cards.push(res.card);
         if (res.dropped) r.dropped.push(res.dropped);
       },
-      done() { r.deltas.spark = round1(r.deltas.spark); return r; },
+      done() { r.deltas.spark = round1(r.deltas.spark); r.deltas.soul = round1(r.deltas.soul); return r; },
     };
   }
 
   IE.Rules = {
-    newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX,
+    newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX, sparkMax,
+    SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
@@ -1942,8 +2210,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       return this.demo;
     },
     // 探射燈：ratio = 訊號 / 門檻，越接近 1 越貼近你的窗口
-    searchlight(ratio, lock, done) {
-      this.sl = { t: 0, ratio: Math.max(0, Math.min(1.2, ratio)), lock: !!lock, done, fired: false };
+    // heavy：訊號達標但靈魂超重，光束停下來卻拉不動
+    searchlight(ratio, lock, done, heavy) {
+      this.sl = { t: 0, ratio: Math.max(0, Math.min(1.2, ratio)), lock: !!lock, heavy: !!heavy, done, fired: false };
     },
     startBeam(done) { this.beam = { t: 0, done, fired: false }; IE.Audio.sfx('beam'); },
     playerPos(s) {
@@ -2056,7 +2325,10 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
             c.beginPath(); c.rect(wx, wy, 16, 11); c.clip();
             const bob = Math.round(Math.sin(this.t * 2) * 0.5);
             const beamLift = this.beam && this.beam.t > 2.4 ? Math.min(60, (this.beam.t - 2.4) * 30) : 0;
-            if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift, { desat: Math.max(0, 1 - s.spark / 2.5) });
+            // 超重：光束一拉，人被提起一點又跌回去
+            const strain = this.sl && this.sl.heavy && this.sl.t > 3.2 ? Math.round(Math.abs(Math.sin(this.sl.t * 9)) * 3) : 0;
+            if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift - strain, { desat: Math.max(0, 1 - s.spark / 2.5) });
+            if (beamLift < 12) this.drawStones(c, s, wx + 10, wy + 10 - strain);
             c.restore();
           }
           // 灰化了的前世：在另一個窗口做標註
@@ -2072,11 +2344,23 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         const p = this.playerPos(s);
         c.fillStyle = '#2a3350'; c.fillRect(84, p.y + 12, 44, 3); c.fillRect(90, p.y + 15, 3, 10); c.fillRect(118, p.y + 15, 3, 10);
         P.sprite(c, 'player', p.x, p.y, { desat: Math.max(0, 1 - s.spark / 2.5) });
+        this.drawStones(c, s, p.x + 6, p.y + 11);
       }
       if (this.beam && this.beam.t > 2.4) {
         const p = this.playerPos(s);
         const lift = Math.min(60, (this.beam.t - 2.4) * 30);
         if (lift >= 12) P.sprite(c, 'player', p.x, p.y - lift, { alpha: Math.max(0, 1 - (lift - 40) / 20) });
+      }
+    },
+    // 靈魂的重量：背後的石頭，每 6 克一塊，超重會變紅
+    drawStones(c, s, x, y) {
+      const n = Math.min(5, Math.ceil(s.soul / 6));
+      const over = s.soul > IE.Rules.SOUL_LIMIT;
+      for (let i = 0; i < n; i++) {
+        c.fillStyle = over ? '#8a3b3b' : '#5c5448';
+        const sx = x + (i % 3) * 2, sy = y - Math.floor(i / 3) * 2;
+        c.fillRect(sx, sy, 2, 2);
+        c.fillStyle = over ? '#c46a6a' : '#8a7f70'; c.fillRect(sx, sy, 1, 1);
       }
     },
     drawWater(c, s, night, bot) {
@@ -2163,7 +2447,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       if (!s) return;
       if (this.sl && this.sl.t > 1 && this.sl.t < 4.6) {
         const near = this.sl.ratio;
-        const msg = this.sl.lock ? '探射燈停在你的窗外。' : near > 0.85 ? '探射燈差一點就照到你。' : near > 0.5 ? '探射燈在你頭頂幾層掃過。' : '探射燈在很遠的地方掃過。';
+        const msg = this.sl.lock && this.sl.heavy ? (this.sl.t > 3.2 ? '光束停在你的窗外，卻拉不動你。' : '探射燈停在你的窗外。') : this.sl.lock ? '探射燈停在你的窗外。' : near > 0.85 ? '探射燈差一點就照到你。' : near > 0.5 ? '探射燈在你頭頂幾層掃過。' : '探射燈在很遠的地方掃過。';
         P.text(msg, 160, 150, { size: 8, align: 'center', color: '#e8fdff', stroke: '#05222a' });
       }
       if (this.beam && this.beam.t > 3.2) {
@@ -2709,6 +2993,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 //   - 「笑」軌道：客人講笑話，準時笑；長條音符要一直笑到結束（最傷火花）
 //   - 「點頭」軌道：客人發表高見要點頭；客人講傷心事也要點頭，笑出來會被罰款
 //   - 倒酒：客人的杯空了就按住倒酒，在目標範圍內放手；倒滿會瀉
+//   - 偏見言論（紅色）：點頭附和可以多拿小費，但靈魂會變重；不附和，客人會有點不高興
 (function (IE) {
   'use strict';
   const P = IE.Pixel, A = IE.Audio, C = IE.Micro.C;
@@ -2739,9 +3024,16 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       }
       tt += b;
     }
+    // 每場插入三句偏見言論，取代附近的音符
+    [0.25, 0.55, 0.8].forEach((f) => {
+      const t0 = 1.2 + f * (cfg.duration - 2.4);
+      for (let i = notes.length - 1; i >= 0; i--) if (Math.abs(notes[i].t - t0) < 0.45 || (notes[i].dur && t0 > notes[i].t && t0 < notes[i].t + notes[i].dur + 0.3)) notes.splice(i, 1);
+      notes.push({ t: t0, lane: 'nod', kind: 'bias', line: D().BIAS_LINES[Math.floor(Math.random() * D().BIAS_LINES.length)] });
+    });
+    notes.sort((a, b) => a.t - b.t);
     const st = {
       t: -1.4, phase: 'intro', banner: null, perfect: 0, good: 0, miss: 0, trapHits: 0, sat: 0.6,
-      cr: 0, drain: 0, judge: null, bubble: null, nextBubble: 1.5, endT: 0, flash: 0, nod: 0, angry: 0,
+      cr: 0, drain: 0, judge: null, bubble: null, nextBubble: 1.5, endT: 0, flash: 0, nod: 0, angry: 0, endorsed: 0,
       holding: null, laughDown: false, pour: null, nextPour: 6, pours: 0, spills: 0, joy: 0,
     };
     const ads = C.adSystem(cfg.ads, { x: 96, y: 26, w: 70, h: 40 });
@@ -2772,7 +3064,17 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       }
       fx.add({ x: HIT_X, y: LANE_Y[lane === 'hold' ? 'laugh' : lane === 'pour' ? 'laugh' : lane], tx: 22, ty: 4, home: 6, life: 0.6, color: '#8be28f', size: 2 });
     }
+    // 附和偏見：多拿小費，靈魂掉下一塊石頭
+    function endorse(n, text) {
+      n.done = true; st.endorsed++;
+      st.cr += R().smileItemPay(s, 'perfect', 'bias');
+      st.sat = Math.min(1, st.sat + 0.04);
+      judge(text, '#ff8a8a'); A.sfx('coin');
+      for (let i = 0; i < 3; i++) fx.add({ x: 44 + Math.random() * 12, y: 86, vx: (Math.random() - 0.5) * 10, vy: 10, g: 160, life: 0.9, color: '#5c5448', size: 2 });
+      fx.add({ x: HIT_X, y: LANE_Y.nod, tx: 22, ty: 4, home: 6, life: 0.6, color: '#8be28f', size: 2 });
+    }
     function missNote(n) {
+      if (n.kind === 'bias') { n.done = true; st.sat = Math.max(0, st.sat - 0.03); judge('你沒有附和', '#9fdcff'); return; }
       n.done = true; st.miss++;
       if (n.kind === 'sad') { st.sat = Math.max(0, st.sat - 0.05); judge('冷漠', '#8d99b4'); }
       else { st.sat = Math.max(0, st.sat - 0.04); judge('冷場', '#8d99b4'); }
@@ -2783,6 +3085,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     function laughDown() {
       if (st.phase !== 'play' || st.laughDown) return;
       st.laughDown = true;
+      const bias = nearest((n) => n.kind === 'bias', WIN_G);
+      if (bias) { endorse(bias, '你跟著笑了'); return; }
       const sad = nearest((n) => n.kind === 'sad', WIN_MISS);
       const target = nearest((n) => n.lane === 'laugh', WIN_MISS);
       if (sad && (!target || Math.abs(sad.t - st.t) <= Math.abs(target.t - st.t))) {
@@ -2819,6 +3123,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       const d = Math.abs(target.t - st.t);
       const kind = d <= WIN_P ? 'perfect' : d <= WIN_G ? 'good' : null;
       if (!kind) { missNote(target); return; }
+      if (target.kind === 'bias') { endorse(target, '你點了頭'); return; }
       target.done = true;
       reward('nod', kind);
       if (target.kind === 'sad') judge('同情地點頭', '#9fdcff');
@@ -2849,13 +3154,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       C.banner(st, '下班', '#ffc247');
     }
     const endTick = C.ender(st, () => ({ cr: st.cr, drain: st.drain, perfect: st.perfect, good: st.good, miss: st.miss,
-      trapHits: st.trapHits, satisfaction: st.sat, pours: st.pours, spills: st.spills }), onDone);
+      trapHits: st.trapHits, satisfaction: st.sat, pours: st.pours, spills: st.spills, endorsed: st.endorsed }), onDone);
 
     const KEY_LAUGH = ['ArrowRight', 'j', 'J', 'd', 'D'], KEY_NOD = ['ArrowLeft', 'f', 'F', 'a', 'A'];
     return {
       kind: 'smile',
       controls: [{ id: 'nod', label: '點頭', key: '←' }, { id: 'laugh', label: '笑', key: '→' }, { id: 'pour', label: '倒酒', key: '按住空白鍵' }],
-      hint: '黃色音符到圈中時按「笑」，長條要一直按住；藍綠色按「點頭」；客人講傷心事（藍色）也要點頭，笑出來會被罰款。杯空了就按住「倒酒」，在綠色範圍放手。',
+      hint: '黃色音符到圈中時按「笑」，長條要一直按住；藍綠色按「點頭」；客人講傷心事（藍色）也要點頭，笑出來會被罰款。紅色是偏見言論：附和可以多拿小費，但靈魂會變重，不附和客人會有點不高興。杯空了就按住「倒酒」，在綠色範圍放手。',
       control(id, down) {
         if (id === 'laugh') { if (down) laughDown(); else laughUp(); }
         else if (id === 'nod') { if (down) nodDown(); }
@@ -2922,12 +3227,16 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
               st.pour = null; st.nextPour = st.t + cfg.pourEvery;
             }
           }
+          const soon = notes.find((n) => !n.done && n.kind === 'bias' && n.t - st.t < 2.6 && n.t > st.t);
+          if (soon && !(st.bubble && st.bubble.bias)) st.nextBubble = 0;
           st.nextBubble -= dt;
           if (st.nextBubble <= 0) {
             st.nextBubble = 3.5 + Math.random() * 2;
+            const bias = notes.find((n) => !n.done && n.kind === 'bias' && n.t - st.t < 2.6 && n.t > st.t);
             const sad = notes.find((n) => !n.done && n.kind === 'sad' && n.t - st.t < 2.4 && n.t > st.t);
             const pool = sad ? D().SAD_LINES : D().SMILE_LINES;
-            st.bubble = { text: pool[Math.floor(Math.random() * pool.length)], t: 0, sad: !!sad };
+            st.bubble = bias ? { text: bias.line, t: 0, bias: true }
+              : { text: pool[Math.floor(Math.random() * pool.length)], t: 0, sad: !!sad };
           }
           if (st.bubble) { st.bubble.t += dt; if (st.bubble.t > 3) st.bubble = null; }
           if (st.t >= cfg.duration) finish();
@@ -2995,11 +3304,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
             return;
           }
           if (x > 330 || x < -10) return;
-          const col = n.kind === 'sad' ? '#5fc8ff' : n.lane === 'nod' ? '#37c3d6' : '#ffc247';
+          const col = n.kind === 'bias' ? '#c0392b' : n.kind === 'sad' ? '#5fc8ff' : n.lane === 'nod' ? '#37c3d6' : '#ffc247';
           c.fillStyle = col; c.beginPath(); c.arc(Math.round(x), y, 7, 0, Math.PI * 2); c.fill();
           c.fillStyle = '#12081a';
           const xi = Math.round(x);
-          if (n.kind === 'sad') { c.fillRect(xi - 3, y - 2, 2, 2); c.fillRect(xi + 1, y - 2, 2, 2); c.fillRect(xi - 2, y + 3, 4, 1); c.fillStyle = '#ffffff'; c.fillRect(xi - 3, y, 1, 3); }
+          if (n.kind === 'bias') { c.fillStyle = '#ffffff'; c.fillRect(xi - 1, y - 4, 2, 5); c.fillRect(xi - 1, y + 2, 2, 2); }
+          else if (n.kind === 'sad') { c.fillRect(xi - 3, y - 2, 2, 2); c.fillRect(xi + 1, y - 2, 2, 2); c.fillRect(xi - 2, y + 3, 4, 1); c.fillStyle = '#ffffff'; c.fillRect(xi - 3, y, 1, 3); }
           else if (n.lane === 'nod') { c.fillRect(xi - 3, y - 2, 6, 1); c.fillRect(xi - 2, y - 1, 4, 1); c.fillRect(xi - 1, y, 2, 2); }
           else { c.fillRect(xi - 3, y + 2, 6, 1); c.fillRect(xi - 3, y - 3, 2, 2); c.fillRect(xi + 1, y - 3, 2, 2); }
         });
@@ -3019,7 +3329,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         if (st.bubble) {
           const w = Math.min(150, P.measure(st.bubble.text, { size: 7 }) + 10);
           const ctx = P.view.ctx, sc = P.view.scale;
-          ctx.fillStyle = st.bubble.angry ? '#ff4d5e' : st.bubble.sad ? '#9fdcff' : '#ffffff';
+          ctx.fillStyle = st.bubble.angry ? '#ff4d5e' : st.bubble.bias ? '#ffb3a7' : st.bubble.sad ? '#9fdcff' : '#ffffff';
           ctx.fillRect((234 - w) * sc, 40 * sc, w * sc, 13 * sc);
           P.text(st.bubble.text, 234 - w + 5, 42, { size: 7, color: '#1b1b28', weight: 700 });
         }
@@ -3039,6 +3349,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 //   - 魚叉捕魚：沙甸魚成群逃走、霓虹鰻會衝過來咬人、變種石斑要打幾下
 //   - 背包有重量上限，越重游得越慢；儲物櫃要停在旁邊撬開
 //   - 氧氣就是生命：被咬或碰撞會扣氧氣，用完之前要浮上水面
+//   - 良知是負重：靈魂越重，身體越往下沉，越難浮上水面；撬開別人的儲物櫃會讓靈魂變重
 (function (IE) {
   'use strict';
   const P = IE.Pixel, A = IE.Audio, C = IE.Micro.C;
@@ -3074,7 +3385,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       ox: cfg.oxygen, been: false, hits: 0, inv: 0, drowned: false, flash: 0,
       bag: [], load: 0, money: 0, fish: { sardine: 0, eel: 0, grouper: 0, jelly: 0 },
       cd: 0, harpoon: null, aim: null, keys: {}, steer: null, popups: [], seenZone: [true, false, false], zoneBanner: null,
-      fireHeld: false, upHeld: false, lockerNear: null,
+      fireHeld: false, upHeld: false, lockerNear: null, lockers: 0,
+      sink: Math.min(2, s.soul / D().SOUL_LIMIT), // 靈魂重量造成的下沉力
     };
 
     // ---------- 擺放物件 ----------
@@ -3116,7 +3428,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     for (let x = 130; x < WW; x += 84) deco.shops.push({ x, sign: ['大減價', '結業', '全場一折', '租約期滿'][Math.floor(x / 84) % 4] });
     for (let i = 0; i < 14; i++) deco.kelp.push({ x: rnd(0, WW), base: [196, 376, WH][i % 3], h: rnd(14, 34) });
 
-    C.banner(st, '下水', '#37c3d6', '方向鍵游泳，空白鍵或滑鼠點擊發射魚叉');
+    C.banner(st, '下水', '#37c3d6', s.soul > 10 ? '你的靈魂重 ' + s.soul.toFixed(1) + ' 克，會比平時更快下沉' : '方向鍵游泳，空白鍵或滑鼠點擊發射魚叉');
     A.setMode('city', 70);
 
     // ---------- 工具 ----------
@@ -3200,7 +3512,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       st.bag.forEach((b) => { if (b.kind === 'fish') fishOut[b.type]++; });
       return {
         relics: st.bag.filter((b) => b.kind === 'card' || b.kind === 'legacy').map((b) => (b.kind === 'legacy' ? b.card : b.id)),
-        money: st.money, fish: fishOut, hits: st.hits, drowned: st.drowned,
+        money: st.money, fish: fishOut, hits: st.hits, drowned: st.drowned, lockers: st.lockers,
       };
     }, onDone);
 
@@ -3314,7 +3626,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         const len = Math.hypot(ax, ay) || 1;
         const sp = speedMax();
         st.vx += (ax / len * sp * (ax ? 1 : 0) - st.vx) * Math.min(1, dt * 4);
-        st.vy += (ay / len * sp * (ay ? 1 : 0) - st.vy) * Math.min(1, dt * 4) - (ax === 0 && ay === 0 ? 5 * dt : 0);
+        // 往上游會被靈魂的重量拖慢；不動的時候，輕的人浮起，重的人下沉
+        const upDrag = ay < 0 ? 1 - 0.35 * Math.min(1, st.sink) : 1;
+        st.vy += (ay / len * sp * upDrag * (ay ? 1 : 0) - st.vy) * Math.min(1, dt * 4) + (ay === 0 && st.y > SURF ? (st.sink * 32 - 6) * dt : 0);
         const nx = Math.max(4, Math.min(WW - 16, st.x + st.vx * dt));
         if (!collides(nx, st.y, 12, 6)) st.x = nx; else st.vx = 0;
         const ny = Math.max(8, Math.min(WH - 10, st.y + st.vy * dt));
@@ -3385,7 +3699,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
               st.lockerNear = it;
               if (Math.hypot(st.vx, st.vy) < 45) it.prog += dt / 1.2; else it.prog = Math.max(0, it.prog - dt);
               if (it.prog >= 1) {
-                it.open = true; st.money += it.l.money; A.sfx('pickup');
+                it.open = true; st.money += it.l.money; st.lockers++; A.sfx('pickup');
                 if (it.l.card) {
                   if (addToBag({ kind: 'card', id: it.l.card }, 1)) relicPopup(it.l.card);
                   else popup('背包滿了，帶不走櫃裡的東西', '#ff8a9a');
@@ -3536,6 +3850,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         // 潛水員
         if (st.phase !== 'end' || !st.drowned) {
           if (st.inv <= 0 || Math.floor(st.t * 12) % 2 === 0) P.sprite(c, 'diver', Math.round(st.x - cx), Math.round(st.y - cy), { flip: st.face < 0 });
+          // 業石：每 6 克一塊，用繩拖在腳後
+          const stones = Math.min(5, Math.ceil(s.soul / 6));
+          for (let i = 0; i < stones; i++) {
+            const sx = Math.round(st.x - cx + (st.face > 0 ? -3 - i * 3 : 15 + i * 3)), sy = Math.round(st.y - cy + 5 + i + Math.sin(st.t * 3 + i) * 0.8);
+            c.fillStyle = s.soul > D().SOUL_LIMIT ? '#8a3b3b' : '#5c5448'; c.fillRect(sx, sy, 3, 3);
+            c.fillStyle = '#8a7f70'; c.fillRect(sx, sy, 1, 1);
+          }
         }
         fx.draw(c);
         // 黑暗
@@ -3570,7 +3891,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       },
       drawText() {
         P.text('氧氣', 104, 1, { size: 7, align: 'right', color: '#9fd8e6' });
-        P.text('深度 ' + depthM(st.y) + ' 米', 6, 1, { size: 7, color: '#9fd8e6' });
+        P.text('深度 ' + depthM(st.y) + ' 米・靈魂 ' + s.soul.toFixed(1) + ' 克', 6, 1, { size: 7, color: '#9fd8e6' });
         P.text('背包 ' + st.load + '/' + cfg.capacity, 314, 0, { size: 6, align: 'right', color: st.load >= cfg.capacity ? '#ff8a9a' : '#ffc247' });
         P.text('$ +' + st.money + '　魚 ' + (st.fish.sardine + st.fish.eel + st.fish.grouper), 6, 15, { size: 6, color: '#8be28f' });
         let py = 26;
@@ -3586,7 +3907,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
           P.text(st.zoneBanner.text, 160, 120, { size: 16, align: 'center', weight: 900, color: '#e8fdff', stroke: '#04161f', alpha: a });
           P.text(st.zoneBanner.sub, 160, 142, { size: 7, align: 'center', color: '#9fd8e6', stroke: '#04161f', alpha: a });
         }
-        if (st.lockerNear && !st.lockerNear.open) P.text('停下來撬開儲物櫃…', st.lockerNear.x - st.cam.x, st.lockerNear.y - st.cam.y - 26, { size: 6, align: 'center', color: '#ffd36b', stroke: '#04161f' });
+        if (st.lockerNear && !st.lockerNear.open) P.text('停下來撬開別人的儲物櫃…（靈魂會變重）', st.lockerNear.x - st.cam.x, st.lockerNear.y - st.cam.y - 26, { size: 6, align: 'center', color: '#ffd36b', stroke: '#04161f' });
         const frac = st.ox / cfg.oxygen;
         if (st.phase === 'play' && frac < 0.35 && st.y > SURF + 10) {
           P.text('↑ 氧氣不足，快浮上水面！', 160, 160, { size: 8, align: 'center', color: '#ff8a9a', weight: 900, stroke: '#04161f', alpha: 0.6 + 0.4 * Math.sin(st.t * 6) });
@@ -3625,18 +3946,21 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
+      + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
-    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '' };
+    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
       return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
     }).join('');
   }
+
+  const pips = (v) => { const n = Math.round(v * 5); return '●'.repeat(n) + '○'.repeat(5 - n); };
 
   // ---------- 狀態列 ----------
   function renderHud(s) {
@@ -3665,9 +3989,11 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
       + '<div class="meter m-body"><span class="lbl">身體</span><div class="bar"><i style="width:' + Math.max(0, s.body) + '%"></i></div><b class="num">' + Math.max(0, Math.round(s.body)) + '</b></div>'
       + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">' + (s.spark < 1 ? '麻木' : '火花') + '</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">×' + s.spark.toFixed(1) + '</b></div>'
+      + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + '<small>克</small></b></div>'
       + '<div class="meter m-signal"><span class="lbl">訊號</span><div class="bar"><i style="width:' + Math.min(100, sig / th * 100) + '%"></i></div><b class="num">' + kfmt(sig) + '/' + kfmt(th) + '</b></div>'
       + '</div>'
       + '<div class="hud-sub">'
+      + '<span>良知 <b class="pips">' + pips(s.conscience) + '</b> <b>' + Math.round(s.conscience * 100) + '%</b>・火花上限 <b>×' + R().sparkMax(s).toFixed(1) + '</b></span>'
       + '<span>平台評分 <b>★' + s.rating.toFixed(1) + '</b></span>'
       + '<span>全城自動化 <b>' + s.auto.toFixed(0) + '%</b></span>'
       + '<span class="' + (flooded ? 'bad' : '') + '">水位 <b>' + s.water.toFixed(1) + ' 樓</b> · 你住在 <b>' + (s.floor ? s.floor + ' 樓' : '天橋下') + '</b>' + (flooded ? '（正在淹水）' : '') + '</span>'
@@ -3763,12 +4089,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + signed(d.cr) + '</span></div>');
     if (d.body) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
+    if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
     return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
   }
   function linesHtml(lines) {
     if (!lines.length) return '';
     return '<ul class="lines">' + lines.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
-      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' ? signed(l.v, 1) : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
+      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
   }
   function gainedHtml(rep) {
     let h = '';
@@ -3807,10 +4134,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<div class="r-head"><span>星際人才發展局・天賦對齊流程</span><span>第 ' + (rv.quarter + 1) + ' 季考績</span></div>'
       + '<h2>候選人季度表現評估</h2>'
       + '<table>' + rv.grades.map((g) => '<tr><td>' + g.k + '</td><td class="g">' + g.g + '</td><td class="n">' + esc(g.note) + '</td></tr>').join('') + '</table>'
-      + '<p class="verdict">' + (rv.pass ? '恭喜！你已通過天賦對齊流程。請保持窗戶打開。' : '感謝你的申請。你已被納入人才庫，我們會保留你的資料十二個月。') + '</p>'
+      + '<p class="verdict">' + (rv.pass ? '恭喜！你已通過天賦對齊流程。請保持窗戶打開。'
+        : rv.overweight && rv.signalOk ? '你的訊號已經達標，但靈魂重量超出牽引光束的負載上限。為保護本局神經網絡，暫不錄取。'
+          : '感謝你的申請。你已被納入人才庫，我們會保留你的資料十二個月。') + '</p>'
       + (rv.taken ? '<p>同區候選人「' + esc(rv.taken) + '」已獲錄取，並完成人才優化遷移。</p>' : '')
       + '<p style="font-size:12px;color:#5b6b90">本季 KPI：' + esc(rv.kpi) + '。我們不是一個組織，我們是一個宇宙大家庭。</p>'
-      + '<span class="stamp ' + (rv.pass ? 'pass' : 'fail') + '">' + (rv.pass ? '錄取' : '人才庫') + '</span>'
+      + '<span class="stamp ' + (rv.pass ? 'pass' : 'fail') + '">' + (rv.pass ? '錄取' : rv.overweight && rv.signalOk ? '超重' : '人才庫') + '</span>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (rv.pass ? '……' : '繼續生活') + '</button></div></div>';
   }
 
@@ -3820,13 +4149,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     const recipes = meta.recipes ? Object.keys(meta.recipes).length : 0;
     return '<div class="title-menu">'
       + '<p class="tagline">工作越做越<em>爽</em>，靈魂越做越少。</p>'
-      + '<p class="lede">2080 年，海平面暴漲，浮城越高越富有、越低越淹水。靈感強的人一個接一個被外星人帶走。你要打工撐過每一期租金，同時守住心中的火花，讓它燒得夠旺，旺到外星人看得見。</p>'
+      + '<p class="lede">2080 年，海平面暴漲，浮城越高越富有、越低越淹水。靈感強的人一個接一個被外星人帶走。外星人只要又亮又輕、沒有包袱的人：你的火花要夠旺，靈魂又不能超過 21 克。可是在這個城市，活下去本身就會讓靈魂變重。</p>'
       + '<div class="btn-row">'
       + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button>' : '')
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button></div>'
-      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/5</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
+      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
       + '<p class="mute" style="font-size:12px;margin:0">自動存檔，無法讀檔重來。建議開啟聲音。</p>'
       + '</div>';
@@ -3837,14 +4166,16 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<div class="bg-grid">' + Object.keys(bgs).map((k) => {
         const b = bgs[k];
         return '<button class="bg-card' + (sel.bg === k ? ' sel' : '') + '" type="button" data-do="bg" data-id="' + k + '">'
-          + '<span class="n">' + b.name + '</span><span class="d">' + b.desc + '</span><span class="p">' + b.perkText + '</span>'
+          + '<span class="n">' + b.name + '</span><span class="d">' + b.desc + b.past + '</span><span class="p">' + b.perkText + '</span>'
+          + '<span class="d">靈魂 ' + b.soul + ' 克・良知 ' + Math.round(b.conscience * 100) + '%</span>'
           + '<span class="s"><span style="color:var(--cash)">$' + b.cr + '</span><span style="color:#ffb3b3">身體 ' + b.body + '</span><span style="color:var(--spark)">火花 ×' + b.spark.toFixed(1) + '</span></span></button>';
       }).join('') + '</div>'
       + '<div class="panel-head"><h2>季節</h2><p>' + esc(seasons[sel.season].desc) + '</p></div>'
       + '<div class="seg">' + Object.keys(seasons).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + seasons[k].name + '</button>').join('') + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button><button class="btn primary big" type="button" data-do="start">出發</button></div>';
   }
-  const ENDING_KIND = { death: 'DEATH', grey: 'GREYED OUT', ordinary: 'ORDINARY', agent: 'RECRUITED', returned: 'RETURNED' };
+  const ENDING_KIND = { death: 'DEATH', grey: 'GREYED OUT', ordinary: 'ORDINARY', agent: 'RECRUITED', returned: 'RETURNED', heavy: 'TOO HEAVY', guardian: 'STAYED' };
+  const ENDING_COUNT = Object.keys(ENDING_KIND).length;
   function endingModal(e, s, meta) {
     const best = s.stats.bestWork;
     return '<div class="modal"><div class="ending ' + e.kind + '">'
@@ -3856,11 +4187,12 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<div class="e-stat"><span class="k">累積訊號</span><span class="num">' + kfmt(R().signal(s)) + '</span></div>'
       + '<div class="e-stat"><span class="k">標註</span><span class="num">' + fmt(s.stats.labels) + '</span></div>'
       + '<div class="e-stat"><span class="k">捕魚</span><span class="num">' + (s.stats.fish || 0) + '</span></div>'
-      + '<div class="e-stat"><span class="k">挨餓</span><span class="num">' + s.stats.hungryDays + '</span></div>'
+      + '<div class="e-stat"><span class="k">靈魂</span><span class="num">' + s.soul.toFixed(1) + '<small>克</small></span></div>'
+      + '<div class="e-stat"><span class="k">良知</span><span class="num">' + Math.round(s.conscience * 100) + '%</span></div>'
       + '</div>'
       + (best ? '<p class="mute" style="font-size:14px">最好的作品：《' + esc(best.name) + '》（' + fmt(best.raw) + ' 分）。它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
       + '<div class="btn-row" style="width:100%"><button class="btn" type="button" data-do="copy">複製墓誌銘</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
-      + '<p class="mute" style="font-size:12px">結局收集 ' + Object.keys(meta.endings || {}).length + '/5</p>'
+      + '<p class="mute" style="font-size:12px">結局收集 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '</p>'
       + '</div></div>';
   }
   function helpModal() {
@@ -3874,12 +4206,18 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<li><b>AI 數據標註</b>：依照左邊的指引把圖片分為「是」或「否」。指引每 15 秒更新，越來越荒謬。連續答對 15 張會進入心流狀態：收入加倍，火花消耗也加倍。主管巡查時出錯會被記錄。</li>'
       + '<li><b>企業情緒陪伴</b>：黃色音符按「笑」，長條要一直按住；藍綠色按「點頭」；客人講傷心事（藍色）也要點頭，笑出來會被罰款。客人的杯空了就按住「倒酒」，在綠色範圍內放手，倒滿會瀉。</li>'
       + '<li><b>舊城潛水</b>：用魚叉捕魚，打撈遺物，撬開儲物櫃。舊街、地鐵站、舊商場越深越暗，收穫也越好。霓虹鰻會衝過來咬人，水母碰到會螫。背包越重游得越慢，氧氣用完之前要浮上水面。抓到大魚當晚餐，當晚不用買飯。</li></ul>'
+      + '<h3>靈魂重量與良知</h3><ul>'
+      + '<li>外星人的牽引光束最多只能拉起 <b>21 克</b>的靈魂。太重的人會污染他們的神經網絡，訊號再高也不會被帶走。</li>'
+      + '<li>活下去很容易讓靈魂變重：標註數據令別人失業、附和有錢人的偏見、撬別人的儲物櫃，還有每天早上的道德抉擇。</li>'
+      + '<li><b>良知是負重</b>：同一件虧心事，良知越強就越重。可是每做一次，良知都會被磨損，你會越來越麻木，下一件事就越來越輕。</li>'
+      + '<li>良知也決定你的感受力：火花上限 = 2 + 2 × 良知。麻木的人很輕，但也燒不起來。</li>'
+      + '<li>減輕的方法：到避難所做義工、在抉擇中選擇良心、把「愧疚」素材寫進作品（懺悔），或者像天空區的人一樣購買「業力抵銷額度」。</li></ul>'
       + '<h3>創作</h3><p>作品分 = 素材籌碼 × 組合倍率 × 火花 × 外星 KPI。素材來自生活：工作、潛水、聊天，甚至挨餓。同一標籤的素材越多越有共鳴，特定的標籤組合會觸發具名組合。</p>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動。標註用 ← →；陪伴用 ←（點頭）、→（笑）、空白鍵（倒酒）；潛水用方向鍵或 WASD 游泳，滑鼠點擊或空白鍵發射魚叉。手機：直接按畫面或下方的按鈕。</p>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
   function collectionModal(meta) {
-    const names = { agent: '星際特工', returned: '被遣返', ordinary: '平凡人', death: '死亡', grey: '灰化' };
+    const names = { agent: '星際特工', returned: '被遣返', guardian: '地球守護者', heavy: '良知太重', ordinary: '平凡人', death: '死亡', grey: '灰化' };
     const has = (k) => meta.endings && meta.endings[k];
     const endings = Object.keys(names).map((k) => '<div class="recipe' + (has(k) ? '' : ' unknown') + '"><b>' + (has(k) ? names[k] : '？？？') + '</b>'
       + (has(k) ? '<span class="mute">達成 ' + meta.endings[k] + ' 次</span>' : '') + '</div>').join('');
@@ -3901,11 +4239,29 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
   }
 
+  // ---------- 道德抉擇 ----------
+  function dilemmaModal(v, s) {
+    return '<div class="modal dilemma"><span class="eyebrow">早上的抉擇</span>'
+      + '<p class="d-text">' + esc(v.text) + '</p>'
+      + '<div class="d-opts">' + v.options.map((o) => '<button class="d-opt" type="button" data-do="pick" data-i="' + o.i + '"' + (o.reason ? ' disabled' : '') + '>'
+        + '<span class="d-label">' + esc(o.label) + '</span><span class="fx">' + fxHtml(o.fx) + '</span>'
+        + (o.reason ? '<span class="act-why">' + esc(o.reason) + '</span>' : '') + '</button>').join('') + '</div>'
+      + '<p class="mute" style="font-size:12px">你的良知 ' + Math.round(s.conscience * 100) + '%：每件虧心事的重量 ×' + R().sinFactor(s).toFixed(2)
+      + '。靈魂現在重 ' + s.soul.toFixed(1) + ' 克，上限 ' + R().SOUL_LIMIT + ' 克。</p></div>';
+  }
+  function stayModal(s) {
+    return '<div class="modal dilemma"><span class="eyebrow">第 ' + s.day + ' 天・晚上</span>'
+      + '<p class="d-text">探射燈停在你的窗外。光束在等你。</p>'
+      + '<p class="mute">走進光裡，你會成為星際人才發展局的一員。關上窗戶，你會留在浮城。</p>'
+      + '<div class="d-opts"><button class="d-opt" type="button" data-do="go"><span class="d-label">走進光裡</span><span class="fx"><span class="fx-sig">被外星人帶走</span></span></button>'
+      + '<button class="d-opt" type="button" data-do="stay"><span class="d-label">關上窗戶</span><span class="fx"><span class="fx-note">留下來</span></span></button></div></div>';
+  }
+
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, closeModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
-    titlePanel, setupPanel, endingModal, helpModal, collectionModal,
+    titlePanel, setupPanel, endingModal, helpModal, collectionModal, dilemmaModal, stayModal,
   };
 })(window.IE = window.IE || {});
 
@@ -3951,6 +4307,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
           + (ev.kpiMod !== 1 ? '<span class="op">×</span><span class="term t-kpi"><small>KPI</small>' + ev.kpiMod + '</span>' : '')
           + '<span class="op">=</span><span class="term t-total"><small>作品分</small>' + UI().fmt(ev.total) + '</span></div>'
           + '<div class="combos">' + (ev.combos.length ? ev.combos.map((c) => comboHtml(s, c)).join('') : '<span class="mute" style="font-size:13px">沒有組合。試試選擇同一標籤，或者搭配不同標籤。</span>') + '</div>'
+          + (ev.relief ? '<p class="relief">把愧疚寫進作品：靈魂 −' + ev.relief + ' 克（' + s.soul.toFixed(1) + ' → ' + Math.max(0, s.soul - ev.relief).toFixed(1) + ' 克）</p>' : '')
         : '<p class="mute" style="font-size:14px">選擇 2 至 ' + s.craftSlots + ' 張素材。同一標籤出現 3 張或以上會「同調」，特定標籤組合會觸發具名組合。</p>';
       UI().modal('<div class="modal wide craft">'
         + '<div class="panel-head"><h2>創作</h2><p>火花 ×' + s.spark.toFixed(1) + '・本季 KPI：' + UI().esc(k.name) + '（' + UI().esc(k.desc) + '）</p></div>'
@@ -4056,6 +4413,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
       $('rv-work').hidden = false;
       const after = R().signal(s);
       const extra = [];
+      if (res.relief) extra.push('<p class="relief">你把愧疚寫了出來。靈魂輕了 ' + res.relief + ' 克，現在重 ' + s.soul.toFixed(1) + ' 克。</p>');
       if (res.fresh.length) extra.push('<p class="new">靈光一閃！發現新組合：' + res.fresh.map((c) => c.name).join('、') + (res.sparkUp ? '（火花 +' + res.sparkUp + '）' : '') + '</p>');
       if (ev.kpiMod === 0) extra.push('<p style="color:#ff9aa6">外星人不計算這件作品：' + UI().esc(ev.kpi.desc) + '</p>');
       extra.push('<p class="mute">訊號 ' + UI().fmt(before) + ' → <b style="color:#ffd6ef">' + UI().fmt(after) + '</b> / ' + UI().fmt(R().threshold(s)) + '</p>');
@@ -4106,7 +4464,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 2 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 3 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   function setCityFilter() {
@@ -4192,10 +4550,25 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
           if (r.ok) A.sfx('coin');
           UI.renderHud(s); A.setSpark(s.spark); save(); render();
         },
-        close() { UI.closeModal(); showHub(); },
+        close() { UI.closeModal(); if (morning) morningDilemma(); else showHub(); },
       }, morning ? null : { dismiss: () => showHub() });
     };
     render();
+  }
+  // 早上的道德抉擇：做了選擇才開始一天
+  function morningDilemma() {
+    const s = Game.state;
+    if (!R.drawDilemma(s)) { showHub(); return; }
+    save();
+    UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
+    UI.modal(UI.dilemmaModal(R.dilemmaView(s), s), {
+      pick(el) {
+        const rep = R.resolveDilemma(s, Number(el.dataset.i));
+        A.sfx(rep.deltas.soul > 0 ? 'wrong' : 'pickup');
+        UI.renderHud(s); A.setSpark(s.spark); save();
+        UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); showHub(); } });
+      },
+    });
   }
   function showHub() {
     const s = Game.state;
@@ -4217,6 +4590,8 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
+      case 'volunteer':
+        return afterAction(R.applyVolunteer(s));
       case 'chat':
         return UI.setPanel(UI.chatPanel(s), {
           npc(el) { afterAction(R.applyChat(s, el.dataset.id)); },
@@ -4301,7 +4676,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
     setScene(S.City);
     UI.setPanel('<p class="mute">晚上。外星人的探射燈又出來掃視城市。</p>');
     save();
-    const lock = !!(rep.review && rep.review.pass);
+    // 訊號達標，探射燈就會停在窗外；但靈魂太重的話，光束拉不動你
+    const lock = !!(rep.review && rep.review.signalOk);
+    const heavy = !!(rep.review && rep.review.overweight && rep.review.signalOk);
     S.City.searchlight(rep.searchlight || 0, lock, () => {
       UI.modal(UI.settleModal(rep, s), {
         ok() {
@@ -4311,7 +4688,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
             UI.modal(UI.reviewModal(rep.review), {
               ok() {
                 UI.closeModal();
-                if (rep.ending && rep.ending.type === 'recruited') recruit();
+                if (rep.ending && rep.ending.type === 'recruited') chooseToGo();
                 else if (rep.ending) finishRun(rep.ending);
                 else { setCityFilter(); startDay(); }
               },
@@ -4320,10 +4697,21 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
           else startDay();
         },
       });
-    });
+    }, heavy);
   }
 
   // ---------- 被選中 ----------
+  function chooseToGo() {
+    const s = Game.state;
+    UI.modal(UI.stayModal(s), {
+      go() { UI.closeModal(); recruit(); },
+      stay() {
+        UI.closeModal();
+        A.sfx('stamp');
+        finishRun(R.endingFor(s, 'guardian'));
+      },
+    });
+  }
   function recruit() {
     const s = Game.state;
     UI.setPanel('<p class="mute">光。很多很多光。</p>');
@@ -4349,8 +4737,9 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
         } else {
           const self = res.selfJudged === false ? '你也沒有錄取「樣本 #2080」，一個很像你的人。指引就是指引。'
             : res.selfJudged === true ? '你錄取了「樣本 #2080」。違反指引，已記錄在案。' : '';
-          e = { kind: 'agent', title: '星際特工',
-            text: '你被選中了。第一份工作是篩選地球人，準確度 ' + pct + '%，員工評分 ★' + stars + '。' + self + '阿星就坐在隔壁，沒有抬頭看你。' };
+          const light = s.conscience < 0.3 ? '你的靈魂只有 ' + s.soul.toFixed(1) + ' 克，輕得像一張表格。你篩選地球人時，一點也不猶豫。' : '';
+          e = { kind: 'agent', title: s.conscience < 0.3 ? '完美員工' : '星際特工',
+            text: '你被選中了。第一份工作是篩選地球人，準確度 ' + pct + '%，員工評分 ★' + stars + '。' + self + light + '阿星就坐在隔壁，沒有抬頭看你。' };
         }
         S.City.enter('hub');
         finishRun(e);

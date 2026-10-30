@@ -37,8 +37,9 @@
       return this.demo;
     },
     // 探射燈：ratio = 訊號 / 門檻，越接近 1 越貼近你的窗口
-    searchlight(ratio, lock, done) {
-      this.sl = { t: 0, ratio: Math.max(0, Math.min(1.2, ratio)), lock: !!lock, done, fired: false };
+    // heavy：訊號達標但靈魂超重，光束停下來卻拉不動
+    searchlight(ratio, lock, done, heavy) {
+      this.sl = { t: 0, ratio: Math.max(0, Math.min(1.2, ratio)), lock: !!lock, heavy: !!heavy, done, fired: false };
     },
     startBeam(done) { this.beam = { t: 0, done, fired: false }; IE.Audio.sfx('beam'); },
     playerPos(s) {
@@ -151,7 +152,10 @@
             c.beginPath(); c.rect(wx, wy, 16, 11); c.clip();
             const bob = Math.round(Math.sin(this.t * 2) * 0.5);
             const beamLift = this.beam && this.beam.t > 2.4 ? Math.min(60, (this.beam.t - 2.4) * 30) : 0;
-            if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift, { desat: Math.max(0, 1 - s.spark / 2.5) });
+            // 超重：光束一拉，人被提起一點又跌回去
+            const strain = this.sl && this.sl.heavy && this.sl.t > 3.2 ? Math.round(Math.abs(Math.sin(this.sl.t * 9)) * 3) : 0;
+            if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift - strain, { desat: Math.max(0, 1 - s.spark / 2.5) });
+            if (beamLift < 12) this.drawStones(c, s, wx + 10, wy + 10 - strain);
             c.restore();
           }
           // 灰化了的前世：在另一個窗口做標註
@@ -167,11 +171,23 @@
         const p = this.playerPos(s);
         c.fillStyle = '#2a3350'; c.fillRect(84, p.y + 12, 44, 3); c.fillRect(90, p.y + 15, 3, 10); c.fillRect(118, p.y + 15, 3, 10);
         P.sprite(c, 'player', p.x, p.y, { desat: Math.max(0, 1 - s.spark / 2.5) });
+        this.drawStones(c, s, p.x + 6, p.y + 11);
       }
       if (this.beam && this.beam.t > 2.4) {
         const p = this.playerPos(s);
         const lift = Math.min(60, (this.beam.t - 2.4) * 30);
         if (lift >= 12) P.sprite(c, 'player', p.x, p.y - lift, { alpha: Math.max(0, 1 - (lift - 40) / 20) });
+      }
+    },
+    // 靈魂的重量：背後的石頭，每 6 克一塊，超重會變紅
+    drawStones(c, s, x, y) {
+      const n = Math.min(5, Math.ceil(s.soul / 6));
+      const over = s.soul > IE.Rules.SOUL_LIMIT;
+      for (let i = 0; i < n; i++) {
+        c.fillStyle = over ? '#8a3b3b' : '#5c5448';
+        const sx = x + (i % 3) * 2, sy = y - Math.floor(i / 3) * 2;
+        c.fillRect(sx, sy, 2, 2);
+        c.fillStyle = over ? '#c46a6a' : '#8a7f70'; c.fillRect(sx, sy, 1, 1);
       }
     },
     drawWater(c, s, night, bot) {
@@ -258,7 +274,7 @@
       if (!s) return;
       if (this.sl && this.sl.t > 1 && this.sl.t < 4.6) {
         const near = this.sl.ratio;
-        const msg = this.sl.lock ? '探射燈停在你的窗外。' : near > 0.85 ? '探射燈差一點就照到你。' : near > 0.5 ? '探射燈在你頭頂幾層掃過。' : '探射燈在很遠的地方掃過。';
+        const msg = this.sl.lock && this.sl.heavy ? (this.sl.t > 3.2 ? '光束停在你的窗外，卻拉不動你。' : '探射燈停在你的窗外。') : this.sl.lock ? '探射燈停在你的窗外。' : near > 0.85 ? '探射燈差一點就照到你。' : near > 0.5 ? '探射燈在你頭頂幾層掃過。' : '探射燈在很遠的地方掃過。';
         P.text(msg, 160, 150, { size: 8, align: 'center', color: '#e8fdff', stroke: '#05222a' });
       }
       if (this.beam && this.beam.t > 3.2) {

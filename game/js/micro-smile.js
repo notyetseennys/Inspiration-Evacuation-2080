@@ -2,6 +2,7 @@
 //   - 「笑」軌道：客人講笑話，準時笑；長條音符要一直笑到結束（最傷火花）
 //   - 「點頭」軌道：客人發表高見要點頭；客人講傷心事也要點頭，笑出來會被罰款
 //   - 倒酒：客人的杯空了就按住倒酒，在目標範圍內放手；倒滿會瀉
+//   - 偏見言論（紅色）：點頭附和可以多拿小費，但靈魂會變重；不附和，客人會有點不高興
 (function (IE) {
   'use strict';
   const P = IE.Pixel, A = IE.Audio, C = IE.Micro.C;
@@ -32,9 +33,16 @@
       }
       tt += b;
     }
+    // 每場插入三句偏見言論，取代附近的音符
+    [0.25, 0.55, 0.8].forEach((f) => {
+      const t0 = 1.2 + f * (cfg.duration - 2.4);
+      for (let i = notes.length - 1; i >= 0; i--) if (Math.abs(notes[i].t - t0) < 0.45 || (notes[i].dur && t0 > notes[i].t && t0 < notes[i].t + notes[i].dur + 0.3)) notes.splice(i, 1);
+      notes.push({ t: t0, lane: 'nod', kind: 'bias', line: D().BIAS_LINES[Math.floor(Math.random() * D().BIAS_LINES.length)] });
+    });
+    notes.sort((a, b) => a.t - b.t);
     const st = {
       t: -1.4, phase: 'intro', banner: null, perfect: 0, good: 0, miss: 0, trapHits: 0, sat: 0.6,
-      cr: 0, drain: 0, judge: null, bubble: null, nextBubble: 1.5, endT: 0, flash: 0, nod: 0, angry: 0,
+      cr: 0, drain: 0, judge: null, bubble: null, nextBubble: 1.5, endT: 0, flash: 0, nod: 0, angry: 0, endorsed: 0,
       holding: null, laughDown: false, pour: null, nextPour: 6, pours: 0, spills: 0, joy: 0,
     };
     const ads = C.adSystem(cfg.ads, { x: 96, y: 26, w: 70, h: 40 });
@@ -65,7 +73,17 @@
       }
       fx.add({ x: HIT_X, y: LANE_Y[lane === 'hold' ? 'laugh' : lane === 'pour' ? 'laugh' : lane], tx: 22, ty: 4, home: 6, life: 0.6, color: '#8be28f', size: 2 });
     }
+    // 附和偏見：多拿小費，靈魂掉下一塊石頭
+    function endorse(n, text) {
+      n.done = true; st.endorsed++;
+      st.cr += R().smileItemPay(s, 'perfect', 'bias');
+      st.sat = Math.min(1, st.sat + 0.04);
+      judge(text, '#ff8a8a'); A.sfx('coin');
+      for (let i = 0; i < 3; i++) fx.add({ x: 44 + Math.random() * 12, y: 86, vx: (Math.random() - 0.5) * 10, vy: 10, g: 160, life: 0.9, color: '#5c5448', size: 2 });
+      fx.add({ x: HIT_X, y: LANE_Y.nod, tx: 22, ty: 4, home: 6, life: 0.6, color: '#8be28f', size: 2 });
+    }
     function missNote(n) {
+      if (n.kind === 'bias') { n.done = true; st.sat = Math.max(0, st.sat - 0.03); judge('你沒有附和', '#9fdcff'); return; }
       n.done = true; st.miss++;
       if (n.kind === 'sad') { st.sat = Math.max(0, st.sat - 0.05); judge('冷漠', '#8d99b4'); }
       else { st.sat = Math.max(0, st.sat - 0.04); judge('冷場', '#8d99b4'); }
@@ -76,6 +94,8 @@
     function laughDown() {
       if (st.phase !== 'play' || st.laughDown) return;
       st.laughDown = true;
+      const bias = nearest((n) => n.kind === 'bias', WIN_G);
+      if (bias) { endorse(bias, '你跟著笑了'); return; }
       const sad = nearest((n) => n.kind === 'sad', WIN_MISS);
       const target = nearest((n) => n.lane === 'laugh', WIN_MISS);
       if (sad && (!target || Math.abs(sad.t - st.t) <= Math.abs(target.t - st.t))) {
@@ -112,6 +132,7 @@
       const d = Math.abs(target.t - st.t);
       const kind = d <= WIN_P ? 'perfect' : d <= WIN_G ? 'good' : null;
       if (!kind) { missNote(target); return; }
+      if (target.kind === 'bias') { endorse(target, '你點了頭'); return; }
       target.done = true;
       reward('nod', kind);
       if (target.kind === 'sad') judge('同情地點頭', '#9fdcff');
@@ -142,13 +163,13 @@
       C.banner(st, '下班', '#ffc247');
     }
     const endTick = C.ender(st, () => ({ cr: st.cr, drain: st.drain, perfect: st.perfect, good: st.good, miss: st.miss,
-      trapHits: st.trapHits, satisfaction: st.sat, pours: st.pours, spills: st.spills }), onDone);
+      trapHits: st.trapHits, satisfaction: st.sat, pours: st.pours, spills: st.spills, endorsed: st.endorsed }), onDone);
 
     const KEY_LAUGH = ['ArrowRight', 'j', 'J', 'd', 'D'], KEY_NOD = ['ArrowLeft', 'f', 'F', 'a', 'A'];
     return {
       kind: 'smile',
       controls: [{ id: 'nod', label: '點頭', key: '←' }, { id: 'laugh', label: '笑', key: '→' }, { id: 'pour', label: '倒酒', key: '按住空白鍵' }],
-      hint: '黃色音符到圈中時按「笑」，長條要一直按住；藍綠色按「點頭」；客人講傷心事（藍色）也要點頭，笑出來會被罰款。杯空了就按住「倒酒」，在綠色範圍放手。',
+      hint: '黃色音符到圈中時按「笑」，長條要一直按住；藍綠色按「點頭」；客人講傷心事（藍色）也要點頭，笑出來會被罰款。紅色是偏見言論：附和可以多拿小費，但靈魂會變重，不附和客人會有點不高興。杯空了就按住「倒酒」，在綠色範圍放手。',
       control(id, down) {
         if (id === 'laugh') { if (down) laughDown(); else laughUp(); }
         else if (id === 'nod') { if (down) nodDown(); }
@@ -215,12 +236,16 @@
               st.pour = null; st.nextPour = st.t + cfg.pourEvery;
             }
           }
+          const soon = notes.find((n) => !n.done && n.kind === 'bias' && n.t - st.t < 2.6 && n.t > st.t);
+          if (soon && !(st.bubble && st.bubble.bias)) st.nextBubble = 0;
           st.nextBubble -= dt;
           if (st.nextBubble <= 0) {
             st.nextBubble = 3.5 + Math.random() * 2;
+            const bias = notes.find((n) => !n.done && n.kind === 'bias' && n.t - st.t < 2.6 && n.t > st.t);
             const sad = notes.find((n) => !n.done && n.kind === 'sad' && n.t - st.t < 2.4 && n.t > st.t);
             const pool = sad ? D().SAD_LINES : D().SMILE_LINES;
-            st.bubble = { text: pool[Math.floor(Math.random() * pool.length)], t: 0, sad: !!sad };
+            st.bubble = bias ? { text: bias.line, t: 0, bias: true }
+              : { text: pool[Math.floor(Math.random() * pool.length)], t: 0, sad: !!sad };
           }
           if (st.bubble) { st.bubble.t += dt; if (st.bubble.t > 3) st.bubble = null; }
           if (st.t >= cfg.duration) finish();
@@ -288,11 +313,12 @@
             return;
           }
           if (x > 330 || x < -10) return;
-          const col = n.kind === 'sad' ? '#5fc8ff' : n.lane === 'nod' ? '#37c3d6' : '#ffc247';
+          const col = n.kind === 'bias' ? '#c0392b' : n.kind === 'sad' ? '#5fc8ff' : n.lane === 'nod' ? '#37c3d6' : '#ffc247';
           c.fillStyle = col; c.beginPath(); c.arc(Math.round(x), y, 7, 0, Math.PI * 2); c.fill();
           c.fillStyle = '#12081a';
           const xi = Math.round(x);
-          if (n.kind === 'sad') { c.fillRect(xi - 3, y - 2, 2, 2); c.fillRect(xi + 1, y - 2, 2, 2); c.fillRect(xi - 2, y + 3, 4, 1); c.fillStyle = '#ffffff'; c.fillRect(xi - 3, y, 1, 3); }
+          if (n.kind === 'bias') { c.fillStyle = '#ffffff'; c.fillRect(xi - 1, y - 4, 2, 5); c.fillRect(xi - 1, y + 2, 2, 2); }
+          else if (n.kind === 'sad') { c.fillRect(xi - 3, y - 2, 2, 2); c.fillRect(xi + 1, y - 2, 2, 2); c.fillRect(xi - 2, y + 3, 4, 1); c.fillStyle = '#ffffff'; c.fillRect(xi - 3, y, 1, 3); }
           else if (n.lane === 'nod') { c.fillRect(xi - 3, y - 2, 6, 1); c.fillRect(xi - 2, y - 1, 4, 1); c.fillRect(xi - 1, y, 2, 2); }
           else { c.fillRect(xi - 3, y + 2, 6, 1); c.fillRect(xi - 3, y - 3, 2, 2); c.fillRect(xi + 1, y - 3, 2, 2); }
         });
@@ -312,7 +338,7 @@
         if (st.bubble) {
           const w = Math.min(150, P.measure(st.bubble.text, { size: 7 }) + 10);
           const ctx = P.view.ctx, sc = P.view.scale;
-          ctx.fillStyle = st.bubble.angry ? '#ff4d5e' : st.bubble.sad ? '#9fdcff' : '#ffffff';
+          ctx.fillStyle = st.bubble.angry ? '#ff4d5e' : st.bubble.bias ? '#ffb3a7' : st.bubble.sad ? '#9fdcff' : '#ffffff';
           ctx.fillRect((234 - w) * sc, 40 * sc, w * sc, 13 * sc);
           P.text(st.bubble.text, 234 - w + 5, 42, { size: 7, color: '#1b1b28', weight: 700 });
         }

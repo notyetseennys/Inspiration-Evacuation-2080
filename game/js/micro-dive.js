@@ -3,6 +3,7 @@
 //   - 魚叉捕魚：沙甸魚成群逃走、霓虹鰻會衝過來咬人、變種石斑要打幾下
 //   - 背包有重量上限，越重游得越慢；儲物櫃要停在旁邊撬開
 //   - 氧氣就是生命：被咬或碰撞會扣氧氣，用完之前要浮上水面
+//   - 良知是負重：靈魂越重，身體越往下沉，越難浮上水面；撬開別人的儲物櫃會讓靈魂變重
 (function (IE) {
   'use strict';
   const P = IE.Pixel, A = IE.Audio, C = IE.Micro.C;
@@ -38,7 +39,8 @@
       ox: cfg.oxygen, been: false, hits: 0, inv: 0, drowned: false, flash: 0,
       bag: [], load: 0, money: 0, fish: { sardine: 0, eel: 0, grouper: 0, jelly: 0 },
       cd: 0, harpoon: null, aim: null, keys: {}, steer: null, popups: [], seenZone: [true, false, false], zoneBanner: null,
-      fireHeld: false, upHeld: false, lockerNear: null,
+      fireHeld: false, upHeld: false, lockerNear: null, lockers: 0,
+      sink: Math.min(2, s.soul / D().SOUL_LIMIT), // 靈魂重量造成的下沉力
     };
 
     // ---------- 擺放物件 ----------
@@ -80,7 +82,7 @@
     for (let x = 130; x < WW; x += 84) deco.shops.push({ x, sign: ['大減價', '結業', '全場一折', '租約期滿'][Math.floor(x / 84) % 4] });
     for (let i = 0; i < 14; i++) deco.kelp.push({ x: rnd(0, WW), base: [196, 376, WH][i % 3], h: rnd(14, 34) });
 
-    C.banner(st, '下水', '#37c3d6', '方向鍵游泳，空白鍵或滑鼠點擊發射魚叉');
+    C.banner(st, '下水', '#37c3d6', s.soul > 10 ? '你的靈魂重 ' + s.soul.toFixed(1) + ' 克，會比平時更快下沉' : '方向鍵游泳，空白鍵或滑鼠點擊發射魚叉');
     A.setMode('city', 70);
 
     // ---------- 工具 ----------
@@ -164,7 +166,7 @@
       st.bag.forEach((b) => { if (b.kind === 'fish') fishOut[b.type]++; });
       return {
         relics: st.bag.filter((b) => b.kind === 'card' || b.kind === 'legacy').map((b) => (b.kind === 'legacy' ? b.card : b.id)),
-        money: st.money, fish: fishOut, hits: st.hits, drowned: st.drowned,
+        money: st.money, fish: fishOut, hits: st.hits, drowned: st.drowned, lockers: st.lockers,
       };
     }, onDone);
 
@@ -278,7 +280,9 @@
         const len = Math.hypot(ax, ay) || 1;
         const sp = speedMax();
         st.vx += (ax / len * sp * (ax ? 1 : 0) - st.vx) * Math.min(1, dt * 4);
-        st.vy += (ay / len * sp * (ay ? 1 : 0) - st.vy) * Math.min(1, dt * 4) - (ax === 0 && ay === 0 ? 5 * dt : 0);
+        // 往上游會被靈魂的重量拖慢；不動的時候，輕的人浮起，重的人下沉
+        const upDrag = ay < 0 ? 1 - 0.35 * Math.min(1, st.sink) : 1;
+        st.vy += (ay / len * sp * upDrag * (ay ? 1 : 0) - st.vy) * Math.min(1, dt * 4) + (ay === 0 && st.y > SURF ? (st.sink * 32 - 6) * dt : 0);
         const nx = Math.max(4, Math.min(WW - 16, st.x + st.vx * dt));
         if (!collides(nx, st.y, 12, 6)) st.x = nx; else st.vx = 0;
         const ny = Math.max(8, Math.min(WH - 10, st.y + st.vy * dt));
@@ -349,7 +353,7 @@
               st.lockerNear = it;
               if (Math.hypot(st.vx, st.vy) < 45) it.prog += dt / 1.2; else it.prog = Math.max(0, it.prog - dt);
               if (it.prog >= 1) {
-                it.open = true; st.money += it.l.money; A.sfx('pickup');
+                it.open = true; st.money += it.l.money; st.lockers++; A.sfx('pickup');
                 if (it.l.card) {
                   if (addToBag({ kind: 'card', id: it.l.card }, 1)) relicPopup(it.l.card);
                   else popup('背包滿了，帶不走櫃裡的東西', '#ff8a9a');
@@ -500,6 +504,13 @@
         // 潛水員
         if (st.phase !== 'end' || !st.drowned) {
           if (st.inv <= 0 || Math.floor(st.t * 12) % 2 === 0) P.sprite(c, 'diver', Math.round(st.x - cx), Math.round(st.y - cy), { flip: st.face < 0 });
+          // 業石：每 6 克一塊，用繩拖在腳後
+          const stones = Math.min(5, Math.ceil(s.soul / 6));
+          for (let i = 0; i < stones; i++) {
+            const sx = Math.round(st.x - cx + (st.face > 0 ? -3 - i * 3 : 15 + i * 3)), sy = Math.round(st.y - cy + 5 + i + Math.sin(st.t * 3 + i) * 0.8);
+            c.fillStyle = s.soul > D().SOUL_LIMIT ? '#8a3b3b' : '#5c5448'; c.fillRect(sx, sy, 3, 3);
+            c.fillStyle = '#8a7f70'; c.fillRect(sx, sy, 1, 1);
+          }
         }
         fx.draw(c);
         // 黑暗
@@ -534,7 +545,7 @@
       },
       drawText() {
         P.text('氧氣', 104, 1, { size: 7, align: 'right', color: '#9fd8e6' });
-        P.text('深度 ' + depthM(st.y) + ' 米', 6, 1, { size: 7, color: '#9fd8e6' });
+        P.text('深度 ' + depthM(st.y) + ' 米・靈魂 ' + s.soul.toFixed(1) + ' 克', 6, 1, { size: 7, color: '#9fd8e6' });
         P.text('背包 ' + st.load + '/' + cfg.capacity, 314, 0, { size: 6, align: 'right', color: st.load >= cfg.capacity ? '#ff8a9a' : '#ffc247' });
         P.text('$ +' + st.money + '　魚 ' + (st.fish.sardine + st.fish.eel + st.fish.grouper), 6, 15, { size: 6, color: '#8be28f' });
         let py = 26;
@@ -550,7 +561,7 @@
           P.text(st.zoneBanner.text, 160, 120, { size: 16, align: 'center', weight: 900, color: '#e8fdff', stroke: '#04161f', alpha: a });
           P.text(st.zoneBanner.sub, 160, 142, { size: 7, align: 'center', color: '#9fd8e6', stroke: '#04161f', alpha: a });
         }
-        if (st.lockerNear && !st.lockerNear.open) P.text('停下來撬開儲物櫃…', st.lockerNear.x - st.cam.x, st.lockerNear.y - st.cam.y - 26, { size: 6, align: 'center', color: '#ffd36b', stroke: '#04161f' });
+        if (st.lockerNear && !st.lockerNear.open) P.text('停下來撬開別人的儲物櫃…（靈魂會變重）', st.lockerNear.x - st.cam.x, st.lockerNear.y - st.cam.y - 26, { size: 6, align: 'center', color: '#ffd36b', stroke: '#04161f' });
         const frac = st.ox / cfg.oxygen;
         if (st.phase === 'play' && frac < 0.35 && st.y > SURF + 10) {
           P.text('↑ 氧氣不足，快浮上水面！', 160, 160, { size: 8, align: 'center', color: '#ff8a9a', weight: 900, stroke: '#04161f', alpha: 0.6 + 0.4 * Math.sin(st.t * 6) });

@@ -18,6 +18,16 @@ const URL = 'http://localhost:' + PORT + '/';
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push(m.text()); });
+  // 關掉早上的手機；如果出現道德抉擇，就選第一個可選的選項
+  const closePhone = async () => {
+    await page.click('.phone [data-do="close"]');
+    if (await page.$('#modal [data-do="pick"]')) {
+      await page.click('#modal [data-do="pick"]:not([disabled])');
+      await page.click('#modal [data-do="ok"]');
+      dilemmas++;
+    }
+  };
+  let dilemmas = 0;
   const fail = async (msg) => { console.error('✗ ' + msg); await browser.close(); server.kill(); process.exit(1); };
   const ok = (msg) => console.log('✓ ' + msg);
   try {
@@ -26,7 +36,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.reload();
     await page.click('[data-do="new"]');
     await page.click('[data-do="start"]');
-    await page.click('.phone [data-do="close"]');
+    await closePhone();
     ok('開局');
 
     // 玩三天：早上標註、下午潛水、晚上創作或睡覺
@@ -51,11 +61,11 @@ const URL = 'http://localhost:' + PORT + '/';
       }
       await page.waitForSelector('#modal [data-do="ok"]', { timeout: 8000 });
       await page.click('#modal [data-do="ok"]');
-      await page.click('.phone [data-do="close"]');
+      await closePhone();
     }
     const day = await page.evaluate(() => window.__IE.Game.state.day);
     if (day !== 4) await fail('應該是第 4 天，現在是第 ' + day + ' 天');
-    ok('玩完三天，現在是第 ' + day + ' 天');
+    ok('玩完三天，現在是第 ' + day + ' 天（遇到 ' + dilemmas + ' 個道德抉擇）');
 
     // 存檔 → 重新載入 → 繼續
     await page.reload();
@@ -67,7 +77,7 @@ const URL = 'http://localhost:' + PORT + '/';
 
     // 強制死亡 → 結局
     await page.evaluate(() => { window.__IE.Game.state.body = 3; });
-    if (await page.$('.phone [data-do="close"]')) await page.click('.phone [data-do="close"]');
+    if (await page.$('.phone [data-do="close"]')) await closePhone();
     await page.click('.act[data-id="label"]');
     await page.evaluate(() => window.__IE.Game.applyMicroResult('label', { cr: 50, drain: 0.2, correct: 20, wrong: 1, maxCombo: 8 }));
     await page.click('#modal [data-do="ok"]');
