@@ -249,3 +249,30 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 9：局外畫面（P1）
+
+### 改動摘要
+1. **外星評級徽章（1 至 8 級，`game/js/icons.js`、`game/js/ui.js`、`game/css/art.css`）**：
+   - 新增 8 枚 12×12 外星評級徽章（`stake_1` 至 `stake_8`，由見習銅章、正式銀章、資深綠盾、主管青星、總監紫芒、副總裁金翼、合夥人赤環至第 8 級「外星人本人」彩虹母艦冠冕）與 `IE.Icons.stake(n, size)` 介面。
+   - 在選角畫面（`setupPanel`）每張角色卡右上角、角色詳情標題及難度選擇器（`stakeHtml`）顯示該角色已通過的最高外星評級徽章（讀取 `IE.Game.meta.stakes`）。
+2. **人才檔案升級演出（`game/js/ui.js`、`game/css/art.css`）**：
+   - 升級時在結局結算面板展示 `.mr-level.levelup-banner` 金色橫幅（`✦ TALENT FILE LEVEL UP ✦`、等級躍升 `Lv.X → 升到 Lv.Y！` 與「解鎖權限」標籤），並在個人檔案條加上 `Lv.` 徽章。
+3. **成就彈出提示（Toast，`game/js/ui.js`、`game/css/art.css`）**：
+   - 新增 `achToast(a, delayMs)`，於解鎖成就時在 `#toasts` 依序彈出金色獎盃成就提示卡（`.toast.ach-toast`，顯示成就名稱、說明與 `+N 扭蛋券` 獎勵）。
+4. **外星 HR 機密備忘錄（`game/js/ui.js`、`game/css/art.css`）**：
+   - 新增 `classifiedMemoHtml(text, idx, unlocked)`，將 15 份外星 HR 備忘錄設計為「機密文件」（`.memo.classified`）：附 `FILE // HR-XXX` 編號、`機密檔案・TOP SECRET` 紅色斜印章、關鍵詞塗黑遮罩（`.redact`，懸停或點擊可揭開解密）及打字機逐字顯現動畫（`.tw-c` 與閃爍游標 `.tw-cursor`）。
+5. **每日挑戰卡片（`game/js/ui.js`、`game/css/art.css`）**：
+   - 新增 `dailyCardHtml(meta)`，在標題畫面將每日挑戰呈現為完整卡片（`.daily-card`），顯示今日挑戰日期編號、指定樣本角色半身立繪、季節、外星評級 2 徽章、固定種子碼及挑戰狀態。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t9-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t9-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t9-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t9-after-mobile.png`
+
+### 已知問題
+- 無。
+
+
