@@ -573,3 +573,225 @@
 .ct-stage-intro.static .si-stamp {
   animation: none !important;
 }
+
+/* =========================================================
+   任務 4：計分演出升級（破萬/破十萬/破百萬、再一次、流派光帶、手牌發光、傳說字卡）
+   ========================================================= */
+.ct-total[data-tier]:not([data-tier=""])::before {
+  content: attr(data-tier);
+  display: table;
+  margin: 0 auto 4px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-align: center;
+  padding: 3px 14px;
+  border-radius: 99px;
+  background: rgba(10, 12, 22, 0.92);
+  border: 1.5px solid currentColor;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .ct-total.tier-1,
+  .ct-total.tier-2,
+  .ct-total.tier-3 {
+    font-size: clamp(34px, 12.5vw, 58px) !important;
+  }
+  .ct-total[data-tier]:not([data-tier=""])::before {
+    font-size: 11px;
+    padding: 2px 10px;
+  }
+}
+.ct-total.tier-1 {
+  color: #7ee8fa;
+  text-shadow:
+    0 0 18px rgba(55, 195, 214, 0.9),
+    0 0 42px rgba(55, 195, 214, 0.65),
+    0 4px 12px #000;
+}
+.ct-total.tier-2 {
+  color: #ff9be2;
+  text-shadow:
+    0 0 22px rgba(255, 79, 180, 0.95),
+    0 0 54px rgba(195, 139, 255, 0.8),
+    0 4px 14px #000;
+}
+.ct-total.tier-3 {
+  color: #fff6c2;
+  text-shadow:
+    0 0 24px #ffd36b,
+    0 0 56px #ff4fb4,
+    0 0 92px #37c3d6,
+    0 5px 16px #000;
+}
+
+.ct-stage.million-closeup {
+  animation: million-zoom 0.85s cubic-bezier(0.18, 1.5, 0.36, 1);
+  box-shadow:
+    0 0 48px rgba(255, 211, 107, 0.55),
+    inset 0 0 40px rgba(255, 79, 180, 0.35);
+  border-color: #ffd36b !important;
+}
+@keyframes million-zoom {
+  0% { transform: scale(1); }
+  28% { transform: scale(1.045); }
+  100% { transform: scale(1); }
+}
+
+/* 重複觸發（再一次！）彈出字樣 */
+.ct-again-pop {
+  position: fixed;
+  z-index: 68;
+  pointer-events: none;
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff6c2;
+  background: linear-gradient(135deg, #ff4fb4, #ff8a3c);
+  border: 1.5px solid #ffd36b;
+  border-radius: 99px;
+  padding: 2px 10px;
+  box-shadow: 0 4px 14px rgba(255, 79, 180, 0.65);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+/* 流派觸發光帶掃過 */
+.ct-schools {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+.ct-schools.sweeping::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--sc-col, #37c3d6) 45%,
+    #ffffff 50%,
+    var(--sc-col, #37c3d6) 55%,
+    transparent 100%
+  );
+  opacity: 0.7;
+  animation: school-ribbon-sweep 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes school-ribbon-sweep {
+  0% { transform: translateX(-110%) skewX(-18deg); opacity: 0.9; }
+  100% { transform: translateX(110%) skewX(-18deg); opacity: 0; }
+}
+.sch.sch-hit {
+  box-shadow:
+    0 0 16px var(--c, #37c3d6),
+    inset 0 0 10px rgba(255, 255, 255, 0.55);
+  border-color: #fff !important;
+  color: #fff !important;
+}
+
+/* 留在手牌觸發（held-in-hand）發光跳起 */
+.cc.held-glow {
+  animation: held-card-glow 0.65s ease-out;
+}
+@keyframes held-card-glow {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 211, 107, 0);
+  }
+  35% {
+    box-shadow:
+      0 0 24px rgba(255, 211, 107, 0.95),
+      0 0 42px rgba(255, 138, 60, 0.65),
+      inset 0 0 16px rgba(255, 246, 194, 0.75);
+    border-color: #fff6c2;
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 211, 107, 0);
+  }
+}
+
+/* 傳說組合全屏字卡 */
+.ct-legend-card {
+  position: fixed;
+  inset: 0;
+  z-index: 82;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 211, 107, 0.32), rgba(10, 8, 22, 0.88) 72%);
+  backdrop-filter: blur(4px);
+  animation: si-fade-in 0.2s ease-out;
+}
+.ct-legend-card.out {
+  opacity: 0;
+  transition: opacity 0.18s ease-in;
+}
+.lc-inner {
+  width: min(520px, 100%);
+  text-align: center;
+  padding: 22px 24px 16px;
+  border-radius: 12px;
+  background: linear-gradient(155deg, rgba(38, 26, 10, 0.96), rgba(18, 13, 30, 0.98));
+  border: 2px solid #ffd36b;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.88),
+    0 0 44px rgba(255, 211, 107, 0.55),
+    inset 0 0 28px rgba(255, 211, 107, 0.22);
+  animation: lc-pop 0.38s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+@keyframes lc-pop {
+  0% { transform: scale(0.65) translateY(18px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.lc-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: #1c1304;
+  background: linear-gradient(90deg, #ffe799, #ffd36b, #ffb84d);
+  padding: 3px 12px;
+  border-radius: 99px;
+}
+.lc-inner h2 {
+  margin: 10px 0 6px;
+  font-size: 30px;
+  color: #fff6c2;
+  text-shadow: 0 0 20px rgba(255, 211, 107, 0.85), 0 3px 8px #000;
+}
+.lc-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #f3e4bd;
+}
+.lc-bonus {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffd36b;
+  padding: 5px 14px;
+  border-radius: 6px;
+  background: rgba(255, 211, 107, 0.14);
+  border: 1px solid rgba(255, 211, 107, 0.55);
+}
+.lc-skip {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--mute);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-stage.million-closeup,
+  .ct-schools.sweeping::after,
+  .cc.held-glow,
+  .lc-inner {
+    animation: none !important;
+  }
+}
+.ct-legend-card.static .lc-inner {
+  animation: none !important;
+}
+

@@ -483,6 +483,89 @@
       fx.ps.push({ x: r.x, y: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 160, life: 0.6 + Math.random() * 0.7, age: 0, size: 3 + Math.random() * 4, col });
     }
   }
+  // 打破最高單筆紀錄或破百萬時的煙花粒子
+  function fireworks(waves) {
+    if (!fx || IE.Pixel.reducedMotion) return;
+    const cols = ['#ffd36b', '#ff4fb4', '#37c3d6', '#9be36b', '#c38bff', '#ff8a3c'];
+    for (let w = 0; w < (waves || 4); w++) {
+      setTimeout(() => {
+        if (!fx) return;
+        const cx = innerWidth * (0.2 + Math.random() * 0.6);
+        const cy = innerHeight * (0.18 + Math.random() * 0.42);
+        const col = cols[w % cols.length];
+        for (let i = 0; i < 42; i++) {
+          const a = (Math.PI * 2 * i) / 42 + (Math.random() - 0.5) * 0.12;
+          const sp = 90 + Math.random() * 190;
+          fx.ps.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, g: 130, life: 0.75 + Math.random() * 0.65, age: 0, size: 4 + Math.random() * 4, col: i % 3 === 0 ? '#ffffff' : col });
+        }
+      }, (w * 180) / Math.min(2, speedK()));
+    }
+  }
+  // 重複觸發（again: true）時卡片上方彈出「再一次！」
+  function popAgain(el) {
+    if (!root || !el) return;
+    const r = rectOf(el);
+    const p = document.createElement('div');
+    p.className = 'ct-again-pop';
+    p.textContent = '再一次！';
+    p.style.left = r.x + 'px';
+    p.style.top = (r.top - 14) + 'px';
+    root.appendChild(p);
+    const dur = 760 / Math.min(2, speedK());
+    p.animate([
+      { transform: 'translate(-50%, 6px) scale(0.4) rotate(-8deg)', opacity: 0 },
+      { transform: 'translate(-50%, -10px) scale(1.18) rotate(3deg)', opacity: 1, offset: 0.3 },
+      { transform: 'translate(-50%, -26px) scale(1) rotate(0deg)', opacity: 0 },
+    ], { duration: dur, easing: 'cubic-bezier(.2,1.6,.4,1)' });
+    setTimeout(() => p.remove(), dur);
+  }
+  // 流派觸發時掃過流派光帶
+  function sweepSchool(el, schoolId) {
+    const sc = D().SCHOOLS && D().SCHOOLS[schoolId];
+    const col = (sc && sc.color) || '#37c3d6';
+    const bar = $('.ct-schools');
+    if (bar) {
+      bar.style.setProperty('--sc-col', col);
+      bar.classList.remove('sweeping');
+      void bar.offsetWidth;
+      bar.classList.add('sweeping');
+      setTimeout(() => { if (bar) bar.classList.remove('sweeping'); }, 650);
+    }
+    if (el) {
+      el.classList.remove('sch-hit');
+      void el.offsetWidth;
+      el.classList.add('sch-hit');
+      burst(el, 22, 0.9, col);
+      setTimeout(() => { if (el) el.classList.remove('sch-hit'); }, 650);
+    }
+    if (A().school) A().school(schoolId);
+  }
+  // 傳說組合全屏字卡（點擊可跳過）
+  function showLegendCard(x) {
+    if (!root) return Promise.resolve();
+    const r = D().RECIPES.find((rc) => rc.id === x.id || rc.name === x.name);
+    const card = document.createElement('div');
+    card.className = 'ct-legend-card' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    card.innerHTML = '<div class="lc-inner">'
+      + '<span class="lc-eyebrow">★ 傳說組合達成 ★</span>'
+      + '<h2>《' + esc(x.name) + '》</h2>'
+      + '<p class="lc-hint">' + esc((r && r.hint) || '隱藏在浮城深處的傳說共鳴') + '</p>'
+      + '<div class="lc-bonus">+' + x.chips + ' 籌碼　+' + x.mult + ' 倍率' + (x.xmult ? '　×' + x.xmult : '') + '</div>'
+      + '<small class="lc-skip">點擊任意處跳過</small></div>';
+    root.appendChild(card);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        card.classList.add('out');
+        setTimeout(() => { if (card.parentNode) card.remove(); }, 180);
+        resolve();
+      };
+      root.addEventListener('pointerdown', finish, { capture: true, once: true });
+      setTimeout(finish, 950 / speedK());
+    });
+  }
   function fxStop() {
     if (!fx) return;
     cancelAnimationFrame(fx.raf);
@@ -548,7 +631,8 @@
           break;
         case 'card': {
           const el = stageCard(x.uid);
-          bump(el);
+          bump(el, x.again ? 1.2 : 1.12);
+          if (x.again) popAgain(el);
           floatText(el, '+' + x.chips, 'chips');
           setBoxes(x.C, x.M);
           pulse(chipsEl);
@@ -568,7 +652,17 @@
         case 'obj': {
           const el = objEl(x.slot);
           wiggle(el);
-          if (x.uid != null) bump(x.held ? root.querySelector('.ct-hand .cc[data-uid="' + x.uid + '"]') : stageCard(x.uid), 1.06);
+          if (x.uid != null) {
+            const targetCard = x.held ? root.querySelector('.ct-hand .cc[data-uid="' + x.uid + '"]') : stageCard(x.uid);
+            bump(targetCard, x.held ? 1.14 : 1.06);
+            if (x.held && targetCard) {
+              targetCard.classList.remove('held-glow');
+              void targetCard.offsetWidth;
+              targetCard.classList.add('held-glow');
+              burst(targetCard, 18, 0.75, '#ffd36b');
+              floatText(targetCard, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult : '+' + x.chips, x.xmult ? 'xmult' : 'mult');
+            }
+          }
           floatText(el, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
           setBoxes(x.C, x.M);
           pulse(x.chips && !x.mult ? chipsEl : multEl);
@@ -580,11 +674,12 @@
         case 'school': {
           const el = root.querySelector('.ct-schools .sch[data-school="' + x.school + '"]');
           wiggle(el);
+          sweepSchool(el, x.school);
           if (x.uid != null) bump(stageCard(x.uid), 1.06);
           floatText(el || multEl, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
           setBoxes(x.C, x.M);
           pulse(x.chips && !x.mult ? chipsEl : multEl);
-          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (!A().school) A().fx(x.xmult ? 'xmult' : 'mult', ++n);
           if (x.xmult) shake(5);
           await wait(x.xmult ? 440 : 320);
           break;
@@ -599,7 +694,7 @@
             shake(14);
             burst($('.ct-tags'), 80, 1.4, '#ffd36b');
             flash('#ffd36b');
-            await wait(900);
+            await showLegendCard(x);
           } else {
             A().fx(x.isNew ? 'xmult' : 'mult', ++n);
             if (x.isNew) burst($('.ct-tags'), 30, 0.8, '#ffd36b');
@@ -668,8 +763,13 @@
   async function showTotal(res) {
     const s = st.s;
     const el = $('.ct-total');
+    const stg = $('.ct-stage');
     el.hidden = false;
-    const size = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
+    const tier = res.total >= 1e6 ? 3 : res.total >= 1e5 ? 2 : res.total >= 1e4 ? 1 : 0;
+    el.className = 'ct-total num' + (tier ? ' tier-' + tier : '');
+    el.dataset.tier = tier === 3 ? '★ 破百萬・超新星爆發 ★' : tier === 2 ? '✦ 破十萬・訊號狂潮 ✦' : tier === 1 ? '◆ 破萬・靈感湧現 ◆' : '';
+    const baseSize = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
+    const size = tier === 3 ? Math.max(baseSize, 96) : tier === 2 ? Math.max(baseSize, 84) : tier === 1 ? Math.max(baseSize, 72) : baseSize;
     el.style.fontSize = size + 'px';
     const record = res.total > st.best;
     const steps = 18;
@@ -681,15 +781,29 @@
     }
     el.textContent = fmt(res.total);
     A().fx('total', Math.min(12, Math.round(Math.log10(Math.max(10, res.total)) * 2)));
-    el.animate([{ transform: 'translate(-50%,-50%) scale(1.6)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 280, easing: 'cubic-bezier(.2,2,.4,1)' });
+    const peakScale = tier === 3 ? 1.95 : tier === 2 ? 1.78 : tier === 1 ? 1.65 : 1.5;
+    el.animate([{ transform: 'translate(-50%,-50%) scale(' + peakScale + ')' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 340, easing: 'cubic-bezier(.2,2,.4,1)' });
     const mag = Math.log10(Math.max(10, res.total));
-    shake(Math.min(18, mag * 2.5));
-    burst(el, Math.min(120, Math.round(mag * 14)), Math.min(1.6, mag / 3));
+    const shakeMag = tier === 3 ? 28 : tier === 2 ? 22 : tier === 1 ? 16 : Math.min(14, mag * 2.2);
+    const pCount = tier === 3 ? 320 : tier === 2 ? 220 : tier === 1 ? 150 : Math.min(100, Math.round(mag * 12));
+    const pPower = tier === 3 ? 2.2 : tier === 2 ? 1.85 : tier === 1 ? 1.55 : Math.min(1.4, mag / 3);
+    const pCol = tier === 3 ? '#ffd36b' : tier === 2 ? '#ff4fb4' : tier === 1 ? '#37c3d6' : undefined;
+    shake(shakeMag);
+    burst(el, pCount, pPower, pCol);
+    if (tier === 3 && stg) {
+      stg.classList.add('million-closeup');
+      flash('#ffd36b');
+      fireworks(3);
+      setTimeout(() => { if (stg) stg.classList.remove('million-closeup'); }, 900 / Math.min(2, speedK()));
+    } else if (tier === 2) {
+      flash('rgba(255, 79, 180, 0.45)');
+    }
     if (record) {
       st.best = res.total;
       tag('新紀錄！', 'legend');
       flash('#ff4fb4');
       A().sfx('boom');
+      fireworks(5);
     }
     // 數字飛向「今晚」
     const night = $('.ct-night b');
