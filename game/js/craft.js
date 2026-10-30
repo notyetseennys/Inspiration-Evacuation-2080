@@ -64,10 +64,104 @@
     }).join('');
   }
 
+  // ---------- 互動教學（任務 15：選牌 → 看預計分數 → 下筆 → 改稿 → 媒材 → 流派） ----------
+  const TUT_STEPS = [
+    {
+      id: 'pick',
+      short: '選牌',
+      title: '步驟 1/6：選牌（挑選 1 至 5 張素材）',
+      desc: '點選手牌中的素材卡（或按數字鍵 1–9）。相同標籤出現得越多，作品形式越高級；湊齊特定標籤還能觸發「具名組合」。',
+      action: '試著點選 1 張手牌，或按「下一步」',
+      target: '.ct-hand',
+    },
+    {
+      id: 'est',
+      short: '看預計分數',
+      title: '步驟 2/6：看預計分數（籌碼 × 倍率 × 火花）',
+      desc: '選牌後，計分板會即時預覽作品形式、籌碼與倍率，下方亦會顯示「預計得分」及「只差一張」的組合提示。',
+      action: '檢視中央計分板與預計得分，再按「下一步」',
+      target: '.ct-score, .ct-est',
+    },
+    {
+      id: 'play',
+      short: '下筆',
+      title: '步驟 3/6：下筆（每晚可下筆 3 次）',
+      desc: '選好素材後按「下筆」，素材會逐張計分並觸發靈感物件。每晚三次下筆的分數加總，就是今晚完成的作品訊號！',
+      action: '按下右下角「下筆」，或按「下一步」',
+      target: '.ct-play',
+    },
+    {
+      id: 'discard',
+      short: '改稿',
+      title: '步驟 4/6：改稿（換掉不合用的素材）',
+      desc: '手牌不順時，選中不要的素材再按「改稿」，即可棄掉重抽（每晚預設 2 次）。改稿前可按右上角「牌庫」查看剩餘素材。',
+      action: '可選牌試試「改稿」，或按「下一步」',
+      target: '.ct-discard',
+    },
+    {
+      id: 'media',
+      short: '媒材',
+      title: '步驟 5/6：媒材（紙・聲・影・身・數）',
+      desc: '每張素材右上角標有媒材。下筆 4 張同媒材觸發「連作」，5 種媒材各一觸發「跨界」；5 張同媒材的小說或史詩更會昇華為「三部曲」與「傑作」！',
+      action: '留意手牌右上角的媒材標記，再按「下一步」',
+      target: '.ct-hand',
+    },
+    {
+      id: 'school',
+      short: '流派',
+      title: '步驟 6/6：靈感物件與流派（2 件 / 3 件加成）',
+      desc: '上方是已裝備的靈感物件，分屬十個創作流派。裝備 2 件同流派即可啟動流派加成，湊滿 3 件效果更強並亮起流光外框！',
+      action: '點選靈感物件或流派可查看詳情與引言',
+      target: '.ct-objs, .ct-schools',
+    },
+  ];
+
+  function renderTutorial() {
+    if (!root || !st) return;
+    const tutEl = $('.ct-tut');
+    if (!tutEl) return;
+    root.querySelectorAll('.tut-focus, .tut-focus-med').forEach((el) => {
+      el.classList.remove('tut-focus', 'tut-focus-med');
+    });
+    if (st.tutStep == null || st.tutStep < 0 || st.tutStep >= TUT_STEPS.length) {
+      tutEl.hidden = true;
+      tutEl.innerHTML = '';
+      root.classList.remove('tut-active');
+      return;
+    }
+    const idx = st.tutStep;
+    const step = TUT_STEPS[idx];
+    root.classList.add('tut-active');
+    tutEl.hidden = false;
+    root.querySelectorAll(step.target).forEach((el) => el.classList.add('tut-focus'));
+    if (step.id === 'media') {
+      const h = $('.ct-hand');
+      if (h) h.classList.add('tut-focus-med');
+    }
+    const pills = TUT_STEPS.map((s, i) => '<button type="button" class="tut-pill' + (i === idx ? ' on' : i < idx ? ' done' : '') + '" data-tut-go="' + i + '"><i>' + (i + 1) + '</i>' + esc(s.short) + '</button>').join('');
+    tutEl.innerHTML = '<div class="ct-tut-head">'
+      + '<span class="tut-badge">✦ 創作互動導覽</span>'
+      + '<div class="tut-pills">' + pills + '</div>'
+      + '<button type="button" class="btn mini tut-skip" data-tut="skip">跳過教學</button>'
+      + '</div>'
+      + '<div class="ct-tut-body">'
+      + '<div class="tut-txt"><strong>' + esc(step.title) + '</strong><p>' + esc(step.desc) + '</p><small class="tut-act">👉 ' + esc(step.action) + '</small></div>'
+      + '<div class="tut-btns">'
+      + (idx > 0 ? '<button type="button" class="btn mini" data-tut="prev">上一步</button>' : '')
+      + (idx < TUT_STEPS.length - 1
+        ? '<button type="button" class="btn primary mini" data-tut="next">下一步 →</button>'
+        : '<button type="button" class="btn primary mini" data-tut="done">完成教學 ✓</button>')
+      + '</div></div>';
+  }
+
   // ---------- 開啟 ----------
   function open(s, onDone) {
+    const meta = IE.Game.meta || {};
+    const needTut = !meta.craftTutorial;
+    if (needTut) meta.craftTutorial = true;
     st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
-      fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0 };
+      fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0,
+      tutStep: needTut ? 0 : -1 };
     root = document.createElement('div');
     root.id = 'ctable';
     root.className = 'ctable';
@@ -78,6 +172,7 @@
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
       + '<div class="ct-stagebar" hidden></div>'
+      + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
@@ -102,11 +197,6 @@
     else A().setMode('alien', 80);
     render();
     if (stg) showStageIntro(stg);
-    const meta = IE.Game.meta || {};
-    if (!meta.craftTutorial) {
-      meta.craftTutorial = true;
-      UI().pushModal(tutorialHtml(), { close: UI().closeModal }, { dismiss: () => {} });
-    }
   }
   function close(result) {
     fxStop();
@@ -248,6 +338,7 @@
     pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
     db.disabled = st.busy || !st.sel.length || ses.discards <= 0;
     renderPreview();
+    renderTutorial();
   }
   // 工具卡欄
   function renderTools() {
@@ -398,6 +489,23 @@
   // ---------- 輸入 ----------
   function onClick(e) {
     if (!st) return;
+    const tutGo = e.target.closest('[data-tut-go]');
+    if (tutGo) {
+      st.tutStep = Number(tutGo.dataset.tutGo);
+      A().sfx('click');
+      renderTutorial();
+      return;
+    }
+    const tutBtn = e.target.closest('[data-tut]');
+    if (tutBtn) {
+      const act = tutBtn.dataset.tut;
+      A().sfx('click');
+      if (act === 'next') st.tutStep = Math.min(TUT_STEPS.length - 1, st.tutStep + 1);
+      else if (act === 'prev') st.tutStep = Math.max(0, st.tutStep - 1);
+      else st.tutStep = -1;
+      renderTutorial();
+      return;
+    }
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
@@ -439,6 +547,7 @@
         A().medium(mk);
         st.lastNote = '媒材音：' + (MED_SOUND_DESC[mk] || mk);
       }
+      if (st.tutStep === 0 && st.sel.length > 0) st.tutStep = 1;
     }
     else { if (SR && SR.maxCards < 5) $('.ct-info').textContent = '外星評審：每次最多下筆 ' + SR.maxCards + ' 張。'; return; }
     A().fx('card', st.sel.length * 2);
@@ -696,6 +805,7 @@
   async function doPlay() {
     const s = st.s, ses = s.session;
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
+    if (st.tutStep >= 0 && st.tutStep <= 2) st.tutStep = 3;
     st.busy = true; st.fast = false; st.chipN = 0;
     const uids = st.sel.slice();
     st.sel = [];
@@ -946,6 +1056,7 @@
   async function doDiscard() {
     const s = st.s, ses = s.session;
     if (st.busy || !st.sel.length || ses.discards <= 0) return;
+    if (st.tutStep === 3) st.tutStep = 4;
     st.busy = true;
     const uids = st.sel.slice();
     root.querySelectorAll('.ct-hand .cc').forEach((el) => {
