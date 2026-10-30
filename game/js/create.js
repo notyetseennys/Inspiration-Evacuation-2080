@@ -62,12 +62,14 @@
   }
 
   // ---------- 具名組合與 KPI ----------
+  // 具名組合要「純」：下筆的每一張素材，都要有組合要求的其中一個標籤（像同花一樣，要刻意湊）
+  const pure = (r, sel) => sel.every((c) => c.tags.some((t) => r.need[t]));
   function matchRecipes(s, sel) {
     const counts = tagCounts(sel);
     return D.RECIPES.filter((r) => {
       const need = Object.keys(r.need);
       if (!need.length && !r.cond) return false;
-      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!r.cond || r.cond(s, sel));
+      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!need.length || pure(r, sel)) && (!r.cond || r.cond(s, sel));
     });
   }
   const power = (r) => r.chips / 10 + r.mult * 10 + (Object.values(r.need).reduce((a, b) => a + b, 0)) * 0.5;
@@ -118,7 +120,8 @@
     const fs = formStats(s, F.id);
     let chips = fs.chips, mult = fs.mult;
     const steps = [{ t: 'form', form: F.id, level: fs.level, chips, mult, C: chips, M: mult }];
-    const objs = activeObjects(s);
+    const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
+    const objs = SR && SR.noObjects ? [] : activeObjects(s);
     const ses = s.session || {};
     const recs = matchRecipes(s, sel);
     const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct,
@@ -127,10 +130,12 @@
     const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
     const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
     F.scoring.forEach((c, i) => {
+      // 外星評審的規則：某些素材不計分
+      if (SR && SR.blocked(c)) { steps.push(snap({ t: 'blocked', uid: c.uid })); return; }
       let reps = 1 + (c.mod === 'echo' ? 1 : 0);
       objs.forEach((o) => { if (o.def.retrig && o.def.retrig(c, ctx, i)) reps++; });
       for (let r = 0; r < reps; r++) {
-        const v = cardValue(s, c);
+        const v = SR && SR.extraWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
         chips += v;
         steps.push(snap({ t: 'card', uid: c.uid, chips: v, again: r > 0 }));
         const mf = MOD_FX[c.mod];
@@ -161,12 +166,15 @@
     const ai = aiFactor(s, F.id, objs);
     const wm = (RL.worldMods(s).signalMult) || 1;
     const tm = IE.World ? IE.World.tripMult(s) : 1;
+    const sm = SR ? SR.mult(F.id, ctx.kpiMod) : 1;
+    const sp = s.spark * (SR ? SR.sparkMult : 1);
     if (ai !== 1) steps.push({ t: 'ai', x: ai });
+    if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
     if (wm !== 1) steps.push({ t: 'world', x: wm });
     if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
     if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
-    steps.push({ t: 'spark', x: s.spark });
-    const raw = Math.round(chips * mult * s.spark * ai * wm * tm);
+    steps.push({ t: 'spark', x: sp });
+    const raw = Math.round(chips * mult * sp * ai * wm * tm * sm);
     const total = Math.round(raw * ctx.kpiMod);
     const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
     return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
@@ -181,8 +189,24 @@
     const fs = formStats(s, F.id);
     const all = matchRecipes(s, sel);
     const recs = topRecipes(all).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+    // 預計得分（包括物件；黑盒之類的隨機效果按中間值計）與「差一張」提示
+    const est = scorePlay(s, uids, { roll: 0.5 });
+    const have = new Set(all.map((r) => r.id));
+    const ses = s.session;
+    const hints = [];
+    if (ses && uids.length < 5) {
+      ses.hand.filter((u) => !uids.includes(u)).forEach((u) => {
+        const c = cardOf(s, u);
+        if (!c) return;
+        matchRecipes(s, sel.concat(c)).filter((r) => !have.has(r.id) && !r.legend).forEach((r) => {
+          if (!hints.some((h) => h.recipe === r.id)) hints.push({ uid: u, card: c.name, recipe: r.id, name: (s.discovered[r.id] || known(r.id)) ? r.name : '？？？', power: power(r) });
+        });
+      });
+    }
+    hints.sort((a, b) => b.power - a.power);
     return { form: F.id, name: FORM[F.id].name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: F.scoring.map((c) => c.uid),
-      recipes: recs, ai: aiFactor(s, F.id, activeObjects(s)) };
+      recipes: recs, ai: aiFactor(s, F.id, activeObjects(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
+      blocked: est.steps.filter((x) => x.t === 'blocked').length };
   }
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
 
@@ -212,9 +236,11 @@
       mode: all ? 'allnighter' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
       handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
-      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0),
+      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: Math.max(0, C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
+    // 關卡之夜：設定目標分數與外星評審的規則
+    if (IE.Stages) IE.Stages.onStart(s, s.session);
     draw(s);
     return s.session;
   }
@@ -234,6 +260,8 @@
   function play(s, uids) {
     const ses = s.session;
     if (!ses || ses.plays <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return null;
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    if (SR && (uids.length > SR.maxCards || uids.some((u) => SR.forbidden(cardOf(s, u))))) return null;
     const res = scorePlay(s, uids, { roll: RL.rand(s) });
     // 用過的素材會磨損；寫進作品的愧疚會被卸下
     res.scoring.forEach((u) => { const c = cardOf(s, u); if (c) c.wear = (c.wear || 0) + 1; });
@@ -267,6 +295,7 @@
       if (e.spark) { RL.addSpark(s, e.spark, true); notes.push(D.OBJ[o.id].name + '：火花 ' + e.spark); }
       if (e.cr) { s.cr += e.cr; notes.push(D.OBJ[o.id].name + '：+$' + e.cr); }
     });
+    if (SR && SR.sinPerPlay) notes.push('天空區贊助：靈魂 +' + RL.sin(s, SR.sinPerPlay, null) + ' 克');
     res.notes = notes;
     ses.notes.push(...notes);
     ses.total += res.total; ses.raw += res.raw;
@@ -314,7 +343,8 @@
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
     const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
-    return { work, session: ses, paid };
+    const stage = IE.Stages ? IE.Stages.settle(s, ses) : null;
+    return { work, session: ses, paid, stage };
   }
   // 還未下筆就離開：退回材料費與體力
   function cancel(s) {
@@ -334,10 +364,12 @@
   // ---------- 模擬用：找出這手牌最好的下筆 ----------
   function bestPlay(s) {
     const ses = s.session;
-    const hand = ses.hand.map((u) => cardOf(s, u)).filter(Boolean);
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !(SR && SR.forbidden(c)));
     if (!hand.length) return null;
     const cands = new Map();
-    const add = (cards) => { const uids = cards.slice(0, 5).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
+    const maxN = SR ? SR.maxCards : 5;
+    const add = (cards) => { const uids = cards.slice(0, maxN).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
     const byVal = hand.slice().sort((a, b) => b.value - a.value);
     add(byVal);
     const tags = [...new Set(hand.flatMap((c) => c.tags))];

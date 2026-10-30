@@ -32,7 +32,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 7 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 8 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -96,6 +96,15 @@
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
       collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
       gacha() { A.init(); openGacha(() => showTitle()); },
+      daily() {
+        A.init(); store.del(KEY_RUN);
+        const d = IE.Meta.daily(IE.Meta.dateKey());
+        UI.modal('<div class="modal"><span class="eyebrow">每日挑戰・' + d.key + '</span><h2>今天的人才篩選</h2><p>今天所有人都用同一個種子：<b>' + D.BACKGROUNDS[d.bg].name + '</b>、' + D.SEASONS[d.season].name + '、外星評級 ' + d.stake + '。分數按存活天數與通過的關卡計算，只記錄你今天的最佳成績。</p>'
+          + '<div class="btn-row"><button class="btn primary" type="button" data-do="go">開始</button><button class="btn" type="button" data-do="close">返回</button></div></div>', {
+          go() { UI.closeModal(); newGame(d.bg, d.season, { seed: d.seed, stake: d.stake, daily: d.key }); },
+          close() { UI.closeModal(); },
+        }, { dismiss: () => {} });
+      },
     });
   }
   // 人才扭蛋機
@@ -123,18 +132,20 @@
   function showSetup() {
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
-      bg(el) { Game.setup.bg = el.dataset.id; render(); },
+      bg(el) { Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render(); },
+      stake(el) { Game.setup.stake = Number(el.dataset.id); render(); },
       season(el) { Game.setup.season = el.dataset.id; render(); },
       back() { showTitle(); },
       gacha() { openGacha(render); },
-      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)) }); },
     });
     render();
     window.scrollTo({ top: 0 });
   }
-  function newGame(bg, season) {
+  function newGame(bg, season, o) {
     A.init();
-    Game.state = R.newRun({ bg, season, meta: Game.meta });
+    o = o || {};
+    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed, stake: o.stake || 1, daily: o.daily || null });
     if (Game.meta.nextStart && Game.meta.nextStart.length) { Game.meta.nextStart = []; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
@@ -643,7 +654,7 @@
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 7) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 8) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

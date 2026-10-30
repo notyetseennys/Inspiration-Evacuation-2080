@@ -11,7 +11,7 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR, World: W } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
@@ -160,6 +160,8 @@ function simInterview(s, rng, moral) {
 function runCreate(s, mode) {
   CR.start(s, mode);
   const ses = s.session;
+  // 機械人只會用「加班燈」和「濃縮咖啡」
+  for (let i = (s.tools || []).length - 1; i >= 0; i--) if (s.tools[i] === 'lamp' || s.tools[i] === 'coffee') IE.Stages.useTool(s, i, []);
   while (ses.plays > 0 && ses.hand.length) {
     let best = CR.bestPlay(s);
     if (best && ses.discards > 0 && (best.form === 'sketch' || best.form === 'poem')) {
@@ -413,6 +415,9 @@ function runOne(strat, bg, season, seed) {
       const careful = S.moral !== 'random' && strat !== 'workaholic';
       const tired = careful && (s.body < (R.isNight(s) ? 36 : 26) || (s.noRest >= 3 && slot === 1) || ((s.conds.heatstroke || s.conds.insomnia) && slot === 1));
       let choice = tired ? 'rest' : S.act(s, rng);
+      // 關卡之夜：會去創作（評審之夜身體好就通宵）
+      const stg = IE.Stages.today(s);
+      if (stg && R.isNight(s) && S.moral !== 'random' && strat !== 'workaholic' && enabled(s, 'create')) choice = stg.kind === 'boss' && s.body > 55 && enabled(s, 'allnighter') ? 'allnighter' : 'create';
       if (s.trip && !R.isNight(s)) choice = tripChoice(s);
       else if (!tired && S.travel != null) choice = travelChoice(s, S.travel) || choice;
       if (careful && D.OUTDOOR.includes(choice) && R.outdoorRisk(s) >= 0.03) choice = R.isNight(s) ? 'rest' : (['label', 'smile', 'farm', 'clinic', 'chat', 'rest'].find((id) => enabled(s, id)) || 'rest');
@@ -433,7 +438,7 @@ function runOne(strat, bg, season, seed) {
   return { ending: s.ended.type, death: s.ended.deathId, day: s.ended.day, signals, works: s.works.length, soul: s.soul,
     conscience: s.conscience, sparkMax: R.sparkMax(s), overweightFails, type: dos.archetype.id, worlds: Object.keys(s.eventsSeen).length,
     crAt, raws: s.works.map((w) => w.raw), crEarned: s.stats.crEarned, trips: s.stats.trips, rares: Object.keys(s.rares).length,
-    sales: s.stats.sales, decor: Object.keys(s.decor).length };
+    sales: s.stats.sales, decor: Object.keys(s.decor).length, stageLog: s.stageLog || [] };
 }
 
 const bgs = Object.keys(D.BACKGROUNDS);
@@ -467,6 +472,19 @@ if (process.env.ECON) {
     const raws = res.flatMap((r) => r.raws);
     console.log(strat.padEnd(11) + [10, 30, 60, 90].map((d) => { const a = res.filter((r) => r.crAt[d] != null).map((r) => r.crAt[d]); return 'D' + d + ' $' + pctl(a, 0.25) + '/' + pctl(a, 0.5) + '/' + pctl(a, 0.75); }).join('  ')
       + '  作品 p25/50/90 ' + [0.25, 0.5, 0.9].map((p) => pctl(raws, p)).join('/'));
+  }
+  process.exit(0);
+}
+
+// STAGES=1：各關卡的通過率
+if (process.env.STAGES) {
+  for (const strat of (process.env.STRAT ? process.env.STRAT.split(',') : ['balanced', 'saint', 'shameless'])) {
+    const res = [];
+    for (let i = 0; i < RUNS; i++) res.push(runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % seasons.length], 1000 + i));
+    const all = res.flatMap((r) => r.stageLog);
+    const rate = (f) => { const a = all.filter(f); return a.length ? Math.round(100 * a.filter((x) => x.pass).length / a.length) + '%（' + a.length + '）' : '-'; };
+    console.log(strat.padEnd(11) + ['small', 'big', 'boss'].map((k) => k + ' ' + rate((x) => x.kind === k)).join('　') + '　｜' + [0, 1, 2, 3, 4].map((q) => '季' + (q + 1) + ' ' + rate((x) => Math.floor((x.day - 1) / 20) === q)).join(' ')
+      + '｜被選中 ' + Math.round(100 * res.filter((r) => r.ending === 'recruited').length / RUNS) + '%');
   }
   process.exit(0);
 }

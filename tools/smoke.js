@@ -178,6 +178,32 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('#modal [data-do="ok"]');
     ok('天台菜園：評級 ' + rank);
 
+    // 第六期：關卡之夜（第 7 天社區小展）、工具卡、預計得分、牌庫
+    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 7; s.slot = 2; s.body = 80; s.cr = 500; s.tools = ['lamp', 'renew']; s.morning = { day: 7, feed: [] }; s.trip = null; });
+    await page.click('#views [data-view="room"]');
+    await page.click('.act[data-id="create"]');
+    if (await page.$('#modal [data-do="close"]')) await page.click('#modal [data-do="close"]');
+    await page.waitForSelector('#ctable .ct-stagebar:not([hidden])');
+    const playsBefore = await page.evaluate(() => window.__IE.Game.state.session.plays);
+    await page.click('#ctable .ct-tool[data-tool="0"]');
+    const playsAfter = await page.evaluate(() => window.__IE.Game.state.session.plays);
+    if (playsAfter !== playsBefore + 1) await fail('加班燈沒有生效');
+    await page.click('#ctable [data-ct="deck"]');
+    await page.waitForSelector('#modal .dk-rows');
+    await page.click('#modal [data-do="close"]');
+    const u0 = await page.evaluate(() => window.__IE.Game.state.session.hand[0]);
+    await page.click('#ctable .ct-hand .cc[data-uid="' + u0 + '"]');
+    const est = await page.textContent('#ctable .ct-est');
+    if (!/預計/.test(est)) await fail('沒有預計得分');
+    await page.click('#ctable .ct-hand .cc[data-uid="' + u0 + '"]');
+    await createNight();
+    const stage = await page.evaluate(() => window.__IE.Game.state.stageDone && window.__IE.Game.state.stageDone[7]);
+    if (!stage) await fail('關卡沒有結算');
+    ok('第 1 關社區小展：' + (stage === 'pass' ? '入選' : '落選') + '（' + est.trim().slice(0, 24) + '…）');
+    await page.waitForSelector('#modal [data-do="ok"]', { timeout: 10000 });
+    await page.click('#modal [data-do="ok"]');
+    await closePhone();
+
     // 夢境面試：跳到第 18 天晚上
     await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 18; s.slot = 2; s.body = 80; s.morning = { day: 18, feed: [] }; });
     if (!(await page.$('.phone'))) await page.click('[data-hud="phone"]');
@@ -214,6 +240,10 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('.dossier .d-class h3');
     const stamps = await page.$$eval('.dossier .dstamp', (els) => els.map((e) => e.textContent));
     ok('人類樣本檔案：' + (await page.textContent('.dossier .d-class h3')) + '｜印章 ' + stamps.join('、'));
+    await page.waitForSelector('.meta-result .mr-xp');
+    const prof = await page.evaluate(() => { const m = JSON.parse(localStorage.getItem('ie2080.meta')) || {}; return { xp: m.lastXp, level: m.level || 1, ach: Object.keys(m.ach || {}) }; });
+    if (!prof.xp) throw new Error('結局沒有發放人才檔案經驗');
+    ok('局外結算：經驗 +' + prof.xp + '，人才檔案 Lv.' + prof.level + '，成就 ' + (prof.ach.join('、') || '（沒有）'));
     const md = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('ie2080.meta')).deaths || {}; } catch (e) { return {}; } });
     if (!Object.keys(md).length) await fail('死亡圖鑑沒有記錄');
     // 人才扭蛋機

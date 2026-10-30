@@ -17,12 +17,16 @@
   function cardEl(s, c, o) {
     o = o || {};
     const D_ = D();
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
+    if (dark) return '<button type="button" class="cc dark" data-uid="' + c.uid + '"><span class="cc-name">？？？</span><span class="cc-tags"><span class="t">停電</span></span><span class="cc-foot"><b class="cc-val num">?</b></span></button>';
+    const off = SR && SR.forbidden(c), blocked = SR && !off && SR.blocked(c);
     const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
     const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
     return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
-      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + '>'
+      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + '<span class="cc-name">' + esc(c.name) + '</span>'
       + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
@@ -50,12 +54,14 @@
     root.setAttribute('aria-label', '創作之夜');
     root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
       + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span></div>'
-      + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
+      + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
-      + '<section class="ct-objs"></section><p class="ct-info"></p>'
+      + '<div class="ct-stagebar" hidden></div>'
+      + '<section class="ct-objs"></section><section class="ct-tools"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
+      + '<p class="ct-est"></p>'
       + '<div class="ct-tags"></div>'
       + '<section class="ct-stage"><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
       + '<p class="ct-hint"></p>'
@@ -106,6 +112,8 @@
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
     $('.ct-objs').innerHTML = slots.join('');
+    renderTools();
+    renderStage();
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
     $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
@@ -116,6 +124,34 @@
     pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
     db.disabled = st.busy || !st.sel.length || ses.discards <= 0;
     renderPreview();
+  }
+  // 工具卡欄
+  function renderTools() {
+    const s = st.s, S = IE.Stages;
+    if (!S) return;
+    const n = S.toolSlots(s), tools = s.tools || [];
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const id = tools[i];
+      if (!id) { out.push('<div class="ct-tool empty">工具卡</div>'); continue; }
+      const T = S.TOOL[id];
+      out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + T.desc) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
+    }
+    $('.ct-tools').innerHTML = out.join('');
+  }
+  // 關卡之夜：目標分數與評審規則
+  function renderStage() {
+    const s = st.s, ses = s.session, bar = $('.ct-stagebar');
+    const g = ses.stage;
+    if (!g) { bar.hidden = true; return; }
+    bar.hidden = false;
+    const sc = IE.Stages.stageScore(ses);
+    const rules = g.rules.map((id) => IE.Stages.BOSS[id]);
+    bar.style.setProperty('--c', g.color);
+    bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
+      + '<div class="bar"><i style="width:' + Math.min(100, sc / g.target * 100) + '%"></i></div>'
+      + (rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
+      + (sc >= g.target ? '<div class="sb-pass">已達標！</div>' : '');
   }
   function renderGoal(extra) {
     const s = st.s;
@@ -139,7 +175,8 @@
       $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
       $('.ct-form .fl').textContent = '';
       setBoxes(0, 0, 'preview');
-      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；特定的標籤組合會觸發具名組合。';
+      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；具名組合要「純」：每一張都要有組合要求的標籤。';
+      $('.ct-est').innerHTML = '';
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring'));
       return;
     }
@@ -149,7 +186,15 @@
     const bits = pv.recipes.map((r) => (r.known ? '<span class="rc' + (r.legend ? ' lg' : '') + '">' + esc(r.name) + '</span>'
       : '<span class="rc unk' + (r.legend ? ' lg' : '') + '">' + (r.legend ? '？？？ 傳說組合' : '？？？ 未知組合') + '</span>'));
     if (pv.ai < 1) bits.push('<span class="rc ai">AI 正在模仿你的「' + esc(pv.name) + '」：×' + pv.ai + '</span>');
+    if (pv.blocked) bits.push('<span class="rc ai">' + pv.blocked + ' 張素材被評審判為不計分</span>');
+    // 「差一張」提示
+    pv.hints.forEach((h) => bits.push('<span class="rc near">加入「' + esc(h.card) + '」→《' + esc(h.name) + '》</span>'));
     $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">沒有具名組合</span>';
+    // 預計得分
+    const g = st.s.session.stage;
+    const need = g ? Math.max(0, g.target - IE.Stages.stageScore(st.s.session)) : 0;
+    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分（' + fmt(pv.estChips) + ' × ' + (Math.round(pv.estMult * 10) / 10) + ' × 火花）'
+      + (g && need > 0 ? '<span class="' + (pv.est >= need ? 'ok' : 'short') + '">　關卡還差 ' + fmt(need) + (pv.est >= need ? '：這一筆足夠！' : '') + '</span>' : '');
     root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.toggle('scoring', pv.scoring.includes(Number(b.dataset.uid))));
   }
 
@@ -158,6 +203,8 @@
     if (!st) return;
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
+    const tb = e.target.closest('.ct-tool[data-tool]');
+    if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
     const ob = e.target.closest('.ct-obj[data-obj]');
     if (ob) { const o = D().OBJ[ob.dataset.obj]; $('.ct-info').innerHTML = '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + '）：' + esc(o.desc); wiggle(ob); return; }
     const b = e.target.closest('[data-ct]');
@@ -168,13 +215,17 @@
     else if (k === 'discard') doDiscard();
     else if (k === 'sort') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; store.set('ie2080.sort', st.sortBy); render(); }
     else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
+    else if (k === 'deck') UI().pushModal(deckHtml(st.s), { close: UI().closeModal }, { dismiss: () => {} });
     else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
     else if (k === 'leave') leave();
   }
   function toggle(uid) {
+    const SR = IE.Stages ? IE.Stages.scoring(st.s) : null;
+    const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
-    else if (st.sel.length < 5) st.sel.push(uid);
-    else return;
+    else if (SR && c && SR.forbidden(c)) { $('.ct-info').textContent = '外星評審：這張素材不能用。'; return; }
+    else if (st.sel.length < (SR ? SR.maxCards : 5)) st.sel.push(uid);
+    else { if (SR && SR.maxCards < 5) $('.ct-info').textContent = '外星評審：每次最多下筆 ' + SR.maxCards + ' 張。'; return; }
     A().fx('card', st.sel.length * 2);
     render();
   }
@@ -184,6 +235,28 @@
     else if (k === 'Enter') doPlay();
     else if (k === 'd' || k === 'D' || k === 'Backspace') doDiscard();
     else if (k === 's' || k === 'S') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; render(); }
+  }
+  // 使用工具卡：先選素材，再按工具卡
+  function useTool(idx) {
+    const r = IE.Stages.useTool(st.s, idx, st.sel.slice());
+    $('.ct-info').innerHTML = esc(r.msg);
+    if (r.ok) { A().sfx('pickup'); st.sel = []; burst($('.ct-tools'), 24, 0.8, '#9be36b'); }
+    else A().sfx('wrong');
+    render();
+  }
+  // 牌庫檢視：還沒抽的素材按標籤分佈
+  function deckHtml(s) {
+    const ses = s.session;
+    const left = ses.deck.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const counts = {};
+    left.forEach((c) => c.tags.forEach((g) => { counts[g] = (counts[g] || 0) + 1; }));
+    const max = Math.max(1, ...Object.values(counts));
+    const rows = Object.keys(D().TAGS).filter((g) => counts[g]).sort((a, b) => counts[b] - counts[a]).map((g) => '<div class="dk-row"><span class="tag" style="--c:' + D().TAGS[g].color + '">' + D().TAGS[g].name + '</span>'
+      + '<div class="dk-bar"><i style="width:' + counts[g] / max * 100 + '%;background:' + D().TAGS[g].color + '"></i></div><b class="num">' + counts[g] + '</b></div>').join('');
+    return '<div class="modal wide"><h2>牌庫</h2><p class="mute" style="font-size:13px">還沒抽到的素材有 ' + left.length + ' 張（用過的 ' + ses.used.length + ' 張會在牌庫抽完後洗回去）。改稿前看看接下來最可能抽到甚麼。</p>'
+      + '<div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
+      + '<h3>未抽的素材</h3><div class="dk-cards">' + left.slice().sort((a, b) => b.value - a.value).map((c) => '<span class="dk-card">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '・' + c.value + '</small></span>').join('') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">返回</button></div></div>';
   }
   function leave() {
     if (st.busy) return;
@@ -416,6 +489,19 @@
           A().sfx('wrong');
           await wait(320);
           break;
+        case 'blocked': {
+          const el = stageCard(x.uid);
+          if (el) { el.classList.add('blocked'); floatText(el, '不計分', 'bad'); wiggle(el); }
+          A().sfx('wrong');
+          await wait(260);
+          break;
+        }
+        case 'stage':
+          tag('外星評審（' + x.name + '）×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          if (x.x !== 1) shake(6);
+          await wait(360);
+          break;
         case 'world':
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
@@ -513,6 +599,13 @@
     });
   }
 
+  function stageResultHtml(g) {
+    return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '入選' : '落選') + '</span>'
+      + '<b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+      + (g.lines.length ? '<small>' + esc(g.lines.join('・')) + '</small>' : '')
+      + (g.tools.length ? '<small>工具卡：' + g.tools.map((id) => esc(IE.Stages.TOOL[id].name)).join('、') + '</small>' : '')
+      + (g.objs.length ? '<small>靈感物件：' + g.objs.map((id) => esc(D().OBJ[id].name)).join('、') + '</small>' : '') + '</div>';
+  }
   // ---------- 今晚完成 ----------
   async function endNight() {
     const s = st.s;
@@ -534,6 +627,7 @@
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + (res.stage ? stageResultHtml(res.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
       + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
@@ -565,7 +659,9 @@
     return '<div class="modal"><h2>創作之夜</h2><div class="help">'
       + '<p>從素材庫抽一手素材。每晚可以<b>下筆</b>三次、<b>改稿</b>兩次；三次下筆的分數加起來，就是今晚的作品。</p>'
       + '<ul><li>選 1 至 5 張素材下筆。同一標籤出現得越多，<b>作品形式</b>越高級：短詩、對聯、歌、小說、壁畫、交響曲、史詩……</li>'
-      + '<li>特定標籤組合會觸發<b>具名組合</b>（例如「水＋記憶＋飢餓」＝水淹童年）。還有隱藏的<b>傳說組合</b>等你發現。</li>'
+      + '<li>特定標籤組合會觸發<b>具名組合</b>（例如「水＋記憶＋飢餓」＝水淹童年）。組合要<b>純</b>：下筆的每一張都要有組合要求的標籤。還有隱藏的<b>傳說組合</b>等你發現。</li>'
+      + '<li>選牌時會顯示<b>預計得分</b>，以及「加入某張就成為某個組合」的提示；「牌庫」可以看接下來會抽到甚麼。</li>'
+      + '<li>每季第 7、14、20 天晚上是<b>關卡之夜</b>：一晚之內要達到目標分數。第 20 天的外星評審還會改寫規則。<b>工具卡</b>可以在這裡改造素材。</li>'
       + '<li><b>靈感物件</b>會在計分時觸發；朋友、潛水、事件和二手市集都可以找到。</li>'
       + '<li>分數 = 籌碼 × 倍率 × 火花。素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格。</li>'
       + '<li>白天做不同的事，會練成不同的技法，令相應的作品形式升級。</li></ul>'

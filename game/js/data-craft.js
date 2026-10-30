@@ -90,7 +90,7 @@
     R('lastpainting', '欠債藝術家的最後一幅畫', { hunger: 1 }, 50, 3, { legend: true, xmult: 3,
       cond: (s) => s.cr < 25, hint: '口袋裡幾乎一分錢都沒有的時候，畫你的肚餓。' }),
     R('forthetaken', '為所有被帶走的人', { warmth: 1, memory: 1 }, 60, 4, { legend: true, xmult: 3,
-      cond: (s) => s.npcs.filter((n) => !n.alive).length >= 3, hint: '當身邊的朋友一個一個被帶走之後……' }),
+      cond: (s, sel) => sel.length === 5 && s.npcs.filter((n) => !n.alive).length >= 4, hint: '當身邊的朋友一個一個被帶走之後，用五件全部關於人情或記憶的東西……' }),
   ];
 
   // ---------- 素材變化 ----------

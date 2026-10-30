@@ -209,7 +209,7 @@
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 7, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 8, seed, rngState: seed, stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -260,6 +260,11 @@
     if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
     D.STARTER.forEach((id) => addCard(s, id));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
+    // 局外成長：檔案等級的獎勵
+    if (s.metaPerks) {
+      s.objSlots += s.metaPerks.objSlots;
+      if (IE.Stages) for (let i = 0; i < s.metaPerks.startTool; i++) IE.Stages.giveTool(s, IE.Stages.randomTool(s));
+    }
     return s;
   }
   const countAction = (s, k) => { s.stats.actions[k] = (s.stats.actions[k] || 0) + 1; };
@@ -371,7 +376,8 @@
   // ---------- 時間 ----------
   const quarterOf = (day) => Math.min(D.REVIEW_DAYS.length - 1, Math.floor((day - 1) / 20));
   const isNight = (s) => s.slot === 2;
-  const threshold = (s) => Math.round(D.THRESHOLDS[s.quarter] * (worldMods(s).thresholdMult || 1));
+  const stakeMod = (s, k) => (IE.Meta ? IE.Meta.stakeMod(s, k) : 1);
+  const threshold = (s) => Math.round(D.THRESHOLDS[s.quarter] * (worldMods(s).thresholdMult || 1) * stakeMod(s, 'threshold'));
   const reviewDay = (s) => D.REVIEW_DAYS[s.quarter];
   const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
@@ -382,7 +388,7 @@
     const f = floor == null ? s.floor : floor;
     if (f <= 0) return 0;
     const period = Math.floor((s.day - 1) / D.RENT_EVERY);
-    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1) * (perk(s).rentMult || 1));
+    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1) * (perk(s).rentMult || 1) * stakeMod(s, 'rent'));
   }
 
   // 抉擇與面試的訊號：資料寫的是舊版數值（門檻 16.5 萬時），按本季門檻等比例放大
@@ -931,6 +937,13 @@
     if (IE.World) IE.World.decorList(s).forEach((d) => items.push({ cat: 'home', icon: 'd_' + d.id, id: 'decor:' + d.id, name: d.name, desc: d.desc, cost: d.cost, owned: d.owned, need: !d.owned && !!d.reason && d.reason !== '錢不夠', note: !d.owned && d.reason && d.reason !== '錢不夠' ? d.reason : null }));
     add('black', 'gem', { id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0, note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
     if (worldMods(s).eraseShop) add('black', 'shredder', { id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
+    // 工具卡貨架（每三天換兩張）
+    if (IE.Stages) IE.Stages.toolShop(s).forEach((tid) => {
+      const T = IE.Stages.TOOL[tid], full = (s.tools || []).length >= IE.Stages.toolSlots(s);
+      items.push({ cat: 'craft', icon: T.icon, id: 'tool:' + tid, name: '工具卡：' + T.name, desc: T.desc + '（在創作桌上使用）', cost: IE.Stages.toolPrice(s, tid), need: full, note: full ? '工具卡欄已滿（' + IE.Stages.toolSlots(s) + ' 格）' : null });
+    });
+    const pm = stakeMod(s, 'prices');
+    if (pm !== 1) items.forEach((it) => { if (!it.id.startsWith('tool:') && it.cost) it.cost = Math.round(it.cost * pm); });
     items.forEach((it) => { it.enabled = !it.owned && !it.need && s.cr >= it.cost; });
     return items;
   }
@@ -938,6 +951,13 @@
     const it = shop(s).find((x) => x.id === id);
     if (!it || !it.enabled) return { ok: false, msg: '無法購買' };
     if (id.startsWith('decor:')) return IE.World.buyDecor(s, id.slice(6));
+    if (id.startsWith('tool:')) {
+      const tid = id.slice(5);
+      s.cr -= it.cost;
+      IE.Stages.giveTool(s, tid);
+      s.toolShop.items = s.toolShop.items.filter((x) => x !== tid);
+      return { ok: true, msg: '已購買工具卡：' + IE.Stages.TOOL[tid].name };
+    }
     s.cr -= it.cost;
     s.buys = s.buys || {};
     s.buys[id] = (s.buys[id] || 0) + 1;
@@ -1145,6 +1165,15 @@
     if (s.noRest >= 3) feed.push({ kind: 'warn', text: '你已經連續 ' + s.noRest + ' 天沒有休息。' + (s.noRest >= 4 ? '今晚起有猝死的危險。' : '') });
     if (s.cr < foodCost(s) * 2) feed.push({ kind: 'warn', text: '你的錢不夠吃兩晚飯。餓肚子睡覺會令身體 −25。' });
     (s.newsQueue || []).forEach((t) => feed.push({ kind: 'news', text: t }));
+    // 關卡之夜的預告
+    if (IE.Stages) {
+      [0, 1].forEach((k) => {
+        const g = IE.Stages.stageOn(s, s.day + k);
+        if (!g) return;
+        feed.unshift({ kind: k ? 'news' : 'warn', text: (k ? '【明晚】' : '【今晚】') + '第 ' + g.index + ' 關「' + g.name + '」：一晚之內的創作要達到 ' + g.target.toLocaleString() + ' 分。'
+          + (g.rules.length ? '評審的條件：' + g.rules.map((b) => b.name + '（' + b.desc + '）').join('、') + '。' : '') + (k ? '' : '不參加就當作棄權。') });
+      });
+    }
     // 天空區委託：每五天換一批
     if (IE.World) {
       const cm = IE.World.commissions(s).filter((c) => !c.done);
@@ -1347,6 +1376,8 @@
     s.events.filter((e) => s.day >= e.until).forEach((e) => rep.line('事件結束：' + evDef(e.id).name, 'news'));
     if (s.events.some((e) => s.day >= e.until)) s.eventNext = Math.max(s.eventNext, s.day + 2 + Math.floor(rand(s) * 4));
     s.events = s.events.filter((e) => s.day < e.until);
+    // 關卡之夜沒有創作：棄權
+    if (IE.Stages) IE.Stages.endOfDay(s, rep);
     // 旅行結束：坐夜機回浮城
     if (s.trip && s.day >= s.trip.until && s.body > 0 && IE.World) IE.World.flyHome(s, rep);
     // 探射燈
@@ -1493,6 +1524,9 @@
     meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
     meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
     if (IE.Roster) IE.Roster.settle(meta, finalType);
+    meta.tickets = (meta.tickets || 0) + (s.stageTickets || 0);
+    meta.lastTickets = (meta.lastTickets || 0) + (s.stageTickets || 0);
+    if (IE.Meta) IE.Meta.settle(meta, s, finalType);
     meta.unlocked = meta.unlocked || {};
     meta.lastUnlocks = [];
     D.OBJECTS.forEach((o) => {
