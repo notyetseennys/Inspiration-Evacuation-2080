@@ -21,10 +21,11 @@
     const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
-    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '')
+    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
       + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + '<span class="cc-name">' + esc(c.name) + '</span>'
+      + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
       + '<span class="cc-tags">' + tags + '</span>'
       + '<span class="cc-foot"><b class="cc-val num">' + val + '</b>'
       + (wear ? '<span class="cc-wear" title="用過 ' + wear + ' 次，籌碼 ×' + C().wearMult(c).toFixed(2) + '">' + (wear >= 4 ? '陳腔濫調' : '用過 ×' + wear) + '</span>' : '') + '</span>'
@@ -419,6 +420,11 @@
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
+        case 'trip':
+          tag((x.abroad ? '異鄉之夜' : '旅行的餘韻') + ' ×' + x.x, 'kpi-good');
+          A().fx('mult', 3);
+          await wait(300);
+          break;
         case 'kpi':
           tag('外星 KPI ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
           A().sfx(x.x >= 1 ? 'combo' : 'wrong');
@@ -528,6 +534,7 @@
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
       + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
     root.appendChild(panel);

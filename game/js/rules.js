@@ -25,6 +25,7 @@
   function bgOf(s) { return D.BACKGROUNDS[s.bg]; }
   function seasonOf(s) { return D.SEASONS[s.season]; }
   function perk(s) { return bgOf(s).perk; }
+  const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
 
   // ---------- 事件（長期，可同時進行兩個） ----------
   const evDef = (id) => D.WORLD_EVENTS.find((w) => w.id === id);
@@ -188,7 +189,7 @@
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 5, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 6, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -205,6 +206,8 @@
       unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
       pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false },
+      // 旅行與家居（第三期）
+      trip: null, visited: {}, rares: {}, decor: {}, antique: null, gallerySoldDay: 0,
       auto: 0, removed: { smile: false, label: false },
       mastery: { label: 0, smile: 0, dive: 0 },
       cards: [], uid: 1,
@@ -216,7 +219,8 @@
       stats: { labels: 0, wrong: 0, smiles: 0, perfects: 0, dives: 0, relics: 0, fish: 0, flows: 0, works: 0,
         crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null,
         actions: {}, deliveries: 0, lateDeliveries: 0, headlines: 0, shares: 0, buskNotes: 0, crowdMax: 0,
-        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '', bestPlay: 0, maxObjects: 1 },
+        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '', bestPlay: 0, maxObjects: 1,
+        trips: 0, sites: 0, flights: 0, sales: 0, decor: 0 },
       log: { fish: {}, relics: {} },
       newsSeen: {}, morning: null, ended: null,
       legacy: (opts.meta && opts.meta.relics) ? opts.meta.relics.slice(-5) : [],
@@ -238,7 +242,10 @@
   // ---------- 素材卡 ----------
   function makeCard(s, id) {
     const c = D.CARDS[id];
-    return { uid: s.uid++, id, name: c.name, tags: c.tags.slice(), value: c.value };
+    const card = { uid: s.uid++, id, name: c.name, tags: c.tags.slice(), value: c.value };
+    if (c.origin) card.origin = c.origin;
+    if (c.rarity) card.rarity = c.rarity;
+    return card;
   }
   function addCard(s, idOrCard) {
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
@@ -641,7 +648,7 @@
   }
   function applyBusk(s, res) {
     const rep = report(s, '街頭表演');
-    const cr = Math.round(res.cr);
+    const cr = Math.round(res.cr * (decorOn(s, 'stereo') ? 1.2 : 1));
     const body = 4 - seasonOf(s).outdoorBody;
     s.cr += cr; s.stats.crEarned += cr;
     hurt(s, body, 'busk');
@@ -751,8 +758,9 @@
     return rep.done();
   }
   function applyRest(s) {
+    if (s.trip && IE.World) return IE.World.tripRest(s);
     const rep = report(s, '休息');
-    const b = s.floor === 0 ? 12 : 22;
+    const b = (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0);
     heal(s, b);
     s.restedToday = true;
     const cured = cureConds(s, 'rest');
@@ -770,7 +778,7 @@
 
   // ---------- 行動清單（讓介面顯示取捨） ----------
   function actions(s) {
-    const list = [];
+    let list = [];
     const outdoor = seasonOf(s).outdoorBody;
     const labelLocked = s.rating < 2 ? '平台帳戶審查中（評分低於 2 星）' : null;
     let labelCr = 0;
@@ -778,7 +786,8 @@
     labelCr = Math.round(labelCr);
     const labelSpark = round1(28 * labelItemDrain(s));
     const tired = s.body > 10 ? null : '身體太差，撐不住了';
-    if (!isNight(s)) {
+    if (s.trip && !isNight(s) && IE.World) list = IE.World.tripActions(s);
+    else if (!isNight(s)) {
       list.push({ id: 'label', group: 'work', name: 'AI 數據標註', sub: '教 AI 認貓，好讓它以後不再需要你',
         fx: [['cr', '約 +$' + labelCr], ['body', '−8'], ['spark', '約 −' + labelSpark], ['card', '機械']],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'label') || labelLocked });
@@ -808,7 +817,7 @@
         fx: [['soul', '−' + round1(2.5 * (perk(s).volunteerAtone || 1) * (worldMods(s).atoneMult || 1)) + ' 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
         reason: tired });
       list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
-        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
+        fx: [['body', '+' + ((s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
     } else {
       const CR = D.CRAFT, Cr = IE.Create;
       const m = Cr.objMods(s);
@@ -822,8 +831,10 @@
       list.push({ id: 'ot', group: 'night', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
         fx: [['cr', '約 +$' + Math.round(labelCr * 1.5)], ['body', '−14'], ['spark', '約 −' + round1(labelSpark * 1.5)]],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'ot') || labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
-      list.push({ id: 'rest', group: 'night', name: '早點睡', sub: '明天又是新的一天',
-        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
+      list.push({ id: 'rest', group: 'night', name: '早點睡', sub: s.trip ? '在旅館早點睡' : '明天又是新的一天',
+        fx: [['body', '+' + (s.trip ? 18 : (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
+      // 在外地：沒有深夜加班
+      if (s.trip) list = list.filter((a) => a.id !== 'ot');
     }
     // 危險提示：外出的致命機會、身體撐不住、過勞與連續通宵
     const risk = outdoorRisk(s);
@@ -909,6 +920,7 @@
   function drawDilemma(s) {
     if (s.dilemmaDay === s.day) return s.dilemma;
     s.dilemmaDay = s.day; s.dilemma = null;
+    if (s.trip) return null;
     if (rand(s) > 0.4 + (worldMods(s).dilemmaBoost || 0)) return null;
     const pool = D.DILEMMAS.filter((d) => {
       const used = s.usedDilemmas[d.id];
@@ -1042,7 +1054,7 @@
     s.pending.forEach((p) => {
       const w = evDef(p.id);
       feed.unshift({ kind: 'omen', text: (p.fresh ? '【新預兆】' : '【預兆】') + w.omen
-        + (A(s, 'insight') >= 50 ? '（洞察：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
+        + (A(s, 'insight') >= 50 || decorOn(s, 'telescope') ? '（' + (A(s, 'insight') >= 50 ? '洞察' : '望遠鏡') + '：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
       p.fresh = false;
     });
     activeEvents(s).forEach(({ def, until }) => {
@@ -1055,13 +1067,19 @@
     const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
     // 事件：大部分會先出現預兆，少數 S 級無預警爆發
     scheduleEvents(s, feed);
-    const risk = outdoorRisk(s), home = homeRisk(s);
+    const risk = s.trip ? 0 : outdoorRisk(s), home = s.trip ? 0 : homeRisk(s);
+    if (s.trip) feed.unshift({ kind: 'news', text: '【旅行中】你在' + D.DEST[s.trip.dest].name + '。第 ' + s.trip.until + ' 天晚上飛回浮城。' });
     if (risk > 0) feed.push({ kind: 'warn', text: '外出工作（潛水、外送、表演、義工）有致命危險：約 ' + Math.round(risk * 1000) / 10 + '%。' });
     if (home > 0) feed.push({ kind: 'warn', text: '今晚留在 ' + (s.floor ? s.floor + ' 樓' : '天橋下') + '有致命危險：約 ' + Math.round(home * 1000) / 10 + '%。' });
     condsInfo(s).forEach((c) => { if (c.lethal) feed.push({ kind: 'warn', text: '你的「' + c.name + '」已經第 ' + c.days + ' 天，再拖 ' + c.left + ' 天會致命。商店有藥箱。' }); });
     if (s.noRest >= 3) feed.push({ kind: 'warn', text: '你已經連續 ' + s.noRest + ' 天沒有休息。' + (s.noRest >= 4 ? '今晚起有猝死的危險。' : '') });
     if (s.cr < foodCost(s) * 2) feed.push({ kind: 'warn', text: '你的錢不夠吃兩晚飯。餓肚子睡覺會令身體 −25。' });
     (s.newsQueue || []).forEach((t) => feed.push({ kind: 'news', text: t }));
+    // 天空區委託：每五天換一批
+    if (IE.World) {
+      const cm = IE.World.commissions(s).filter((c) => !c.done);
+      if (cm.length && (s.day - 1) % 5 === 0) cm.forEach((c) => feed.push({ kind: 'comm', text: '【天空區委託・$' + c.pay + '】' + c.text + '（第 ' + c.until + ' 天前）' }));
+    }
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
     // 偏執太高的人，會在動態裡看見不存在的帖文
@@ -1103,7 +1121,8 @@
     if (e.cond && rand(s) < e.cond.chance) addCond(s, e.cond.id, rep);
     if (e.spark) rep.delta('spark', addSpark(s, e.spark, true));
     if (e.cr) { s.cr = Math.max(0, s.cr + e.cr); rep.delta('cr', e.cr); }
-    if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * -e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
+    if (e.crPct && decorOn(s, 'lock')) rep.line('防盜門擋住了他們', 'good');
+    else if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * -e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
     if (e.rentHike) s.rentHike += e.rentHike;
     if (e.rating) s.rating = clamp(s.rating + e.rating, 1, 5);
     if (e.flag) s.flags[e.flag] = s.day + 1;
@@ -1120,7 +1139,7 @@
     const rep = report(s, '第 ' + s.day + ' 天結算');
     rep.review = null; rep.ending = null; rep.event = null; rep.interview = false;
     // 晚餐
-    const food = foodCost(s);
+    const food = Math.round(foodCost(s) * (s.trip ? 1.5 : 1));
     if (s.flags.fishDinner === s.day) {
       heal(s, 6);
       rep.line('晚餐：自己抓的魚', 'good', 6, 'body');
@@ -1128,7 +1147,7 @@
       rep.line('晚餐：沒付錢的便當', '');
     } else if (s.cr >= food) {
       s.cr -= food;
-      rep.line(s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -food, 'cr');
+      rep.line(s.trip ? '晚餐（異國的物價）' : s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -food, 'cr');
     } else {
       hurt(s, 25, 'hunger'); s.stats.hungryDays++;
       addSpark(s, -0.3);
@@ -1139,11 +1158,14 @@
       if (s.stats.hungryDays === 3) gainObject(s, 'emptybowl', rep);
     }
     // 睡覺
-    if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    if (s.trip) { if (s.conds.insomnia) rep.line('失眠：在旅館也睡不著', 'bad'); else { heal(s, 6); rep.line('在旅館睡覺', '', 6, 'body'); } }
+    else if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    else if (flooded(s) && decorOn(s, 'pump')) { heal(s, 4); rep.line('家裡淹水，抽水泵整晚在響', '', 4, 'body'); }
     else if (flooded(s)) { hurt(s, 8, 'floodhome'); rep.line('家裡正在淹水', 'bad', -8, 'body'); if (rand(s) < 0.12) addCond(s, 'mold', rep); }
     else if (s.conds.insomnia) rep.line('失眠：整晚沒有睡著', 'bad');
-    else { heal(s, 6); rep.line('睡覺', '', 6, 'body'); }
-    if (S.nightBody) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
+    else { const b = 6 + (decorOn(s, 'bed') ? 3 : 0); heal(s, b); rep.line(decorOn(s, 'bed') ? '睡覺（彈簧床）' : '睡覺', '', b, 'body'); }
+    if (S.nightBody && !s.trip && decorOn(s, 'ac')) rep.line('冷氣機整晚在響，你睡得很好', 'good');
+    else if (S.nightBody && !s.trip) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
     // 事件的每日影響
     if (M.bodyDaily) {
       const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
@@ -1159,13 +1181,13 @@
       else if (def.dur && c.days >= def.dur) { delete s.conds[c.id]; rep.line(def.name + '好了', 'good'); }
     });
     // 致命危險：在家（按樓層）與每晚
-    homeHazards(s).forEach((h) => {
+    (s.trip ? [] : homeHazards(s)).forEach((h) => {
       if (s.body <= 0) return;
       if (rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
       else rep.line(evDef(h.ev).name + '：你撐過了今晚（致命機會 ' + Math.round(h.chance * 100) + '%）', '');
     });
     (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '……', 'bad'); } });
-    (M.condChance || []).forEach((c) => { if (!c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
+    (M.condChance || []).forEach((c) => { if (!c.outdoor && !s.trip && rand(s) < c.chance * (c.id === 'heatstroke' && decorOn(s, 'ac') ? 0.5 : 1)) addCond(s, c.id, rep); });
     // 過勞：連續多天沒有休息，有猝死的危險
     s.noRest = s.restedToday ? 0 : s.noRest + 1;
     s.restedToday = false;
@@ -1206,8 +1228,10 @@
       const def = D.NPCS.find((x) => x.id === n.id);
       n.signal += Math.round(def.base * (0.7 + rand(s) * 0.6) * (1 + s.quarter * 0.3));
     });
-    // 隨機事件
-    if (rand(s) < 0.45) nightEvent(s, rep);
+    // 隨機事件（在外地是旅途的事）
+    if (s.trip && IE.World) { if (rand(s) < 0.5) IE.World.tripNight(s, rep); }
+    else if (rand(s) < 0.45) nightEvent(s, rep);
+    if (IE.World) IE.World.decorDaily(s, rep);
     // 水位
     const wasFlooded = flooded(s);
     s.water = Math.min(8.5, s.water + S.water);
@@ -1234,6 +1258,7 @@
       } else {
         s.floor = 0; s.debt = 0; s.graceUsed = false;
         rep.line('第二次交不起租。你被趕出門，今晚開始睡在天橋下。', 'bad');
+        if (Object.keys(s.decor || {}).length) { rep.line('房東沒收了你所有的家具。', 'bad'); s.decor = {}; }
         rep.gain('e_evict');
         rep.rent = { evicted: true };
       }
@@ -1244,6 +1269,8 @@
     s.events.filter((e) => s.day >= e.until).forEach((e) => rep.line('事件結束：' + evDef(e.id).name, 'news'));
     if (s.events.some((e) => s.day >= e.until)) s.eventNext = Math.max(s.eventNext, s.day + 2 + Math.floor(rand(s) * 4));
     s.events = s.events.filter((e) => s.day < e.until);
+    // 旅行結束：坐夜機回浮城
+    if (s.trip && s.day >= s.trip.until && s.body > 0 && IE.World) IE.World.flyHome(s, rep);
     // 探射燈
     rep.searchlight = Math.min(1.5, signal(s) / threshold(s));
     // 篩選日；前兩晚會被傳召入夢面試
@@ -1376,6 +1403,11 @@
     Object.keys(s.objSeen || {}).forEach((k) => { meta.objSeen[k] = true; });
     meta.forms = meta.forms || {};
     Object.keys(s.formsSeen || {}).forEach((k) => { meta.forms[k] = Math.max(meta.forms[k] || 0, (s.forms && s.forms[k]) || 1); });
+    // 旅行：去過的地方、找到的極稀有素材
+    meta.visited = meta.visited || {};
+    Object.keys(s.visited || {}).forEach((k) => { meta.visited[k] = (meta.visited[k] || 0) + s.visited[k]; });
+    meta.rares = meta.rares || {};
+    Object.keys(s.rares || {}).forEach((k) => { meta.rares[k] = true; });
     meta.unlocked = meta.unlocked || {};
     meta.lastUnlocks = [];
     D.OBJECTS.forEach((o) => {
@@ -1433,6 +1465,6 @@
     chatCost, aliveNpcs, applyChat, applyRest,
     teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
-    MAX_CARDS,
+    report, heal, outdoorHazard, MAX_CARDS,
   };
 });

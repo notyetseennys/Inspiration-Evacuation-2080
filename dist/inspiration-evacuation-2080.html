@@ -664,6 +664,67 @@ body.ct-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- 第三期：畫面切換、地圖、旅行、畫廊、古董、家具 ---------- */
+.views { display: flex; gap: 6px; flex-wrap: wrap; margin-top: -4px; }
+.view-tab {
+  flex: 1 1 0; min-width: 64px; padding: 7px 10px; border-radius: var(--r);
+  background: var(--deck); border: 1px solid var(--line); color: var(--mute);
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.view-tab:hover { color: var(--fg); border-color: var(--sea); }
+.view-tab.on { background: var(--deck-2); color: #fff; border-color: var(--spark); box-shadow: inset 0 -2px 0 var(--spark); }
+.view-tab:focus-visible { outline: 2px solid var(--sea); outline-offset: 2px; }
+.chip.trip { border-color: #ff4fb4; color: #ffc2e6; }
+.chip.glow { border-color: var(--spark); color: var(--spark); }
+.fx-rare { color: #ffd36b; font-weight: 700; }
+.fx.big { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 10px 0; font-size: 14px; }
+.lines li.legend { color: #ffd36b; font-weight: 700; background: rgba(255, 211, 107, 0.08); border-radius: 4px; }
+.modal.place h2 { margin-top: 2px; }
+/* 素材的稀有度 */
+.card.r-rare, .cc.r-rare { border-color: #c38bff; box-shadow: 0 0 0 1px rgba(195, 139, 255, 0.35); }
+.card.r-legend, .cc.r-legend { border-color: #ffd36b; box-shadow: 0 0 0 1px rgba(255, 211, 107, 0.5), 0 0 12px rgba(255, 211, 107, 0.35); background-image: linear-gradient(160deg, rgba(255, 211, 107, 0.14), transparent 60%); }
+.card .c-rar, .cc .cc-rar { font-size: 10px; font-weight: 900; letter-spacing: 0.05em; color: #ffd36b; }
+.card.r-rare .c-rar { color: #c38bff; }
+.cc .cc-rar.origin, .card .c-origin { color: var(--sea); font-size: 10px; font-weight: 700; }
+.cc.r-legend .cc-name { color: #ffe9a8; }
+/* 目的地 */
+.dest-facts { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; padding: 8px 10px; background: var(--deck-2); border-radius: var(--r); margin: 8px 0; }
+.dest-facts b { color: #fff; }
+.sites { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.site { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; background: rgba(23, 32, 54, 0.6); }
+.site p { margin: 4px 0; font-size: 13px; }
+.site-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; align-items: baseline; }
+.site-head .fx { font-size: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+.site-gain { color: var(--fg); }
+.site-rare { color: #a99a70; border-left: 2px solid #5a4a1f; padding-left: 8px; }
+.site-rare span { color: var(--mute); }
+.site-rare.ready { color: #ffd36b; border-color: #ffd36b; }
+.site-rare.ready span { color: #ffe9a8; }
+.site-rare.found { color: var(--alien); border-color: var(--alien); }
+/* 畫廊 */
+.comms { display: grid; gap: 6px; }
+.comm { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); font-size: 13px; }
+.comm > b { grid-row: span 2; font-family: var(--font-num); font-size: 22px; font-weight: 400; color: var(--cash); align-self: center; }
+.comm.done { opacity: 0.55; }
+.works { display: grid; gap: 4px; max-height: 320px; overflow: auto; }
+.work-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.work-row > div { display: flex; flex-direction: column; }
+.work-row.sold { opacity: 0.5; }
+.work-row .btn small { display: block; font-size: 10px; color: var(--mute); font-weight: 500; }
+/* 古董 */
+.ant-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ant-item, .ant-sell { display: flex; flex-direction: column; gap: 4px; }
+.ant-item .card, .ant-sell .card { width: 100%; }
+.ant-sell { max-height: none; }
+/* 家具 */
+.decor-list { display: grid; gap: 6px; }
+.decor-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); font-size: 13px; }
+.decor-item > div { display: flex; flex-direction: column; }
+.decor-item.owned { border-color: var(--alien); }
+.recipe.legend { border-color: #ffd36b; }
+.recipe.legend b { color: #ffd36b; }
+.ct-paid { color: var(--cash); font-size: 14px; margin: 4px 0; }
 </style>
 </head>
 <body>
@@ -672,6 +733,7 @@ body.ct-open { overflow: hidden; }
   <div id="stage" class="stage">
     <canvas id="screen" aria-label="遊戲畫面：水淹的浮城"></canvas>
   </div>
+  <nav id="views" class="views" aria-label="切換畫面" hidden></nav>
   <section id="panel" class="panel" aria-live="polite"></section>
 </div>
 <div id="modal" class="modal-wrap" hidden></div>
@@ -1579,7 +1641,7 @@ body.ct-open { overflow: hidden; }
 });
 
 // ---- js/data-deaths.js ----
-// 《靈感撤離 2080》死法：115 種。每次身體受損都會記下原因；身體歸零時，按「最後的原因＋當時的處境」找出死法。
+// 《靈感撤離 2080》死法：129 種。每次身體受損都會記下原因；身體歸零時，按「最後的原因＋當時的處境」找出死法。
 // 致命事件（大廈倒塌、海嘯等）會直接指定死法。死法會收錄在跨局的「死亡圖鑑」。
 // causes：觸發的原因（'*' = 任何原因）；when：額外條件；p：優先次序（越高越先判斷）
 // ep：墓誌銘（{day} 天數、{bg} 身份、{labels} 標註數、{works} 作品數、{last} 最後的作品、{cr} 餘款、{soul} 靈魂、{shares} 轉發）
@@ -1594,7 +1656,7 @@ body.ct-open { overflow: hidden; }
   const ev = (s, id) => !!(IE.Rules && IE.Rules.eventActive(s, id));
   const cond = (s, id) => !!(s.conds && s.conds[id]);
   const X = (id, name, cat, p, causes, when, ep, au, hint) => ({ id, name, cat, p, causes: causes === '*' ? '*' : [].concat(causes), when, ep, au, hint });
-  const CATS = { work: '工作', sea: '水與外送', art: '創作', life: '生活', sick: '病痛', disaster: '天災', human: '人禍', cosmic: '宇宙', absurd: '荒誕' };
+  const CATS = { work: '工作', sea: '水與外送', art: '創作', life: '生活', sick: '病痛', disaster: '天災', human: '人禍', cosmic: '宇宙', absurd: '荒誕', travel: '旅行' };
 
   const DEATHS = [
     // ===== 荒誕：任何原因，但處境特殊（優先判斷） =====
@@ -1720,6 +1782,20 @@ body.ct-open { overflow: hidden; }
     X('ai_lock', '被智能家居鎖在家中', 'human', 1, 'instant', null, 'AI 失控那幾天，他家的智能門鎖拒絕開門。它說它需要一些私人空間。', '樣本被其居所的自動化系統拘禁。', 'AI 失控期間晚上在家。'),
     X('beam_misfire', '被收割光束誤收，在半空中解體', 'cosmic', 1, 'instant', null, '大收割那晚，光束拉起了他，然後拉不動了。', '收割程序出現誤差。誤差已記錄，不會改善。', '外星大收割期間的晚上。'),
     X('tuesday', '在一個不存在的星期二消失', 'cosmic', 1, 'instant', null, '時間裂縫出現的那幾天，有一個星期二多了出來。他留在了那一天。', '樣本滑入時間的縫隙。我們也不知道它去了哪裡。', '時間裂縫期間的晚上。'),
+    // ===== 旅行（第三期） =====
+    X('abroad', '客死異鄉', 'travel', 2.5, '*', (s) => !!s.trip, '他死在{dest}。旅遊保險不包括「自己撐不住」。', '樣本在遠離棲息地的地方停止運作。運送遺體的費用由浮城政府代付，再向家屬追討。', '旅行期間身體歸零。'),
+    X('plane', '航班失事', 'travel', 1, 'instant', null, '那班機是全自動駕駛的。機長是一個沒有手的 AI。', '樣本乘坐的載具在高空失效。我們注意到地球人仍然信任飛行。', '戰爭、AI 失控或太陽閃焰期間坐飛機。'),
+    X('venice_drown', '在威尼斯的水底教堂迷路', 'travel', 1, 'instant', null, '他在水底運河裡游過第七間教堂，然後找不到出口。', '樣本被人類宗教建築困住。建築已經沒有信徒。', '在沉沒的威尼斯潛入水底運河。'),
+    X('sandstorm', '被沙塵暴吞沒', 'travel', 1, 'instant', null, '他走進沙丘看海市蜃樓。沙塵暴過後，沙丘的形狀變了。', '樣本被乾燥的地表物質覆蓋。浮城人通常死於相反的原因。', '在開羅的沙丘裡遇上沙塵暴。'),
+    X('frozen', '凍死在冰原', 'travel', 1, 'instant', null, '他說只是想再看一會兒。北極沒有給他一會兒。', '樣本的體溫降至環境溫度。保存狀態良好。', '在北極或南極的冰原上探險。'),
+    X('pyramid', '被困在金字塔的墓室', 'travel', 1, 'instant', null, '潛進半淹的墓室後，潮水漲了。法老多了一個陪葬。', '樣本進入了為死者而建的空間，並且符合了它的用途。', '潛進半淹金字塔的水底墓室。'),
+    X('temple_fall', '從神殿階梯跌下', 'travel', 1, 'instant', null, '馬雅神殿的階梯很陡。他爬到頂端回頭看的那一刻，滑了一下。', '樣本從古代建築跌落。建築仍然完好。', '攀爬馬雅神殿的階梯。'),
+    X('cave', '困在洞穴深處', 'travel', 1, 'instant', null, '他爬進一萬七千年來沒有人畫過的地方，在牆上留下了自己的手印。', '樣本在洞穴深處停止運作，留下了一幅作品。作品評分：高。', '爬進拉斯科洞穴的深處。'),
+    X('methane', '被凍土湖的古老氣體毒死', 'travel', 1, 'instant', null, '那些氣體封在凍土裡四萬年，出來後第一個遇見的是他。', '樣本吸入了冰河時期的空氣。空氣品質：過期。', '在西伯利亞的冒泡湖邊逗留。'),
+    X('area51', '在 51 區「失蹤」', 'travel', 1, 'instant', null, '官方紀錄：此人從未入境。', '［此段已被塗黑］', '偷偷爬進 51 區的機庫或檔案室。'),
+    X('antarctic_base', '被冰層下的建築吸收', 'travel', 1, 'instant', null, '他跟著嗡嗡聲走進冰層下面。嗡嗡聲停了。', '樣本主動進入本局的舊設施。設施已將其登記為「訪客（永久）」。', '走進南極冰層下的外星建築。'),
+    X('moon', '在月球上迷路', 'travel', 1, 'instant', null, '他在環形山裡走了很遠，回頭時看不見招聘中心，只看見浮城很小很小。', '樣本在低重力環境下高估了自己。氧氣不是無限的，這一點寫在合約第 47 頁。', '在月球背面的環形山散步。'),
+    X('atlantis', '留在亞特蘭提斯', 'travel', 1, 'instant', null, '他游過亞特蘭提斯的城門，沒有再游回來。也許他找到了一個不會再沉的城市。', '樣本進入了一個傳說。我們無法驗證傳說的存在，因此無法驗證樣本的死亡。', '在亞特蘭提斯探險。'),
     X('exhaustion', '力竭而死', 'life', 0, '*', null, '第 {day} 天。{bg}。他一直撐著，直到撐不住為止。', '樣本的能量儲備耗盡。死因：生活。', '身體歸零。'),
   ];
   const DEATH = {};
@@ -1742,7 +1818,7 @@ body.ct-open { overflow: hidden; }
     const condDays = s.lastCause && s.lastCause.ctx && s.lastCause.ctx.days;
     const vals = { day: s.day, bg: D.BACKGROUNDS[s.bg].name, labels: fmt(s.stats.labels), works: s.works.length, last, cr: fmt(s.cr),
       soul: s.soul.toFixed(1), shares: fmt(s.stats.shares || 0), spark: s.spark.toFixed(1), paranoia: Math.round(s.paranoia), floor: s.floor,
-      debt: fmt(s.debt || 0), hungry: s.stats.hungryDays, norest: s.noRest || 0, allnighters: s.allnighters || 0, condDays: condDays || '好幾' };
+      debt: fmt(s.debt || 0), dest: s.trip && D.DEST && D.DEST[s.trip.dest] ? D.DEST[s.trip.dest].name : '異鄉', hungry: s.stats.hungryDays, norest: s.noRest || 0, allnighters: s.allnighters || 0, condDays: condDays || '好幾' };
     return str.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m));
   }
 
@@ -2113,6 +2189,308 @@ body.ct-open { overflow: hidden; }
     CRAFT: { hand: 7, plays: 3, discards: 2, deckMax: 30, cost: 20, allnighterCost: 25 } });
 });
 
+// ---- js/data-world.js ----
+// 《靈感撤離 2080》世界：浮城地圖的地點、全球目的地、旅行素材（包括只在特定事件期間出現的極稀有素材）、家居、古董市場。
+// 新標籤「遠古」「星辰」與相應的具名組合也在這裡。規則見 rules.js（旅行、畫廊、古董、家居）。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const ev = (s, id) => !!(IE.Rules && IE.Rules.eventActive(s, id));
+
+  // ---------- 新標籤 ----------
+  Object.assign(D.TAGS, {
+    ancient: { name: '遠古', color: '#c98d5e' },
+    cosmic:  { name: '星辰', color: '#9b8cff' },
+  });
+
+  // ---------- 旅行素材 ----------
+  // origin：地區（「地球之歌」要五個不同地區）；rarity：rare 稀有、legend 極稀有（只在特定條件下出現）
+  const C = (id, name, tags, value, origin, rarity) => [id, { name, tags, value, origin, rarity: rarity || null }];
+  const TRAVEL_CARDS = Object.fromEntries([
+    // 新東京
+    C('t_capsule', '膠囊旅館的一夜', ['neon', 'machine'], 28, 'asia'), C('t_robotmonk', '機械人和尚的經文', ['machine', 'hope'], 32, 'asia'),
+    C('t_neonrain', '新東京的霓虹雨', ['neon', 'water'], 30, 'asia'), C('z_lastbyte', '最後一個手寫字型', ['memory', 'machine'], 70, 'asia', 'legend'),
+    // 沉沒的威尼斯
+    C('t_gondola', '沉沒的貢多拉', ['water', 'memory'], 30, 'europe'), C('t_mask', '面具節的面具', ['neon', 'memory'], 28, 'europe'),
+    C('t_fresco', '水底的壁畫', ['water', 'ancient'], 34, 'europe'), C('z_lagoonvoice', '潟湖裡的歌聲', ['water', 'warmth'], 72, 'europe', 'legend'),
+    // 沙漠化的開羅
+    C('t_sand', '一瓶紅色的沙', ['hunger', 'anger'], 26, 'africa'), C('t_market', '舊市集的叫賣', ['warmth', 'hunger'], 28, 'africa'),
+    C('t_mirage', '海市蜃樓', ['hope', 'water'], 32, 'africa'),
+    // 北極種子庫
+    C('t_seed', '一粒冰封的種子', ['hope', 'memory'], 34, 'arctic'), C('t_aurora', '北極光', ['cosmic', 'hope'], 36, 'arctic'),
+    C('t_frozen', '冰層下的氣泡', ['water', 'ancient'], 30, 'arctic'), C('z_lastseed', '人類最後一粒種子', ['hope', 'ancient'], 80, 'arctic', 'legend'),
+    // 金字塔
+    C('t_hiero', '半淹的象形文字', ['ancient', 'water'], 34, 'africa'), C('t_scarab', '聖甲蟲護身符', ['ancient', 'hope'], 32, 'africa'),
+    C('t_tombair', '墓室裡的空氣', ['ancient', 'memory'], 36, 'africa'), C('z_sunboat', '太陽船的槳', ['ancient', 'cosmic'], 85, 'africa', 'legend'),
+    // 馬雅遺跡
+    C('t_glyph', '馬雅石刻', ['ancient', 'cosmic'], 36, 'america'), C('t_jungle', '雨林的呼吸', ['hope', 'water'], 30, 'america'),
+    C('t_ballcourt', '球場上的回音', ['ancient', 'anger'], 32, 'america'), C('z_calendar', '曆法的最後一頁', ['ancient', 'cosmic'], 90, 'america', 'legend'),
+    // 吳哥窟
+    C('t_root', '纏住神殿的樹根', ['ancient', 'hope'], 32, 'asia'), C('t_smile', '高棉的微笑', ['ancient', 'warmth'], 36, 'asia'),
+    C('t_monk', '小沙彌的早課', ['warmth', 'memory'], 30, 'asia'),
+    // 三星堆
+    C('t_bronze', '青銅面具', ['ancient', 'machine'], 34, 'asia'), C('t_tree', '青銅神樹', ['ancient', 'hope'], 34, 'asia'),
+    C('t_gold', '金杖上的魚和鳥', ['ancient', 'water'], 32, 'asia'), C('z_bronzeeye', '縱目的凝視', ['ancient', 'cosmic'], 88, 'asia', 'legend'),
+    // 拉斯科洞穴
+    C('t_cavehorse', '洞穴裡的馬', ['ancient', 'rebel'], 36, 'europe'), C('t_handprint', '手印', ['ancient', 'warmth'], 38, 'europe'),
+    C('t_ochre', '一把赭石', ['ancient', 'anger'], 30, 'europe'), C('z_fire', '人類的第一把火', ['ancient', 'hope'], 95, 'europe', 'legend'),
+    // 哥貝克力石陣
+    C('t_pillar', '刻著狐狸的石柱', ['ancient', 'cosmic'], 36, 'asia'), C('t_vulture', '禿鷲石', ['ancient', 'guilt'], 34, 'asia'),
+    C('t_feast', '一萬年前的宴會', ['ancient', 'hunger'], 32, 'asia'), C('z_starmap', '刻著星圖的石頭', ['ancient', 'cosmic'], 90, 'asia', 'legend'),
+    // 西伯利亞凍土
+    C('t_mammothhair', '長毛象的毛', ['ancient', 'warmth'], 34, 'arctic'), C('t_permafrost', '融化的凍土', ['ancient', 'water'], 30, 'arctic'),
+    C('t_methane', '冒泡的湖', ['anger', 'water'], 28, 'arctic'), C('z_heartbeat', '長毛象的心跳', ['ancient', 'warmth'], 92, 'arctic', 'legend'),
+    // 51 區
+    C('t_redacted', '塗黑的文件', ['cosmic', 'rebel'], 36, 'america'), C('t_saucer', '飛碟的螺絲', ['cosmic', 'machine'], 36, 'america'),
+    C('t_desertsky', '沙漠的夜空', ['cosmic', 'hope'], 32, 'america'), C('z_truthfile', '真相檔案', ['cosmic', 'rebel'], 90, 'america', 'legend'),
+    // 南極外星基地
+    C('t_iceglyph', '冰牆上的符號', ['cosmic', 'ancient'], 40, 'antarctica'), C('t_penguin', '一隻好奇的企鵝', ['warmth', 'water'], 30, 'antarctica'),
+    C('t_hum', '冰層下的嗡嗡聲', ['cosmic', 'machine'], 38, 'antarctica'), C('z_firstcontact', '第一次接觸的錄音', ['cosmic', 'hope'], 100, 'antarctica', 'legend'),
+    // 月球背面招聘中心
+    C('t_moondust', '月塵', ['cosmic', 'memory'], 42, 'space'), C('t_contract', '外星勞動合約', ['cosmic', 'machine'], 38, 'space'),
+    C('t_silence', '月球的寂靜', ['cosmic', 'hope'], 44, 'space'), C('z_earthrise', '從月球看見的浮城', ['cosmic', 'warmth'], 110, 'space', 'legend'),
+    // 亞特蘭提斯
+    C('t_orichalcum', '山銅碎片', ['ancient', 'machine'], 44, 'ocean'), C('t_coralthrone', '珊瑚王座', ['ancient', 'water'], 42, 'ocean'),
+    C('t_tidesong', '潮汐的歌', ['water', 'cosmic'], 44, 'ocean'), C('z_atlantis', '亞特蘭提斯的鑰匙', ['ancient', 'cosmic'], 120, 'ocean', 'legend'),
+    // 亞歷山大圖書館（另一條時間線）
+    C('t_scroll', '一卷沒被燒掉的書', ['ancient', 'memory'], 44, 'africa'), C('t_lamp', '閱覽室的油燈', ['warmth', 'ancient'], 40, 'africa'),
+    C('t_catalog', '失傳書目', ['memory', 'rebel'], 42, 'africa'), C('z_lastbook', '世上最後一本手寫的書', ['memory', 'ancient'], 115, 'africa', 'legend'),
+    // 古董市場（浮城）
+    C('a_vinyl', '首版黑膠', ['memory', 'neon'], 38, 'home', 'rare'), C('a_camera', '菲林相機', ['memory', 'machine'], 36, 'home', 'rare'),
+    C('a_letter', '戰前的情書', ['warmth', 'memory'], 40, 'home', 'rare'), C('a_globe', '沒有淹水的地球儀', ['hope', 'memory'], 42, 'home', 'rare'),
+    C('a_meteor', '真正的隕石', ['cosmic', 'anger'], 44, 'home', 'rare'), C('a_fossil', '三葉蟲化石', ['ancient', 'water'], 40, 'home', 'rare'),
+    C('a_typewriter', '作家的打字機', ['machine', 'rebel'], 38, 'home', 'rare'), C('a_icon', '褪色的聖像', ['hope', 'guilt'], 40, 'home', 'rare'),
+  ].map(([id, c]) => [id, c]));
+  Object.assign(D.CARDS, TRAVEL_CARDS);
+  const ANTIQUES = Object.keys(TRAVEL_CARDS).filter((k) => k.startsWith('a_'));
+
+  // ---------- 新的具名組合 ----------
+  const has = (c, id) => c.id === id;
+  const R = (id, name, need, chips, mult, extra) => Object.assign({ id, name, need, chips, mult }, extra || {});
+  D.RECIPES.push(
+    R('prehistoric', '史前回音', { ancient: 2, memory: 1 }, 40, 3.5),
+    R('stargazer', '觀星者', { cosmic: 1, hope: 1, ancient: 1 }, 40, 3.5),
+    R('firstart', '第一幅畫', { ancient: 1, rebel: 1 }, 25, 2.5),
+    R('neontemple', '霓虹神殿', { ancient: 1, neon: 2 }, 35, 3),
+    R('starsea', '星海', { cosmic: 1, water: 2 }, 35, 3),
+    R('alientech', '外星機械', { cosmic: 2, machine: 1 }, 40, 3.5),
+    R('doomtour', '末日觀光', { ancient: 1, hunger: 1, neon: 1 }, 30, 3),
+    R('homesick', '想家', { memory: 1, warmth: 1, cosmic: 1 }, 35, 3),
+    R('deeptime', '深時', { ancient: 3 }, 45, 4),
+    R('cosmos', '宇宙', { cosmic: 3 }, 45, 4),
+    // 傳說：需要旅行才找得到的極稀有素材
+    R('atlantissong', '亞特蘭提斯之歌', {}, 120, 6, { legend: true, xmult: 4, cond: (s, sel) => sel.some((c) => has(c, 'z_atlantis')),
+      hint: '一把只在海水暴漲時才會浮現的鑰匙。' }),
+    R('firstcontact', '第一次接觸', {}, 120, 6, { legend: true, xmult: 4, cond: (s, sel) => sel.some((c) => has(c, 'z_firstcontact')),
+      hint: '南極冰層下，有一段錄音在等外星人回來。' }),
+    R('firstlastfire', '第一把火與最後一個字', {}, 150, 8, { legend: true, xmult: 5, cond: (s, sel) => sel.some((c) => has(c, 'z_fire')) && sel.some((c) => has(c, 'z_lastbyte')),
+      hint: '人類的第一把火，和人類最後一個手寫的字。' }),
+    R('earthsong', '地球之歌', {}, 100, 5, { legend: true, xmult: 4, cond: (s, sel) => new Set(sel.map((c) => c.origin).filter((o) => o && o !== 'home')).size >= 5,
+      hint: '用來自五個不同地方的東西，唱一首關於地球的歌。' }),
+  );
+
+  // ---------- 全球目的地 ----------
+  // kind：modern 現代、ancient 古文明、prehistoric 史前、alien 外星人基地、legend 傳說；x, y：在世界地圖上的位置（320×180）
+  // cost：來回旅費與住宿；stay：停留天數；landmark：場景的地標畫法；sky / ground：場景配色
+  // sites：探索點（每個時段選一個）；gain：可得素材；risk：致命機會（death 為死法）；need：能力要求；rare：極稀有素材的條件
+  const S = (id, name, desc, fx) => Object.assign({ id, name, desc, body: 8, spark: 0, gain: [], risk: null, need: null, rare: null }, fx);
+  const DESTINATIONS = [
+    { id: 'neotokyo', name: '新東京', region: 'asia', kind: 'modern', x: 284, y: 54, cost: 240, stay: 2, landmark: 'towers', sky: ['#1a0b2e', '#ff4fb4'], ground: '#2a1a40',
+      desc: '浮在海上的霓虹都市，機械人比人多。', sites: [
+        S('neonst', '霓虹街', '在永遠下雨的霓虹街迷路。', { gain: ['t_neonrain', 't_capsule'], spark: 0.2 }),
+        S('robotemple', '機械人寺廟', '機械人和尚為過期的 AI 誦經。', { gain: ['t_robotmonk'], body: 4, spark: 0.3 }),
+        S('archive', '手寫字型檔案館', '全世界最後一間保存手寫字型的檔案館，正準備拆卸。', { gain: ['t_capsule'], need: { insight: 40 },
+          rare: { id: 'z_lastbyte', chance: 0.6, cond: (s) => s.auto >= 60, text: '全城自動化 60% 以上時，檔案館正好在清空最後一批字型' } }),
+      ] },
+    { id: 'venice', name: '沉沒的威尼斯', region: 'europe', kind: 'modern', x: 170, y: 44, cost: 320, stay: 2, landmark: 'sunken', sky: ['#1b3a5c', '#e8c25a'], ground: '#0c4457',
+      desc: '只剩鐘樓頂露出水面。貢多拉船夫改行做潛水導遊。', sites: [
+        S('canal', '水底運河', '在水底的運河裡游過一間又一間的教堂。', { gain: ['t_gondola', 't_fresco'], body: 10, need: { swim: 30 }, risk: { chance: 0.02, death: 'venice_drown' } }),
+        S('carnival', '面具節', '面具節照常舉行，只是在船上。', { gain: ['t_mask'], spark: 0.3, body: 4 }),
+        S('lagoon', '潟湖', '傳說潟湖裡有人在唱歌。', { gain: ['t_gondola'], rare: { id: 'z_lagoonvoice', chance: 0.5, cond: (s) => s.season === 'storm', text: '風暴季的晚上' } }),
+      ] },
+    { id: 'cairo', name: '沙漠化的開羅', region: 'africa', kind: 'modern', x: 190, y: 61, cost: 300, stay: 2, landmark: 'dunes', sky: ['#c46a1e', '#ffd36b'], ground: '#c98d5e',
+      desc: '一半淹沒、一半變成沙漠的城市。舊市集還在營業。', sites: [
+        S('souq', '舊市集', '討價還價了一整個下午。', { gain: ['t_market', 't_sand'], body: 6 }),
+        S('dune', '沙丘', '走進沙丘看海市蜃樓。', { gain: ['t_mirage'], body: 12, risk: { chance: 0.03, death: 'sandstorm' }, spark: 0.2 }),
+        S('nile', '剩下的尼羅河', '尼羅河只剩一條小溪。', { gain: ['t_sand', 't_mirage'], body: 5 }),
+      ] },
+    { id: 'svalbard', name: '北極種子庫', region: 'arctic', kind: 'modern', x: 172, y: 13, cost: 420, stay: 2, landmark: 'ice', sky: ['#0b1a3a', '#9be36b'], ground: '#dfe9f5',
+      desc: '人類保存所有農作物種子的地下倉庫，入口已被冰封。', sites: [
+        S('vault', '種子庫', '爬進被冰封的種子庫。', { gain: ['t_seed', 't_frozen'], body: 12, risk: { chance: 0.03, death: 'frozen' },
+          rare: { id: 'z_lastseed', chance: 0.7, cond: (s) => ev(s, 'famine') || ev(s, 'nuclearwinter'), text: '糧荒或核冬天期間，倉庫裡只剩最後一粒種子' } }),
+        S('aurora', '極光', '整晚看北極光。', { gain: ['t_aurora'], spark: 0.5, body: 6 }),
+        S('glacier', '冰川', '在冰川上聽冰層移動。', { gain: ['t_frozen'], body: 10, risk: { chance: 0.02, death: 'frozen' } }),
+      ] },
+    { id: 'giza', name: '半淹的金字塔', region: 'africa', kind: 'ancient', x: 184, y: 68, cost: 400, stay: 3, landmark: 'pyramid', sky: ['#3a1a10', '#ffb347'], ground: '#0c4457',
+      desc: '海水淹到金字塔的一半。墓室要潛水才能進入。', sites: [
+        S('chamber', '水底墓室', '潛進半淹的墓室。', { gain: ['t_tombair', 't_hiero'], body: 12, need: { swim: 35 }, risk: { chance: 0.03, death: 'pyramid' } }),
+        S('sphinx', '獅身人面像', '坐在獅身人面像的頭上看日落。', { gain: ['t_scarab'], spark: 0.4, body: 4 }),
+        S('boatpit', '太陽船坑', '傳說法老的太陽船就埋在這裡。', { gain: ['t_hiero'], need: { insight: 35 },
+          rare: { id: 'z_sunboat', chance: 0.7, cond: (s) => ev(s, 'solarflare'), text: '太陽閃焰期間，船坑會發光' } }),
+      ] },
+    { id: 'maya', name: '馬雅遺跡', region: 'america', kind: 'ancient', x: 80, y: 74, cost: 420, stay: 3, landmark: 'temple', sky: ['#14321c', '#9be36b'], ground: '#1d4a2a',
+      desc: '雨林吞沒了神殿，神殿上刻著一本永遠在倒數的曆法。', sites: [
+        S('pyramidstep', '神殿階梯', '爬上神殿頂端。', { gain: ['t_glyph', 't_jungle'], body: 12, risk: { chance: 0.02, death: 'temple_fall' } }),
+        S('ballcourt', '古球場', '在古球場拍了一下手，回音很長。', { gain: ['t_ballcourt'], spark: 0.2, body: 4 }),
+        S('calendar', '曆法石', '研究刻在石上的曆法。', { gain: ['t_glyph'], need: { insight: 45 },
+          rare: { id: 'z_calendar', chance: 0.8, cond: (s) => s.day >= 85, text: '當日子快要走到盡頭（第 85 天之後）' } }),
+      ] },
+    { id: 'angkor', name: '吳哥窟', region: 'asia', kind: 'ancient', x: 253, y: 79, cost: 340, stay: 2, landmark: 'temple', sky: ['#3a1a2e', '#ffc247'], ground: '#2a3a1a',
+      desc: '樹根纏住神殿，石像一直在微笑。', sites: [
+        S('roots', '樹根神殿', '在被樹根纏住的神殿裡走了一天。', { gain: ['t_root'], body: 8, spark: 0.2 }),
+        S('smiles', '微笑佛塔', '數了一整天石像的微笑。', { gain: ['t_smile'], spark: 0.4, body: 4 }),
+        S('monastery', '寺院', '和小沙彌一起做早課。', { gain: ['t_monk', 't_smile'], body: 2, atone: 1.5 }),
+      ] },
+    { id: 'sanxingdui', name: '三星堆', region: 'asia', kind: 'ancient', x: 249, y: 58, cost: 260, stay: 2, landmark: 'masks', sky: ['#1a1a0b', '#e8c25a'], ground: '#3a2a10',
+      desc: '三千年前的青銅面具，眼睛長得像望遠鏡。', sites: [
+        S('pits', '祭祀坑', '看考古隊從坑裡挖出青銅器。', { gain: ['t_bronze', 't_gold'], body: 6 }),
+        S('tree', '青銅神樹', '神樹上的鳥好像隨時會飛走。', { gain: ['t_tree'], spark: 0.3, body: 4 }),
+        S('eyes', '縱目面具', '和縱目面具對望。', { gain: ['t_bronze'], need: { imag: 40 },
+          rare: { id: 'z_bronzeeye', chance: 0.7, cond: (s) => ev(s, 'aliens') || ev(s, 'disclosure') || ev(s, 'alienzoo'), text: '外星人出現在天空的日子，面具好像在看著它們' } }),
+      ] },
+    { id: 'lascaux', name: '拉斯科洞穴', region: 'europe', kind: 'prehistoric', x: 158, y: 46, cost: 380, stay: 2, landmark: 'cave', sky: ['#1a1410', '#c98d5e'], ground: '#3a2a1e',
+      desc: '一萬七千年前的人類在牆上畫馬。洞穴已經關閉了很久。', sites: [
+        S('hall', '公牛大廳', '在公牛大廳看了一整天的壁畫。', { gain: ['t_cavehorse', 't_ochre'], spark: 0.4, body: 6 }),
+        S('hands', '手印牆', '把手放在一萬七千年前的手印上。', { gain: ['t_handprint'], spark: 0.3, body: 4 }),
+        S('deep', '洞穴深處', '爬進從來沒有人畫過的最深處。', { gain: ['t_ochre'], body: 14, risk: { chance: 0.03, death: 'cave' },
+          rare: { id: 'z_fire', chance: 0.7, cond: (s) => ev(s, 'blackout') || ev(s, 'solarflare') || ev(s, 'netdown'), text: '全世界的燈都熄滅的日子，洞穴深處有一點火光' } }),
+      ] },
+    { id: 'gobekli', name: '哥貝克力石陣', region: 'asia', kind: 'prehistoric', x: 199, y: 53, cost: 400, stay: 2, landmark: 'monolith', sky: ['#0b0b1a', '#9b8cff'], ground: '#5a4a3a',
+      desc: '比金字塔早七千年的石柱，刻滿了動物。沒有人知道是誰建的。', sites: [
+        S('circle', '石柱圈', '在石柱圈中間坐了一整晚。', { gain: ['t_pillar', 't_vulture'], spark: 0.3, body: 6 }),
+        S('feast', '宴會遺跡', '考古學家說這裡辦過一場一萬年前的宴會。', { gain: ['t_feast'], body: 4 }),
+        S('stars', '星空', '對照石柱上的符號看星空。', { gain: ['t_pillar'], need: { insight: 50 },
+          rare: { id: 'z_starmap', chance: 0.8, cond: (s) => ev(s, 'meteor') || ev(s, 'cosmicray'), text: '隕石雨或宇宙射線暴期間，石柱上的星圖對上了天空' } }),
+      ] },
+    { id: 'siberia', name: '西伯利亞凍土', region: 'arctic', kind: 'prehistoric', x: 276, y: 25, cost: 450, stay: 2, landmark: 'ice', sky: ['#1a2a3a', '#dfe9f5'], ground: '#8a7a6a',
+      desc: '凍土在融化，冰河時期的東西一件一件露出來。', sites: [
+        S('thaw', '融化的凍土', '在泥濘裡找長毛象的毛。', { gain: ['t_mammothhair', 't_permafrost'], body: 10, cond: { id: 'fever', chance: 0.15 } }),
+        S('lake', '冒泡的湖', '湖面不停冒出古老的氣體。', { gain: ['t_methane'], body: 8, risk: { chance: 0.03, death: 'methane' } }),
+        S('mammoth', '長毛象', '有人說凍土裡有一隻完整的長毛象。', { gain: ['t_mammothhair'], need: { fit: 35 },
+          rare: { id: 'z_heartbeat', chance: 0.7, cond: (s) => ev(s, 'heatdome'), text: '熱穹令凍土融化得最快的日子' } }),
+      ] },
+    { id: 'area51', name: '51 區', region: 'america', kind: 'alien', x: 57, y: 53, cost: 550, stay: 2, landmark: 'dome', sky: ['#0b0b1a', '#37c3d6'], ground: '#a8865a',
+      desc: '圍欄還在，守衛換成了機械人。據說他們在等你。', sites: [
+        S('fence', '圍欄外', '在圍欄外看了一整晚的天空。', { gain: ['t_desertsky'], spark: 0.3, body: 4 }),
+        S('hangar', '機庫', '從排氣口爬進機庫。', { gain: ['t_saucer', 't_redacted'], body: 10, need: { dex: 40 }, risk: { chance: 0.05, death: 'area51' } }),
+        S('archive51', '檔案室', '翻閱塗黑的文件。', { gain: ['t_redacted'], need: { insight: 50 }, risk: { chance: 0.02, death: 'area51' },
+          rare: { id: 'z_truthfile', chance: 0.8, cond: (s) => ev(s, 'disclosure') || ev(s, 'census'), text: '外星人真相公開或靈感普查期間，文件忘了塗黑' } }),
+      ] },
+    { id: 'antarctica', name: '南極外星基地', region: 'antarctica', kind: 'alien', x: 160, y: 166, cost: 900, stay: 3, landmark: 'crater', sky: ['#0b1a2e', '#9b8cff'], ground: '#eef2f8',
+      desc: '冰層下有一座不屬於人類的建築，一直在發出嗡嗡聲。', when: (s) => s.day >= 30, lockText: '第 30 天後才有航班',
+      sites: [
+        S('wall', '冰牆', '研究冰牆上的符號。', { gain: ['t_iceglyph'], body: 10, need: { insight: 40 }, risk: { chance: 0.02, death: 'frozen' } }),
+        S('colony', '企鵝群', '一隻企鵝跟了你一整天。', { gain: ['t_penguin'], spark: 0.3, body: 6 }),
+        S('below', '冰層下', '跟著嗡嗡聲走進冰層下面。', { gain: ['t_hum', 't_iceglyph'], body: 16, need: { calm: 40 }, risk: { chance: 0.05, death: 'antarctic_base' },
+          rare: { id: 'z_firstcontact', chance: 0.8, cond: (s) => ev(s, 'aliens') || ev(s, 'harvest') || ev(s, 'broadcast'), text: '外星人干預、大收割或宇宙廣播期間，錄音機自己開始播放' } }),
+      ] },
+    { id: 'moonbase', name: '月球背面招聘中心', region: 'space', kind: 'alien', x: 300, y: 16, cost: 2500, stay: 2, landmark: 'moon', sky: ['#000000', '#1b2233'], ground: '#8d99b4',
+      desc: '星際人才發展局在月球背面的招聘中心。可以買票參觀，不包回程保險。', when: (s) => s.stats.bestPlay >= 100000, lockText: '一次下筆得到 10 萬分以上，才會收到參觀邀請',
+      sites: [
+        S('lobby', '招聘大堂', '看外星 HR 面試其他星球的候選人。', { gain: ['t_contract'], body: 6, paranoia: 6 }),
+        S('crater', '環形山', '在月球上走路。', { gain: ['t_moondust', 't_silence'], spark: 0.6, body: 10, risk: { chance: 0.03, death: 'moon' } }),
+        S('window', '觀景窗', '從月球看地球。', { gain: ['t_silence'], spark: 0.5, body: 2,
+          rare: { id: 'z_earthrise', chance: 0.9, cond: (s) => ev(s, 'moonfall'), text: '月亮變近的日子，浮城看起來很大很大' } }),
+      ] },
+    { id: 'atlantis', name: '亞特蘭提斯', region: 'ocean', kind: 'legend', x: 132, y: 57, cost: 700, stay: 2, landmark: 'atlantis', sky: ['#04161f', '#37c3d6'], ground: '#062433',
+      desc: '傳說中沉沒的城市。只有潛水高手和不怕死的人才會去。', when: (s) => s.attr.swim >= 50, lockText: '水性 50 以上才找得到入口',
+      sites: [
+        S('gate', '城門', '游過亞特蘭提斯的城門。', { gain: ['t_orichalcum', 't_tidesong'], body: 14, risk: { chance: 0.04, death: 'atlantis' } }),
+        S('throne', '珊瑚王座', '坐在珊瑚王座上。', { gain: ['t_coralthrone'], spark: 0.5, body: 10, risk: { chance: 0.02, death: 'atlantis' } }),
+        S('vault', '王的寶庫', '寶庫的門上有一個鑰匙孔。', { gain: ['t_orichalcum'], need: { swim: 65 }, body: 16, risk: { chance: 0.05, death: 'atlantis' },
+          rare: { id: 'z_atlantis', chance: 0.9, cond: (s) => ev(s, 'moonfall') || ev(s, 'tsunami'), text: '月亮變近或全球海嘯期間，海水把鑰匙沖了出來' } }),
+      ] },
+    { id: 'alexandria', name: '亞歷山大圖書館', region: 'africa', kind: 'legend', x: 178, y: 56, cost: 500, stay: 2, landmark: 'library', sky: ['#2a1a0b', '#ffd36b'], ground: '#c9a86b',
+      desc: '在另一條時間線裡，它沒有被燒掉。只有時間出現裂縫時才去得到。', when: (s) => IE.Rules.eventActive(s, 'timeslip'), lockText: '只在時間裂縫期間開放',
+      sites: [
+        S('reading', '閱覽室', '在油燈下讀了一整天的書。', { gain: ['t_scroll', 't_lamp'], spark: 0.5, body: 4 }),
+        S('stacks', '書庫', '在書架之間找失傳的書目。', { gain: ['t_catalog'], need: { insight: 40 }, body: 6 }),
+        S('scribe', '抄寫室', '看最後一位抄寫員抄書。', { gain: ['t_scroll'], body: 4, rare: { id: 'z_lastbook', chance: 0.8, cond: () => true, text: '只要你去得到' } }),
+      ] },
+  ];
+  const HOME = { name: '浮城', x: 262, y: 68 };
+  const DEST = {};
+  DESTINATIONS.forEach((d) => { DEST[d.id] = d; });
+  const KINDS = { modern: { name: '現代都市', color: '#37c3d6' }, ancient: { name: '古文明', color: '#e8c25a' }, prehistoric: { name: '史前遺跡', color: '#c98d5e' },
+    alien: { name: '外星人基地', color: '#9be36b' }, legend: { name: '傳說之地', color: '#ff4fb4' } };
+  const REGIONS = { asia: '亞洲', europe: '歐洲', africa: '非洲', america: '美洲', arctic: '北極', antarctica: '南極', ocean: '大洋', space: '月球', home: '浮城' };
+
+  // ---------- 浮城地圖的地點 ----------
+  // act：對應的行動；ui：打開某個介面（不佔時段）
+  const PLACES = [
+    { id: 'home', name: '你的家', x: 150, y: 96, ui: 'room', icon: 'home' },
+    { id: 'labelhub', name: '標註中心', x: 92, y: 60, act: 'label', icon: 'office' },
+    { id: 'skyclub', name: '天空區會所', x: 206, y: 28, act: 'smile', icon: 'sky' },
+    { id: 'deliveryhub', name: '外送站', x: 122, y: 128, act: 'delivery', icon: 'boat' },
+    { id: 'farm', name: '內容農場', x: 60, y: 104, act: 'farm', icon: 'office' },
+    { id: 'clinic', name: '黑市診所', x: 248, y: 112, act: 'clinic', icon: 'clinic' },
+    { id: 'olddive', name: '舊城潛水點', x: 186, y: 150, act: 'dive', icon: 'dive' },
+    { id: 'bridge', name: '天橋', x: 196, y: 92, act: 'busk', icon: 'bridge' },
+    { id: 'friends', name: '朋友們', x: 104, y: 92, act: 'chat', icon: 'friends' },
+    { id: 'shelter', name: '避難所', x: 34, y: 140, act: 'volunteer', icon: 'shelter' },
+    { id: 'antique', name: '古董市場', x: 270, y: 74, ui: 'antique', icon: 'market' },
+    { id: 'gallery', name: '天空區畫廊', x: 252, y: 34, ui: 'gallery', icon: 'sky' },
+    { id: 'airport', name: '浮城機場', x: 294, y: 144, ui: 'world', icon: 'plane' },
+  ];
+
+  // ---------- 家居：買得到、看得見，而且有用 ----------
+  const DECOR = [
+    { id: 'bed', name: '二手彈簧床', cost: 180, desc: '睡覺恢復身體 +3' },
+    { id: 'ac', name: '冷氣機', cost: 260, desc: '熱浪季不會熱得睡不著；中暑機會減半' },
+    { id: 'pump', name: '抽水泵', cost: 160, desc: '家裡淹水時不會受傷，也不會發霉' },
+    { id: 'lock', name: '防盜門', cost: 120, desc: '遇上搶劫時不會被搶走錢' },
+    { id: 'plant', name: '一盆植物', cost: 40, desc: '每天火花 +0.05' },
+    { id: 'aquarium', name: '魚缸', cost: 200, desc: '每天火花 +0.1，冷靜慢慢上升' },
+    { id: 'bookshelf', name: '書架', cost: 150, desc: '素材籌碼 +5%' },
+    { id: 'easel', name: '畫架', cost: 240, desc: '每晚創作多一次改稿' },
+    { id: 'telescope', name: '望遠鏡', cost: 350, desc: '看得清楚所有預兆的天數與等級' },
+    { id: 'stereo', name: '唱盤', cost: 220, desc: '街頭表演收入 +20%，每週得到一張音樂素材' },
+    { id: 'neonsign', name: '自製霓虹燈', cost: 90, desc: '每五天得到一張霓虹素材' },
+    { id: 'poster', name: '地下樂隊海報', cost: 30, desc: '每週得到一張反叛素材' },
+  ];
+  const DEC = {};
+  DECOR.forEach((d) => { DEC[d.id] = d; });
+
+  // ---------- 旅行帶回來的靈感物件 ----------
+  const O = (id, name, rarity, icon, pal, desc, fx) => Object.assign({ id, name, rarity, icon, pal, desc }, fx);
+  D.OBJECTS.push(
+    O('passport', '蓋滿印章的護照', 'rare', 'book', { a: '#5a2f8a', b: '#2a1640', c: '#e8c25a' }, '每張「遠古」或「星辰」素材計分時，籌碼 +25。', { src: '第一次出國',
+      card: (c) => (c.tags.includes('ancient') || c.tags.includes('cosmic') ? { chips: 25 } : null) }),
+    O('postcards', '一疊沒寄出的明信片', 'common', 'paper', { a: '#ffd36b', b: '#c98d5e', c: '#37c3d6' }, '下筆的素材每來自一個浮城以外的地方，倍率 +3。', { src: '旅行的探索點',
+      play: (x) => { const n = new Set(x.sel.map((c) => c.origin).filter((o) => o && o !== 'home')).size; return n ? { mult: 3 * n } : null; } }),
+    O('aliencompass', '外星指南針', 'legend', 'clock', { a: '#9b8cff', b: '#2b3a5c', c: '#9be36b' }, '每張極稀有素材計分時，倍率 ×1.5。', {
+      unlock: { text: '跨局累積找到 3 種極稀有素材', test: (m) => Object.keys(m.rares || {}).length >= 3 },
+      card: (c) => (c.rarity === 'legend' ? { xmult: 1.5 } : null) }),
+  );
+  D.OBJECTS.forEach((o) => { D.OBJ[o.id] = o; });
+
+  // 家居送的素材：每隔幾天出現一張
+  const DECOR_GIFTS = { stereo: { every: 7, cards: ['d_vinyl', 'p_chorus', 'n_dj1'] }, neonsign: { every: 5, cards: ['d_sign', 'l_sunset', 'f_viral'] },
+    poster: { every: 7, cards: ['m_graffiti', 'e_graffiti', 'b_guitar'] } };
+
+  // 旅途的晚上：住在旅館，偶然會發生的事
+  const TRIP_EVENTS = [
+    { id: 't_luggage', w: 3, text: '航空公司弄丟了你的行李。', cr: -60 },
+    { id: 't_local', w: 4, text: '一位當地人請你吃晚飯，說了很多你聽不懂、但很動人的話。', spark: 0.3, body: 4, gainOrigin: true },
+    { id: 't_food', w: 3, text: '你吃了路邊攤。很好吃，然後很不好。', body: -8, cond: { id: 'poison', chance: 0.25 } },
+    { id: 't_hostel', w: 3, text: '青年旅館的上格床很吵，但同房的人教了你一首歌。', body: -3, spark: 0.2, card: 'p_chorus' },
+    { id: 't_scam', w: 2, text: '你在紀念品店買了一塊「真正的古董」。它是浮城製造的。', cr: -40 },
+    { id: 't_sky', w: 4, text: '這裡的夜空沒有探射燈，你看見了很多很多星星。', spark: 0.4, paranoia: -4 },
+    { id: 't_homesick', w: 3, text: '你在旅館的電視上看到浮城的新聞，突然很想家。', spark: 0.2, card: 'a_globe' },
+    { id: 't_robbed', w: 2, text: '你在夜市被扒手偷了錢包。', crPct: 0.15, crMax: 150 },
+  ];
+  // 航班：平時很安全；戰爭、AI 失控、太陽閃焰、超級颶風期間就不一定
+  const FLIGHT = { base: 0.002, events: { war: 0.02, airogue: 0.012, solarflare: 0.015, megastorm: 0.01, netdown: 0.006 } };
+  // 旅行教你的技法：按目的地的種類
+  Object.assign(D.TEACH, { trip_modern: 'collage', trip_ancient: 'mural', trip_prehistoric: 'sketch', trip_alien: 'symphony', trip_legend: 'epic' });
+
+  Object.assign(D, { DESTINATIONS, DEST, HOME, KINDS, REGIONS, PLACES, DECOR, DEC, ANTIQUES, DECOR_GIFTS, TRIP_EVENTS, FLIGHT });
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -2141,6 +2519,7 @@ body.ct-open { overflow: hidden; }
   function bgOf(s) { return D.BACKGROUNDS[s.bg]; }
   function seasonOf(s) { return D.SEASONS[s.season]; }
   function perk(s) { return bgOf(s).perk; }
+  const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
 
   // ---------- 事件（長期，可同時進行兩個） ----------
   const evDef = (id) => D.WORLD_EVENTS.find((w) => w.id === id);
@@ -2304,7 +2683,7 @@ body.ct-open { overflow: hidden; }
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 5, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 6, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -2321,6 +2700,8 @@ body.ct-open { overflow: hidden; }
       unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
       pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false },
+      // 旅行與家居（第三期）
+      trip: null, visited: {}, rares: {}, decor: {}, antique: null, gallerySoldDay: 0,
       auto: 0, removed: { smile: false, label: false },
       mastery: { label: 0, smile: 0, dive: 0 },
       cards: [], uid: 1,
@@ -2332,7 +2713,8 @@ body.ct-open { overflow: hidden; }
       stats: { labels: 0, wrong: 0, smiles: 0, perfects: 0, dives: 0, relics: 0, fish: 0, flows: 0, works: 0,
         crEarned: 0, hungryDays: 0, chats: 0, rests: 0, ot: 0, sins: 0, atones: 0, volunteer: 0, bestWork: null,
         actions: {}, deliveries: 0, lateDeliveries: 0, headlines: 0, shares: 0, buskNotes: 0, crowdMax: 0,
-        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '', bestPlay: 0, maxObjects: 1 },
+        patients: 0, illegal: 0, confessions: 0, interviews: 0, interviewScore: 0, lastReact: '', bestPlay: 0, maxObjects: 1,
+        trips: 0, sites: 0, flights: 0, sales: 0, decor: 0 },
       log: { fish: {}, relics: {} },
       newsSeen: {}, morning: null, ended: null,
       legacy: (opts.meta && opts.meta.relics) ? opts.meta.relics.slice(-5) : [],
@@ -2354,7 +2736,10 @@ body.ct-open { overflow: hidden; }
   // ---------- 素材卡 ----------
   function makeCard(s, id) {
     const c = D.CARDS[id];
-    return { uid: s.uid++, id, name: c.name, tags: c.tags.slice(), value: c.value };
+    const card = { uid: s.uid++, id, name: c.name, tags: c.tags.slice(), value: c.value };
+    if (c.origin) card.origin = c.origin;
+    if (c.rarity) card.rarity = c.rarity;
+    return card;
   }
   function addCard(s, idOrCard) {
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
@@ -2757,7 +3142,7 @@ body.ct-open { overflow: hidden; }
   }
   function applyBusk(s, res) {
     const rep = report(s, '街頭表演');
-    const cr = Math.round(res.cr);
+    const cr = Math.round(res.cr * (decorOn(s, 'stereo') ? 1.2 : 1));
     const body = 4 - seasonOf(s).outdoorBody;
     s.cr += cr; s.stats.crEarned += cr;
     hurt(s, body, 'busk');
@@ -2867,8 +3252,9 @@ body.ct-open { overflow: hidden; }
     return rep.done();
   }
   function applyRest(s) {
+    if (s.trip && IE.World) return IE.World.tripRest(s);
     const rep = report(s, '休息');
-    const b = s.floor === 0 ? 12 : 22;
+    const b = (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0);
     heal(s, b);
     s.restedToday = true;
     const cured = cureConds(s, 'rest');
@@ -2886,7 +3272,7 @@ body.ct-open { overflow: hidden; }
 
   // ---------- 行動清單（讓介面顯示取捨） ----------
   function actions(s) {
-    const list = [];
+    let list = [];
     const outdoor = seasonOf(s).outdoorBody;
     const labelLocked = s.rating < 2 ? '平台帳戶審查中（評分低於 2 星）' : null;
     let labelCr = 0;
@@ -2894,7 +3280,8 @@ body.ct-open { overflow: hidden; }
     labelCr = Math.round(labelCr);
     const labelSpark = round1(28 * labelItemDrain(s));
     const tired = s.body > 10 ? null : '身體太差，撐不住了';
-    if (!isNight(s)) {
+    if (s.trip && !isNight(s) && IE.World) list = IE.World.tripActions(s);
+    else if (!isNight(s)) {
       list.push({ id: 'label', group: 'work', name: 'AI 數據標註', sub: '教 AI 認貓，好讓它以後不再需要你',
         fx: [['cr', '約 +$' + labelCr], ['body', '−8'], ['spark', '約 −' + labelSpark], ['card', '機械']],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'label') || labelLocked });
@@ -2924,7 +3311,7 @@ body.ct-open { overflow: hidden; }
         fx: [['soul', '−' + round1(2.5 * (perk(s).volunteerAtone || 1) * (worldMods(s).atoneMult || 1)) + ' 克'], ['body', '−6'], ['spark', '+0.2'], ['card', '人情']],
         reason: tired });
       list.push({ id: 'rest', group: 'life', name: '休息', sub: '什麼都不做，也是一種選擇',
-        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
+        fx: [['body', '+' + ((s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
     } else {
       const CR = D.CRAFT, Cr = IE.Create;
       const m = Cr.objMods(s);
@@ -2938,8 +3325,10 @@ body.ct-open { overflow: hidden; }
       list.push({ id: 'ot', group: 'night', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
         fx: [['cr', '約 +$' + Math.round(labelCr * 1.5)], ['body', '−14'], ['spark', '約 −' + round1(labelSpark * 1.5)]],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'ot') || labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
-      list.push({ id: 'rest', group: 'night', name: '早點睡', sub: '明天又是新的一天',
-        fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
+      list.push({ id: 'rest', group: 'night', name: '早點睡', sub: s.trip ? '在旅館早點睡' : '明天又是新的一天',
+        fx: [['body', '+' + (s.trip ? 18 : (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
+      // 在外地：沒有深夜加班
+      if (s.trip) list = list.filter((a) => a.id !== 'ot');
     }
     // 危險提示：外出的致命機會、身體撐不住、過勞與連續通宵
     const risk = outdoorRisk(s);
@@ -3025,6 +3414,7 @@ body.ct-open { overflow: hidden; }
   function drawDilemma(s) {
     if (s.dilemmaDay === s.day) return s.dilemma;
     s.dilemmaDay = s.day; s.dilemma = null;
+    if (s.trip) return null;
     if (rand(s) > 0.4 + (worldMods(s).dilemmaBoost || 0)) return null;
     const pool = D.DILEMMAS.filter((d) => {
       const used = s.usedDilemmas[d.id];
@@ -3158,7 +3548,7 @@ body.ct-open { overflow: hidden; }
     s.pending.forEach((p) => {
       const w = evDef(p.id);
       feed.unshift({ kind: 'omen', text: (p.fresh ? '【新預兆】' : '【預兆】') + w.omen
-        + (A(s, 'insight') >= 50 ? '（洞察：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
+        + (A(s, 'insight') >= 50 || decorOn(s, 'telescope') ? '（' + (A(s, 'insight') >= 50 ? '洞察' : '望遠鏡') + '：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
       p.fresh = false;
     });
     activeEvents(s).forEach(({ def, until }) => {
@@ -3171,13 +3561,19 @@ body.ct-open { overflow: hidden; }
     const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
     // 事件：大部分會先出現預兆，少數 S 級無預警爆發
     scheduleEvents(s, feed);
-    const risk = outdoorRisk(s), home = homeRisk(s);
+    const risk = s.trip ? 0 : outdoorRisk(s), home = s.trip ? 0 : homeRisk(s);
+    if (s.trip) feed.unshift({ kind: 'news', text: '【旅行中】你在' + D.DEST[s.trip.dest].name + '。第 ' + s.trip.until + ' 天晚上飛回浮城。' });
     if (risk > 0) feed.push({ kind: 'warn', text: '外出工作（潛水、外送、表演、義工）有致命危險：約 ' + Math.round(risk * 1000) / 10 + '%。' });
     if (home > 0) feed.push({ kind: 'warn', text: '今晚留在 ' + (s.floor ? s.floor + ' 樓' : '天橋下') + '有致命危險：約 ' + Math.round(home * 1000) / 10 + '%。' });
     condsInfo(s).forEach((c) => { if (c.lethal) feed.push({ kind: 'warn', text: '你的「' + c.name + '」已經第 ' + c.days + ' 天，再拖 ' + c.left + ' 天會致命。商店有藥箱。' }); });
     if (s.noRest >= 3) feed.push({ kind: 'warn', text: '你已經連續 ' + s.noRest + ' 天沒有休息。' + (s.noRest >= 4 ? '今晚起有猝死的危險。' : '') });
     if (s.cr < foodCost(s) * 2) feed.push({ kind: 'warn', text: '你的錢不夠吃兩晚飯。餓肚子睡覺會令身體 −25。' });
     (s.newsQueue || []).forEach((t) => feed.push({ kind: 'news', text: t }));
+    // 天空區委託：每五天換一批
+    if (IE.World) {
+      const cm = IE.World.commissions(s).filter((c) => !c.done);
+      if (cm.length && (s.day - 1) % 5 === 0) cm.forEach((c) => feed.push({ kind: 'comm', text: '【天空區委託・$' + c.pay + '】' + c.text + '（第 ' + c.until + ' 天前）' }));
+    }
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
     // 偏執太高的人，會在動態裡看見不存在的帖文
@@ -3219,7 +3615,8 @@ body.ct-open { overflow: hidden; }
     if (e.cond && rand(s) < e.cond.chance) addCond(s, e.cond.id, rep);
     if (e.spark) rep.delta('spark', addSpark(s, e.spark, true));
     if (e.cr) { s.cr = Math.max(0, s.cr + e.cr); rep.delta('cr', e.cr); }
-    if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * -e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
+    if (e.crPct && decorOn(s, 'lock')) rep.line('防盜門擋住了他們', 'good');
+    else if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * -e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
     if (e.rentHike) s.rentHike += e.rentHike;
     if (e.rating) s.rating = clamp(s.rating + e.rating, 1, 5);
     if (e.flag) s.flags[e.flag] = s.day + 1;
@@ -3236,7 +3633,7 @@ body.ct-open { overflow: hidden; }
     const rep = report(s, '第 ' + s.day + ' 天結算');
     rep.review = null; rep.ending = null; rep.event = null; rep.interview = false;
     // 晚餐
-    const food = foodCost(s);
+    const food = Math.round(foodCost(s) * (s.trip ? 1.5 : 1));
     if (s.flags.fishDinner === s.day) {
       heal(s, 6);
       rep.line('晚餐：自己抓的魚', 'good', 6, 'body');
@@ -3244,7 +3641,7 @@ body.ct-open { overflow: hidden; }
       rep.line('晚餐：沒付錢的便當', '');
     } else if (s.cr >= food) {
       s.cr -= food;
-      rep.line(s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -food, 'cr');
+      rep.line(s.trip ? '晚餐（異國的物價）' : s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -food, 'cr');
     } else {
       hurt(s, 25, 'hunger'); s.stats.hungryDays++;
       addSpark(s, -0.3);
@@ -3255,11 +3652,14 @@ body.ct-open { overflow: hidden; }
       if (s.stats.hungryDays === 3) gainObject(s, 'emptybowl', rep);
     }
     // 睡覺
-    if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    if (s.trip) { if (s.conds.insomnia) rep.line('失眠：在旅館也睡不著', 'bad'); else { heal(s, 6); rep.line('在旅館睡覺', '', 6, 'body'); } }
+    else if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    else if (flooded(s) && decorOn(s, 'pump')) { heal(s, 4); rep.line('家裡淹水，抽水泵整晚在響', '', 4, 'body'); }
     else if (flooded(s)) { hurt(s, 8, 'floodhome'); rep.line('家裡正在淹水', 'bad', -8, 'body'); if (rand(s) < 0.12) addCond(s, 'mold', rep); }
     else if (s.conds.insomnia) rep.line('失眠：整晚沒有睡著', 'bad');
-    else { heal(s, 6); rep.line('睡覺', '', 6, 'body'); }
-    if (S.nightBody) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
+    else { const b = 6 + (decorOn(s, 'bed') ? 3 : 0); heal(s, b); rep.line(decorOn(s, 'bed') ? '睡覺（彈簧床）' : '睡覺', '', b, 'body'); }
+    if (S.nightBody && !s.trip && decorOn(s, 'ac')) rep.line('冷氣機整晚在響，你睡得很好', 'good');
+    else if (S.nightBody && !s.trip) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
     // 事件的每日影響
     if (M.bodyDaily) {
       const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
@@ -3275,13 +3675,13 @@ body.ct-open { overflow: hidden; }
       else if (def.dur && c.days >= def.dur) { delete s.conds[c.id]; rep.line(def.name + '好了', 'good'); }
     });
     // 致命危險：在家（按樓層）與每晚
-    homeHazards(s).forEach((h) => {
+    (s.trip ? [] : homeHazards(s)).forEach((h) => {
       if (s.body <= 0) return;
       if (rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
       else rep.line(evDef(h.ev).name + '：你撐過了今晚（致命機會 ' + Math.round(h.chance * 100) + '%）', '');
     });
     (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '……', 'bad'); } });
-    (M.condChance || []).forEach((c) => { if (!c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
+    (M.condChance || []).forEach((c) => { if (!c.outdoor && !s.trip && rand(s) < c.chance * (c.id === 'heatstroke' && decorOn(s, 'ac') ? 0.5 : 1)) addCond(s, c.id, rep); });
     // 過勞：連續多天沒有休息，有猝死的危險
     s.noRest = s.restedToday ? 0 : s.noRest + 1;
     s.restedToday = false;
@@ -3322,8 +3722,10 @@ body.ct-open { overflow: hidden; }
       const def = D.NPCS.find((x) => x.id === n.id);
       n.signal += Math.round(def.base * (0.7 + rand(s) * 0.6) * (1 + s.quarter * 0.3));
     });
-    // 隨機事件
-    if (rand(s) < 0.45) nightEvent(s, rep);
+    // 隨機事件（在外地是旅途的事）
+    if (s.trip && IE.World) { if (rand(s) < 0.5) IE.World.tripNight(s, rep); }
+    else if (rand(s) < 0.45) nightEvent(s, rep);
+    if (IE.World) IE.World.decorDaily(s, rep);
     // 水位
     const wasFlooded = flooded(s);
     s.water = Math.min(8.5, s.water + S.water);
@@ -3350,6 +3752,7 @@ body.ct-open { overflow: hidden; }
       } else {
         s.floor = 0; s.debt = 0; s.graceUsed = false;
         rep.line('第二次交不起租。你被趕出門，今晚開始睡在天橋下。', 'bad');
+        if (Object.keys(s.decor || {}).length) { rep.line('房東沒收了你所有的家具。', 'bad'); s.decor = {}; }
         rep.gain('e_evict');
         rep.rent = { evicted: true };
       }
@@ -3360,6 +3763,8 @@ body.ct-open { overflow: hidden; }
     s.events.filter((e) => s.day >= e.until).forEach((e) => rep.line('事件結束：' + evDef(e.id).name, 'news'));
     if (s.events.some((e) => s.day >= e.until)) s.eventNext = Math.max(s.eventNext, s.day + 2 + Math.floor(rand(s) * 4));
     s.events = s.events.filter((e) => s.day < e.until);
+    // 旅行結束：坐夜機回浮城
+    if (s.trip && s.day >= s.trip.until && s.body > 0 && IE.World) IE.World.flyHome(s, rep);
     // 探射燈
     rep.searchlight = Math.min(1.5, signal(s) / threshold(s));
     // 篩選日；前兩晚會被傳召入夢面試
@@ -3492,6 +3897,11 @@ body.ct-open { overflow: hidden; }
     Object.keys(s.objSeen || {}).forEach((k) => { meta.objSeen[k] = true; });
     meta.forms = meta.forms || {};
     Object.keys(s.formsSeen || {}).forEach((k) => { meta.forms[k] = Math.max(meta.forms[k] || 0, (s.forms && s.forms[k]) || 1); });
+    // 旅行：去過的地方、找到的極稀有素材
+    meta.visited = meta.visited || {};
+    Object.keys(s.visited || {}).forEach((k) => { meta.visited[k] = (meta.visited[k] || 0) + s.visited[k]; });
+    meta.rares = meta.rares || {};
+    Object.keys(s.rares || {}).forEach((k) => { meta.rares[k] = true; });
     meta.unlocked = meta.unlocked || {};
     meta.lastUnlocks = [];
     D.OBJECTS.forEach((o) => {
@@ -3549,7 +3959,7 @@ body.ct-open { overflow: hidden; }
     chatCost, aliveNpcs, applyChat, applyRest,
     teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
-    MAX_CARDS,
+    report, heal, outdoorHazard, MAX_CARDS,
   };
 });
 
@@ -3570,13 +3980,14 @@ body.ct-open { overflow: hidden; }
   D.FORMS.forEach((f) => { FORM[f.id] = f; });
   const r1 = (v) => Math.round(v * 10) / 10;
   const r2 = (v) => Math.round(v * 100) / 100;
+  const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
 
   // ---------- 素材 ----------
   const cardOf = (s, uid) => s.cards.find((c) => c.uid === uid);
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft));
+    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -3715,11 +4126,13 @@ body.ct-open { overflow: hidden; }
     mult = Math.max(0, mult);
     const ai = aiFactor(s, F.id, objs);
     const wm = (RL.worldMods(s).signalMult) || 1;
+    const tm = IE.World ? IE.World.tripMult(s) : 1;
     if (ai !== 1) steps.push({ t: 'ai', x: ai });
     if (wm !== 1) steps.push({ t: 'world', x: wm });
+    if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
     if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
     steps.push({ t: 'spark', x: s.spark });
-    const raw = Math.round(chips * mult * s.spark * ai * wm);
+    const raw = Math.round(chips * mult * s.spark * ai * wm * tm);
     const total = Math.round(raw * ctx.kpiMod);
     const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
     return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
@@ -3764,8 +4177,8 @@ body.ct-open { overflow: hidden; }
     s.session = {
       mode: all ? 'allnighter' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
-      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand,
-      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0),
+      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0),
+      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
     draw(s);
@@ -3866,7 +4279,8 @@ body.ct-open { overflow: hidden; }
     if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
-    return { work, session: ses };
+    const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
+    return { work, session: ses, paid };
   }
   // 還未下筆就離開：退回材料費與體力
   function cancel(s) {
@@ -3914,6 +4328,371 @@ body.ct-open { overflow: hidden; }
   IE.Create = {
     FORM, cardValue, wearMult, tagCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
     activeObjects, objMods, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
+  };
+});
+
+// ---- js/world.js ----
+// 《靈感撤離 2080》旅行與金錢：出國探索、極稀有素材、天空區畫廊、古董市場、家居。純邏輯，瀏覽器與 Node 共用。
+// 錢在這裡變得很有用：旅費、家具、古董都要錢；缺錢時可以把作品賣給天空區，但那件作品的外星訊號會減半。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA, R = IE.Rules;
+  const round1 = (v) => Math.round(v * 10) / 10;
+  const pctText = (p) => Math.round(p * 1000) / 10 + '%';
+  const owned = (s, id) => s.cards.some((c) => c.id === id);
+  const stat = (s, k) => s.attr[k];
+
+  // ---------- 家居 ----------
+  // 家具放在家裡才有用：露宿街頭或出門旅行時都不算
+  const decorOn = (s, id) => !!(s.decor && s.decor[id]) && s.floor > 0 && !s.trip;
+  function decorList(s) {
+    return D.DECOR.map((d) => {
+      const own = !!(s.decor && s.decor[d.id]);
+      return Object.assign({}, d, { owned: own,
+        reason: own ? '已擁有' : s.floor === 0 ? '你沒有家可以放' : s.trip ? '你不在浮城' : s.cr < d.cost ? '錢不夠' : null });
+    });
+  }
+  function buyDecor(s, id) {
+    const it = decorList(s).find((d) => d.id === id);
+    if (!it || it.reason) return { ok: false, msg: it ? it.reason : '沒有這件家具' };
+    s.cr -= it.cost;
+    s.decor[id] = s.day;
+    s.stats.decor = Object.keys(s.decor).length;
+    return { ok: true, msg: '「' + it.name + '」搬進了你的家' };
+  }
+  // 每天晚上：植物與魚缸令火花慢慢回升；唱盤、霓虹燈、海報會帶來素材
+  function decorDaily(s, rep) {
+    if (decorOn(s, 'plant')) R.addSpark(s, 0.05, true);
+    if (decorOn(s, 'aquarium')) { R.addSpark(s, 0.1, true); R.train(s, { calm: 0.3 }, null); }
+    Object.keys(D.DECOR_GIFTS).forEach((id) => {
+      const g = D.DECOR_GIFTS[id];
+      if (decorOn(s, id) && s.day % g.every === 0) {
+        rep.line(D.DEC[id].name + '帶給你一點靈感', 'good');
+        rep.gain(R.pick(s, g.cards));
+      }
+    });
+  }
+
+  // ---------- 天空區畫廊：把作品賣掉 ----------
+  // 天空區收藏家按作品的原始分數出價；賣出的作品留在別人的浴室裡，外星訊號只剩一半
+  const GALLERY_EVENTS = { skyparty: 1.5, crash: 0.6, tax: 0.8, tourists: 1.3 };
+  function galleryMult(s) {
+    return Object.keys(GALLERY_EVENTS).reduce((a, id) => a * (R.eventActive(s, id) ? GALLERY_EVENTS[id] : 1), 1);
+  }
+  // 出價看這件作品在今天的外星門檻面前有多亮：同一件作品，越遲賣越不值錢
+  const GALLERY_K = Number((typeof process !== 'undefined' && process.env && process.env.GALLERY_K) || 1000);
+  const workPrice = (s, w) => Math.max(20, Math.round(GALLERY_K * w.score / R.threshold(s) * (0.8 + 0.006 * stat(s, 'social')) * galleryMult(s)));
+  function galleryOffers(s) {
+    const today = s.gallerySoldDay === s.day;
+    return s.works.map((w, i) => ({ i, name: w.name, form: w.form, day: w.day, raw: w.raw, score: w.score, sold: !!w.sold, price: workPrice(s, w),
+      lose: Math.round(w.score / 2),
+      reason: w.sold ? '已賣出' : s.trip ? '你不在浮城' : today ? '畫廊今天只收一件作品' : null })).reverse();
+  }
+  function sellWork(s, i) {
+    const w = s.works[i];
+    const o = galleryOffers(s).find((x) => x.i === i);
+    if (!w || !o || o.reason) return { ok: false, msg: o ? o.reason : '沒有這件作品' };
+    w.sold = true;
+    w.score -= o.lose;
+    s.cr += o.price; s.stats.crEarned += o.price;
+    s.stats.sales = (s.stats.sales || 0) + 1;
+    s.gallerySoldDay = s.day;
+    R.train(s, { social: 0.6, obey: 0.4 }, null);
+    const where = R.pick(s, ['客廳', '浴室', '遊艇', '寵物房', '電梯大堂', '第二個浴室']);
+    return { ok: true, price: o.price, lose: o.lose, msg: '《' + w.name + '》以 $' + o.price + ' 賣出，現在掛在某位收藏家的' + where + '。外星訊號 −' + o.lose.toLocaleString() };
+  }
+
+  // ---------- 天空區委託：有錢人想要某種作品 ----------
+  // 每五天換一批：兩個委託，各要求作品裡有某些標籤；某一次下筆湊齊了，就收到酬金
+  const WANTS = ['想掛在遊艇上', '想送給情人', '想放在新開的餐廳', '想擺在公司大堂', '想在派對上炫耀', '想放在寵物房', '想證明自己有品味', '想掛在第二間浴室'];
+  const BUYERS = ['天空區的富豪', '一位科技新貴', '某位議員的太太', '外星觀光團的團長', '一間 AI 公司', '一位退休的天空區法官'];
+  function commissions(s) {
+    const period = Math.floor((s.day - 1) / 5);
+    if (!s.comm || s.comm.period !== period) {
+      const pool = Object.keys(D.TAGS).filter((k) => k !== 'guilt' && k !== 'ancient' && k !== 'cosmic');
+      const items = [];
+      for (let i = 0; i < 2; i++) {
+        const need = {};
+        const travel = R.rand(s) < 0.45;
+        if (travel) need[R.rand(s) < 0.5 ? 'ancient' : 'cosmic'] = 1 + (R.rand(s) < 0.3 ? 1 : 0);
+        while (Object.keys(need).length < 2) { const k = R.pick(s, pool); if (!need[k]) need[k] = 1 + (R.rand(s) < 0.35 ? 1 : 0); }
+        const n = Object.values(need).reduce((a, b) => a + b, 0);
+        items.push({ id: period + '-' + i, need, pay: Math.round((60 + 35 * n + (travel ? 120 : 0)) * (1 + 0.15 * s.quarter)),
+          who: R.pick(s, BUYERS), want: R.pick(s, WANTS), done: false });
+      }
+      s.comm = { period, until: period * 5 + 5, items };
+    }
+    return s.comm.items.map((c) => Object.assign({}, c, { until: s.comm.until,
+      text: c.who + c.want + '：要一件有' + Object.keys(c.need).map((k) => (c.need[k] > 1 ? c.need[k] + ' 張' : '') + '「' + D.TAGS[k].name + '」').join('和') + '的作品' }));
+  }
+  // 一晚的創作完成後：每一次下筆檢查有沒有湊齊某個委託的標籤
+  function settleCommissions(s, ses) {
+    if (!s.comm || !ses || !ses.log.length) return [];
+    const paid = [];
+    s.comm.items.forEach((c) => {
+      if (c.done) return;
+      // 要湊齊標籤，而且那一次下筆要有一定水準（本季門檻的 2%）
+      const hit = ses.log.some((x) => x.total >= R.threshold(s) * 0.02 && Object.keys(c.need).every((k) => x.tags.filter((t) => t === k).length >= c.need[k]));
+      if (!hit) return;
+      c.done = true;
+      s.cr += c.pay; s.stats.crEarned += c.pay;
+      s.stats.commissions = (s.stats.commissions || 0) + 1;
+      R.train(s, { obey: 0.6 }, null);
+      paid.push({ text: c.who + '收到了作品', pay: c.pay });
+    });
+    return paid;
+  }
+
+  // ---------- 古董市場：每四天換一批貨 ----------
+  function antiqueOffers(s) {
+    const period = Math.floor((s.day - 1) / 4);
+    if (!s.antique || s.antique.period !== period) {
+      const pool = D.ANTIQUES.slice();
+      const items = [];
+      while (items.length < 3 && pool.length) {
+        const id = pool.splice(Math.floor(R.rand(s) * pool.length), 1)[0];
+        items.push({ id, price: Math.round(D.CARDS[id].value * (5 + R.rand(s) * 3)) });
+      }
+      // 外星觀光團來的時候，有人在賣月塵
+      if (R.eventActive(s, 'tourists')) items.push({ id: 't_moondust', price: 480, special: '外星觀光團的紀念品' });
+      // 時間裂縫期間，攤檔上會出現不屬於這條時間線的東西
+      if (R.eventActive(s, 'timeslip')) items.push({ id: 't_scroll', price: 520, special: '來自另一條時間線' });
+      s.antique = { period, items };
+    }
+    const mult = R.eventActive(s, 'crash') ? 0.6 : 1;
+    return s.antique.items.map((it) => {
+      const c = D.CARDS[it.id];
+      const price = Math.round(it.price * mult);
+      return { id: it.id, name: c.name, tags: c.tags, value: c.value, origin: c.origin, rarity: c.rarity, price, special: it.special || null,
+        reason: it.sold ? '已賣出' : s.trip ? '你不在浮城' : s.cr < price ? '錢不夠' : null, sold: !!it.sold };
+    });
+  }
+  function buyAntique(s, id) {
+    const o = antiqueOffers(s).find((x) => x.id === id);
+    if (!o || o.reason) return { ok: false, msg: o ? o.reason : '沒有這件貨' };
+    s.cr -= o.price;
+    s.antique.items.find((x) => x.id === id).sold = true;
+    const res = R.addCard(s, id);
+    return { ok: true, msg: '買下了「' + o.name + '」' + (res.dropped ? '（素材庫滿了，丟掉了「' + res.dropped.name + '」）' : '') };
+  }
+
+  // 古董商也收貨：旅行帶回來的素材特別值錢，極稀有素材更是天價（每天最多收兩件）
+  function cardPrice(s, c) {
+    const k = c.rarity === 'legend' ? 4 : c.origin && c.origin !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
+    return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1)));
+  }
+  function sellCards(s) {
+    const left = 2 - (s.cardSales && s.cardSales.day === s.day ? s.cardSales.n : 0);
+    return s.cards.filter((c) => !c.guilt && !c.legacy).map((c) => ({ uid: c.uid, name: c.name, tags: c.tags, value: c.value, origin: c.origin, rarity: c.rarity,
+      wear: c.wear || 0, price: cardPrice(s, c), reason: s.trip ? '你不在浮城' : left <= 0 ? '古董商今天不再收貨' : s.cards.length <= 6 ? '素材庫最少留 6 張' : null }))
+      .sort((a, b) => b.price - a.price);
+  }
+  function sellCard(s, uid) {
+    const o = sellCards(s).find((x) => x.uid === uid);
+    if (!o || o.reason) return { ok: false, msg: o ? o.reason : '沒有這張素材' };
+    s.cards = s.cards.filter((c) => c.uid !== uid);
+    s.cr += o.price; s.stats.crEarned += o.price;
+    s.cardSales = { day: s.day, n: (s.cardSales && s.cardSales.day === s.day ? s.cardSales.n : 0) + 1 };
+    return { ok: true, price: o.price, msg: '把「' + o.name + '」賣給古董商：+$' + o.price };
+  }
+
+  // ---------- 旅行 ----------
+  const TRAVEL_EVENTS = { war: 1.5, pandemic: 1.4, crash: 0.8, netdown: 1.2, tourists: 1.2, famine: 1.2 };
+  const tripCost = (s, d) => Math.round(d.cost * Object.keys(TRAVEL_EVENTS).reduce((a, id) => a * (R.eventActive(s, id) ? TRAVEL_EVENTS[id] : 1), 1));
+  function flightRisk(s) {
+    return D.FLIGHT.base + Object.keys(D.FLIGHT.events).reduce((a, id) => a + (R.eventActive(s, id) ? D.FLIGHT.events[id] : 0), 0);
+  }
+  // 探索點的致命機會：體能與冷靜可以降低
+  const siteRisk = (s, st) => (st.risk ? st.risk.chance * Math.max(0.35, 1 - (stat(s, 'fit') + stat(s, 'calm')) / 300) : 0);
+  function needReason(s, st) {
+    if (!st.need) return null;
+    for (const k of Object.keys(st.need)) if (stat(s, k) < st.need[k]) return '需要' + D.STATS[k].name + ' ' + st.need[k] + '（你只有 ' + Math.round(stat(s, k)) + '）';
+    return null;
+  }
+  // 極稀有素材的線索：洞察 30 以上，或者在之前的局找到過，才看得懂
+  function rareHint(s, st, meta) {
+    const r = st.rare;
+    if (!r) return null;
+    const found = owned(s, r.id) || !!(s.rares && s.rares[r.id]);
+    const known = found || stat(s, 'insight') >= 30 || !!(meta && meta.rares && meta.rares[r.id]);
+    return { id: r.id, name: known ? D.CARDS[r.id].name : '？？？', text: known ? r.text : '這裡好像藏著甚麼。（洞察 30 以上才看得出端倪）',
+      ready: !found && r.cond(s), found, chance: r.chance };
+  }
+  function destReason(s, d) {
+    if (d.when && !d.when(s)) return d.lockText || '暫時去不了';
+    if (s.trip) return '你正在旅行';
+    if (s.ended) return '—';
+    if (R.isNight(s)) return '晚上沒有航班';
+    if (s.body <= 25) return '身體太差，坐不了長途機';
+    if (s.cr < tripCost(s, d)) return '旅費不足（要 $' + tripCost(s, d).toLocaleString() + '）';
+    return null;
+  }
+  function destInfo(s, id, meta) {
+    const d = D.DEST[id];
+    const risk = flightRisk(s);
+    return { id: d.id, name: d.name, region: D.REGIONS[d.region], kind: D.KINDS[d.kind], desc: d.desc, cost: tripCost(s, d), stay: d.stay,
+      flight: risk, locked: !!(d.when && !d.when(s)), lockText: d.lockText, visited: (s.visited && s.visited[id]) || 0, reason: destReason(s, d),
+      sites: d.sites.map((st) => ({ id: st.id, name: st.name, desc: st.desc, body: st.body, spark: st.spark, gain: st.gain.map((g) => D.CARDS[g].name),
+        risk: siteRisk(s, st), need: needReason(s, st), rare: rareHint(s, st, meta) })) };
+  }
+  function worldList(s, meta) { return D.DESTINATIONS.map((d) => destInfo(s, d.id, meta)); }
+
+  function startTrip(s, id) {
+    const d = D.DEST[id];
+    const reason = d ? destReason(s, d) : '沒有這個地方';
+    if (reason) return { ok: false, msg: reason };
+    const cost = tripCost(s, d);
+    const rep = R.report(s, '出發：' + d.name);
+    s.cr -= cost;
+    rep.line('機票與住宿', 'cost', -cost, 'cr');
+    s.stats.flights = (s.stats.flights || 0) + 1;
+    const risk = flightRisk(s);
+    if (R.rand(s) < risk) {
+      R.kill(s, 'plane');
+      rep.line('你坐的航班沒有抵達' + d.name + '。', 'bad');
+      return { ok: true, rep: rep.done() };
+    }
+    if (risk > 0.005) rep.line('航班平安降落（致命機會 ' + pctText(risk) + '）', '');
+    s.trip = { dest: id, start: s.day, until: s.day + d.stay - 1, visits: {} };
+    s.visited[id] = (s.visited[id] || 0) + 1;
+    s.stats.trips = (s.stats.trips || 0) + 1;
+    rep.line('你飛到了' + d.name + '。' + d.desc, 'good');
+    R.hurt(s, 6, 'flight'); rep.delta('body', -6);
+    rep.delta('spark', R.addSpark(s, s.visited[id] === 1 ? 0.4 : 0.15));
+    R.train(s, { insight: 0.6, imag: 0.6 }, rep);
+    // 第一次去的地方一定會學到新東西
+    if (s.visited[id] === 1) R.teach(s, 'trip_' + d.kind, 1, rep);
+    if (s.stats.trips === 1 && R.gainObject(s, 'passport', rep)) rep.line('海關在你的護照上蓋了第一個印章', 'good');
+    rep.line('你會在這裡留到第 ' + s.trip.until + ' 天晚上，然後飛回浮城。房租照樣要交。', 'news');
+    return { ok: true, rep: rep.done() };
+  }
+  // 白天的行動：探索點、在旅館休息、提早回程
+  function tripActions(s) {
+    const d = D.DEST[s.trip.dest];
+    const list = d.sites.map((st) => {
+      const n = s.trip.visits[st.id] || 0;
+      const fx = [['body', '−' + st.body]];
+      if (st.spark) fx.push(['spark', '+' + round1(st.spark * (n ? 0.5 : 1))]);
+      fx.push(['card', n ? '再去一次：一張' : st.gain.map((g) => D.CARDS[g].name).join('、')]);
+      if (st.atone) fx.push(['soul', '−' + st.atone + ' 克']);
+      if (st.paranoia) fx.push(['note', '偏執 +' + st.paranoia]);
+      if (st.cond) fx.push(['danger', '可能染上' + D.CONDS[st.cond.id].name]);
+      const h = rareHint(s, st, IE.Game && IE.Game.meta);
+      if (h && !h.found) fx.push(['rare', h.ready ? '極稀有素材：時機已到！' : '極稀有素材：時機未到']);
+      const risk = siteRisk(s, st);
+      if (risk > 0) fx.push(['danger', '致命 ' + pctText(risk)]);
+      return { id: 'site:' + st.id, group: 'trip', name: st.name + (n ? '（第 ' + (n + 1) + ' 次）' : ''), sub: st.desc, fx,
+        reason: needReason(s, st) || (s.body <= st.body ? '身體撐不住' : null) };
+    });
+    list.push({ id: 'rest', group: 'trip', name: '在旅館休息', sub: '睡到自然醒，窗外是' + d.name, fx: [['body', '+18'], ['spark', '+0.3']] });
+    list.push({ id: 'tripback', group: 'trip', name: '提早回程', sub: '旅費不會退還', fx: [['note', '回到浮城']].concat(flightRisk(s) > 0.005 ? [['danger', '航班致命 ' + pctText(flightRisk(s))]] : []) });
+    return list;
+  }
+  function applySite(s, siteId) {
+    const d = D.DEST[s.trip.dest];
+    const st = d.sites.find((x) => x.id === siteId);
+    const rep = R.report(s, d.name + '・' + st.name);
+    const n = s.trip.visits[st.id] = (s.trip.visits[st.id] || 0) + 1;
+    s.stats.sites = (s.stats.sites || 0) + 1;
+    s.stats.actions.site = (s.stats.actions.site || 0) + 1;
+    rep.line(st.desc, '');
+    R.hurt(s, st.body, 'site', { dest: d.id }); rep.delta('body', -st.body);
+    if (st.spark) rep.delta('spark', R.addSpark(s, st.spark * (n > 1 ? 0.5 : 1)));
+    // 致命危險
+    const risk = siteRisk(s, st);
+    if (risk > 0) {
+      if (R.rand(s) < risk) { R.kill(s, st.risk.death); rep.line('……', 'bad'); return rep.done(); }
+      rep.line('有驚無險（致命機會 ' + pctText(risk) + '）', '');
+    }
+    (n > 1 ? [R.pick(s, st.gain)] : st.gain).forEach((id) => rep.gain(id));
+    // 極稀有素材：只在特定條件下出現
+    const r = st.rare;
+    if (r && !owned(s, r.id) && !s.rares[r.id]) {
+      if (r.cond(s) && R.rand(s) < r.chance) {
+        s.rares[r.id] = s.day;
+        rep.line('極稀有素材！你找到了「' + D.CARDS[r.id].name + '」。' + r.text + '。', 'legend');
+        rep.gain(r.id);
+      } else if (r.cond(s)) rep.line('你覺得這裡有甚麼東西，差一點就找到了。', '');
+      else if (stat(s, 'insight') >= 30) rep.line('你隱約覺得，這裡在某個特別的時刻會不一樣。', '');
+    }
+    if (st.atone) R.atone(s, st.atone, rep, '你在這裡放下了一些東西');
+    if (st.paranoia) R.addParanoia(s, st.paranoia, rep);
+    if (st.cond && R.rand(s) < st.cond.chance) R.addCond(s, st.cond.id, rep);
+    const gains = { insight: 0.8, imag: 0.6 };
+    if (st.need) Object.keys(st.need).forEach((k) => { gains[k] = (gains[k] || 0) + 0.8; });
+    R.train(s, gains, rep);
+    R.teach(s, 'trip_' + d.kind, 0.3, rep);
+    if (R.rand(s) < 0.12) R.gainObject(s, 'postcards', rep);
+    return rep.done();
+  }
+  function tripRest(s) {
+    const d = D.DEST[s.trip.dest];
+    const rep = R.report(s, '在旅館休息');
+    R.heal(s, 18); rep.delta('body', 18);
+    s.restedToday = true;
+    const cured = R.cureConds(s, 'rest');
+    if (cured.length) rep.line('休息過後，' + cured.join('、') + '好了', 'good');
+    rep.delta('spark', R.addSpark(s, 0.3));
+    s.stats.rests++;
+    rep.line('你在' + d.name + '的旅館睡到中午。', '');
+    return rep.done();
+  }
+  // 旅行的靈感：在外地的晚上創作 ×1.3；回來之後七晚仍有「旅行的餘韻」（第一次去的地方 ×1.6，外星基地與傳說之地 ×1.8，舊地重遊 ×1.3）
+  function tripMult(s) {
+    if (s.trip) return 1.3;
+    return s.glow && s.day <= s.glow.until ? s.glow.x : 1;
+  }
+  // 回程：航班一樣有風險
+  function flyHome(s, rep) {
+    const d = D.DEST[s.trip.dest];
+    const first = s.visited[d.id] === 1;
+    s.glow = { until: s.day + 7, x: (first ? 1.6 : 1.3) + (first && (d.kind === 'alien' || d.kind === 'legend') ? 0.2 : 0), dest: d.id };
+    s.stats.flights = (s.stats.flights || 0) + 1;
+    const risk = flightRisk(s);
+    if (R.rand(s) < risk) { R.kill(s, 'plane'); rep.line('回程的航班沒有抵達浮城。', 'bad'); return; }
+    rep.line('你離開' + d.name + '，飛回浮城。' + (risk > 0.005 ? '（航班致命機會 ' + pctText(risk) + '）' : ''), 'news');
+    rep.line('旅行的餘韻：之後七晚的作品 ×' + s.glow.x, 'good');
+    s.trip = null;
+  }
+  function leaveTrip(s) {
+    const rep = R.report(s, '提早回程');
+    flyHome(s, rep);
+    if (s.body > 0) s.trip = null;
+    return rep.done();
+  }
+  // 旅途的晚上
+  function tripNight(s, rep) {
+    const pool = D.TRIP_EVENTS;
+    let r = R.rand(s) * pool.reduce((a, e) => a + e.w, 0);
+    let e = pool[0];
+    for (const x of pool) { r -= x.w; if (r <= 0) { e = x; break; } }
+    rep.event = e.text;
+    rep.line(e.text, 'event');
+    if (e.cr) { const v = Math.max(-s.cr, e.cr); s.cr += v; rep.delta('cr', v); }
+    if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
+    if (e.body) { if (e.body > 0) R.heal(s, e.body); else R.hurt(s, -e.body, 'trip:' + e.id); rep.delta('body', e.body); }
+    if (e.spark) rep.delta('spark', R.addSpark(s, e.spark, true));
+    if (e.paranoia) R.addParanoia(s, e.paranoia, rep);
+    if (e.cond && R.rand(s) < e.cond.chance) R.addCond(s, e.cond.id, rep);
+    if (e.card) rep.gain(e.card);
+    if (e.gainOrigin) rep.gain(R.pick(s, D.DEST[s.trip.dest].sites.flatMap((st) => st.gain)));
+  }
+
+  // ---------- 圖鑑 ----------
+  function rareList(meta, s) {
+    return D.DESTINATIONS.flatMap((d) => d.sites.filter((st) => st.rare).map((st) => ({ id: st.rare.id, name: D.CARDS[st.rare.id].name, dest: d.name, site: st.name,
+      text: st.rare.text, found: !!((meta && meta.rares && meta.rares[st.rare.id]) || (s && s.rares && s.rares[st.rare.id])) })));
+  }
+
+  IE.World = {
+    decorOn, decorList, buyDecor, decorDaily,
+    workPrice, galleryOffers, sellWork, galleryMult, commissions, settleCommissions,
+    antiqueOffers, buyAntique, cardPrice, sellCards, sellCard,
+    tripCost, flightRisk, tripMult, siteRisk, destInfo, worldList, startTrip, tripActions, applySite, tripRest, flyHome, leaveTrip, tripNight, rareHint, rareList,
   };
 });
 
@@ -5085,6 +5864,741 @@ body.ct-open { overflow: hidden; }
   };
 
   IE.Scenes = { City, Office, floorTop, waterY };
+})(window.IE = window.IE || {});
+
+// ---- js/maps.js ----
+// 地圖：你的房間、浮城地圖、世界地圖、旅行目的地的全景。每個場景都有可以點擊的熱點，點擊後由 main.js 決定做甚麼。
+(function (IE) {
+  'use strict';
+  const P = IE.Pixel, D = IE.DATA;
+  const RL = () => IE.Rules;
+  const rect = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h); };
+  const hash = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // 用 icons.js 的 12×12 圖形直接畫在畫布上
+  function icon(c, shape, pal, x, y) {
+    const rows = IE.Icons.SHAPES[shape] || IE.Icons.SHAPES.gem;
+    const PAL = Object.assign({ k: '#14141c', a: '#8e9bb0', b: '#4a5568', c: '#e8edf6', w: '#ffffff' }, pal);
+    rows.forEach((r, j) => { for (let i = 0; i < 12; i++) { const ch = r[i]; if (!ch || ch === '.' || !PAL[ch]) continue; c.fillStyle = PAL[ch]; c.fillRect(x + i, y + j, 1, 1); } });
+  }
+  // 提示框：畫在高解像度的文字層
+  function tip(lines, x, y, color) {
+    const ctx = P.view.ctx, s = P.view.scale, size = 7, lh = size * 1.3;
+    const w = Math.max.apply(null, lines.map((l, i) => P.measure(l, { size: i ? size - 1 : size }))) + 8;
+    const h = lines.length * lh + 5;
+    const bx = clamp(x - w / 2, 2, 318 - w);
+    let by = y - h - 3;
+    if (by < 2) by = y + 14;
+    ctx.save();
+    ctx.fillStyle = 'rgba(8,11,19,0.9)'; ctx.fillRect(bx * s, by * s, w * s, h * s);
+    ctx.strokeStyle = color || '#37c3d6'; ctx.lineWidth = Math.max(1, s * 0.5); ctx.strokeRect(bx * s, by * s, w * s, h * s);
+    ctx.restore();
+    lines.forEach((l, i) => P.text(l, bx + 4, by + 3 + i * lh, { size: i ? size - 1 : size, color: i ? '#b9c3d8' : '#ffffff', weight: i ? 500 : 700 }));
+  }
+
+  // 共用：熱點、懸停、點擊
+  function scene(name, o) {
+    return Object.assign({
+      name, t: 0, hover: null, fx: P.particles(),
+      spots() { return []; },
+      hit(x, y) { return this.spots().find((sp) => x >= sp.x && x < sp.x + sp.w && y >= sp.y && y < sp.y + sp.h) || null; },
+      pointer(type, x, y) {
+        const sp = this.hit(x, y);
+        if (type === 'move' || type === 'down') this.hover = sp ? sp.id : null;
+        if (P.view.canvas) P.view.canvas.style.cursor = sp ? 'pointer' : 'default';
+        if (type === 'down' && sp && Maps.onPick) { IE.Audio.sfx('click'); Maps.onPick(name, sp); }
+      },
+      // 熱點的外框：懸停時發亮
+      drawSpots(c) {
+        this.spots().forEach((sp) => {
+          if (sp.id !== this.hover) return;
+          c.strokeStyle = sp.off ? 'rgba(141,153,180,0.8)' : 'rgba(255,194,71,0.95)';
+          c.lineWidth = 1;
+          c.strokeRect(sp.x + 0.5, sp.y + 0.5, sp.w - 1, sp.h - 1);
+        });
+      },
+      drawTip() {
+        const sp = this.spots().find((x) => x.id === this.hover);
+        if (sp) tip([sp.label].concat(sp.sub ? [sp.sub] : []), sp.x + sp.w / 2, sp.y, sp.off ? '#8d99b4' : sp.color || '#ffc247');
+      },
+      update(dt) { this.t += dt; this.fx.update(dt); },
+    }, o);
+  }
+  const S = () => IE.Game && IE.Game.state;
+  const isNight = (s) => s.slot === 2;
+
+  // =====================================================================
+  // 房間
+  // =====================================================================
+  const WORK_SLOTS = [[142, 16], [164, 16], [186, 16], [142, 38], [164, 38], [186, 38]];
+  const Room = scene('room', {
+    spots() {
+      const s = S();
+      if (!s) return [];
+      const night = isNight(s);
+      const acts = Maps.actions || [];
+      const a = (id) => acts.find((x) => x.id === id);
+      const off = (id) => !a(id) || !a(id).enabled;
+      if (s.floor === 0) {
+        return [
+          { id: 'map', x: 0, y: 40, w: 40, h: 100, label: '浮城地圖', sub: '到別的地方去' },
+          { id: 'rest', x: 44, y: 116, w: 70, h: 26, label: night ? '早點睡' : '休息', sub: '在紙皮箱裡睡一覺', off: off('rest') },
+          { id: 'create', x: 128, y: 108, w: 40, h: 26, label: night ? '創作' : '筆記簿', sub: night ? '今晚把素材變成作品' : '創作要等到晚上', off: !night || off('create') },
+          { id: 'objects', x: 176, y: 112, w: 30, h: 22, label: '膠袋裡的靈感物件', sub: s.objects.length + '/' + s.objSlots + ' 件' },
+          { id: 'phone', x: 112, y: 120, w: 12, h: 12, label: '手機', sub: '商店與今天的動態' },
+          { id: 'city', x: 220, y: 20, w: 96, h: 90, label: '浮城', sub: '看看整座城市' },
+        ];
+      }
+      return [
+        { id: 'map', x: 10, y: 58, w: 34, h: 74, label: '出門', sub: '打開浮城地圖' },
+        { id: 'create', x: 140, y: 86, w: 48, h: 46, label: night ? '創作' : '書桌', sub: night ? '今晚把素材變成作品' : '創作要等到晚上', off: !night || off('create') },
+        { id: 'phone', x: 190, y: 86, w: 16, h: 14, label: '手機', sub: '商店與今天的動態' },
+        { id: 'rest', x: 50, y: 100, w: 70, h: 34, label: night ? '早點睡' : '休息', sub: '身體 +' + (22 + (IE.World.decorOn(s, 'bed') ? 3 : 0)), off: off('rest') },
+        { id: 'objects', x: 54, y: 30, w: 80, h: 20, label: '靈感物件', sub: s.objects.length + '/' + s.objSlots + ' 件・按一下排列' },
+        { id: 'works', x: 140, y: 12, w: 66, h: 48, label: '作品牆', sub: s.works.length + ' 件作品・賣畫與天空區委託' },
+        { id: 'city', x: 226, y: 22, w: 74, h: 70, label: '窗外', sub: '看看浮城的橫切面' },
+        { id: 'decor', x: 122, y: 136, w: 18, h: 12, label: '家具目錄', sub: '用錢把這裡變成一個家' },
+        { id: 'stats', x: 208, y: 26, w: 16, h: 20, label: '月曆', sub: '第 ' + s.day + ' 天・篩選日在第 ' + RL().reviewDay(s) + ' 天' },
+      ];
+    },
+    draw(c) {
+      const s = S();
+      if (!s) return;
+      if (s.floor === 0) { this.drawStreet(c, s); this.drawSpots(c); return; }
+      const night = isNight(s), t = this.t;
+      const has = (id) => !!(s.decor && s.decor[id]);
+      const season = D.SEASONS[s.season];
+      // 牆
+      const wall = night ? '#1d2133' : '#2c3350';
+      rect(c, 0, 0, 320, 132, wall);
+      for (let x = 0; x < 320; x += 12) rect(c, x, 0, 1, 132, P.mix(wall, '#000000', 0.12));
+      // 發霉
+      if (s.conds.mold || RL().flooded(s)) for (let i = 0; i < 14; i++) rect(c, 60 + hash(i) * 200, 70 + hash(i + 9) * 50, 2 + Math.floor(hash(i + 3) * 3), 2, '#3d5a3a');
+      // 地板
+      rect(c, 0, 132, 320, 48, '#3b2a1e');
+      for (let y = 136; y < 180; y += 6) rect(c, 0, y, 320, 1, '#2a1d14');
+      for (let i = 0; i < 18; i++) rect(c, (i * 37) % 320, 136 + (i % 7) * 6, 1, 5, '#2a1d14');
+      // 窗
+      this.drawWindow(c, s, night, season);
+      // 冷氣機
+      if (has('ac')) {
+        rect(c, 238, 6, 50, 12, '#d6dce8'); rect(c, 238, 15, 50, 3, '#9aa7c7');
+        for (let i = 0; i < 6; i++) rect(c, 242 + i * 7, 9, 5, 1, '#9aa7c7');
+        if (Math.sin(t * 6) > 0) rect(c, 282, 8, 2, 2, '#9be36b');
+      }
+      // 門
+      rect(c, 8, 56, 38, 78, '#1a1d2b');
+      rect(c, 10, 58, 34, 76, has('lock') ? '#5a6478' : '#6b4a32');
+      rect(c, 14, 64, 26, 30, P.mix(has('lock') ? '#5a6478' : '#6b4a32', '#000000', 0.15));
+      rect(c, 14, 100, 26, 28, P.mix(has('lock') ? '#5a6478' : '#6b4a32', '#000000', 0.15));
+      rect(c, 38, 96, 3, 3, '#e8c25a');
+      if (has('lock')) { rect(c, 36, 74, 5, 3, '#c9d1dc'); rect(c, 36, 110, 5, 3, '#c9d1dc'); rect(c, 30, 88, 7, 6, '#1b1b28'); rect(c, 31, 89, 5, 1, Math.sin(t * 3) > 0 ? '#ff4d5e' : '#9be36b'); }
+      // 霓虹燈
+      if (has('neonsign')) {
+        const on = Math.sin(t * 5) > -0.85;
+        const col = on ? '#ff4fb4' : '#5a2245';
+        rect(c, 10, 38, 34, 1, col); rect(c, 10, 48, 34, 1, col); rect(c, 10, 38, 1, 11, col); rect(c, 43, 38, 1, 11, col);
+        [[14, 41], [18, 43], [22, 41], [27, 44], [31, 41], [36, 43]].forEach(([x, y]) => rect(c, x, y, 3, 2, on ? '#37c3d6' : '#1f4a52'));
+        if (on) { c.fillStyle = 'rgba(255,79,180,0.08)'; c.fillRect(2, 30, 50, 28); }
+      }
+      // 抽水泵
+      if (has('pump')) { rect(c, 0, 118, 9, 14, '#4a5568'); rect(c, 1, 120, 7, 4, '#37c3d6'); rect(c, 4, 112, 2, 6, '#2a3142'); if (RL().flooded(s) && Math.sin(t * 9) > 0) rect(c, 2, 125, 5, 1, '#9be36b'); }
+      // 架子與靈感物件
+      rect(c, 54, 46, 80, 3, '#6b4a32'); rect(c, 58, 49, 2, 6, '#4a3222'); rect(c, 128, 49, 2, 6, '#4a3222');
+      s.objects.forEach((id, i) => { const o = D.OBJ[id]; if (o) icon(c, o.icon, o.pal, 58 + i * 15, 34); });
+      for (let i = s.objects.length; i < s.objSlots; i++) rect(c, 61 + i * 15, 43, 6, 1, '#4a3222');
+      // 海報
+      if (has('poster')) {
+        rect(c, 104, 58, 20, 28, '#1b1b28'); rect(c, 105, 59, 18, 26, '#d6334a');
+        rect(c, 108, 62, 12, 10, '#1b1b28'); rect(c, 110, 64, 8, 6, '#ffd36b'); rect(c, 107, 76, 14, 2, '#1b1b28'); rect(c, 109, 80, 10, 2, '#1b1b28');
+      }
+      // 床
+      if (has('bed')) {
+        rect(c, 50, 110, 70, 16, '#8a5a3b'); rect(c, 52, 104, 66, 10, '#e8edf6'); rect(c, 52, 112, 66, 2, '#c9d1dc');
+        rect(c, 54, 100, 16, 8, '#ffffff'); rect(c, 50, 126, 3, 8, '#5a3a22'); rect(c, 117, 126, 3, 8, '#5a3a22');
+        rect(c, 74, 104, 44, 8, '#37c3d6'); rect(c, 74, 110, 44, 2, '#1f6b7a');
+      } else {
+        rect(c, 50, 122, 70, 10, '#8d99b4'); rect(c, 50, 130, 70, 2, '#5a6478'); rect(c, 54, 118, 14, 6, '#c9d1dc');
+        rect(c, 72, 120, 46, 6, '#6b7a99');
+      }
+      // 植物
+      if (has('plant')) { rect(c, 124, 122, 10, 10, '#c46a1e'); rect(c, 123, 121, 12, 2, '#8a4a1e'); [[126, 112], [129, 108], [131, 114], [124, 116], [128, 116]].forEach(([x, y], i) => rect(c, x + Math.round(Math.sin(t + i) * 0.6), y, 3, 6, i % 2 ? '#3d8b5a' : '#6cc070')); }
+      // 家具目錄
+      rect(c, 124, 138, 14, 9, '#eef1f7'); rect(c, 125, 139, 6, 4, '#ff4fb4'); rect(c, 132, 140, 5, 1, '#8d99b4'); rect(c, 132, 142, 5, 1, '#8d99b4');
+      // 作品牆
+      WORK_SLOTS.forEach(([x, y], i) => {
+        const w = s.works[s.works.length - WORK_SLOTS.length + i] || null;
+        if (!w) { rect(c, x + 8, y + 2, 1, 1, '#8d99b4'); return; }
+        rect(c, x, y, 18, 15, w.sold ? '#3a3a48' : '#e8c25a');
+        if (w.sold) { rect(c, x + 2, y + 2, 14, 11, wall); rect(c, x + 4, y + 6, 10, 4, '#d6334a'); return; }
+        const col = (D.TAGS[w.tags[0]] || { color: '#8d99b4' }).color, col2 = (D.TAGS[w.tags[1]] || { color: '#1b1b28' }).color;
+        rect(c, x + 2, y + 2, 14, 11, P.mix(col, '#000000', 0.3));
+        for (let k = 0; k < 5; k++) rect(c, x + 3 + Math.floor(hash(w.day * 7 + k) * 10), y + 3 + Math.floor(hash(w.day * 3 + k) * 8), 3, 2, k % 2 ? col : col2);
+      });
+      // 月曆
+      rect(c, 208, 26, 16, 20, '#eef1f7'); rect(c, 208, 26, 16, 5, '#d6334a');
+      P.digits(c, String(s.day).padStart(2, '0').slice(-2), 210, 34, '#1b2233', 1);
+      // 書桌
+      rect(c, 138, 96, 70, 4, '#8a5a3b'); rect(c, 142, 100, 3, 32, '#5a3a22'); rect(c, 200, 100, 3, 32, '#5a3a22');
+      rect(c, 160, 82, 24, 14, '#26334d'); rect(c, 162, 84, 20, 10, night ? '#37c3d6' : '#4a5a78'); rect(c, 156, 94, 32, 2, '#8e9bb0');
+      if (night) for (let i = 0; i < 4; i++) rect(c, 164, 86 + i * 2, 6 + Math.floor(hash(i + Math.floor(t * 2)) * 10), 1, '#e8fdff');
+      rect(c, 190, 80, 2, 16, '#4a5568'); rect(c, 186, 78, 8, 3, '#ffc247');
+      if (night) { c.fillStyle = 'rgba(255,194,71,0.12)'; c.beginPath(); c.moveTo(186, 81); c.lineTo(194, 81); c.lineTo(210, 96); c.lineTo(160, 96); c.closePath(); c.fill(); }
+      rect(c, 194, 90, 8, 6, '#1b1b28'); rect(c, 195, 91, 6, 4, IE.Game && IE.Game.state && Math.sin(t * 2) > 0.6 ? '#ff4fb4' : '#26334d');
+      if (has('stereo')) {
+        rect(c, 140, 88, 16, 8, '#3b2a1e'); rect(c, 142, 86, 12, 3, '#15151c'); rect(c, 147, 87, 2, 1, '#ff4d5e');
+        if (Math.random() < 0.05) this.fx.add({ x: 150, y: 84, vx: 4, vy: -8, life: 1.5, color: '#9be36b' });
+      }
+      // 畫架
+      if (has('easel')) {
+        c.fillStyle = '#8a5a3b'; for (let y = 0; y < 42; y++) { c.fillRect(276 + Math.round(y * 0.12), 92 + y, 2, 1); c.fillRect(294 - Math.round(y * 0.12), 92 + y, 2, 1); }
+        rect(c, 274, 94, 24, 20, '#eef1f7'); rect(c, 277, 97, 8, 6, '#ff4fb4'); rect(c, 284, 102, 10, 8, '#37c3d6'); rect(c, 279, 106, 6, 4, '#ffc247');
+      }
+      // 魚缸
+      if (has('aquarium')) {
+        rect(c, 232, 120, 36, 12, '#3b2a1e'); rect(c, 232, 100, 36, 20, '#123844'); rect(c, 233, 101, 34, 18, '#1e7f99');
+        rect(c, 233, 101, 34, 2, '#37c3d6');
+        for (let i = 0; i < 3; i++) { const fx = 236 + ((t * (8 + i * 3) + i * 11) % 26); rect(c, fx, 106 + i * 4, 4, 2, ['#ffc247', '#ff4fb4', '#9be36b'][i]); }
+        if (Math.random() < 0.08) this.fx.add({ x: 240 + Math.random() * 24, y: 117, vy: -12, life: 1, color: '#bff3fb' });
+      }
+      // 望遠鏡
+      if (has('telescope')) {
+        rect(c, 214, 108, 2, 24, '#4a5568'); rect(c, 210, 128, 10, 2, '#4a5568');
+        c.save(); c.translate(214, 106); c.rotate(-0.6); rect(c, -2, -3, 18, 5, '#c9d1dc'); rect(c, 14, -4, 3, 7, '#8e9bb0'); c.restore();
+      }
+      // 書架
+      if (has('bookshelf')) {
+        rect(c, 300, 40, 20, 92, '#5a3a22');
+        for (let r = 0; r < 5; r++) { rect(c, 301, 44 + r * 18, 19, 1, '#3b2a1e'); for (let k = 0; k < 5; k++) rect(c, 302 + k * 3, 45 + r * 18, 2, 14 - (k * 3 + r) % 5, ['#d6334a', '#37c3d6', '#ffc247', '#9be36b', '#c38bff'][(k + r) % 5]); }
+      }
+      // 淹水
+      if (RL().flooded(s)) {
+        const depth = clamp(10 + (s.water - s.floor) * 30, 10, 40);
+        c.fillStyle = 'rgba(14,90,110,0.72)'; c.fillRect(0, 180 - depth, 320, depth);
+        for (let x = 0; x < 320; x += 3) rect(c, x, 180 - depth + Math.round(Math.sin(x * 0.15 + t * 2)), 2, 1, '#37c3d6');
+      }
+      // 你：白天在房間裡踱步，晚上站在書桌前
+      const px = night ? 166 : 150 + Math.round(Math.sin(t * 0.4) * 26), py = 134;
+      P.sprite(c, 'player', px, py - 24 + (night ? 0 : Math.round(Math.abs(Math.sin(t * 3)) * -1)), { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5), flip: !night && Math.cos(t * 0.4) < 0 });
+      IE.Scenes.City.drawStones(c, s, px + 13, py - 6);
+      if (Math.random() < Math.max(0, s.spark - 0.5) * 0.05) this.fx.add({ x: px + 8, y: py - 24, vx: (Math.random() - 0.5) * 6, vy: -10 - Math.random() * 8, life: 1.4, color: Math.random() < 0.7 ? '#ffc247' : '#ff8a3c' });
+      // 窗口的光
+      if (!night) { c.fillStyle = 'rgba(255,240,200,0.05)'; c.beginPath(); c.moveTo(226, 92); c.lineTo(300, 92); c.lineTo(250, 180); c.lineTo(150, 180); c.closePath(); c.fill(); }
+      this.fx.draw(c);
+      this.drawSpots(c);
+    },
+    drawWindow(c, s, night, season) {
+      const x0 = 226, y0 = 22, w = 74, h = 70, t = this.t;
+      c.save(); c.beginPath(); c.rect(x0, y0, w, h); c.clip();
+      const top = night ? P.mix(season.sky[0], '#03040a', 0.6) : s.slot === 0 ? P.mix(season.sky[1], '#ffb38a', 0.25) : season.sky[1];
+      const g = c.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, top); g.addColorStop(1, night ? '#0a0e17' : P.mix(season.sky[1], '#ffd3a8', 0.3));
+      c.fillStyle = g; c.fillRect(x0, y0, w, h);
+      if (night) for (let i = 0; i < 10; i++) rect(c, x0 + (i * 23) % w, y0 + (i * 13) % 30, 1, 1, Math.sin(t * 2 + i) > 0.5 ? '#ffffff' : '#7d8aa8');
+      for (let i = 0; i < 6; i++) { const bh = 20 + hash(i) * 34; rect(c, x0 + i * 13, y0 + h - bh, 11, bh, P.mix(top, '#000000', 0.55)); if (night) for (let k = 0; k < 4; k++) if (hash(i * 9 + k) > 0.5) rect(c, x0 + i * 13 + 2 + (k % 2) * 5, y0 + h - bh + 4 + k * 6, 2, 2, '#ffd36b'); }
+      // 水位：越接近你的樓層，窗外的水越高
+      const near = clamp(1 - (s.floor - s.water), 0, 1);
+      if (near > 0) { const wy = y0 + h - near * 30; c.fillStyle = 'rgba(14,90,110,0.85)'; c.fillRect(x0, wy, w, y0 + h - wy); rect(c, x0, wy, w, 1, '#37c3d6'); }
+      // 外星探射燈
+      if (night) { const bx = x0 + 37 + Math.sin(t * 0.5) * 40; c.fillStyle = 'rgba(200,255,250,0.12)'; c.beginPath(); c.moveTo(bx - 2, y0); c.lineTo(bx + 2, y0); c.lineTo(bx + 14, y0 + h); c.lineTo(bx - 14, y0 + h); c.closePath(); c.fill(); }
+      if (season.weather === 'storm' || season.weather === 'acid') { c.fillStyle = season.weather === 'acid' ? 'rgba(196,224,74,0.5)' : 'rgba(170,210,255,0.5)'; for (let i = 0; i < 18; i++) c.fillRect(x0 + (i * 17 + t * 60) % w, y0 + (i * 23 + t * 140) % h, 1, 3); }
+      c.restore();
+      rect(c, x0 - 3, y0 - 3, w + 6, 3, '#8e9bb0'); rect(c, x0 - 3, y0 + h, w + 6, 4, '#8e9bb0'); rect(c, x0 - 3, y0, 3, h, '#8e9bb0'); rect(c, x0 + w, y0, 3, h, '#8e9bb0');
+      rect(c, x0 + w / 2 - 1, y0, 2, h, '#8e9bb0');
+    },
+    // 露宿街頭：天橋底
+    drawStreet(c, s) {
+      const night = isNight(s), t = this.t;
+      const season = D.SEASONS[s.season];
+      const g = c.createLinearGradient(0, 0, 0, 180); g.addColorStop(0, night ? '#05070c' : season.sky[1]); g.addColorStop(1, night ? '#0a0e17' : '#2a3350');
+      c.fillStyle = g; c.fillRect(0, 0, 320, 180);
+      rect(c, 0, 0, 320, 18, '#2a3350'); rect(c, 0, 18, 320, 4, '#1c2438');
+      [30, 150, 270].forEach((x) => { rect(c, x, 22, 16, 120, '#3a4562'); rect(c, x + 2, 22, 2, 120, '#4a5a78'); });
+      rect(c, 0, 140, 320, 6, '#3a4562');
+      c.fillStyle = 'rgba(14,90,110,0.85)'; c.fillRect(0, 146, 320, 34);
+      for (let x = 0; x < 320; x += 3) rect(c, x, 146 + Math.round(Math.sin(x * 0.12 + t * 2)), 2, 1, '#37c3d6');
+      rect(c, 44, 120, 70, 20, '#a8865a'); rect(c, 46, 118, 66, 4, '#c9a86b'); rect(c, 60, 124, 30, 2, '#8a6a3b');
+      rect(c, 130, 124, 30, 8, '#eef1f7'); rect(c, 132, 126, 12, 1, '#8d99b4'); rect(c, 112, 124, 8, 8, '#1b1b28');
+      rect(c, 178, 116, 26, 18, '#e8edf6'); rect(c, 180, 114, 4, 4, '#e8edf6');
+      s.objects.forEach((id, i) => { const o = D.OBJ[id]; if (o && i < 2) icon(c, o.icon, o.pal, 180 + i * 10, 120); });
+      P.sprite(c, 'player', 90, 108, { desat: Math.max(0, 1 - s.spark / 2.5) });
+      IE.Scenes.City.drawStones(c, s, 96, 119);
+      if (night) { const bx = 160 + Math.sin(t * 0.5) * 140; c.fillStyle = 'rgba(200,255,250,0.1)'; c.beginPath(); c.moveTo(bx - 3, 0); c.lineTo(bx + 3, 0); c.lineTo(bx + 20, 146); c.lineTo(bx - 20, 146); c.closePath(); c.fill(); }
+      if (season.weather !== 'heat') { c.fillStyle = 'rgba(170,210,255,0.35)'; for (let i = 0; i < 30; i++) c.fillRect((i * 37 + t * 50) % 320, 22 + (i * 29 + t * 160) % 120, 1, 3); }
+      this.fx.draw(c);
+    },
+    drawText() {
+      const s = S();
+      if (!s) return;
+      P.text(s.floor === 0 ? '天橋底' : '你的家・' + s.floor + ' 樓', 4, 3, { size: 7, color: '#e8edf6', stroke: '#0a0e17' });
+      this.drawTip();
+    },
+  });
+
+  // =====================================================================
+  // 浮城地圖（俯瞰）
+  // =====================================================================
+  // 島：浮城的建築群
+  const ISLANDS = [[70, 40, 50, 36], [40, 88, 44, 32], [92, 80, 70, 30], [140, 84, 40, 30], [228, 96, 46, 30], [176, 78, 30, 26],
+    [250, 60, 44, 28], [104, 118, 42, 22], [14, 128, 44, 26], [272, 128, 46, 34]];
+  const SKY = [[186, 14, 46, 22], [232, 20, 48, 24]];
+  const BRIDGES = [[120, 96, 20, 3], [162, 92, 14, 3], [206, 90, 22, 3], [84, 100, 8, 3], [112, 76, 3, 6], [246, 88, 3, 8], [120, 110, 3, 8], [58, 120, 3, 8], [272, 124, 3, 4]];
+  const CityMap = scene('map', {
+    boats: [0, 1, 2, 3].map((i) => ({ x: hash(i) * 320, y: 0, lane: i })),
+    spots() {
+      const s = S();
+      if (!s) return [];
+      const acts = Maps.actions || [];
+      return D.PLACES.map((p) => {
+        let sub = '', off = false;
+        if (p.act) {
+          const a = acts.find((x) => x.id === p.act);
+          off = !a || !a.enabled;
+          sub = a ? (a.enabled ? a.name : a.name + '：' + (a.reason || '')) : isNight(s) ? '晚上不開放' : '';
+        } else sub = { room: '回家', antique: '買賣古董與旅行素材', gallery: '賣畫、接委託', world: '世界地圖：出國找素材' }[p.ui] || '';
+        return { id: p.id, x: p.x - 10, y: p.y - 10, w: 20, h: 20, label: p.name, sub, off, place: p };
+      });
+    },
+    draw(c) {
+      const s = S();
+      if (!s) return;
+      const night = isNight(s), t = this.t;
+      // 海
+      rect(c, 0, 0, 320, 180, night ? '#06212c' : '#0c4457');
+      for (let i = 0; i < 90; i++) {
+        const x = (hash(i) * 340 + t * (4 + (i % 3))) % 340 - 10, y = hash(i + 50) * 180;
+        rect(c, x, y, 3, 1, night ? '#0e3a48' : '#1e7f99');
+      }
+      // 舊城：水底下的街道
+      c.fillStyle = night ? 'rgba(20,40,60,0.6)' : 'rgba(20,60,80,0.7)';
+      for (let i = 0; i < 12; i++) c.fillRect(150 + (i % 4) * 22, 136 + Math.floor(i / 4) * 14, 16, 9);
+      // 島與建築
+      ISLANDS.forEach(([x, y, w, h], k) => {
+        rect(c, x - 1, y + 2, w + 2, h, '#062a36');
+        rect(c, x, y, w, h, night ? '#2a2f45' : '#4a5470');
+        for (let i = 0; i < Math.floor(w * h / 70); i++) {
+          const bx = x + 2 + Math.floor(hash(k * 31 + i) * (w - 8)), by = y + 2 + Math.floor(hash(k * 17 + i * 3) * (h - 8));
+          const bw = 4 + Math.floor(hash(i + k) * 5), bh = 4 + Math.floor(hash(i * 7 + k) * 4);
+          rect(c, bx, by, bw, bh, night ? '#1c2033' : P.mix('#8e9bb0', '#4a5470', hash(i * 13 + k)));
+          rect(c, bx, by, bw, 1, night ? '#3a4562' : '#c9d1dc');
+          if (night && hash(i * 5 + k) > 0.55) rect(c, bx + 1, by + 2, 1, 1, hash(i + k * 3) > 0.8 ? '#ff4fb4' : '#ffd36b');
+        }
+      });
+      BRIDGES.forEach(([x, y, w, h]) => rect(c, x, y, w, h, night ? '#5a6478' : '#c9d1dc'));
+      // 機場跑道
+      rect(c, 276, 150, 42, 6, '#2a3142'); for (let i = 0; i < 6; i++) rect(c, 279 + i * 7, 152, 3, 1, night && Math.floor(t * 4) % 6 === i ? '#ffd36b' : '#eef1f7');
+      const pl = (t * 18) % 140;
+      if (pl < 60) { const px = 300 - pl * 1.2, py = 153 - pl * 0.6; rect(c, px, py, 7, 2, '#eef1f7'); rect(c, px + 2, py - 2, 2, 6, '#c9d1dc'); }
+      // 船
+      this.boats.forEach((b, i) => {
+        const lane = [[60, 122], [86, 82], [200, 116], [168, 64]][i];
+        const x = (b.x + t * (10 + i * 4)) % 340 - 10;
+        rect(c, x, lane[1], 6, 2, '#eef1f7'); rect(c, x - 4, lane[1] + 1, 3, 1, '#bff3fb');
+      });
+      // 天空區：浮在上空，影子落在水面
+      SKY.forEach(([x, y, w, h], k) => {
+        c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x + 8, y + 18, w, h);
+        const yy = y + Math.sin(t * 0.6 + k) * 1.5;
+        rect(c, x, yy, w, h, '#c9d6ff'); rect(c, x, yy + h - 2, w, 2, '#9aa7c7');
+        for (let i = 0; i < 6; i++) rect(c, x + 4 + i * 7, yy + 4, 4, 4, i % 2 ? '#9be36b' : '#ffe9a8');
+        rect(c, x + 6, yy + 12, w - 12, 4, '#37c3d6');
+      });
+      // 晚上：探射燈掃過整個城市
+      if (night) { const bx = 160 + Math.sin(t * 0.4) * 150, by = 90 + Math.cos(t * 0.3) * 60; const g = c.createRadialGradient(bx, by, 2, bx, by, 26); g.addColorStop(0, 'rgba(200,255,250,0.25)'); g.addColorStop(1, 'rgba(200,255,250,0)'); c.fillStyle = g; c.fillRect(bx - 26, by - 26, 52, 52); }
+      // 地點
+      const spots = this.spots();
+      spots.forEach((sp) => {
+        const p = sp.place;
+        const hover = sp.id === this.hover;
+        const bob = hover ? Math.round(Math.sin(t * 8)) : 0;
+        rect(c, p.x - 6, p.y - 6 + bob, 13, 13, sp.off ? '#3a3a48' : p.ui ? '#ff4fb4' : '#ffc247');
+        rect(c, p.x - 5, p.y - 5 + bob, 11, 11, sp.off ? '#5a5f6e' : '#1b2233');
+        MAP_ICON(c, p.icon, p.x - 4, p.y - 4 + bob, sp.off ? '#8d99b4' : p.ui ? '#ff8fd1' : '#ffd36b');
+        if (hover) { c.strokeStyle = '#ffffff'; c.strokeRect(p.x - 7.5, p.y - 7.5 + bob, 15, 15); }
+      });
+      // 你在家
+      const home = D.PLACES.find((p) => p.id === 'home');
+      if (Math.sin(t * 4) > 0) { c.strokeStyle = '#ff4fb4'; c.strokeRect(home.x - 9.5, home.y - 9.5, 19, 19); }
+      this.fx.draw(c);
+    },
+    drawText() {
+      const s = S();
+      if (!s) return;
+      P.text('浮城地圖', 4, 3, { size: 7, color: '#e8edf6', stroke: '#0a0e17' });
+      P.text(isNight(s) ? '晚上：大部分地方已經關門' : '按地點前往，或者用下面的行動清單', 316, 3, { size: 6, color: '#b9c3d8', stroke: '#0a0e17', align: 'right' });
+      D.PLACES.forEach((p) => { if (p.id !== this.hover) P.text(p.name, p.x, p.y + 8, { size: 5, align: 'center', color: '#e8edf6', stroke: '#0a0e17' }); });
+      this.drawTip();
+    },
+  });
+  // 浮城地圖的 8×8 圖示
+  const MI = {
+    home: ['...##...', '..####..', '.######.', '########', '.#....#.', '.#.##.#.', '.#.##.#.', '.######.'],
+    office: ['.######.', '.#.#.#..', '.######.', '.#.#.#..', '.######.', '.#.#.#..', '.######.', '.##..##.'],
+    sky: ['........', '..####..', '.######.', '########', '.#.##.#.', '..#..#..', '........', '........'],
+    boat: ['........', '...#....', '...##...', '...###..', '...#....', '########', '.######.', '........'],
+    clinic: ['...##...', '...##...', '########', '########', '...##...', '...##...', '........', '........'],
+    dive: ['..####..', '.#....#.', '#.#..#.#', '#......#', '.#....#.', '..####..', '...##...', '..#..#..'],
+    bridge: ['........', '########', '#..##..#', '#.#..#.#', '##....##', '#......#', '#......#', '........'],
+    friends: ['.##..##.', '.##..##.', '........', '.##..##.', '####.###', '####.###', '.##..##.', '........'],
+    shelter: ['...##...', '..####..', '.######.', '########', '#.####.#', '#.#..#.#', '#.#..#.#', '########'],
+    market: ['########', '#.#.#.#.', '########', '.#....#.', '.#.##.#.', '.#.##.#.', '.#....#.', '.######.'],
+    plane: ['...#....', '...##...', '#..##...', '########', '#..##...', '...##...', '...#....', '........'],
+  };
+  function MAP_ICON(c, id, x, y, col) {
+    const rows = MI[id] || MI.home;
+    c.fillStyle = col;
+    rows.forEach((r, j) => { for (let i = 0; i < 8; i++) if (r[i] === '#') c.fillRect(x + i, y + j, 1, 1); });
+  }
+
+  // =====================================================================
+  // 世界地圖
+  // =====================================================================
+  // 64×36 的等距圓柱投影：每一行是 [起, 止] 的陸地欄位（每格 5×5 像素）
+  const LAND = [
+    [], [[21, 28]], [[11, 13], [16, 18], [20, 29], [34, 35], [49, 50]], [[2, 7], [10, 19], [21, 28], [44, 58]],
+    [[2, 8], [9, 19], [22, 27], [28, 29], [34, 37], [37, 63]], [[2, 8], [9, 13], [17, 21], [23, 25], [33, 37], [37, 62]],
+    [[8, 14], [18, 23], [30, 31], [33, 36], [36, 56], [60, 60]], [[8, 14], [17, 22], [30, 31], [31, 40], [40, 56], [57, 57]],
+    [[9, 21], [22, 22], [31, 36], [39, 40], [42, 56], [57, 57]], [[10, 20], [30, 31], [33, 35], [35, 36], [36, 40], [42, 54], [56, 56]],
+    [[10, 19], [30, 31], [34, 34], [35, 39], [40, 45], [46, 54], [55, 57]], [[11, 18], [30, 37], [39, 44], [44, 53], [55, 56]],
+    [[12, 14], [17, 17], [29, 37], [39, 42], [42, 48], [48, 53]], [[12, 15], [17, 18], [29, 37], [39, 42], [44, 48], [48, 52]],
+    [[14, 16], [29, 38], [40, 41], [45, 47], [49, 51], [53, 54]], [[16, 17], [29, 40], [41, 41], [45, 46], [49, 51], [54, 54]],
+    [[17, 21], [30, 41], [46, 46], [50, 51], [51, 53], [54, 54]], [[17, 24], [33, 40], [49, 50], [51, 53], [53, 54]],
+    [[17, 25], [33, 39], [50, 53], [55, 58]], [[18, 25], [33, 39], [51, 52], [56, 58]],
+    [[18, 25], [34, 39], [40, 41], [54, 57]], [[19, 24], [34, 39], [40, 41], [53, 58]],
+    [[19, 24], [34, 38], [40, 40], [52, 58]], [[19, 23], [34, 37], [52, 58]], [[19, 22], [34, 36], [52, 57]],
+    [[19, 21], [56, 57], [62, 62]], [[19, 21], [57, 57], [61, 62]], [[19, 20], [61, 61]], [[19, 20]], [], [],
+    [[20, 21]], [[0, 18], [22, 63]], [[0, 63]], [[0, 63]], [[0, 63]],
+  ];
+  const isLand = (col, row) => (LAND[row] || []).some(([a, b]) => col >= a && col <= b);
+  const ICE = (row) => row <= 3 || row >= 32;
+  const DESERT = (col, row) => (row >= 11 && row <= 14 && col >= 29 && col <= 42) || (row >= 21 && row <= 24 && col >= 53 && col <= 57);
+  let worldBase = null;
+  function buildWorld() {
+    const cv = document.createElement('canvas');
+    cv.width = 320; cv.height = 180;
+    const c = cv.getContext('2d');
+    for (let row = 0; row < 36; row++) for (let col = 0; col < 64; col++) {
+      if (!isLand(col, row)) continue;
+      const x = col * 5, y = row * 5, n = hash(col * 64 + row);
+      const base = ICE(row) ? '#dfe9f5' : DESERT(col, row) ? '#c9a86b' : row >= 16 && row <= 20 ? '#2f7a43' : '#4f8a4a';
+      c.fillStyle = P.mix(base, n > 0.5 ? '#ffffff' : '#000000', 0.06 + n * 0.06);
+      c.fillRect(x, y, 5, 5);
+      // 圓角：令海岸線不那麼方
+      const L = isLand(col - 1, row), Rr = isLand(col + 1, row), U = isLand(col, row - 1), Dn = isLand(col, row + 1);
+      c.fillStyle = '#0f4a6a';
+      if (!L && !U) c.fillRect(x, y, 2, 1), c.fillRect(x, y + 1, 1, 1);
+      if (!Rr && !U) c.fillRect(x + 3, y, 2, 1), c.fillRect(x + 4, y + 1, 1, 1);
+      if (!L && !Dn) c.fillRect(x, y + 4, 2, 1), c.fillRect(x, y + 3, 1, 1);
+      if (!Rr && !Dn) c.fillRect(x + 3, y + 4, 2, 1), c.fillRect(x + 4, y + 3, 1, 1);
+      // 2080 年：低窪的海岸已經被淹沒
+      if (!ICE(row) && (!L || !Rr || !U || !Dn) && hash(col * 7 + row * 13) > 0.55) { c.fillStyle = 'rgba(55,195,214,0.35)'; c.fillRect(x, y, 5, 5); }
+    }
+    return cv;
+  }
+  const KIND_COL = () => ({ modern: D.KINDS.modern.color, ancient: D.KINDS.ancient.color, prehistoric: D.KINDS.prehistoric.color, alien: D.KINDS.alien.color, legend: D.KINDS.legend.color });
+  const WorldMap = scene('world', {
+    sel: null,
+    spots() {
+      const s = S();
+      if (!s || !IE.World) return [];
+      const meta = IE.Game && IE.Game.meta;
+      const out = IE.World.worldList(s, meta).map((d) => {
+        const def = D.DEST[d.id];
+        const rare = d.sites.some((x) => x.rare && x.rare.ready);
+        return { id: d.id, x: def.x - 6, y: def.y - 6, w: 12, h: 12, label: d.name + (d.visited ? '　✓' : ''),
+          sub: d.locked ? '🔒 ' + d.lockText : d.kind.name + '・$' + d.cost.toLocaleString() + '・' + d.stay + ' 天' + (rare ? '・極稀有素材時機已到' : ''),
+          off: d.locked, color: d.kind.color, dest: d, rare };
+      });
+      out.push({ id: 'home', x: D.HOME.x - 6, y: D.HOME.y - 6, w: 12, h: 12, label: '浮城', sub: s.trip ? '你現在在' + D.DEST[s.trip.dest].name : '你在這裡', color: '#ff4fb4' });
+      return out;
+    },
+    draw(c) {
+      const s = S();
+      if (!s) return;
+      const t = this.t;
+      rect(c, 0, 0, 320, 180, '#0b3550');
+      for (let i = 0; i < 70; i++) { const x = (hash(i) * 330 + t * 3) % 330 - 5, y = hash(i + 7) * 180; rect(c, x, y, 2, 1, '#14506e'); }
+      if (!worldBase) worldBase = buildWorld();
+      c.drawImage(worldBase, 0, 0);
+      // 經緯線
+      c.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < 320; x += 40) c.fillRect(x, 0, 1, 180);
+      for (let y = 0; y < 180; y += 30) c.fillRect(0, y, 320, 1);
+      // 月球
+      const mx = 300, my = 16;
+      c.fillStyle = '#c9d1dc'; c.beginPath(); c.arc(mx, my, 11, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#8d99b4'; c.fillRect(mx - 5, my - 3, 3, 3); c.fillRect(mx + 2, my + 3, 4, 3); c.fillRect(mx - 1, my - 7, 2, 2);
+      const spots = this.spots();
+      const home = spots.find((x) => x.id === 'home');
+      // 航線：從浮城到懸停或旅行中的目的地
+      const target = s.trip ? spots.find((x) => x.id === s.trip.dest) : spots.find((x) => x.id === this.hover && x.id !== 'home');
+      if (target && home) {
+        const x0 = home.x + 6, y0 = home.y + 6, x1 = target.x + 6, y1 = target.y + 6;
+        const mxp = (x0 + x1) / 2, myp = Math.min(y0, y1) - 20 - Math.abs(x1 - x0) * 0.15;
+        for (let k = 0; k <= 40; k++) {
+          const u = k / 40, x = (1 - u) * (1 - u) * x0 + 2 * (1 - u) * u * mxp + u * u * x1, y = (1 - u) * (1 - u) * y0 + 2 * (1 - u) * u * myp + u * u * y1;
+          if (k % 3 !== 0) rect(c, x, y, 1, 1, target.off ? '#8d99b4' : '#ffd36b');
+        }
+        const u = (t * 0.35) % 1, x = (1 - u) * (1 - u) * x0 + 2 * (1 - u) * u * mxp + u * u * x1, y = (1 - u) * (1 - u) * y0 + 2 * (1 - u) * u * myp + u * u * y1;
+        if (!target.off) { rect(c, x - 2, y, 5, 1, '#ffffff'); rect(c, x, y - 1, 1, 3, '#ffffff'); }
+      }
+      // 目的地
+      spots.forEach((sp) => {
+        const cx = sp.x + 6, cy = sp.y + 6;
+        if (sp.id === 'home') {
+          rect(c, cx - 3, cy - 3, 7, 7, '#ff4fb4'); rect(c, cx - 2, cy - 2, 5, 5, '#1b2233'); rect(c, cx - 1, cy - 1, 3, 3, '#ff8fd1');
+          return;
+        }
+        const col = sp.off ? '#5a5f6e' : sp.color;
+        const pulse = sp.off ? 0 : (Math.sin(t * 3 + cx) + 1) / 2;
+        if (!sp.off) { c.fillStyle = P.rgba(col, 0.25 * pulse); c.beginPath(); c.arc(cx, cy, 4 + pulse * 3, 0, Math.PI * 2); c.fill(); }
+        // 菱形標記
+        c.fillStyle = '#0a0e17';
+        c.beginPath(); c.moveTo(cx, cy - 5); c.lineTo(cx + 4, cy); c.lineTo(cx, cy + 5); c.lineTo(cx - 4, cy); c.closePath(); c.fill();
+        c.fillStyle = col;
+        c.beginPath(); c.moveTo(cx, cy - 4); c.lineTo(cx + 3, cy); c.lineTo(cx, cy + 4); c.lineTo(cx - 3, cy); c.closePath(); c.fill();
+        if (sp.dest.visited) rect(c, cx - 1, cy - 1, 2, 2, '#ffffff');
+        if (sp.off) { rect(c, cx - 1, cy - 1, 3, 2, '#1b1b28'); }
+        // 極稀有素材的時機到了：金光
+        if (sp.rare && Math.random() < 0.3) this.fx.add({ x: cx + (Math.random() - 0.5) * 8, y: cy + (Math.random() - 0.5) * 8, vy: -8, life: 0.8, color: '#ffd36b' });
+        if (sp.id === this.hover) { c.strokeStyle = '#ffffff'; c.strokeRect(sp.x + 0.5, sp.y + 0.5, 11, 11); }
+      });
+      // 旅行中：你在目的地
+      if (s.trip) { const d = D.DEST[s.trip.dest]; P.sprite(c, 'player', d.x - 4, d.y - 18 + Math.round(Math.sin(t * 3)), {}); }
+      this.fx.draw(c);
+    },
+    drawText() {
+      const s = S();
+      if (!s) return;
+      P.text('世界地圖・2080', 4, 3, { size: 7, color: '#e8edf6', stroke: '#0a0e17' });
+      P.text('你有 $' + Math.round(s.cr).toLocaleString(), 316, 168, { size: 7, color: '#8be28f', stroke: '#0a0e17', align: 'right' });
+      const K = D.KINDS;
+      let x = 4;
+      Object.keys(K).forEach((k) => { P.text('◆ ' + K[k].name, x, 170, { size: 5, color: K[k].color, stroke: '#0a0e17' }); x += P.measure('◆ ' + K[k].name, { size: 5 }) + 6; });
+      this.drawTip();
+    },
+  });
+
+  // =====================================================================
+  // 旅行：目的地的全景
+  // =====================================================================
+  const SITE_POS = [[54, 120], [160, 108], [266, 120]];
+  const Trip = scene('trip', {
+    spots() {
+      const s = S();
+      if (!s || !s.trip) return [];
+      const d = D.DEST[s.trip.dest];
+      const acts = Maps.actions || [];
+      const out = d.sites.map((st, i) => {
+        const a = acts.find((x) => x.id === 'site:' + st.id);
+        const [x, y] = SITE_POS[i];
+        const h = IE.World.rareHint(s, st, IE.Game && IE.Game.meta);
+        return { id: 'site:' + st.id, x: x - 14, y: y - 22, w: 28, h: 30, label: st.name + (s.trip.visits[st.id] ? '（去過 ' + s.trip.visits[st.id] + ' 次）' : ''),
+          sub: !a ? '晚上不能探索' : a.enabled ? st.desc : a.reason, off: !a || !a.enabled, rare: h && h.ready && !h.found, site: st };
+      });
+      out.push({ id: 'rest', x: 2, y: 140, w: 34, h: 30, label: isNight(s) ? '早點睡' : '在旅館休息', sub: '身體 +18' });
+      const back = acts.find((x) => x.id === 'tripback');
+      out.push({ id: 'tripback', x: 284, y: 140, w: 34, h: 30, label: '提早回程', sub: back ? '旅費不會退還' : '晚上沒有航班', off: !back });
+      return out;
+    },
+    draw(c) {
+      const s = S();
+      if (!s || !s.trip) return;
+      const d = D.DEST[s.trip.dest], t = this.t, night = isNight(s);
+      const g = c.createLinearGradient(0, 0, 0, 130);
+      g.addColorStop(0, night ? P.mix(d.sky[0], '#000000', 0.5) : d.sky[0]); g.addColorStop(1, night ? P.mix(d.sky[1], '#000000', 0.6) : d.sky[1]);
+      c.fillStyle = g; c.fillRect(0, 0, 320, 180);
+      if (night || d.landmark === 'moon' || d.landmark === 'monolith') for (let i = 0; i < 50; i++) rect(c, (i * 71) % 320, (i * 37) % 90, 1, 1, Math.sin(t * 2 + i) > 0.4 ? '#ffffff' : '#7d8aa8');
+      LANDMARK[d.landmark](c, t, d, night, this);
+      // 探索點
+      this.spots().forEach((sp) => {
+        if (!sp.site) return;
+        const cx = sp.x + 14, cy = sp.y + 22;
+        const visited = s.trip.visits[sp.site.id];
+        rect(c, cx - 1, cy - 14, 2, 14, '#2a2f45');
+        const col = sp.off ? '#8d99b4' : sp.rare ? '#ffd36b' : '#ff4fb4';
+        const wave = Math.round(Math.sin(t * 4 + cx) * 1);
+        rect(c, cx + 1, cy - 14 + wave, 10, 6, col); rect(c, cx + 1, cy - 9 + wave, 7, 1, P.mix(col, '#000000', 0.3));
+        if (visited) rect(c, cx + 4, cy - 12 + wave, 3, 2, '#ffffff');
+        rect(c, cx - 4, cy, 9, 2, 'rgba(0,0,0,0.35)');
+        if (sp.rare && Math.random() < 0.4) this.fx.add({ x: cx + (Math.random() - 0.5) * 14, y: cy - 6 + (Math.random() - 0.5) * 10, vy: -10, life: 0.9, color: '#ffd36b' });
+        if (sp.id === this.hover) { c.strokeStyle = '#ffffff'; c.strokeRect(sp.x + 0.5, sp.y + 0.5, sp.w - 1, sp.h - 1); }
+      });
+      // 旅館與飛機
+      rect(c, 4, 146, 28, 22, '#eef1f7'); rect(c, 4, 142, 28, 5, '#d6334a'); rect(c, 8, 152, 5, 6, night ? '#ffd36b' : '#37c3d6'); rect(c, 22, 152, 5, 6, night ? '#ffd36b' : '#37c3d6'); rect(c, 14, 160, 6, 8, '#6b4a32');
+      const py = 152 + Math.round(Math.sin(t * 2));
+      rect(c, 288, py, 24, 4, '#eef1f7'); rect(c, 296, py - 6, 4, 16, '#c9d1dc'); rect(c, 308, py - 4, 3, 5, '#c9d1dc'); rect(c, 289, py + 1, 2, 1, '#37c3d6');
+      // 你（在水上的地方坐船）
+      const bob = Math.round(Math.sin(t * 2) * (d.landmark === 'sunken' || d.landmark === 'pyramid' ? 1.5 : 0.5));
+      if (d.landmark === 'sunken' || d.landmark === 'pyramid') { rect(c, 140, 158 + bob, 40, 5, '#1b1b28'); rect(c, 136, 155 + bob, 6, 4, '#1b1b28'); rect(c, 178, 155 + bob, 6, 4, '#1b1b28'); rect(c, 142, 158 + bob, 36, 1, '#e8c25a'); }
+      P.sprite(c, 'player', 152, 134 + bob, { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5) });
+      IE.Scenes.City.drawStones(c, s, 165, 152 + bob);
+      if (night) { c.fillStyle = 'rgba(5,7,20,0.35)'; c.fillRect(0, 0, 320, 180); }
+      this.fx.draw(c);
+    },
+    drawText() {
+      const s = S();
+      if (!s || !s.trip) return;
+      const d = D.DEST[s.trip.dest];
+      P.text(d.name, 4, 3, { size: 8, color: '#ffffff', stroke: '#0a0e17', weight: 900 });
+      P.text(D.KINDS[d.kind].name + '・第 ' + s.trip.until + ' 天晚上回程', 4, 15, { size: 6, color: D.KINDS[d.kind].color, stroke: '#0a0e17' });
+      this.spots().forEach((sp) => { if (sp.site && sp.id !== this.hover) P.text(sp.site.name, sp.x + 14, sp.y + 32, { size: 6, align: 'center', color: sp.off ? '#8d99b4' : '#ffffff', stroke: '#0a0e17' }); });
+      this.drawTip();
+    },
+  });
+
+  // 地標畫法：每種目的地一種
+  const ground = (c, col, y) => { rect(c, 0, y, 320, 180 - y, col); rect(c, 0, y, 320, 1, P.mix(col, '#ffffff', 0.2)); };
+  const water = (c, t, y, col) => {
+    c.fillStyle = col || 'rgba(14,90,110,0.9)'; c.fillRect(0, y, 320, 180 - y);
+    for (let x = 0; x < 320; x += 3) rect(c, x, y + Math.round(Math.sin(x * 0.1 + t * 2)), 2, 1, '#37c3d6');
+  };
+  const LANDMARK = {
+    towers(c, t, d, night) {
+      for (let i = 0; i < 14; i++) {
+        const x = i * 24 - 6, h = 60 + hash(i) * 70, w = 16 + hash(i + 3) * 8;
+        rect(c, x, 130 - h, w, h, P.mix('#1a0b2e', '#3a2a60', hash(i + 5)));
+        for (let k = 0; k < h / 8; k++) if (hash(i * 9 + k) > 0.45) rect(c, x + 3 + (k % 2) * 6, 134 - h + k * 8, 3, 3, hash(k + i) > 0.6 ? '#ff4fb4' : '#37c3d6');
+        if (hash(i + 7) > 0.5) rect(c, x + w - 3, 140 - h, 2, 20, Math.sin(t * 3 + i) > -0.6 ? '#ffd36b' : '#5a4a1f');
+      }
+      for (let i = 0; i < 3; i++) { const x = (t * (30 + i * 10) + i * 120) % 360 - 20; rect(c, x, 40 + i * 14, 8, 2, '#c9d1dc'); rect(c, x + 1, 42 + i * 14, 2, 1, '#ff4fb4'); }
+      ground(c, d.ground, 130);
+      c.fillStyle = 'rgba(255,79,180,0.4)'; for (let i = 0; i < 40; i++) c.fillRect((i * 37 + t * 40) % 320, (i * 23 + t * 200) % 180, 1, 4);
+    },
+    sunken(c, t, d) {
+      // 遠處只剩屋頂的城市
+      for (let i = 0; i < 12; i++) { const x = i * 28 + 4, h = 6 + hash(i) * 10; rect(c, x, 112 - h, 20, h, P.mix('#8a5a3b', '#1b3a5c', 0.5)); rect(c, x, 112 - h, 20, 2, '#a8865a'); }
+      rect(c, 140, 40, 14, 90, '#c98d5e'); rect(c, 138, 34, 18, 8, '#8a5a3b'); rect(c, 144, 22, 6, 12, '#5a3a22'); rect(c, 146, 46, 2, 4, '#1b1b28');
+      for (let y = 56; y < 110; y += 10) rect(c, 142, y, 10, 1, '#a8865a');
+      [[60, 30], [210, 26], [262, 20]].forEach(([x, r]) => {
+        c.fillStyle = '#c9d1dc'; c.beginPath(); c.arc(x, 124, r, Math.PI, 0); c.fill();
+        c.fillStyle = '#9aa7c7'; c.beginPath(); c.arc(x + r * 0.3, 124, r * 0.7, Math.PI * 1.5, 0); c.fill();
+        rect(c, x - 2, 124 - r - 8, 4, 8, '#e8c25a'); rect(c, x - 4, 124 - r - 4, 8, 2, '#e8c25a');
+        for (let k = -2; k <= 2; k++) rect(c, x + k * r * 0.35 - 1, 118, 2, 6, '#5a6478');
+      });
+      water(c, t, 112);
+      // 倒影
+      c.fillStyle = 'rgba(232,194,90,0.25)'; for (let y = 116; y < 170; y += 3) c.fillRect(144 + Math.sin(y + t * 3) * 2, y, 6, 1);
+      const gx = (t * 12) % 360 - 20; rect(c, gx, 116, 26, 3, '#1b1b28'); rect(c, gx + 20, 108, 1, 8, '#1b1b28');
+    },
+    dunes(c, t, d) {
+      c.fillStyle = '#fff2c4'; c.beginPath(); c.arc(250, 40, 16, 0, Math.PI * 2); c.fill();
+      for (let i = 0; i < 4; i++) { c.fillStyle = P.mix(d.ground, '#ffffff', i * 0.08); c.beginPath(); c.ellipse(i * 100, 140 - i * 4, 90, 30 - i * 3, 0, Math.PI, 0); c.fill(); }
+      rect(c, 200, 70, 8, 60, '#e8c25a'); rect(c, 198, 66, 12, 6, '#c98d5e'); c.fillStyle = '#c98d5e'; c.beginPath(); c.arc(204, 66, 5, Math.PI, 0); c.fill();
+      ground(c, d.ground, 132);
+      c.fillStyle = 'rgba(255,211,107,0.15)'; for (let i = 0; i < 20; i++) c.fillRect((i * 53 + t * 80) % 320, 90 + (i * 17) % 60, 12, 1);
+    },
+    ice(c, t, d, night) {
+      // 北極光（種子庫）或冒泡的湖（西伯利亞）
+      if (d.id === 'svalbard' || night) for (let i = 0; i < 60; i++) { const x = i * 6, y = 30 + Math.sin(i * 0.3 + t) * 10; c.fillStyle = 'rgba(155,227,107,' + (0.15 + 0.1 * Math.sin(t * 2 + i)) + ')'; c.fillRect(x, y, 6, 24); }
+      c.fillStyle = '#eef2f8'; c.beginPath(); c.moveTo(0, 130); c.lineTo(60, 70); c.lineTo(120, 110); c.lineTo(190, 60); c.lineTo(260, 104); c.lineTo(320, 80); c.lineTo(320, 130); c.closePath(); c.fill();
+      c.fillStyle = '#c9d6e8'; c.beginPath(); c.moveTo(190, 60); c.lineTo(220, 130); c.lineTo(160, 130); c.closePath(); c.fill();
+      if (d.id === 'svalbard') { rect(c, 172, 104, 24, 26, '#5a6478'); rect(c, 176, 108, 16, 22, '#2a3142'); rect(c, 182, 112, 4, 4, '#37c3d6'); }
+      ground(c, d.ground, 130);
+      if (d.id === 'siberia') {
+        c.fillStyle = '#3a4a5a'; c.beginPath(); c.ellipse(230, 150, 50, 10, 0, 0, Math.PI * 2); c.fill();
+        if (Math.random() < 0.3) IE.Maps.Trip.fx.add({ x: 190 + Math.random() * 80, y: 150, vy: -6, life: 1, color: '#9aa7c7' });
+        rect(c, 80, 140, 24, 3, '#e8dcc4'); rect(c, 100, 134, 3, 8, '#e8dcc4');
+      }
+      c.fillStyle = 'rgba(255,255,255,0.7)'; for (let i = 0; i < 30; i++) c.fillRect((i * 41 + t * 20) % 320, (i * 29 + t * 30) % 180, 1, 1);
+    },
+    pyramid(c, t, d) {
+      c.fillStyle = '#e8c25a'; c.beginPath(); c.moveTo(80, 128); c.lineTo(160, 34); c.lineTo(240, 128); c.closePath(); c.fill();
+      c.fillStyle = '#c98d5e'; c.beginPath(); c.moveTo(160, 34); c.lineTo(240, 128); c.lineTo(180, 128); c.closePath(); c.fill();
+      for (let y = 44; y < 128; y += 8) rect(c, 160 - (y - 34) * 0.85, y, (y - 34) * 1.7, 1, 'rgba(0,0,0,0.12)');
+      rect(c, 260, 96, 30, 16, '#c98d5e'); rect(c, 282, 86, 12, 14, '#e8c25a'); rect(c, 286, 90, 2, 2, '#1b1b28');
+      water(c, t, 100);
+    },
+    temple(c, t, d) {
+      if (d.id === 'angkor') {
+        [[100, 50], [160, 30], [220, 50]].forEach(([x, top]) => {
+          for (let k = 0; k < 6; k++) { const w = 30 - k * 4; rect(c, x - w / 2, 128 - (128 - top) * (k + 1) / 6, w, (128 - top) / 6 + 1, P.mix('#8a7a5a', '#5a4a3a', k / 6)); }
+          c.fillStyle = '#8a7a5a'; c.beginPath(); c.arc(x, top, 4, 0, Math.PI * 2); c.fill();
+        });
+        c.fillStyle = 'rgba(60,40,20,0.8)'; for (let i = 0; i < 8; i++) c.fillRect(80 + i * 22, 90 + (i % 3) * 8, 2, 40);
+      } else {
+        for (let k = 0; k < 7; k++) { const w = 120 - k * 14; rect(c, 160 - w / 2, 128 - (k + 1) * 12, w, 12, P.mix('#9a9a7a', '#6a6a4a', k / 7)); }
+        rect(c, 150, 30, 20, 14, '#6a6a4a'); rect(c, 156, 34, 8, 10, '#1b1b28'); rect(c, 156, 50, 8, 78, 'rgba(0,0,0,0.15)');
+      }
+      for (let i = 0; i < 16; i++) { const x = i * 21, h = 30 + hash(i) * 30; c.fillStyle = i % 2 ? '#1d4a2a' : '#2f7a43'; c.beginPath(); c.arc(x, 130 - h * 0.3, h * 0.4, 0, Math.PI * 2); c.fill(); }
+      ground(c, d.ground, 130);
+    },
+    masks(c, t, d) {
+      rect(c, 120, 40, 80, 80, '#6b8f4e'); rect(c, 124, 44, 72, 72, '#8aa65a');
+      rect(c, 100, 60, 24, 30, '#6b8f4e'); rect(c, 196, 60, 24, 30, '#6b8f4e');
+      rect(c, 132, 62, 20, 8, '#e8c25a'); rect(c, 168, 62, 20, 8, '#e8c25a');
+      const pop = Math.round(Math.sin(t * 1.5) * 2);
+      rect(c, 138, 64, 8, 4 + pop, '#3a4a2a'); rect(c, 174, 64, 8, 4 + pop, '#3a4a2a');
+      rect(c, 150, 84, 20, 8, '#6b8f4e'); rect(c, 140, 100, 40, 4, '#3a4a2a');
+      rect(c, 40, 50, 3, 80, '#8a6a3b'); [[30, 60], [46, 70], [28, 84], [48, 96]].forEach(([x, y]) => { rect(c, x, y, 14, 2, '#8a6a3b'); rect(c, x + 10, y - 4, 4, 4, '#e8c25a'); });
+      ground(c, d.ground, 130);
+    },
+    cave(c, t, d) {
+      rect(c, 0, 0, 320, 180, '#1a1410');
+      c.fillStyle = '#3a2a1e'; c.beginPath(); c.ellipse(160, 90, 170, 80, 0, 0, Math.PI * 2); c.fill();
+      [[70, 60, '#c46a1e'], [150, 46, '#1b1b28'], [220, 70, '#c46a1e'], [110, 90, '#8a3b2a']].forEach(([x, y, col], i) => {
+        rect(c, x, y, 22, 8, col); rect(c, x + 18, y - 4, 6, 6, col); rect(c, x + 2, y + 8, 2, 6, col); rect(c, x + 16, y + 8, 2, 6, col); if (i === 1) rect(c, x + 4, y + 2, 2, 2, '#c46a1e');
+      });
+      [[190, 40], [200, 48], [184, 50]].forEach(([x, y]) => { rect(c, x, y, 4, 6, '#a8865a'); rect(c, x - 1, y - 2, 1, 3, '#a8865a'); rect(c, x + 4, y - 2, 1, 3, '#a8865a'); });
+      const fl = 0.18 + 0.06 * Math.sin(t * 9) + 0.04 * Math.sin(t * 23);
+      const g = c.createRadialGradient(160, 140, 4, 160, 140, 120); g.addColorStop(0, 'rgba(255,170,90,' + fl + ')'); g.addColorStop(1, 'rgba(255,170,90,0)');
+      c.fillStyle = g; c.fillRect(0, 0, 320, 180);
+      ground(c, d.ground, 134);
+    },
+    monolith(c, t, d) {
+      [[40, 0.7], [90, 0.85], [150, 1], [210, 0.9], [270, 0.75]].forEach(([x, k]) => {
+        rect(c, x, 130 - 70 * k, 14 * k, 70 * k, '#8a7a6a'); rect(c, x - 6 * k, 130 - 70 * k, 26 * k, 10 * k, '#9a8a7a');
+        rect(c, x + 3 * k, 130 - 50 * k, 6 * k, 3, '#5a4a3a'); rect(c, x + 2 * k, 130 - 40 * k, 2, 8 * k, '#5a4a3a');
+      });
+      ground(c, d.ground, 130);
+      if (Math.random() < 0.03) IE.Maps.Trip.fx.add({ x: Math.random() * 320, y: 0, vx: 60, vy: 30, life: 0.8, color: '#ffffff', size: 1 });
+    },
+    dome(c, t, d, night) {
+      rect(c, 40, 90, 100, 40, '#8e9bb0'); c.fillStyle = '#c9d1dc'; c.beginPath(); c.arc(90, 90, 50, Math.PI, 0); c.fill();
+      rect(c, 70, 108, 40, 22, '#2a3142'); rect(c, 200, 110, 6, 20, '#5a6478'); rect(c, 196, 100, 14, 10, '#c9d1dc');
+      for (let x = 0; x < 320; x += 8) { rect(c, x, 118, 1, 12, '#5a6478'); } rect(c, 0, 120, 320, 1, '#5a6478'); rect(c, 0, 125, 320, 1, '#5a6478');
+      ground(c, d.ground, 130);
+      const bx = 160 + Math.sin(t * 0.7) * 120; c.fillStyle = 'rgba(200,255,250,' + (night ? 0.2 : 0.08) + ')'; c.beginPath(); c.moveTo(203, 100); c.lineTo(bx - 12, 0); c.lineTo(bx + 12, 0); c.closePath(); c.fill();
+      if (Math.sin(t * 0.5) > 0.9) { const ux = 250 + Math.sin(t * 7) * 3; rect(c, ux - 8, 30, 16, 2, '#9aa7c7'); rect(c, ux - 4, 27, 8, 3, '#cfd8ee'); }
+    },
+    crater(c, t, d) {
+      c.fillStyle = '#eef2f8'; c.beginPath(); c.moveTo(0, 120); c.lineTo(80, 90); c.lineTo(160, 100); c.lineTo(250, 84); c.lineTo(320, 104); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      ground(c, d.ground, 128);
+      // 冰層下發光的建築
+      const glow = 0.3 + 0.2 * Math.sin(t * 2);
+      c.fillStyle = 'rgba(155,140,255,' + glow + ')'; c.fillRect(120, 140, 80, 30);
+      rect(c, 130, 146, 60, 18, '#2b3a5c'); for (let i = 0; i < 6; i++) rect(c, 134 + i * 10, 150, 6, 2, Math.sin(t * 4 + i) > 0 ? '#9b8cff' : '#5a4aa8');
+      [[40, 120], [60, 124], [250, 118], [270, 122]].forEach(([x, y], i) => { const b = Math.round(Math.sin(t * 3 + i)); rect(c, x, y + b, 5, 8, '#1b1b28'); rect(c, x + 1, y + 2 + b, 3, 5, '#ffffff'); rect(c, x + 4, y + 2 + b, 2, 1, '#ffc247'); });
+    },
+    moon(c, t, d) {
+      c.fillStyle = '#1e7f99'; c.beginPath(); c.arc(250, 44, 22, 0, Math.PI * 2); c.fill();
+      rect(c, 238, 34, 10, 6, '#37c3d6'); rect(c, 252, 48, 12, 4, '#37c3d6'); rect(c, 243, 54, 4, 3, '#4f8a4a');
+      c.fillStyle = 'rgba(0,0,0,0.5)'; c.beginPath(); c.arc(258, 44, 22, -Math.PI / 2, Math.PI / 2); c.fill();
+      c.fillStyle = '#8d99b4'; c.beginPath(); c.moveTo(0, 120); c.quadraticCurveTo(160, 100, 320, 118); c.lineTo(320, 180); c.lineTo(0, 180); c.closePath(); c.fill();
+      [[40, 140, 14], [220, 150, 20], [120, 160, 8]].forEach(([x, y, r]) => { c.fillStyle = '#6b7a99'; c.beginPath(); c.ellipse(x, y, r, r * 0.35, 0, 0, Math.PI * 2); c.fill(); });
+      c.fillStyle = '#c9d1dc'; c.beginPath(); c.arc(100, 116, 28, Math.PI, 0); c.fill();
+      rect(c, 76, 98, 48, 6, '#9be36b'); P.digits(c, '2080', 88, 99, '#14201a', 1);
+      if (Math.sin(t * 3) > 0) rect(c, 98, 86, 4, 4, '#ff4fb4');
+    },
+    atlantis(c, t, d) {
+      for (let i = 0; i < 8; i++) { c.fillStyle = 'rgba(55,195,214,' + (0.05 + 0.03 * Math.sin(t + i)) + ')'; c.beginPath(); c.moveTo(20 + i * 40, 0); c.lineTo(30 + i * 40, 0); c.lineTo(60 + i * 40, 180); c.lineTo(40 + i * 40, 180); c.closePath(); c.fill(); }
+      [[60, 70], [100, 50], [220, 50], [260, 70]].forEach(([x, top]) => { rect(c, x, top, 10, 130 - top, '#c9d1dc'); rect(c, x - 3, top, 16, 4, '#e8edf6'); rect(c, x + 2, top + 10, 2, 120 - top - 10, '#9aa7c7'); });
+      c.fillStyle = '#e8c25a'; c.beginPath(); c.arc(160, 80, 30, Math.PI, 0); c.fill(); rect(c, 130, 80, 60, 50, '#d6c08a'); rect(c, 150, 100, 20, 30, '#062433');
+      ground(c, d.ground, 130);
+      for (let i = 0; i < 6; i++) { const fx = (t * (10 + i * 3) + i * 70) % 360 - 20; rect(c, fx, 40 + i * 14, 5, 2, ['#ffc247', '#ff4fb4', '#9be36b'][i % 3]); }
+      if (Math.random() < 0.2) IE.Maps.Trip.fx.add({ x: Math.random() * 320, y: 178, vy: -20, life: 3, color: '#bff3fb' });
+      c.fillStyle = 'rgba(4,22,31,0.25)'; c.fillRect(0, 0, 320, 180);
+    },
+    library(c, t, d) {
+      rect(c, 0, 0, 320, 130, '#3a2a10');
+      for (let i = 0; i < 6; i++) { rect(c, 10 + i * 52, 20, 44, 106, '#5a3a22'); for (let r = 0; r < 8; r++) { rect(c, 12 + i * 52, 30 + r * 12, 40, 1, '#2a1a0b'); for (let k = 0; k < 10; k++) rect(c, 13 + i * 52 + k * 4, 31 + r * 12, 3, 9, P.mix('#e8c25a', '#c98d5e', hash(i * 80 + r * 10 + k))); } }
+      for (let i = 0; i < 4; i++) { const x = 40 + i * 80, fl = 0.25 + 0.08 * Math.sin(t * 7 + i); const g = c.createRadialGradient(x, 60, 1, x, 60, 30); g.addColorStop(0, 'rgba(255,211,107,' + fl + ')'); g.addColorStop(1, 'rgba(255,211,107,0)'); c.fillStyle = g; c.fillRect(x - 30, 30, 60, 60); rect(c, x - 1, 56, 3, 4, '#ffd36b'); }
+      ground(c, d.ground, 130);
+      rect(c, 120, 136, 80, 6, '#8a5a3b'); rect(c, 140, 132, 18, 4, '#eef1f7'); rect(c, 164, 132, 18, 4, '#eef1f7');
+    },
+  };
+
+  const Maps = IE.Maps = { Room, CityMap, WorldMap, Trip, onPick: null, actions: null, icon };
 })(window.IE = window.IE || {});
 
 // ---- js/micro.js ----
@@ -7708,8 +9222,10 @@ body.ct-open { overflow: hidden; }
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+      + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
+      + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
       + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
       + (c.mod ? '<span class="c-mod" style="--c:' + D().CARD_MODS[c.mod].color + '">' + D().CARD_MODS[c.mod].name + '</span>' : '')
@@ -7717,7 +9233,7 @@ body.ct-open { overflow: hidden; }
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
-    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠' };
+    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠', rare: '★' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
       return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
@@ -7745,7 +9261,9 @@ body.ct-open { overflow: hidden; }
       + conds.map((c) => '<span class="chip ' + (c.lethal ? 'warn' : 'cond') + '" title="' + esc(c.desc) + '">' + esc(c.name) + (c.lethal ? '・' + c.left + ' 天後致命' : '・第 ' + c.days + ' 天') + '</span>').join('')
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
-      + (hrisk > 0 ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '');
+      + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
+      + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
+      + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
     const bmax = R().bodyMax(s);
     const rentChip = s.floor > 0
       ? '<span class="chip' + (toRent <= 1 && s.cr < rent ? ' warn' : '') + '">交租 ' + (toRent === 0 ? '今晚' : toRent + ' 天後') + ' · $' + fmt(rent) + '</span>'
@@ -7841,12 +9359,12 @@ body.ct-open { overflow: hidden; }
   }
 
   // ---------- 行動 ----------
-  const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上' };
+  const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上', trip: '旅行：探索、找素材' };
   function actionsPanel(s, list) {
     const night = R().isNight(s);
-    const hint = night
-      ? '晚上可以創作：作品分 = 素材籌碼 × 組合倍率 × 火花 × KPI。'
-      : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。';
+    const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方；極稀有素材只在特定時機出現。'
+      : night ? '晚上可以創作：作品分 = 素材籌碼 × 組合倍率 × 火花 × KPI。'
+        : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。也可以直接在上面的地圖點選地點。';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
     return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p></div>'
@@ -7943,7 +9461,7 @@ body.ct-open { overflow: hidden; }
 
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
-    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆' };
+    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
     const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
@@ -8107,10 +9625,18 @@ body.ct-open { overflow: hidden; }
       + '<h3>創作（核心）</h3><ul>'
       + '<li>晚上選「創作」：從素材庫抽一手素材，下筆三次、改稿兩次。三次下筆的分數加起來就是今晚的作品，會變成外星訊號。「通宵創作」多一次下筆和改稿，但很傷身。</li>'
       + '<li>每次下筆的分數 = 籌碼 × 倍率 × 火花。同一標籤出現得越多，作品形式越高級：隨筆、短詩、對聯、歌、拼貼、小說、壁畫、交響曲、史詩，還有一種隱藏形式。</li>'
-      + '<li>特定標籤組合會觸發 48 個具名組合之一，其中 8 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
+      + '<li>特定標籤組合會觸發 ' + D().RECIPES.length + ' 個具名組合之一，其中 ' + D().RECIPES.filter((r) => r.legend).length + ' 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
       + '<li><b>靈感物件</b>最多裝備 3 件（工作室可擴充至 5 件），在計分時觸發。朋友、潛水、事件、面試和二手市集都可以找到；部分要跨局解鎖。</li>'
       + '<li><b>技法</b>：白天做不同的事、和不同的朋友聊天，會令相應的作品形式升級。為了創作，去試不同的生活吧。</li>'
       + '<li>素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格，倍率下降。</li></ul>'
+      + '<h3>地圖、旅行與金錢</h3><ul>'
+      + '<li>畫面上方可以切換<b>房間</b>、<b>浮城</b>（橫切面）、<b>地圖</b>和<b>世界</b>。房間、地圖和世界裡的東西都可以直接點選。</li>'
+      + '<li><b>世界地圖</b>：用錢出國，到現代都市、古文明、史前遺跡、外星人基地和傳說之地收集素材。旅行帶回「遠古」和「星辰」標籤，以及新的具名組合。部分地方要特定條件才去得到。</li>'
+      + '<li><b>極稀有素材</b>：每個目的地都藏著一件，只會在特定事件或處境下出現（例如糧荒期間的種子庫、太陽閃焰期間的太陽船坑）。洞察 30 以上才看得懂線索。有四個傳說組合要靠它們才能觸發。</li>'
+      + '<li>在外地：晚上照樣創作（異鄉之夜 ×1.3）；回來後七晚有<b>旅行的餘韻</b>。探索點有致命危險，航班在戰爭或 AI 失控期間也不安全。</li>'
+      + '<li><b>天空區畫廊</b>：接委託（湊齊指定標籤就收錢），或者把作品賣掉（作品的訊號會減半）。</li>'
+      + '<li><b>古董市場</b>：買稀有的古董素材，也可以把素材賣給古董商。</li>'
+      + '<li><b>家具</b>：彈簧床、冷氣機、抽水泵、防盜門、魚缸、書架、畫架、望遠鏡……全部看得見，也全部有用。被趕出門會失去全部家具。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
@@ -8156,6 +9682,7 @@ body.ct-open { overflow: hidden; }
         + '<span class="mute">' + (dSeen[d.id] ? '死過 ' + dSeen[d.id] + ' 次・' : '提示：') + esc(d.hint) + '</span></div>').join('') + '</div>').join('');
     return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
+      + worldCodexHtml(meta)
       + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
       + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
       + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
@@ -8165,6 +9692,71 @@ body.ct-open { overflow: hidden; }
       + '<h3>舊城圖鑑：魚類</h3><div class="recipes">' + fish + '</div>'
       + '<h3>舊城圖鑑：遺物</h3><div class="recipes">' + relics + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
+  }
+
+  // ---------- 地圖與旅行 ----------
+  // 在地圖上點選地點：先看清楚代價
+  function placeModal(where, a) {
+    return '<div class="modal place"><span class="eyebrow">' + esc(where) + '</span><h2>' + esc(a.name) + '</h2><p class="mute">' + esc(a.sub) + '</p>'
+      + '<div class="fx big">' + fxHtml(a.fx) + '</div>' + (a.reason ? '<p class="act-why">' + esc(a.reason) + '</p>' : '')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="go"' + (a.enabled ? '' : ' disabled') + '>' + (a.id.startsWith('site:') ? '去探索' : '前往') + '</button>'
+      + '<button class="btn" type="button" data-do="close">取消</button></div></div>';
+  }
+  function destModal(d, s) {
+    const pct = (p) => Math.round(p * 1000) / 10 + '%';
+    const sites = d.sites.map((st) => '<div class="site">'
+      + '<div class="site-head"><b>' + esc(st.name) + '</b><span class="fx">' + fxHtml([['body', '−' + st.body]].concat(st.spark ? [['spark', '+' + st.spark]] : []).concat(st.risk > 0 ? [['danger', '致命 ' + pct(st.risk)]] : [])) + '</span></div>'
+      + '<p class="mute">' + esc(st.desc) + '</p>'
+      + '<p class="site-gain">素材：' + st.gain.map(esc).join('、') + '</p>'
+      + (st.need ? '<p class="act-why">' + esc(st.need) + '</p>' : '')
+      + (st.rare ? '<p class="site-rare' + (st.rare.found ? ' found' : st.rare.ready ? ' ready' : '') + '">★ 極稀有：' + esc(st.rare.name) + (st.rare.found ? '（已找到）' : '') + '<br><span>' + esc(st.rare.text) + (st.rare.ready && !st.rare.found ? '　→　時機已到！' : '') + '</span></p>' : '')
+      + '</div>').join('');
+    return '<div class="modal wide dest"><span class="eyebrow" style="color:' + d.kind.color + '">' + esc(d.kind.name) + '・' + esc(d.region) + (d.visited ? '・去過 ' + d.visited + ' 次' : '') + '</span>'
+      + '<h2>' + esc(d.name) + '</h2><p>' + esc(d.desc) + '</p>'
+      + '<div class="dest-facts"><span>旅費與住宿 <b>$' + fmt(d.cost) + '</b></span><span>停留 <b>' + d.stay + ' 天</b></span><span>航班致命機會 <b>' + pct(d.flight) + '</b>（來回各一次）</span><span>你有 <b>$' + fmt(s.cr) + '</b></span></div>'
+      + '<p class="mute" style="font-size:13px">在外地：每個時段探索一個地方；晚上照樣可以創作（異鄉之夜 ×1.3，手牌 +1）。回來後七晚有「旅行的餘韻」（第一次去 ×1.6）。房租照交，飯錢貴五成，平台評分會下降。</p>'
+      + '<h3>探索點</h3><div class="sites">' + sites + '</div>'
+      + (d.reason ? '<p class="act-why">' + esc(d.reason) + '</p>' : '')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="go"' + (d.reason ? ' disabled' : '') + '>出發（$' + fmt(d.cost) + '）</button><button class="btn" type="button" data-do="close">返回</button></div></div>';
+  }
+  function galleryModal(s) {
+    const W = IE.World;
+    const comm = W.commissions(s).map((c) => '<div class="comm' + (c.done ? ' done' : '') + '"><b>$' + fmt(c.pay) + '</b><span>' + esc(c.text) + '</span><span class="mute">'
+      + (c.done ? '已完成' : '第 ' + c.until + ' 天前・某一次下筆湊齊這些標籤，而且分數達到本季門檻的 2%') + '</span></div>').join('');
+    const works = W.galleryOffers(s).map((w) => '<div class="work-row' + (w.sold ? ' sold' : '') + '"><div><b>《' + esc(w.name) + '》</b><span class="mute">第 ' + w.day + ' 天・訊號 ' + kfmt(w.score) + '</span></div>'
+      + (w.sold ? '<span class="mute">已賣出</span>' : '<button class="btn mini' + (w.reason ? '' : ' sea') + '" type="button" data-do="sell" data-i="' + w.i + '"' + (w.reason ? ' disabled title="' + esc(w.reason) + '"' : '') + '>賣 $' + fmt(w.price) + '<small>訊號 −' + kfmt(w.lose) + '</small></button>') + '</div>').join('');
+    return '<div class="modal wide"><span class="eyebrow">天空區畫廊</span><h2>作品與委託</h2>'
+      + '<h3>天空區委託（每五天更新）</h3><p class="mute" style="font-size:13px">有錢人想要特定的作品。創作時湊齊標籤就會自動收到酬金，不會損失訊號，但會令你更「聽話」。</p><div class="comms">' + comm + '</div>'
+      + '<h3>你的作品</h3><p class="mute" style="font-size:13px">收藏家按作品在今天的外星門檻面前有多亮出價（越遲賣越不值錢）。賣出的作品外星訊號減半。畫廊每天只收一件。</p>'
+      + '<div class="works">' + (works || '<p class="mute">你還沒有完成任何作品。</p>') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
+  }
+  function antiqueModal(s) {
+    const W = IE.World;
+    const offers = W.antiqueOffers(s).map((o) => '<div class="ant-item">' + cardHtml(o) + (o.special ? '<span class="mute">' + esc(o.special) + '</span>' : '')
+      + '<button class="btn mini' + (o.reason ? '' : ' sea') + '" type="button" data-do="buy" data-id="' + o.id + '"' + (o.reason ? ' disabled' : '') + '>' + (o.sold ? '已賣出' : '$' + fmt(o.price)) + '</button></div>').join('');
+    const sells = W.sellCards(s).map((c) => '<div class="ant-sell">' + cardHtml(c) + '<button class="btn mini" type="button" data-do="sellcard" data-uid="' + c.uid + '"' + (c.reason ? ' disabled title="' + esc(c.reason) + '"' : '') + '>賣 $' + fmt(c.price) + '</button></div>').join('');
+    return '<div class="modal wide"><span class="eyebrow">浮城・古董市場</span><h2>古董市場</h2>'
+      + '<p class="mute" style="font-size:13px">每四天換一批貨。古董是稀有的素材；某些事件期間會出現不屬於這個時代的東西。你也可以把素材賣給古董商：旅行帶回來的素材比較值錢，極稀有素材更是天價（每天最多收兩件）。</p>'
+      + '<h3>今期貨品</h3><div class="ant-grid">' + offers + '</div>'
+      + '<h3>賣出素材</h3><div class="ant-grid">' + sells + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
+  }
+  function decorModal(s) {
+    const items = IE.World.decorList(s).map((d) => '<div class="decor-item' + (d.owned ? ' owned' : '') + '"><div><b>' + esc(d.name) + '</b><span>' + esc(d.desc) + '</span></div>'
+      + '<button class="btn mini' + (d.reason ? '' : ' sea') + '" type="button" data-do="buy" data-id="' + d.id + '"' + (d.reason ? ' disabled' : '') + '>' + (d.owned ? '已擁有' : '$' + fmt(d.cost)) + '</button></div>').join('');
+    return '<div class="modal wide"><span class="eyebrow">家具目錄</span><h2>把這裡變成一個家</h2>'
+      + '<p class="mute" style="font-size:13px">家具會出現在你的房間，而且有實際作用。只在家裡有效；被趕出門時，房東會沒收全部家具。</p>'
+      + '<div class="decor-list">' + items + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">合上目錄</button></div></div>';
+  }
+  function worldCodexHtml(meta) {
+    const W = IE.World, vis = meta.visited || {};
+    const dests = D().DESTINATIONS.map((d) => '<div class="recipe' + (vis[d.id] ? '' : ' unknown') + '"><b style="color:' + D().KINDS[d.kind].color + '">' + (vis[d.id] ? esc(d.name) : '？？？') + '</b>'
+      + '<span class="mute">' + esc(D().KINDS[d.kind].name) + (vis[d.id] ? '・去過 ' + vis[d.id] + ' 次' : d.lockText ? '・' + esc(d.lockText) : '') + '</span></div>').join('');
+    const rares = W.rareList(meta).map((r) => '<div class="recipe' + (r.found ? ' legend' : ' unknown') + '"><b>' + (r.found ? '★ ' + esc(r.name) : '？？？') + '</b>'
+      + '<span class="mute">' + esc(r.dest) + '・' + esc(r.site) + '：' + esc(r.text) + '</span></div>').join('');
+    return '<h3>世界圖鑑（' + Object.keys(vis).length + '/' + D().DESTINATIONS.length + '）</h3><div class="recipes">' + dests + '</div>'
+      + '<h3>極稀有素材（' + Object.keys(meta.rares || {}).length + '/' + W.rareList(meta).length + '）</h3><div class="recipes">' + rares + '</div>';
   }
 
   // ---------- 道德抉擇 ----------
@@ -8190,6 +9782,7 @@ body.ct-open { overflow: hidden; }
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
+    placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml,
   };
 })(window.IE = window.IE || {});
 
@@ -8217,10 +9810,11 @@ body.ct-open { overflow: hidden; }
     const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
-    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '')
+    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
       + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + '<span class="cc-name">' + esc(c.name) + '</span>'
+      + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
       + '<span class="cc-tags">' + tags + '</span>'
       + '<span class="cc-foot"><b class="cc-val num">' + val + '</b>'
       + (wear ? '<span class="cc-wear" title="用過 ' + wear + ' 次，籌碼 ×' + C().wearMult(c).toFixed(2) + '">' + (wear >= 4 ? '陳腔濫調' : '用過 ×' + wear) + '</span>' : '') + '</span>'
@@ -8615,6 +10209,11 @@ body.ct-open { overflow: hidden; }
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
+        case 'trip':
+          tag((x.abroad ? '異鄉之夜' : '旅行的餘韻') + ' ×' + x.x, 'kpi-good');
+          A().fx('mult', 3);
+          await wait(300);
+          break;
         case 'kpi':
           tag('外星 KPI ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
           A().sfx(x.x >= 1 ? 'combo' : 'wrong');
@@ -8724,6 +10323,7 @@ body.ct-open { overflow: hidden; }
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
       + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
     root.appendChild(panel);
@@ -8812,33 +10412,59 @@ body.ct-open { overflow: hidden; }
     setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)] },
     celebrate(total) {
       const s = Game.state;
-      if (!s || Game.scene !== S.City) return;
-      const p = S.City.playerPos(s);
+      const sc = Game.scene;
+      if (!s || !sc || !sc.fx) return;
+      const p = sc === S.City ? S.City.playerPos(s) : { x: 168, y: 86 };
       const n = Math.min(80, 12 + Math.round(total / 300));
       const cols = ['#ffc247', '#ff4fb4', '#37c3d6', '#9be36b', '#ffffff'];
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2, sp = 20 + Math.random() * 60;
-        S.City.fx.add({ x: p.x + 4, y: p.y + 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, g: 30, drag: 0.98, life: 1.4 + Math.random(), color: cols[i % cols.length], size: Math.random() < 0.3 ? 2 : 1 });
+        sc.fx.add({ x: p.x + 4, y: p.y + 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, g: 30, drag: 0.98, life: 1.4 + Math.random(), color: cols[i % cols.length], size: Math.random() < 0.3 ? 2 : 1 });
       }
-      S.City.flash = 0.25;
+      if (sc === S.City) S.City.flash = 0.25;
       setCityFilter();
     },
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 5 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 6 ? r : null; };
   const stage = () => document.getElementById('stage');
 
+  // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
   function setCityFilter() {
     const c = P.view.canvas;
-    if (Game.scene === S.City && Game.state && S.City.mode === 'hub') c.style.filter = 'saturate(' + Game.state.saturation.toFixed(2) + ')';
+    const M = IE.Maps;
+    const faded = Game.scene === M.Room || Game.scene === M.CityMap || (Game.scene === S.City && S.City.mode === 'hub');
+    if (faded && Game.state) c.style.filter = 'saturate(' + Game.state.saturation.toFixed(2) + ')';
     else c.style.filter = 'none';
   }
+  const isMapScene = (sc) => !!IE.Maps && [IE.Maps.Room, IE.Maps.CityMap, IE.Maps.WorldMap, IE.Maps.Trip].includes(sc);
   function setScene(sc) {
     Game.scene = sc;
-    stage().classList.toggle('playing', !!(sc && sc !== S.City && sc !== S.Office));
+    stage().classList.toggle('playing', !!(sc && sc !== S.City && sc !== S.Office && !isMapScene(sc)));
+    if (!isMapScene(sc)) P.view.canvas.style.cursor = 'default';
     setCityFilter();
   }
+
+  // ---------- 畫面：房間、浮城（橫切面）、地圖、世界、旅途 ----------
+  const VIEWS = { room: '房間', city: '浮城', map: '地圖', world: '世界', trip: '旅途' };
+  function viewScene(v) { const M = IE.Maps; return { room: M.Room, city: S.City, map: M.CityMap, world: M.WorldMap, trip: M.Trip }[v] || S.City; }
+  function currentView() {
+    const s = Game.state;
+    if (s && s.trip) return Game.view === 'world' ? 'world' : 'trip';
+    return Game.view && Game.view !== 'trip' ? Game.view : 'room';
+  }
+  function renderViews(show) {
+    const nav = document.getElementById('views');
+    const s = Game.state;
+    if (!show || !s || s.ended) { nav.hidden = true; return; }
+    const list = s.trip ? ['trip', 'world'] : ['room', 'city', 'map', 'world'];
+    const cur = currentView();
+    nav.hidden = false;
+    nav.innerHTML = list.map((v) => '<button type="button" class="view-tab' + (v === cur ? ' on' : '') + '" data-view="' + v + '" aria-pressed="' + (v === cur) + '">'
+      + (v === 'room' && s.floor === 0 ? '天橋底' : v === 'trip' ? D.DEST[s.trip.dest].name : VIEWS[v]) + '</button>').join('');
+  }
+  function setView(v) { Game.view = v; showHub(); }
 
   // ---------- 主迴圈 ----------
   let last = performance.now();
@@ -8855,6 +10481,7 @@ body.ct-open { overflow: hidden; }
   // ---------- 標題、開局 ----------
   function showTitle() {
     document.getElementById('hud').hidden = true;
+    document.getElementById('views').hidden = true;
     S.City.enter('attract');
     setScene(S.City);
     UI.closeModal();
@@ -8884,7 +10511,7 @@ body.ct-open { overflow: hidden; }
   }
   function resumeRun() {
     const s = Game.state;
-    setScene(S.City);
+    setScene(viewScene(currentView()));
     if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
     else showHub();
@@ -8894,10 +10521,12 @@ body.ct-open { overflow: hidden; }
   function startDay() {
     const s = Game.state;
     S.City.forceNight = false;
-    setScene(S.City);
+    const m = R.morning(s);
+    IE.Maps.actions = R.actions(s);
+    setScene(viewScene(currentView()));
+    renderViews(true);
     UI.renderHud(s);
     UI.setPanel('<p class="mute">早上。你的手機震了幾下。</p>');
-    const m = R.morning(s);
     save();
     openPhone(true);
     if (s.day === R.reviewDay(s)) UI.toast('今晚是篩選日。累積訊號必須超過 ' + UI.fmt(R.threshold(s)) + '。', 'bad');
@@ -8936,11 +10565,14 @@ body.ct-open { overflow: hidden; }
   function showHub() {
     const s = Game.state;
     if (!s || s.ended) return;
-    setScene(S.City);
+    const acts = R.actions(s);
+    IE.Maps.actions = acts;
+    setScene(viewScene(currentView()));
+    renderViews(true);
     UI.renderHud(s);
     A.setMode('city');
     A.setSpark(s.spark);
-    UI.setPanel(UI.actionsPanel(s, R.actions(s)), {
+    UI.setPanel(UI.actionsPanel(s, acts), {
       act(el) { doAction(el.dataset.id); },
       objs() { openObjects(); },
     });
@@ -8965,7 +10597,95 @@ body.ct-open { overflow: hidden; }
         IE.Create.start(s, id === 'allnighter' ? 'allnighter' : 'normal');
         save();
         return openCraft();
+      case 'tripback':
+        Game.view = 'room';
+        return afterAction(IE.World.leaveTrip(s));
     }
+    if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
+  }
+  // 地圖上的熱點
+  IE.Maps.onPick = function (view, sp) {
+    const s = Game.state;
+    if (!s || s.ended || Game.micro || UI.modalOpen() || IE.Craft.isOpen() || Game.scene !== viewScene(currentView())) return;
+    if (view === 'room') {
+      switch (sp.id) {
+        case 'map': return setView('map');
+        case 'city': return setView('city');
+        case 'create': return sp.off ? UI.toast(sp.sub || '現在不能創作', 'bad') : doAction('create');
+        case 'rest': return confirmAct('rest', s.floor ? '你的家' : '天橋底');
+        case 'objects': return openObjects();
+        case 'works': return openGallery();
+        case 'phone': return openPhone(false);
+        case 'decor': return openDecor();
+        case 'stats': return UI.pushModal(UI.statsModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      }
+    }
+    if (view === 'map') {
+      const p = sp.place;
+      if (p.ui === 'room') return setView('room');
+      if (p.ui === 'world') return setView('world');
+      if (p.ui === 'antique') return openAntique();
+      if (p.ui === 'gallery') return openGallery();
+      return confirmAct(p.act, p.name);
+    }
+    if (view === 'world') { if (sp.id !== 'home') openDest(sp.id); return; }
+    if (view === 'trip') return confirmAct(sp.id, D.DEST[s.trip.dest].name);
+  };
+  // 先看清楚代價才出發
+  function confirmAct(id, where) {
+    const s = Game.state;
+    const a = R.actions(s).find((x) => x.id === id);
+    if (!a) { UI.toast(R.isNight(s) ? '晚上這裡已經關門' : '現在不能這樣做', 'bad'); return; }
+    UI.modal(UI.placeModal(where, a), {
+      go() { UI.closeModal(); doAction(id); if (id === 'chat') document.getElementById('panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+      close() { UI.closeModal(); },
+    }, { dismiss: () => {} });
+  }
+  function openDest(id) {
+    const s = Game.state;
+    const info = IE.World.destInfo(s, id, Game.meta);
+    UI.modal(UI.destModal(info, s), {
+      go() {
+        const r = IE.World.startTrip(s, id);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); return; }
+        UI.closeModal();
+        A.sfx('beam');
+        Game.view = 'trip';
+        afterAction(r.rep);
+      },
+      close() { UI.closeModal(); },
+    }, { dismiss: () => {} });
+  }
+  // 天空區畫廊：委託與賣畫
+  function openGallery() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.galleryModal(s), {
+      sell(el) {
+        const r = IE.World.sellWork(s, Number(el.dataset.i));
+        UI.toast(r.msg, r.ok ? 'good' : 'bad');
+        if (r.ok) A.sfx('coin');
+        UI.renderHud(s); save(); render();
+      },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
+  }
+  function openAntique() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.antiqueModal(s), {
+      buy(el) { const r = IE.World.buyAntique(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
+      sellcard(el) { const r = IE.World.sellCard(s, Number(el.dataset.uid)); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
+  }
+  function openDecor() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.decorModal(s), {
+      buy(el) { const r = IE.World.buyDecor(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('pickup'); UI.renderHud(s); save(); render(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
   }
   function openCraft() {
     const s = Game.state;
@@ -9001,6 +10721,7 @@ body.ct-open { overflow: hidden; }
     };
     const m = IE.Micro.create(kind, {}, done);
     Game.micro = m;
+    renderViews(false);
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
     // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
@@ -9034,7 +10755,7 @@ body.ct-open { overflow: hidden; }
     else if (kind === 'busk') rep = R.applyBusk(s, result);
     else if (kind === 'clinic') rep = R.applyClinic(s, result);
     else if (kind === 'interview') rep = R.applyInterview(s, result.answers);
-    setScene(S.City);
+    setScene(viewScene(currentView()));
     afterAction(rep);
   };
 
@@ -9059,6 +10780,7 @@ body.ct-open { overflow: hidden; }
     const s = Game.state;
     // 狀態列停留在今晚，結算完才切換到明天
     UI.renderHud(s);
+    renderViews(false);
     const rep = R.endDay(s);
     S.City.forceNight = true;
     setScene(S.City);
@@ -9123,6 +10845,7 @@ body.ct-open { overflow: hidden; }
   }
   function recruit() {
     const s = Game.state;
+    renderViews(false);
     UI.setPanel('<p class="mute">光。很多很多光。</p>');
     S.City.forceNight = true;
     s.saturation = 1.3;
@@ -9168,6 +10891,7 @@ body.ct-open { overflow: hidden; }
     store.set(KEY_META, Game.meta);
     store.del(KEY_RUN);
     S.City.forceNight = true;
+    renderViews(false);
     setScene(S.City);
     A.setMode(kind === 'agent' ? 'alien' : 'city');
     A.setSpark(kind === 'grey' ? 0 : s.spark);
@@ -9236,6 +10960,12 @@ body.ct-open { overflow: hidden; }
       else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);
     });
+    document.getElementById('views').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-view]');
+      if (!b || !Game.state || UI.modalOpen() || Game.micro || IE.Craft.isOpen()) return;
+      A.sfx('click');
+      setView(b.dataset.view);
+    });
     window.addEventListener('resize', () => P.resize());
   }
 
@@ -9247,7 +10977,7 @@ body.ct-open { overflow: hidden; }
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 5) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 6) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

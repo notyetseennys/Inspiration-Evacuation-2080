@@ -17,33 +17,59 @@
     setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)] },
     celebrate(total) {
       const s = Game.state;
-      if (!s || Game.scene !== S.City) return;
-      const p = S.City.playerPos(s);
+      const sc = Game.scene;
+      if (!s || !sc || !sc.fx) return;
+      const p = sc === S.City ? S.City.playerPos(s) : { x: 168, y: 86 };
       const n = Math.min(80, 12 + Math.round(total / 300));
       const cols = ['#ffc247', '#ff4fb4', '#37c3d6', '#9be36b', '#ffffff'];
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2, sp = 20 + Math.random() * 60;
-        S.City.fx.add({ x: p.x + 4, y: p.y + 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, g: 30, drag: 0.98, life: 1.4 + Math.random(), color: cols[i % cols.length], size: Math.random() < 0.3 ? 2 : 1 });
+        sc.fx.add({ x: p.x + 4, y: p.y + 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, g: 30, drag: 0.98, life: 1.4 + Math.random(), color: cols[i % cols.length], size: Math.random() < 0.3 ? 2 : 1 });
       }
-      S.City.flash = 0.25;
+      if (sc === S.City) S.City.flash = 0.25;
       setCityFilter();
     },
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 5 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 6 ? r : null; };
   const stage = () => document.getElementById('stage');
 
+  // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
   function setCityFilter() {
     const c = P.view.canvas;
-    if (Game.scene === S.City && Game.state && S.City.mode === 'hub') c.style.filter = 'saturate(' + Game.state.saturation.toFixed(2) + ')';
+    const M = IE.Maps;
+    const faded = Game.scene === M.Room || Game.scene === M.CityMap || (Game.scene === S.City && S.City.mode === 'hub');
+    if (faded && Game.state) c.style.filter = 'saturate(' + Game.state.saturation.toFixed(2) + ')';
     else c.style.filter = 'none';
   }
+  const isMapScene = (sc) => !!IE.Maps && [IE.Maps.Room, IE.Maps.CityMap, IE.Maps.WorldMap, IE.Maps.Trip].includes(sc);
   function setScene(sc) {
     Game.scene = sc;
-    stage().classList.toggle('playing', !!(sc && sc !== S.City && sc !== S.Office));
+    stage().classList.toggle('playing', !!(sc && sc !== S.City && sc !== S.Office && !isMapScene(sc)));
+    if (!isMapScene(sc)) P.view.canvas.style.cursor = 'default';
     setCityFilter();
   }
+
+  // ---------- 畫面：房間、浮城（橫切面）、地圖、世界、旅途 ----------
+  const VIEWS = { room: '房間', city: '浮城', map: '地圖', world: '世界', trip: '旅途' };
+  function viewScene(v) { const M = IE.Maps; return { room: M.Room, city: S.City, map: M.CityMap, world: M.WorldMap, trip: M.Trip }[v] || S.City; }
+  function currentView() {
+    const s = Game.state;
+    if (s && s.trip) return Game.view === 'world' ? 'world' : 'trip';
+    return Game.view && Game.view !== 'trip' ? Game.view : 'room';
+  }
+  function renderViews(show) {
+    const nav = document.getElementById('views');
+    const s = Game.state;
+    if (!show || !s || s.ended) { nav.hidden = true; return; }
+    const list = s.trip ? ['trip', 'world'] : ['room', 'city', 'map', 'world'];
+    const cur = currentView();
+    nav.hidden = false;
+    nav.innerHTML = list.map((v) => '<button type="button" class="view-tab' + (v === cur ? ' on' : '') + '" data-view="' + v + '" aria-pressed="' + (v === cur) + '">'
+      + (v === 'room' && s.floor === 0 ? '天橋底' : v === 'trip' ? D.DEST[s.trip.dest].name : VIEWS[v]) + '</button>').join('');
+  }
+  function setView(v) { Game.view = v; showHub(); }
 
   // ---------- 主迴圈 ----------
   let last = performance.now();
@@ -60,6 +86,7 @@
   // ---------- 標題、開局 ----------
   function showTitle() {
     document.getElementById('hud').hidden = true;
+    document.getElementById('views').hidden = true;
     S.City.enter('attract');
     setScene(S.City);
     UI.closeModal();
@@ -89,7 +116,7 @@
   }
   function resumeRun() {
     const s = Game.state;
-    setScene(S.City);
+    setScene(viewScene(currentView()));
     if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
     else showHub();
@@ -99,10 +126,12 @@
   function startDay() {
     const s = Game.state;
     S.City.forceNight = false;
-    setScene(S.City);
+    const m = R.morning(s);
+    IE.Maps.actions = R.actions(s);
+    setScene(viewScene(currentView()));
+    renderViews(true);
     UI.renderHud(s);
     UI.setPanel('<p class="mute">早上。你的手機震了幾下。</p>');
-    const m = R.morning(s);
     save();
     openPhone(true);
     if (s.day === R.reviewDay(s)) UI.toast('今晚是篩選日。累積訊號必須超過 ' + UI.fmt(R.threshold(s)) + '。', 'bad');
@@ -141,11 +170,14 @@
   function showHub() {
     const s = Game.state;
     if (!s || s.ended) return;
-    setScene(S.City);
+    const acts = R.actions(s);
+    IE.Maps.actions = acts;
+    setScene(viewScene(currentView()));
+    renderViews(true);
     UI.renderHud(s);
     A.setMode('city');
     A.setSpark(s.spark);
-    UI.setPanel(UI.actionsPanel(s, R.actions(s)), {
+    UI.setPanel(UI.actionsPanel(s, acts), {
       act(el) { doAction(el.dataset.id); },
       objs() { openObjects(); },
     });
@@ -170,7 +202,95 @@
         IE.Create.start(s, id === 'allnighter' ? 'allnighter' : 'normal');
         save();
         return openCraft();
+      case 'tripback':
+        Game.view = 'room';
+        return afterAction(IE.World.leaveTrip(s));
     }
+    if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
+  }
+  // 地圖上的熱點
+  IE.Maps.onPick = function (view, sp) {
+    const s = Game.state;
+    if (!s || s.ended || Game.micro || UI.modalOpen() || IE.Craft.isOpen() || Game.scene !== viewScene(currentView())) return;
+    if (view === 'room') {
+      switch (sp.id) {
+        case 'map': return setView('map');
+        case 'city': return setView('city');
+        case 'create': return sp.off ? UI.toast(sp.sub || '現在不能創作', 'bad') : doAction('create');
+        case 'rest': return confirmAct('rest', s.floor ? '你的家' : '天橋底');
+        case 'objects': return openObjects();
+        case 'works': return openGallery();
+        case 'phone': return openPhone(false);
+        case 'decor': return openDecor();
+        case 'stats': return UI.pushModal(UI.statsModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      }
+    }
+    if (view === 'map') {
+      const p = sp.place;
+      if (p.ui === 'room') return setView('room');
+      if (p.ui === 'world') return setView('world');
+      if (p.ui === 'antique') return openAntique();
+      if (p.ui === 'gallery') return openGallery();
+      return confirmAct(p.act, p.name);
+    }
+    if (view === 'world') { if (sp.id !== 'home') openDest(sp.id); return; }
+    if (view === 'trip') return confirmAct(sp.id, D.DEST[s.trip.dest].name);
+  };
+  // 先看清楚代價才出發
+  function confirmAct(id, where) {
+    const s = Game.state;
+    const a = R.actions(s).find((x) => x.id === id);
+    if (!a) { UI.toast(R.isNight(s) ? '晚上這裡已經關門' : '現在不能這樣做', 'bad'); return; }
+    UI.modal(UI.placeModal(where, a), {
+      go() { UI.closeModal(); doAction(id); if (id === 'chat') document.getElementById('panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+      close() { UI.closeModal(); },
+    }, { dismiss: () => {} });
+  }
+  function openDest(id) {
+    const s = Game.state;
+    const info = IE.World.destInfo(s, id, Game.meta);
+    UI.modal(UI.destModal(info, s), {
+      go() {
+        const r = IE.World.startTrip(s, id);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); return; }
+        UI.closeModal();
+        A.sfx('beam');
+        Game.view = 'trip';
+        afterAction(r.rep);
+      },
+      close() { UI.closeModal(); },
+    }, { dismiss: () => {} });
+  }
+  // 天空區畫廊：委託與賣畫
+  function openGallery() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.galleryModal(s), {
+      sell(el) {
+        const r = IE.World.sellWork(s, Number(el.dataset.i));
+        UI.toast(r.msg, r.ok ? 'good' : 'bad');
+        if (r.ok) A.sfx('coin');
+        UI.renderHud(s); save(); render();
+      },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
+  }
+  function openAntique() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.antiqueModal(s), {
+      buy(el) { const r = IE.World.buyAntique(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
+      sellcard(el) { const r = IE.World.sellCard(s, Number(el.dataset.uid)); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
+  }
+  function openDecor() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.decorModal(s), {
+      buy(el) { const r = IE.World.buyDecor(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('pickup'); UI.renderHud(s); save(); render(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
+    render();
   }
   function openCraft() {
     const s = Game.state;
@@ -206,6 +326,7 @@
     };
     const m = IE.Micro.create(kind, {}, done);
     Game.micro = m;
+    renderViews(false);
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
     // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
@@ -239,7 +360,7 @@
     else if (kind === 'busk') rep = R.applyBusk(s, result);
     else if (kind === 'clinic') rep = R.applyClinic(s, result);
     else if (kind === 'interview') rep = R.applyInterview(s, result.answers);
-    setScene(S.City);
+    setScene(viewScene(currentView()));
     afterAction(rep);
   };
 
@@ -264,6 +385,7 @@
     const s = Game.state;
     // 狀態列停留在今晚，結算完才切換到明天
     UI.renderHud(s);
+    renderViews(false);
     const rep = R.endDay(s);
     S.City.forceNight = true;
     setScene(S.City);
@@ -328,6 +450,7 @@
   }
   function recruit() {
     const s = Game.state;
+    renderViews(false);
     UI.setPanel('<p class="mute">光。很多很多光。</p>');
     S.City.forceNight = true;
     s.saturation = 1.3;
@@ -373,6 +496,7 @@
     store.set(KEY_META, Game.meta);
     store.del(KEY_RUN);
     S.City.forceNight = true;
+    renderViews(false);
     setScene(S.City);
     A.setMode(kind === 'agent' ? 'alien' : 'city');
     A.setSpark(kind === 'grey' ? 0 : s.spark);
@@ -441,6 +565,12 @@
       else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);
     });
+    document.getElementById('views').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-view]');
+      if (!b || !Game.state || UI.modalOpen() || Game.micro || IE.Craft.isOpen()) return;
+      A.sfx('click');
+      setView(b.dataset.view);
+    });
     window.addEventListener('resize', () => P.resize());
   }
 
@@ -452,7 +582,7 @@
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 5) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 6) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

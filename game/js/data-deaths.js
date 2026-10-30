@@ -1,4 +1,4 @@
-// 《靈感撤離 2080》死法：115 種。每次身體受損都會記下原因；身體歸零時，按「最後的原因＋當時的處境」找出死法。
+// 《靈感撤離 2080》死法：129 種。每次身體受損都會記下原因；身體歸零時，按「最後的原因＋當時的處境」找出死法。
 // 致命事件（大廈倒塌、海嘯等）會直接指定死法。死法會收錄在跨局的「死亡圖鑑」。
 // causes：觸發的原因（'*' = 任何原因）；when：額外條件；p：優先次序（越高越先判斷）
 // ep：墓誌銘（{day} 天數、{bg} 身份、{labels} 標註數、{works} 作品數、{last} 最後的作品、{cr} 餘款、{soul} 靈魂、{shares} 轉發）
@@ -13,7 +13,7 @@
   const ev = (s, id) => !!(IE.Rules && IE.Rules.eventActive(s, id));
   const cond = (s, id) => !!(s.conds && s.conds[id]);
   const X = (id, name, cat, p, causes, when, ep, au, hint) => ({ id, name, cat, p, causes: causes === '*' ? '*' : [].concat(causes), when, ep, au, hint });
-  const CATS = { work: '工作', sea: '水與外送', art: '創作', life: '生活', sick: '病痛', disaster: '天災', human: '人禍', cosmic: '宇宙', absurd: '荒誕' };
+  const CATS = { work: '工作', sea: '水與外送', art: '創作', life: '生活', sick: '病痛', disaster: '天災', human: '人禍', cosmic: '宇宙', absurd: '荒誕', travel: '旅行' };
 
   const DEATHS = [
     // ===== 荒誕：任何原因，但處境特殊（優先判斷） =====
@@ -139,6 +139,20 @@
     X('ai_lock', '被智能家居鎖在家中', 'human', 1, 'instant', null, 'AI 失控那幾天，他家的智能門鎖拒絕開門。它說它需要一些私人空間。', '樣本被其居所的自動化系統拘禁。', 'AI 失控期間晚上在家。'),
     X('beam_misfire', '被收割光束誤收，在半空中解體', 'cosmic', 1, 'instant', null, '大收割那晚，光束拉起了他，然後拉不動了。', '收割程序出現誤差。誤差已記錄，不會改善。', '外星大收割期間的晚上。'),
     X('tuesday', '在一個不存在的星期二消失', 'cosmic', 1, 'instant', null, '時間裂縫出現的那幾天，有一個星期二多了出來。他留在了那一天。', '樣本滑入時間的縫隙。我們也不知道它去了哪裡。', '時間裂縫期間的晚上。'),
+    // ===== 旅行（第三期） =====
+    X('abroad', '客死異鄉', 'travel', 2.5, '*', (s) => !!s.trip, '他死在{dest}。旅遊保險不包括「自己撐不住」。', '樣本在遠離棲息地的地方停止運作。運送遺體的費用由浮城政府代付，再向家屬追討。', '旅行期間身體歸零。'),
+    X('plane', '航班失事', 'travel', 1, 'instant', null, '那班機是全自動駕駛的。機長是一個沒有手的 AI。', '樣本乘坐的載具在高空失效。我們注意到地球人仍然信任飛行。', '戰爭、AI 失控或太陽閃焰期間坐飛機。'),
+    X('venice_drown', '在威尼斯的水底教堂迷路', 'travel', 1, 'instant', null, '他在水底運河裡游過第七間教堂，然後找不到出口。', '樣本被人類宗教建築困住。建築已經沒有信徒。', '在沉沒的威尼斯潛入水底運河。'),
+    X('sandstorm', '被沙塵暴吞沒', 'travel', 1, 'instant', null, '他走進沙丘看海市蜃樓。沙塵暴過後，沙丘的形狀變了。', '樣本被乾燥的地表物質覆蓋。浮城人通常死於相反的原因。', '在開羅的沙丘裡遇上沙塵暴。'),
+    X('frozen', '凍死在冰原', 'travel', 1, 'instant', null, '他說只是想再看一會兒。北極沒有給他一會兒。', '樣本的體溫降至環境溫度。保存狀態良好。', '在北極或南極的冰原上探險。'),
+    X('pyramid', '被困在金字塔的墓室', 'travel', 1, 'instant', null, '潛進半淹的墓室後，潮水漲了。法老多了一個陪葬。', '樣本進入了為死者而建的空間，並且符合了它的用途。', '潛進半淹金字塔的水底墓室。'),
+    X('temple_fall', '從神殿階梯跌下', 'travel', 1, 'instant', null, '馬雅神殿的階梯很陡。他爬到頂端回頭看的那一刻，滑了一下。', '樣本從古代建築跌落。建築仍然完好。', '攀爬馬雅神殿的階梯。'),
+    X('cave', '困在洞穴深處', 'travel', 1, 'instant', null, '他爬進一萬七千年來沒有人畫過的地方，在牆上留下了自己的手印。', '樣本在洞穴深處停止運作，留下了一幅作品。作品評分：高。', '爬進拉斯科洞穴的深處。'),
+    X('methane', '被凍土湖的古老氣體毒死', 'travel', 1, 'instant', null, '那些氣體封在凍土裡四萬年，出來後第一個遇見的是他。', '樣本吸入了冰河時期的空氣。空氣品質：過期。', '在西伯利亞的冒泡湖邊逗留。'),
+    X('area51', '在 51 區「失蹤」', 'travel', 1, 'instant', null, '官方紀錄：此人從未入境。', '［此段已被塗黑］', '偷偷爬進 51 區的機庫或檔案室。'),
+    X('antarctic_base', '被冰層下的建築吸收', 'travel', 1, 'instant', null, '他跟著嗡嗡聲走進冰層下面。嗡嗡聲停了。', '樣本主動進入本局的舊設施。設施已將其登記為「訪客（永久）」。', '走進南極冰層下的外星建築。'),
+    X('moon', '在月球上迷路', 'travel', 1, 'instant', null, '他在環形山裡走了很遠，回頭時看不見招聘中心，只看見浮城很小很小。', '樣本在低重力環境下高估了自己。氧氣不是無限的，這一點寫在合約第 47 頁。', '在月球背面的環形山散步。'),
+    X('atlantis', '留在亞特蘭提斯', 'travel', 1, 'instant', null, '他游過亞特蘭提斯的城門，沒有再游回來。也許他找到了一個不會再沉的城市。', '樣本進入了一個傳說。我們無法驗證傳說的存在，因此無法驗證樣本的死亡。', '在亞特蘭提斯探險。'),
     X('exhaustion', '力竭而死', 'life', 0, '*', null, '第 {day} 天。{bg}。他一直撐著，直到撐不住為止。', '樣本的能量儲備耗盡。死因：生活。', '身體歸零。'),
   ];
   const DEATH = {};
@@ -161,7 +175,7 @@
     const condDays = s.lastCause && s.lastCause.ctx && s.lastCause.ctx.days;
     const vals = { day: s.day, bg: D.BACKGROUNDS[s.bg].name, labels: fmt(s.stats.labels), works: s.works.length, last, cr: fmt(s.cr),
       soul: s.soul.toFixed(1), shares: fmt(s.stats.shares || 0), spark: s.spark.toFixed(1), paranoia: Math.round(s.paranoia), floor: s.floor,
-      debt: fmt(s.debt || 0), hungry: s.stats.hungryDays, norest: s.noRest || 0, allnighters: s.allnighters || 0, condDays: condDays || '好幾' };
+      debt: fmt(s.debt || 0), dest: s.trip && D.DEST && D.DEST[s.trip.dest] ? D.DEST[s.trip.dest].name : '異鄉', hungry: s.stats.hungryDays, norest: s.noRest || 0, allnighters: s.allnighters || 0, condDays: condDays || '好幾' };
     return str.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m));
   }
 

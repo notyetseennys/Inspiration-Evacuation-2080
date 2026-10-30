@@ -14,13 +14,14 @@
   D.FORMS.forEach((f) => { FORM[f.id] = f; });
   const r1 = (v) => Math.round(v * 10) / 10;
   const r2 = (v) => Math.round(v * 100) / 100;
+  const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
 
   // ---------- 素材 ----------
   const cardOf = (s, uid) => s.cards.find((c) => c.uid === uid);
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft));
+    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -159,11 +160,13 @@
     mult = Math.max(0, mult);
     const ai = aiFactor(s, F.id, objs);
     const wm = (RL.worldMods(s).signalMult) || 1;
+    const tm = IE.World ? IE.World.tripMult(s) : 1;
     if (ai !== 1) steps.push({ t: 'ai', x: ai });
     if (wm !== 1) steps.push({ t: 'world', x: wm });
+    if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
     if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
     steps.push({ t: 'spark', x: s.spark });
-    const raw = Math.round(chips * mult * s.spark * ai * wm);
+    const raw = Math.round(chips * mult * s.spark * ai * wm * tm);
     const total = Math.round(raw * ctx.kpiMod);
     const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
     return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
@@ -208,8 +211,8 @@
     s.session = {
       mode: all ? 'allnighter' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
-      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand,
-      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0),
+      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0),
+      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
     draw(s);
@@ -310,7 +313,8 @@
     if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
-    return { work, session: ses };
+    const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
+    return { work, session: ses, paid };
   }
   // 還未下筆就離開：退回材料費與體力
   function cancel(s) {

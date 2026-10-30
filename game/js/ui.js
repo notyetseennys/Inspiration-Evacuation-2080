@@ -19,8 +19,10 @@
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+      + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
+      + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
       + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
       + (c.mod ? '<span class="c-mod" style="--c:' + D().CARD_MODS[c.mod].color + '">' + D().CARD_MODS[c.mod].name + '</span>' : '')
@@ -28,7 +30,7 @@
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
-    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠' };
+    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠', rare: '★' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
       return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
@@ -56,7 +58,9 @@
       + conds.map((c) => '<span class="chip ' + (c.lethal ? 'warn' : 'cond') + '" title="' + esc(c.desc) + '">' + esc(c.name) + (c.lethal ? '・' + c.left + ' 天後致命' : '・第 ' + c.days + ' 天') + '</span>').join('')
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
-      + (hrisk > 0 ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '');
+      + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
+      + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
+      + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
     const bmax = R().bodyMax(s);
     const rentChip = s.floor > 0
       ? '<span class="chip' + (toRent <= 1 && s.cr < rent ? ' warn' : '') + '">交租 ' + (toRent === 0 ? '今晚' : toRent + ' 天後') + ' · $' + fmt(rent) + '</span>'
@@ -152,12 +156,12 @@
   }
 
   // ---------- 行動 ----------
-  const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上' };
+  const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上', trip: '旅行：探索、找素材' };
   function actionsPanel(s, list) {
     const night = R().isNight(s);
-    const hint = night
-      ? '晚上可以創作：作品分 = 素材籌碼 × 組合倍率 × 火花 × KPI。'
-      : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。';
+    const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方；極稀有素材只在特定時機出現。'
+      : night ? '晚上可以創作：作品分 = 素材籌碼 × 組合倍率 × 火花 × KPI。'
+        : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。也可以直接在上面的地圖點選地點。';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
     return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p></div>'
@@ -254,7 +258,7 @@
 
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
-    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆' };
+    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
     const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
@@ -418,10 +422,18 @@
       + '<h3>創作（核心）</h3><ul>'
       + '<li>晚上選「創作」：從素材庫抽一手素材，下筆三次、改稿兩次。三次下筆的分數加起來就是今晚的作品，會變成外星訊號。「通宵創作」多一次下筆和改稿，但很傷身。</li>'
       + '<li>每次下筆的分數 = 籌碼 × 倍率 × 火花。同一標籤出現得越多，作品形式越高級：隨筆、短詩、對聯、歌、拼貼、小說、壁畫、交響曲、史詩，還有一種隱藏形式。</li>'
-      + '<li>特定標籤組合會觸發 48 個具名組合之一，其中 8 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
+      + '<li>特定標籤組合會觸發 ' + D().RECIPES.length + ' 個具名組合之一，其中 ' + D().RECIPES.filter((r) => r.legend).length + ' 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
       + '<li><b>靈感物件</b>最多裝備 3 件（工作室可擴充至 5 件），在計分時觸發。朋友、潛水、事件、面試和二手市集都可以找到；部分要跨局解鎖。</li>'
       + '<li><b>技法</b>：白天做不同的事、和不同的朋友聊天，會令相應的作品形式升級。為了創作，去試不同的生活吧。</li>'
       + '<li>素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格，倍率下降。</li></ul>'
+      + '<h3>地圖、旅行與金錢</h3><ul>'
+      + '<li>畫面上方可以切換<b>房間</b>、<b>浮城</b>（橫切面）、<b>地圖</b>和<b>世界</b>。房間、地圖和世界裡的東西都可以直接點選。</li>'
+      + '<li><b>世界地圖</b>：用錢出國，到現代都市、古文明、史前遺跡、外星人基地和傳說之地收集素材。旅行帶回「遠古」和「星辰」標籤，以及新的具名組合。部分地方要特定條件才去得到。</li>'
+      + '<li><b>極稀有素材</b>：每個目的地都藏著一件，只會在特定事件或處境下出現（例如糧荒期間的種子庫、太陽閃焰期間的太陽船坑）。洞察 30 以上才看得懂線索。有四個傳說組合要靠它們才能觸發。</li>'
+      + '<li>在外地：晚上照樣創作（異鄉之夜 ×1.3）；回來後七晚有<b>旅行的餘韻</b>。探索點有致命危險，航班在戰爭或 AI 失控期間也不安全。</li>'
+      + '<li><b>天空區畫廊</b>：接委託（湊齊指定標籤就收錢），或者把作品賣掉（作品的訊號會減半）。</li>'
+      + '<li><b>古董市場</b>：買稀有的古董素材，也可以把素材賣給古董商。</li>'
+      + '<li><b>家具</b>：彈簧床、冷氣機、抽水泵、防盜門、魚缸、書架、畫架、望遠鏡……全部看得見，也全部有用。被趕出門會失去全部家具。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
       + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
@@ -467,6 +479,7 @@
         + '<span class="mute">' + (dSeen[d.id] ? '死過 ' + dSeen[d.id] + ' 次・' : '提示：') + esc(d.hint) + '</span></div>').join('') + '</div>').join('');
     return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
+      + worldCodexHtml(meta)
       + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
       + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
       + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
@@ -476,6 +489,71 @@
       + '<h3>舊城圖鑑：魚類</h3><div class="recipes">' + fish + '</div>'
       + '<h3>舊城圖鑑：遺物</h3><div class="recipes">' + relics + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
+  }
+
+  // ---------- 地圖與旅行 ----------
+  // 在地圖上點選地點：先看清楚代價
+  function placeModal(where, a) {
+    return '<div class="modal place"><span class="eyebrow">' + esc(where) + '</span><h2>' + esc(a.name) + '</h2><p class="mute">' + esc(a.sub) + '</p>'
+      + '<div class="fx big">' + fxHtml(a.fx) + '</div>' + (a.reason ? '<p class="act-why">' + esc(a.reason) + '</p>' : '')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="go"' + (a.enabled ? '' : ' disabled') + '>' + (a.id.startsWith('site:') ? '去探索' : '前往') + '</button>'
+      + '<button class="btn" type="button" data-do="close">取消</button></div></div>';
+  }
+  function destModal(d, s) {
+    const pct = (p) => Math.round(p * 1000) / 10 + '%';
+    const sites = d.sites.map((st) => '<div class="site">'
+      + '<div class="site-head"><b>' + esc(st.name) + '</b><span class="fx">' + fxHtml([['body', '−' + st.body]].concat(st.spark ? [['spark', '+' + st.spark]] : []).concat(st.risk > 0 ? [['danger', '致命 ' + pct(st.risk)]] : [])) + '</span></div>'
+      + '<p class="mute">' + esc(st.desc) + '</p>'
+      + '<p class="site-gain">素材：' + st.gain.map(esc).join('、') + '</p>'
+      + (st.need ? '<p class="act-why">' + esc(st.need) + '</p>' : '')
+      + (st.rare ? '<p class="site-rare' + (st.rare.found ? ' found' : st.rare.ready ? ' ready' : '') + '">★ 極稀有：' + esc(st.rare.name) + (st.rare.found ? '（已找到）' : '') + '<br><span>' + esc(st.rare.text) + (st.rare.ready && !st.rare.found ? '　→　時機已到！' : '') + '</span></p>' : '')
+      + '</div>').join('');
+    return '<div class="modal wide dest"><span class="eyebrow" style="color:' + d.kind.color + '">' + esc(d.kind.name) + '・' + esc(d.region) + (d.visited ? '・去過 ' + d.visited + ' 次' : '') + '</span>'
+      + '<h2>' + esc(d.name) + '</h2><p>' + esc(d.desc) + '</p>'
+      + '<div class="dest-facts"><span>旅費與住宿 <b>$' + fmt(d.cost) + '</b></span><span>停留 <b>' + d.stay + ' 天</b></span><span>航班致命機會 <b>' + pct(d.flight) + '</b>（來回各一次）</span><span>你有 <b>$' + fmt(s.cr) + '</b></span></div>'
+      + '<p class="mute" style="font-size:13px">在外地：每個時段探索一個地方；晚上照樣可以創作（異鄉之夜 ×1.3，手牌 +1）。回來後七晚有「旅行的餘韻」（第一次去 ×1.6）。房租照交，飯錢貴五成，平台評分會下降。</p>'
+      + '<h3>探索點</h3><div class="sites">' + sites + '</div>'
+      + (d.reason ? '<p class="act-why">' + esc(d.reason) + '</p>' : '')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="go"' + (d.reason ? ' disabled' : '') + '>出發（$' + fmt(d.cost) + '）</button><button class="btn" type="button" data-do="close">返回</button></div></div>';
+  }
+  function galleryModal(s) {
+    const W = IE.World;
+    const comm = W.commissions(s).map((c) => '<div class="comm' + (c.done ? ' done' : '') + '"><b>$' + fmt(c.pay) + '</b><span>' + esc(c.text) + '</span><span class="mute">'
+      + (c.done ? '已完成' : '第 ' + c.until + ' 天前・某一次下筆湊齊這些標籤，而且分數達到本季門檻的 2%') + '</span></div>').join('');
+    const works = W.galleryOffers(s).map((w) => '<div class="work-row' + (w.sold ? ' sold' : '') + '"><div><b>《' + esc(w.name) + '》</b><span class="mute">第 ' + w.day + ' 天・訊號 ' + kfmt(w.score) + '</span></div>'
+      + (w.sold ? '<span class="mute">已賣出</span>' : '<button class="btn mini' + (w.reason ? '' : ' sea') + '" type="button" data-do="sell" data-i="' + w.i + '"' + (w.reason ? ' disabled title="' + esc(w.reason) + '"' : '') + '>賣 $' + fmt(w.price) + '<small>訊號 −' + kfmt(w.lose) + '</small></button>') + '</div>').join('');
+    return '<div class="modal wide"><span class="eyebrow">天空區畫廊</span><h2>作品與委託</h2>'
+      + '<h3>天空區委託（每五天更新）</h3><p class="mute" style="font-size:13px">有錢人想要特定的作品。創作時湊齊標籤就會自動收到酬金，不會損失訊號，但會令你更「聽話」。</p><div class="comms">' + comm + '</div>'
+      + '<h3>你的作品</h3><p class="mute" style="font-size:13px">收藏家按作品在今天的外星門檻面前有多亮出價（越遲賣越不值錢）。賣出的作品外星訊號減半。畫廊每天只收一件。</p>'
+      + '<div class="works">' + (works || '<p class="mute">你還沒有完成任何作品。</p>') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
+  }
+  function antiqueModal(s) {
+    const W = IE.World;
+    const offers = W.antiqueOffers(s).map((o) => '<div class="ant-item">' + cardHtml(o) + (o.special ? '<span class="mute">' + esc(o.special) + '</span>' : '')
+      + '<button class="btn mini' + (o.reason ? '' : ' sea') + '" type="button" data-do="buy" data-id="' + o.id + '"' + (o.reason ? ' disabled' : '') + '>' + (o.sold ? '已賣出' : '$' + fmt(o.price)) + '</button></div>').join('');
+    const sells = W.sellCards(s).map((c) => '<div class="ant-sell">' + cardHtml(c) + '<button class="btn mini" type="button" data-do="sellcard" data-uid="' + c.uid + '"' + (c.reason ? ' disabled title="' + esc(c.reason) + '"' : '') + '>賣 $' + fmt(c.price) + '</button></div>').join('');
+    return '<div class="modal wide"><span class="eyebrow">浮城・古董市場</span><h2>古董市場</h2>'
+      + '<p class="mute" style="font-size:13px">每四天換一批貨。古董是稀有的素材；某些事件期間會出現不屬於這個時代的東西。你也可以把素材賣給古董商：旅行帶回來的素材比較值錢，極稀有素材更是天價（每天最多收兩件）。</p>'
+      + '<h3>今期貨品</h3><div class="ant-grid">' + offers + '</div>'
+      + '<h3>賣出素材</h3><div class="ant-grid">' + sells + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
+  }
+  function decorModal(s) {
+    const items = IE.World.decorList(s).map((d) => '<div class="decor-item' + (d.owned ? ' owned' : '') + '"><div><b>' + esc(d.name) + '</b><span>' + esc(d.desc) + '</span></div>'
+      + '<button class="btn mini' + (d.reason ? '' : ' sea') + '" type="button" data-do="buy" data-id="' + d.id + '"' + (d.reason ? ' disabled' : '') + '>' + (d.owned ? '已擁有' : '$' + fmt(d.cost)) + '</button></div>').join('');
+    return '<div class="modal wide"><span class="eyebrow">家具目錄</span><h2>把這裡變成一個家</h2>'
+      + '<p class="mute" style="font-size:13px">家具會出現在你的房間，而且有實際作用。只在家裡有效；被趕出門時，房東會沒收全部家具。</p>'
+      + '<div class="decor-list">' + items + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">合上目錄</button></div></div>';
+  }
+  function worldCodexHtml(meta) {
+    const W = IE.World, vis = meta.visited || {};
+    const dests = D().DESTINATIONS.map((d) => '<div class="recipe' + (vis[d.id] ? '' : ' unknown') + '"><b style="color:' + D().KINDS[d.kind].color + '">' + (vis[d.id] ? esc(d.name) : '？？？') + '</b>'
+      + '<span class="mute">' + esc(D().KINDS[d.kind].name) + (vis[d.id] ? '・去過 ' + vis[d.id] + ' 次' : d.lockText ? '・' + esc(d.lockText) : '') + '</span></div>').join('');
+    const rares = W.rareList(meta).map((r) => '<div class="recipe' + (r.found ? ' legend' : ' unknown') + '"><b>' + (r.found ? '★ ' + esc(r.name) : '？？？') + '</b>'
+      + '<span class="mute">' + esc(r.dest) + '・' + esc(r.site) + '：' + esc(r.text) + '</span></div>').join('');
+    return '<h3>世界圖鑑（' + Object.keys(vis).length + '/' + D().DESTINATIONS.length + '）</h3><div class="recipes">' + dests + '</div>'
+      + '<h3>極稀有素材（' + Object.keys(meta.rares || {}).length + '/' + W.rareList(meta).length + '）</h3><div class="recipes">' + rares + '</div>';
   }
 
   // ---------- 道德抉擇 ----------
@@ -501,5 +579,6 @@
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
+    placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml,
   };
 })(window.IE = window.IE || {});

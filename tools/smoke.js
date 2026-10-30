@@ -112,6 +112,51 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('#modal [data-do="close"]');
     ok('能力值面板（12 項）');
 
+    // 第三期：房間、地圖、世界、旅行、畫廊、古董、家具
+    for (const v of ['room', 'city', 'map', 'world']) {
+      await page.click('#views [data-view="' + v + '"]');
+      const okScene = await page.evaluate((v) => { const I = window.__IE, M = I.Maps; return I.Game.scene === { room: M.Room, city: I.Scenes.City, map: M.CityMap, world: M.WorldMap }[v]; }, v);
+      if (!okScene) await fail('切換畫面失敗：' + v);
+    }
+    ok('切換畫面：房間、浮城、地圖、世界');
+    await page.evaluate(() => { window.__IE.Game.state.cr = 5000; window.__IE.Game.state.body = 80; });
+    const pick = (view, id) => page.evaluate(([view, id]) => { const M = window.__IE.Maps; const sc = { room: M.Room, map: M.CityMap, world: M.WorldMap, trip: M.Trip }[view]; M.onPick(view, sc.spots().find((x) => x.id === id)); }, [view, id]);
+    await page.click('#views [data-view="room"]');
+    await pick('room', 'decor');
+    await page.click('#modal [data-do="buy"][data-id="bed"]');
+    await page.click('#modal [data-do="close"]');
+    if (!(await page.evaluate(() => !!window.__IE.Game.state.decor.bed))) await fail('買不到彈簧床');
+    await page.click('#views [data-view="map"]');
+    await pick('map', 'antique');
+    await page.click('#modal .ant-item [data-do="buy"]:not([disabled])');
+    await page.click('#modal .ant-sell [data-do="sellcard"]:not([disabled])');
+    await page.click('#modal [data-do="close"]');
+    await pick('map', 'gallery');
+    await page.click('#modal [data-do="sell"]:not([disabled])');
+    await page.click('#modal [data-do="close"]');
+    const sold = await page.evaluate(() => window.__IE.Game.state.works.filter((w) => w.sold).length);
+    if (sold !== 1) await fail('畫廊沒有賣出作品');
+    ok('家具、古董市場（買賣）、天空區畫廊（賣出 1 件作品）');
+    await page.click('#views [data-view="world"]');
+    await pick('world', 'neotokyo');
+    await page.click('#modal [data-do="go"]');
+    await page.click('#modal [data-do="ok"]');
+    if (!(await page.evaluate(() => window.__IE.Game.state.trip && window.__IE.Game.scene === window.__IE.Maps.Trip))) await fail('出發後沒有在旅途中');
+    await page.click('.act[data-id^="site:"]:not([disabled])');
+    await page.click('#modal [data-do="ok"]');
+    const origin = await page.evaluate(() => window.__IE.Game.state.cards.filter((c) => c.origin === 'asia').length);
+    if (!origin) await fail('探索後沒有得到旅行素材');
+    await page.click('.act[data-id="rest"]');
+    await page.click('#modal [data-do="ok"]');
+    await page.waitForSelector('#modal [data-do="ok"]', { timeout: 8000 });
+    await page.click('#modal [data-do="ok"]');
+    await page.click('.phone [data-do="close"]');
+    await page.click('.act[data-id="tripback"]');
+    await page.click('#modal [data-do="ok"]');
+    const back = await page.evaluate(() => { const s = window.__IE.Game.state; return { trip: s.trip, day: s.day, scene: window.__IE.Game.scene === window.__IE.Maps.Room, glow: s.glow }; });
+    if (back.trip || !back.scene) await fail('提早回程失敗');
+    ok('旅行：新東京（探索得到 ' + origin + ' 張亞洲素材，第 ' + back.day + ' 天回到浮城）');
+
     // 夢境面試：跳到第 18 天晚上
     await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 18; s.slot = 2; s.body = 80; s.morning = { day: 18, feed: [] }; });
     if (!(await page.$('.phone'))) await page.click('[data-hud="phone"]');
