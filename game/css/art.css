@@ -1,2 +1,64 @@
 /* 《靈感撤離 2080》美術與演出的樣式（與 style.css 分開，方便兩條開發線同時進行）。
    在 style.css 之後載入，所以這裡的規則可以覆蓋 style.css。tools/build.js 會按 index.html 的次序把兩個檔案一起內嵌。 */
+
+/* ==========================================================================
+   任務 1：121 件靈感物件獨立圖示 — 傳說物件金色外框與緩慢閃光
+   ========================================================================== */
+@keyframes ie-legend-icon-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(255, 211, 107, 0.85)) drop-shadow(0 0 5px rgba(255, 194, 71, 0.35));
+  }
+  50% {
+    filter: drop-shadow(0 0 4px rgba(255, 242, 196, 1)) drop-shadow(0 0 9px rgba(255, 194, 71, 0.75)) brightness(1.12);
+  }
+}
+
+@keyframes ie-legend-box-shimmer {
+  0%, 100% {
+    border-color: #ffc247;
+    box-shadow: 0 0 0 1px rgba(255, 211, 107, 0.5), 0 0 12px rgba(255, 194, 71, 0.35), inset 0 0 8px rgba(255, 211, 107, 0.12);
+    background-position: 0% 50%;
+  }
+  50% {
+    border-color: #fff2c4;
+    box-shadow: 0 0 0 1px rgba(255, 242, 196, 0.85), 0 0 18px rgba(255, 211, 107, 0.65), inset 0 0 14px rgba(255, 211, 107, 0.25);
+    background-position: 100% 50%;
+  }
+}
+
+.px-icon.r-legend {
+  padding: 2px;
+  border-radius: 5px;
+  border: 1.5px solid #ffd36b;
+  background: radial-gradient(circle at 30% 25%, rgba(255, 242, 196, 0.28), rgba(255, 194, 71, 0.08) 70%);
+  box-shadow: 0 0 0 1px rgba(138, 90, 30, 0.85), 0 0 8px rgba(255, 211, 107, 0.45);
+  animation: ie-legend-icon-glow 3.4s ease-in-out infinite;
+}
+
+.ct-obj.r-legend,
+.obj-row.r-legend,
+.obj-card.r-legend,
+.store-item.r-legend {
+  border-color: #ffd36b;
+  background-image: linear-gradient(
+    125deg,
+    rgba(255, 211, 107, 0.06) 0%,
+    rgba(255, 211, 107, 0.22) 45%,
+    rgba(255, 242, 196, 0.32) 50%,
+    rgba(255, 211, 107, 0.18) 55%,
+    rgba(255, 211, 107, 0.04) 100%
+  );
+  background-size: 240% 240%;
+  box-shadow: 0 0 0 1px rgba(255, 211, 107, 0.5), 0 0 12px rgba(255, 194, 71, 0.35), inset 0 0 8px rgba(255, 211, 107, 0.12);
+  animation: ie-legend-box-shimmer 4.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-icon.r-legend,
+  .ct-obj.r-legend,
+  .obj-row.r-legend,
+  .obj-card.r-legend,
+  .store-item.r-legend {
+    animation: none !important;
+  }
+}
