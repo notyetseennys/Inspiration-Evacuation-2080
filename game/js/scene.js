@@ -222,7 +222,7 @@
             const beamLift = this.beam && this.beam.t > 2.4 ? Math.min(60, (this.beam.t - 2.4) * 30) : 0;
             // 超重：光束一拉，人被提起一點又跌回去
             const strain = this.sl && this.sl.heavy && this.sl.t > 3.2 ? Math.round(Math.abs(Math.sin(this.sl.t * 9)) * 3) : 0;
-            if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift - strain, { desat: Math.max(0, 1 - s.spark / 2.5) });
+            if (beamLift < 12) P.sprite(c, IE.Chars.spr(s), wx + 4, wy + 1 + bob - beamLift - strain, { desat: Math.max(0, 1 - s.spark / 2.5) });
             if (beamLift < 12) this.drawStones(c, s, wx + 10, wy + 10 - strain);
             c.restore();
           }
@@ -238,13 +238,13 @@
       if (s.floor === 0) {
         const p = this.playerPos(s);
         c.fillStyle = '#2a3350'; c.fillRect(84, p.y + 12, 44, 3); c.fillRect(90, p.y + 15, 3, 10); c.fillRect(118, p.y + 15, 3, 10);
-        P.sprite(c, 'player', p.x, p.y, { desat: Math.max(0, 1 - s.spark / 2.5) });
+        P.sprite(c, IE.Chars.spr(s), p.x, p.y, { desat: Math.max(0, 1 - s.spark / 2.5) });
         this.drawStones(c, s, p.x + 6, p.y + 11);
       }
       if (this.beam && this.beam.t > 2.4) {
         const p = this.playerPos(s);
         const lift = Math.min(60, (this.beam.t - 2.4) * 30);
-        if (lift >= 12) P.sprite(c, 'player', p.x, p.y - lift, { alpha: Math.max(0, 1 - (lift - 40) / 20) });
+        if (lift >= 12) P.sprite(c, IE.Chars.spr(s), p.x, p.y - lift, { alpha: Math.max(0, 1 - (lift - 40) / 20) });
       }
     },
     // 靈魂的重量：背後的石頭，每 6 克一塊，超重會變紅

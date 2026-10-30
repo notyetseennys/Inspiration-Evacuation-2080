@@ -14,6 +14,7 @@
 
   // ---------- 家居 ----------
   // 家具放在家裡才有用：露宿街頭或出門旅行時都不算
+  const perk = (s) => (D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk) || {};
   const decorOn = (s, id) => !!(s.decor && s.decor[id]) && s.floor > 0 && !s.trip;
   function decorList(s) {
     return D.DECOR.map((d) => {
@@ -51,7 +52,7 @@
   }
   // 出價看這件作品在今天的外星門檻面前有多亮：同一件作品，越遲賣越不值錢
   const GALLERY_K = Number((typeof process !== 'undefined' && process.env && process.env.GALLERY_K) || 1000);
-  const workPrice = (s, w) => Math.max(20, Math.round(GALLERY_K * w.score / R.threshold(s) * (0.8 + 0.006 * stat(s, 'social')) * galleryMult(s)));
+  const workPrice = (s, w) => Math.max(20, Math.round(GALLERY_K * w.score / R.threshold(s) * (0.8 + 0.006 * stat(s, 'social')) * galleryMult(s) * (perk(s).galleryMult || 1)));
   function galleryOffers(s) {
     const today = s.gallerySoldDay === s.day;
     return s.works.map((w, i) => ({ i, name: w.name, form: w.form, day: w.day, raw: w.raw, score: w.score, sold: !!w.sold, price: workPrice(s, w),
@@ -92,7 +93,7 @@
       }
       s.comm = { period, until: period * 5 + 5, items };
     }
-    return s.comm.items.map((c) => Object.assign({}, c, { until: s.comm.until,
+    return s.comm.items.map((c) => Object.assign({}, c, { until: s.comm.until, pay: Math.round(c.pay * (perk(s).commMult || 1)),
       text: c.who + c.want + '：要一件有' + Object.keys(c.need).map((k) => (c.need[k] > 1 ? c.need[k] + ' 張' : '') + '「' + D.TAGS[k].name + '」').join('和') + '的作品' }));
   }
   // 一晚的創作完成後：每一次下筆檢查有沒有湊齊某個委託的標籤
@@ -105,10 +106,11 @@
       const hit = ses.log.some((x) => x.total >= R.threshold(s) * 0.02 && Object.keys(c.need).every((k) => x.tags.filter((t) => t === k).length >= c.need[k]));
       if (!hit) return;
       c.done = true;
-      s.cr += c.pay; s.stats.crEarned += c.pay;
+      const pay = Math.round(c.pay * (perk(s).commMult || 1));
+      s.cr += pay; s.stats.crEarned += pay;
       s.stats.commissions = (s.stats.commissions || 0) + 1;
       R.train(s, { obey: 0.6 }, null);
-      paid.push({ text: c.who + '收到了作品', pay: c.pay });
+      paid.push({ text: c.who + '收到了作品', pay });
     });
     return paid;
   }
@@ -119,7 +121,7 @@
     if (!s.antique || s.antique.period !== period) {
       const pool = D.ANTIQUES.slice();
       const items = [];
-      while (items.length < 3 && pool.length) {
+      while (items.length < (perk(s).extraAntique ? 4 : 3) && pool.length) {
         const id = pool.splice(Math.floor(R.rand(s) * pool.length), 1)[0];
         items.push({ id, price: Math.round(D.CARDS[id].value * (5 + R.rand(s) * 3)) });
       }
@@ -129,7 +131,7 @@
       if (R.eventActive(s, 'timeslip')) items.push({ id: 't_scroll', price: 520, special: '來自另一條時間線' });
       s.antique = { period, items };
     }
-    const mult = R.eventActive(s, 'crash') ? 0.6 : 1;
+    const mult = (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).antiqueMult || 1);
     return s.antique.items.map((it) => {
       const c = D.CARDS[it.id];
       const price = Math.round(it.price * mult);
@@ -142,6 +144,7 @@
     if (!o || o.reason) return { ok: false, msg: o ? o.reason : '沒有這件貨' };
     s.cr -= o.price;
     s.antique.items.find((x) => x.id === id).sold = true;
+    s.stats.antiqueTrades = (s.stats.antiqueTrades || 0) + 1;
     const res = R.addCard(s, id);
     return { ok: true, msg: '買下了「' + o.name + '」' + (res.dropped ? '（素材庫滿了，丟掉了「' + res.dropped.name + '」）' : '') };
   }
@@ -149,7 +152,7 @@
   // 古董商也收貨：旅行帶回來的素材特別值錢，極稀有素材更是天價（每天最多收兩件）
   function cardPrice(s, c) {
     const k = c.rarity === 'legend' ? 4 : c.origin && c.origin !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
-    return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1)));
+    return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).sellMult || 1)));
   }
   function sellCards(s) {
     const left = 2 - (s.cardSales && s.cardSales.day === s.day ? s.cardSales.n : 0);
@@ -163,17 +166,35 @@
     s.cards = s.cards.filter((c) => c.uid !== uid);
     s.cr += o.price; s.stats.crEarned += o.price;
     s.cardSales = { day: s.day, n: (s.cardSales && s.cardSales.day === s.day ? s.cardSales.n : 0) + 1 };
+    s.stats.antiqueTrades = (s.stats.antiqueTrades || 0) + 1;
     return { ok: true, price: o.price, msg: '把「' + o.name + '」賣給古董商：+$' + o.price };
   }
 
   // ---------- 旅行 ----------
   const TRAVEL_EVENTS = { war: 1.5, pandemic: 1.4, crash: 0.8, netdown: 1.2, tourists: 1.2, famine: 1.2 };
-  const tripCost = (s, d) => Math.round(d.cost * Object.keys(TRAVEL_EVENTS).reduce((a, id) => a * (R.eventActive(s, id) ? TRAVEL_EVENTS[id] : 1), 1));
-  function flightRisk(s) {
-    return D.FLIGHT.base + Object.keys(D.FLIGHT.events).reduce((a, id) => a + (R.eventActive(s, id) ? D.FLIGHT.events[id] : 0), 0);
+  // 特價機票：每四天一個目的地 −40%
+  function deal(s) {
+    const period = Math.floor((s.day - 1) / 4);
+    if (!s.deal || s.deal.period !== period) {
+      const pool = D.DESTINATIONS.filter((d) => !d.when || d.when(s));
+      s.deal = { period, dest: pool.length ? R.pick(s, pool).id : null, off: 0.4, until: period * 4 + 4 };
+    }
+    return s.deal;
   }
+  const fareOf = (f) => D.FARES[f] || D.FARES.economy;
+  const tripCost = (s, d, fare) => Math.round(d.cost * Object.keys(TRAVEL_EVENTS).reduce((a, id) => a * (R.eventActive(s, id) ? TRAVEL_EVENTS[id] : 1), 1)
+    * (perk(s).tripCost || 1) * fareOf(fare).costMult * (deal(s).dest === d.id ? 1 - deal(s).off : 1));
+  function flightRisk(s, fare) {
+    if (perk(s).flightSafe) return 0;
+    return (D.FLIGHT.base + Object.keys(D.FLIGHT.events).reduce((a, id) => a + (R.eventActive(s, id) ? D.FLIGHT.events[id] : 0), 0)) * fareOf(fare).risk;
+  }
+  // 護照印章：同一局去過 3／6／10 個地方
+  const stamps = (s) => Object.keys(s.visited || {}).length;
+  const stampBonus = (s) => ({ hand: stamps(s) >= 3 ? 1 : 0, plays: stamps(s) >= 10 ? 1 : 0 });
   // 探索點的致命機會：體能與冷靜可以降低
-  const siteRisk = (s, st) => (st.risk ? st.risk.chance * Math.max(0.35, 1 - (stat(s, 'fit') + stat(s, 'calm')) / 300) : 0);
+  const siteRisk = (s, st) => (st.risk ? st.risk.chance * Math.max(0.35, 1 - (stat(s, 'fit') + stat(s, 'calm')) / 300) * (perk(s).siteSafe || 1)
+    * (s.gear.lifejacket && /drown|current|pyramid|atlantis|flood/.test(st.risk.death) ? 0.5 : 1) : 0);
+  const siteBody = (s, st) => (st.body > 0 ? Math.round(st.body * (perk(s).tripBody || 1)) : st.body);
   function needReason(s, st) {
     if (!st.need) return null;
     for (const k of Object.keys(st.need)) if (stat(s, k) < st.need[k]) return '需要' + D.STATS[k].name + ' ' + st.need[k] + '（你只有 ' + Math.round(stat(s, k)) + '）';
@@ -194,41 +215,56 @@
     if (s.ended) return '—';
     if (R.isNight(s)) return '晚上沒有航班';
     if (s.body <= 25) return '身體太差，坐不了長途機';
-    if (s.cr < tripCost(s, d)) return '旅費不足（要 $' + tripCost(s, d).toLocaleString() + '）';
+    if (s.cr < tripCost(s, d, 'budget')) return '旅費不足（廉航也要 $' + tripCost(s, d, 'budget').toLocaleString() + '）';
     return null;
   }
   function destInfo(s, id, meta) {
     const d = D.DEST[id];
     const risk = flightRisk(s);
-    return { id: d.id, name: d.name, region: D.REGIONS[d.region], kind: D.KINDS[d.kind], desc: d.desc, cost: tripCost(s, d), stay: d.stay,
+    const fares = Object.keys(D.FARES).map((f) => ({ id: f, name: D.FARES[f].name, desc: D.FARES[f].desc, cost: tripCost(s, d, f), risk: flightRisk(s, f), ok: s.cr >= tripCost(s, d, f) }));
+    return { id: d.id, name: d.name, region: D.REGIONS[d.region], kind: D.KINDS[d.kind], desc: d.desc, cost: tripCost(s, d), stay: d.stay, fares,
+      deal: deal(s).dest === d.id ? deal(s) : null, souvenir: D.OBJECTS.filter((o) => o.souvenir === d.region).map((o) => o.name),
       flight: risk, locked: !!(d.when && !d.when(s)), lockText: d.lockText, visited: (s.visited && s.visited[id]) || 0, reason: destReason(s, d),
-      sites: d.sites.map((st) => ({ id: st.id, name: st.name, desc: st.desc, body: st.body, spark: st.spark, gain: st.gain.map((g) => D.CARDS[g].name),
+      sites: d.sites.map((st) => ({ id: st.id, name: st.name, desc: st.desc, body: siteBody(s, st), spark: st.spark, gain: st.gain.map((g) => D.CARDS[g].name),
         risk: siteRisk(s, st), need: needReason(s, st), rare: rareHint(s, st, meta) })) };
   }
   function worldList(s, meta) { return D.DESTINATIONS.map((d) => destInfo(s, d.id, meta)); }
 
-  function startTrip(s, id) {
+  function startTrip(s, id, fare) {
     const d = D.DEST[id];
+    fare = D.FARES[fare] ? fare : 'economy';
+    const F = D.FARES[fare];
     const reason = d ? destReason(s, d) : '沒有這個地方';
     if (reason) return { ok: false, msg: reason };
-    const cost = tripCost(s, d);
-    const rep = R.report(s, '出發：' + d.name);
+    const cost = tripCost(s, d, fare);
+    if (s.cr < cost) return { ok: false, msg: F.name + '要 $' + cost.toLocaleString() };
+    const rep = R.report(s, '出發：' + d.name + '（' + F.name + '）');
     s.cr -= cost;
-    rep.line('機票與住宿', 'cost', -cost, 'cr');
+    rep.line((deal(s).dest === id ? '特價機票與住宿' : '機票與住宿') + '（' + F.name + '）', 'cost', -cost, 'cr');
     s.stats.flights = (s.stats.flights || 0) + 1;
-    const risk = flightRisk(s);
-    if (R.rand(s) < risk) {
-      R.kill(s, 'plane');
+    const risk = flightRisk(s, fare);
+    s.trip = { dest: id, start: s.day, until: s.day + d.stay - 1, visits: {}, fare };
+    if (R.rand(s) < risk && R.kill(s, 'plane', rep)) {
       rep.line('你坐的航班沒有抵達' + d.name + '。', 'bad');
       return { ok: true, rep: rep.done() };
     }
     if (risk > 0.005) rep.line('航班平安降落（致命機會 ' + pctText(risk) + '）', '');
-    s.trip = { dest: id, start: s.day, until: s.day + d.stay - 1, visits: {} };
+    const fresh = !s.visited[id];
     s.visited[id] = (s.visited[id] || 0) + 1;
     s.stats.trips = (s.stats.trips || 0) + 1;
     rep.line('你飛到了' + d.name + '。' + d.desc, 'good');
-    R.hurt(s, 6, 'flight'); rep.delta('body', -6);
-    rep.delta('spark', R.addSpark(s, s.visited[id] === 1 ? 0.4 : 0.15));
+    if (F.body > 0) { R.hurt(s, F.body, 'flight'); rep.delta('body', -F.body); } else { R.heal(s, -F.body); rep.delta('body', -F.body); }
+    rep.delta('spark', R.addSpark(s, (s.visited[id] === 1 ? 0.4 : 0.15) + F.spark, true));
+    // 護照印章
+    if (fresh) {
+      const n = stamps(s);
+      rep.line('護照多了一個印章（本局第 ' + n + ' 個）', 'good');
+      const m = D.STAMPS.find((x) => x.n === n);
+      if (m) {
+        rep.line('護照印章 ' + n + ' 個：' + m.text + '！', 'legend');
+        if (n === 6) s.objSlots = Math.min(6, s.objSlots + 1);
+      }
+    }
     R.train(s, { insight: 0.6, imag: 0.6 }, rep);
     // 第一次去的地方一定會學到新東西
     if (s.visited[id] === 1) R.teach(s, 'trip_' + d.kind, 1, rep);
@@ -237,11 +273,29 @@
     return { ok: true, rep: rep.done() };
   }
   // 白天的行動：探索點、在旅館休息、提早回程
+  // 紀念品店：只在當地買得到的靈感物件
+  function souvenirs(s) {
+    if (!s.trip) return [];
+    const region = D.DEST[s.trip.dest].region;
+    return D.OBJECTS.filter((o) => o.souvenir === region).map((o) => {
+      const own = s.objects.includes(o.id) || s.objStash.includes(o.id);
+      return { id: o.id, name: o.name, desc: o.desc, rarity: o.rarity, price: o.price, owned: own,
+        reason: own ? '已擁有' : s.cr < o.price ? '錢不夠' : s.objects.length >= s.objSlots && s.objStash.length >= 4 ? '物件欄和儲物箱都滿了' : null };
+    });
+  }
+  function buySouvenir(s, id) {
+    const o = souvenirs(s).find((x) => x.id === id);
+    if (!o || o.reason) return { ok: false, msg: o ? o.reason : '這裡沒有這件紀念品' };
+    s.cr -= o.price;
+    R.gainObject(s, id, null);
+    s.stats.souvenirs = (s.stats.souvenirs || 0) + 1;
+    return { ok: true, msg: '買下了紀念品「' + o.name + '」' };
+  }
   function tripActions(s) {
     const d = D.DEST[s.trip.dest];
     const list = d.sites.map((st) => {
       const n = s.trip.visits[st.id] || 0;
-      const fx = [['body', '−' + st.body]];
+      const fx = [['body', siteBody(s, st) >= 0 ? '−' + siteBody(s, st) : '+' + -siteBody(s, st)]];
       if (st.spark) fx.push(['spark', '+' + round1(st.spark * (n ? 0.5 : 1))]);
       fx.push(['card', n ? '再去一次：一張' : st.gain.map((g) => D.CARDS[g].name).join('、')]);
       if (st.atone) fx.push(['soul', '−' + st.atone + ' 克']);
@@ -252,7 +306,7 @@
       const risk = siteRisk(s, st);
       if (risk > 0) fx.push(['danger', '致命 ' + pctText(risk)]);
       return { id: 'site:' + st.id, group: 'trip', name: st.name + (n ? '（第 ' + (n + 1) + ' 次）' : ''), sub: st.desc, fx,
-        reason: needReason(s, st) || (s.body <= st.body ? '身體撐不住' : null) };
+        reason: needReason(s, st) || (s.body <= siteBody(s, st) ? '身體撐不住' : null) };
     });
     list.push({ id: 'rest', group: 'trip', name: '在旅館休息', sub: '睡到自然醒，窗外是' + d.name, fx: [['body', '+18'], ['spark', '+0.3']] });
     list.push({ id: 'tripback', group: 'trip', name: '提早回程', sub: '旅費不會退還', fx: [['note', '回到浮城']].concat(flightRisk(s) > 0.005 ? [['danger', '航班致命 ' + pctText(flightRisk(s))]] : []) });
@@ -266,19 +320,21 @@
     s.stats.sites = (s.stats.sites || 0) + 1;
     s.stats.actions.site = (s.stats.actions.site || 0) + 1;
     rep.line(st.desc, '');
-    R.hurt(s, st.body, 'site', { dest: d.id }); rep.delta('body', -st.body);
+    const body = siteBody(s, st);
+    if (body > 0) R.hurt(s, body, 'site', { dest: d.id }); else R.heal(s, -body);
+    rep.delta('body', -body);
     if (st.spark) rep.delta('spark', R.addSpark(s, st.spark * (n > 1 ? 0.5 : 1)));
     // 致命危險
     const risk = siteRisk(s, st);
     if (risk > 0) {
-      if (R.rand(s) < risk) { R.kill(s, st.risk.death); rep.line('……', 'bad'); return rep.done(); }
-      rep.line('有驚無險（致命機會 ' + pctText(risk) + '）', '');
+      if (R.rand(s) < risk) { if (R.kill(s, st.risk.death, rep)) { rep.line('……', 'bad'); return rep.done(); } }
+      else rep.line('有驚無險（致命機會 ' + pctText(risk) + '）', '');
     }
     (n > 1 ? [R.pick(s, st.gain)] : st.gain).forEach((id) => rep.gain(id));
     // 極稀有素材：只在特定條件下出現
     const r = st.rare;
     if (r && !owned(s, r.id) && !s.rares[r.id]) {
-      if (r.cond(s) && R.rand(s) < r.chance) {
+      if (r.cond(s) && R.rand(s) < r.chance + (perk(s).rareBonus || 0)) {
         s.rares[r.id] = s.day;
         rep.line('極稀有素材！你找到了「' + D.CARDS[r.id].name + '」。' + r.text + '。', 'legend');
         rep.gain(r.id);
@@ -318,8 +374,9 @@
     const first = s.visited[d.id] === 1;
     s.glow = { until: s.day + 7, x: (first ? 1.6 : 1.3) + (first && (d.kind === 'alien' || d.kind === 'legend') ? 0.2 : 0), dest: d.id };
     s.stats.flights = (s.stats.flights || 0) + 1;
-    const risk = flightRisk(s);
-    if (R.rand(s) < risk) { R.kill(s, 'plane'); rep.line('回程的航班沒有抵達浮城。', 'bad'); return; }
+    const risk = flightRisk(s, s.trip.fare);
+    if (R.rand(s) < risk && R.kill(s, 'plane', rep)) { rep.line('回程的航班沒有抵達浮城。', 'bad'); return; }
+    s.gear.insurance = false;
     rep.line('你離開' + d.name + '，飛回浮城。' + (risk > 0.005 ? '（航班致命機會 ' + pctText(risk) + '）' : ''), 'news');
     rep.line('旅行的餘韻：之後七晚的作品 ×' + s.glow.x, 'good');
     s.trip = null;
@@ -358,6 +415,6 @@
     decorOn, decorList, buyDecor, decorDaily,
     workPrice, galleryOffers, sellWork, galleryMult, commissions, settleCommissions,
     antiqueOffers, buyAntique, cardPrice, sellCards, sellCard,
-    tripCost, flightRisk, tripMult, siteRisk, destInfo, worldList, startTrip, tripActions, applySite, tripRest, flyHome, leaveTrip, tripNight, rareHint, rareList,
+    tripCost, flightRisk, tripMult, deal, stamps, stampBonus, souvenirs, buySouvenir, siteBody, siteRisk, destInfo, worldList, startTrip, tripActions, applySite, tripRest, flyHome, leaveTrip, tripNight, rareHint, rareList,
   };
 });

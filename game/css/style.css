@@ -713,3 +713,77 @@ body.ct-open { overflow: hidden; }
 .recipe.legend { border-color: #ffd36b; }
 .recipe.legend b { color: #ffd36b; }
 .ct-paid { color: var(--cash); font-size: 14px; margin: 4px 0; }
+
+/* ---------- 第四期：角色稀有度、扭蛋機、浮城百貨、機票 ---------- */
+.rar { display: inline-block; font-family: var(--font-pixel); font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 3px; margin-right: 6px; vertical-align: middle; color: #0a0e17; font-weight: 700; }
+.rar.r-R { background: #8db7d6; }
+.rar.r-SR { background: #c38bff; }
+.rar.r-UR { background: linear-gradient(90deg, #ffd36b, #ff8fd1, #9be36b, #ffd36b); background-size: 300% 100%; animation: ur-shine 3s linear infinite; }
+@keyframes ur-shine { to { background-position: 300% 0; } }
+.ch-img { image-rendering: pixelated; display: block; }
+.hud-day .ch-img { display: inline-block; width: 16px; height: 24px; margin-right: 4px; align-self: center; }
+.bg-card { position: relative; }
+.bg-card .bg-top { display: flex; justify-content: space-between; align-items: center; min-height: 16px; }
+.bg-card .bg-por { display: flex; justify-content: center; padding: 4px 0; }
+.bg-card.r-SR { border-color: rgba(195, 139, 255, 0.55); }
+.bg-card.r-UR { border-color: rgba(255, 211, 107, 0.7); box-shadow: 0 0 14px rgba(255, 211, 107, 0.18); background-image: linear-gradient(160deg, rgba(255, 211, 107, 0.1), transparent 55%); }
+.bg-card.locked { opacity: 0.7; }
+.bg-card.locked .n { color: var(--mute); }
+.alien-tag { font-size: 10px; color: var(--alien); border: 1px solid var(--alien); border-radius: 999px; padding: 1px 6px; }
+.bg-detail { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.bg-detail > :last-child:not(:nth-child(2)) { grid-column: 1 / -1; }
+.bg-detail .bg-big { padding: 8px; background: var(--deck-2); border-radius: var(--r); }
+.bg-detail.r-UR .bg-big { box-shadow: 0 0 0 1px #ffd36b, 0 0 18px rgba(255, 211, 107, 0.35); }
+.bg-detail.r-SR .bg-big { box-shadow: 0 0 0 1px #c38bff; }
+.bg-detail .p { color: var(--spark); font-weight: 700; }
+.btn-row.left { justify-content: flex-start; margin-top: 6px; }
+.gacha-btn small { display: block; font-size: 10px; color: var(--spark); }
+.tickets-note { text-align: center; color: var(--spark); }
+/* 扭蛋機 */
+.modal.gacha { text-align: center; }
+.gacha-machine { margin: 12px auto; width: 140px; }
+.gacha-machine .globe { position: relative; height: 110px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), rgba(55,195,214,0.15) 60%); border: 3px solid #8e9bb0; overflow: hidden; }
+.gacha-machine .globe i { position: absolute; width: 26px; height: 26px; border-radius: 50%; left: calc(8px + var(--i) * 18px); top: calc(48px + var(--i) * 7px);
+  background: linear-gradient(180deg, hsl(calc(var(--i) * 60), 80%, 65%) 50%, #e8edf6 50%); border: 2px solid #0a0e17; }
+.gacha-machine .slot { height: 34px; margin: 0 16px; background: #d6334a; border: 3px solid #0a0e17; border-top: 0; border-radius: 0 0 8px 8px; }
+.gacha-machine.spin .globe i { animation: tumble 0.25s linear infinite alternate; }
+.gacha-machine.spin { animation: machine-shake 0.12s linear infinite; }
+@keyframes tumble { to { transform: translate(6px, -24px) rotate(180deg); } }
+@keyframes machine-shake { 50% { transform: translateX(2px) rotate(1deg); } }
+.gacha-result { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; border-radius: var(--r); background: var(--deck-2); animation: reveal 0.6s ease-out; }
+.gacha-result.r-UR { box-shadow: 0 0 0 2px #ffd36b, 0 0 40px rgba(255, 211, 107, 0.5); }
+.gacha-result.r-SR { box-shadow: 0 0 0 2px #c38bff, 0 0 24px rgba(195, 139, 255, 0.4); }
+.gacha-result h3 { margin: 4px 0 0; }
+.gacha-result p { margin: 0; font-size: 13px; }
+@keyframes reveal { from { transform: scale(0.4) rotate(-8deg); opacity: 0; } 70% { transform: scale(1.08); } to { transform: none; opacity: 1; } }
+.tickets b { color: var(--spark); }
+@media (prefers-reduced-motion: reduce) { .gacha-machine.spin, .gacha-machine.spin .globe i, .gacha-result, .rar.r-UR { animation: none; } }
+/* 浮城百貨 */
+.store-cash { font-size: 14px; margin-bottom: 6px; }
+.store-cash b { color: var(--cash); font-size: 20px; }
+.store-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.store-tab { flex: 1 1 auto; padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--deck); color: var(--mute); font-weight: 700; font-size: 13px; cursor: pointer; }
+.store-tab small { margin-left: 4px; font-size: 10px; color: var(--cash); }
+.store-tab.on { color: #fff; border-color: var(--spark); box-shadow: inset 0 -2px 0 var(--spark); background: var(--deck-2); }
+.store-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.store-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); background: rgba(23, 32, 54, 0.6); }
+.store-item.owned { opacity: 0.6; }
+.store-item.r-rare { border-color: rgba(195, 139, 255, 0.5); }
+.store-item.r-legend { border-color: rgba(255, 211, 107, 0.6); }
+.store-icon { width: 56px; height: 56px; display: grid; place-items: center; background: #0a0e17; border-radius: var(--r); box-shadow: inset 0 0 0 1px var(--line); }
+.px-icon.item { image-rendering: pixelated; }
+.store-txt { display: flex; flex-direction: column; gap: 2px; font-size: 13px; min-width: 0; }
+.store-txt b { font-size: 14px; }
+.store-open { width: 100%; margin-top: 6px; }
+.chip.stamp { border-color: #ffd36b; color: #ffd36b; }
+/* 機票 */
+.fares { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 8px; }
+.fare { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--deck-2); cursor: pointer; }
+.fare b { font-size: 15px; }
+.fare .num { font-size: 22px; color: var(--cash); }
+.fare small { color: var(--mute); font-size: 11px; }
+.fare:hover:not([disabled]) { border-color: var(--spark); }
+.fare[disabled] { opacity: 0.45; cursor: not-allowed; }
+.fare-first { border-color: rgba(255, 211, 107, 0.5); }
+.fare-budget { border-color: rgba(55, 195, 214, 0.4); }
+.deal-tag { display: inline-block; margin-left: 8px; font-size: 12px; vertical-align: middle; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 999px; }

@@ -2,6 +2,7 @@
 // 平衡模擬：以與遊戲相同的規則，用不同策略各跑數百局，檢驗核心矛盾是否成立。
 // 用法：node tools/sim.js [局數]　　DIST=1：查看訊號分佈　STRAT=名稱：只跑指定策略　TYPES=1：人類模組分佈
 //   ECON=1：存款與作品分數分佈　GIFT=400：每 10 天送錢　TRAVEL_MARGIN=0：「有節奏」機械人有錢就旅行　TRACE=1：逐個時段列出選擇
+//   BGS=1：只跑每個角色的比較　CHECK=1：每個行動後檢查素材資料
 // 每個策略 = 行動方式 + 道德取向：
 //   - 道德取向：saint（永遠選擇良心）、pragmatist（缺錢或有大好處就妥協，臨近篩選日會贖罪）、shameless（永遠選擇利益）
 // 設計目標：
@@ -10,7 +11,7 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'rules.js', 'create.js', 'world.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'rules.js', 'create.js', 'world.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR, World: W } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
@@ -192,7 +193,7 @@ function act(s, id, rng, moral) {
     case 'tripback': return W.leaveTrip(s);
   }
   if (id.startsWith('site:')) return W.applySite(s, id.slice(5));
-  if (id.startsWith('trip:')) return W.startTrip(s, id.slice(5)).rep;
+  if (id.startsWith('trip:')) { const [, d, f] = id.split(':'); return W.startTrip(s, d, f).rep; }
 }
 const enabled = (s, id) => { const a = R.actions(s).find((x) => x.id === id); return a && a.enabled; };
 const firstEnabled = (s, ids) => ids.find((id) => enabled(s, id)) || 'rest';
@@ -207,10 +208,13 @@ const daysToReview = (s) => R.reviewDay(s) - s.day;
 function travelChoice(s, margin) {
   if (s.trip || R.isNight(s) || s.slot !== 0 || daysToReview(s) <= 2 || s.body < 45) return null;
   const spare = s.cr - moneyNeed(s) - margin;
-  const opts = W.worldList(s).filter((d) => !d.reason && d.cost <= spare);
+  // 錢夠就坐經濟艙，不夠就坐廉航
+  const opts = W.worldList(s).filter((d) => !d.reason).map((d) => Object.assign(d, { fare: d.fares.find((f) => f.id === 'economy').cost <= spare ? 'economy' : 'budget' }))
+    .filter((d) => d.fares.find((f) => f.id === d.fare).cost <= spare);
   if (!opts.length) return null;
-  const score = (d) => (d.sites.some((x) => x.rare && x.rare.ready) ? 100 : 0) + (d.visited ? 0 : 30) - d.cost / 100;
-  return 'trip:' + opts.sort((a, b) => score(b) - score(a))[0].id;
+  const score = (d) => (d.sites.some((x) => x.rare && x.rare.ready) ? 100 : 0) + (d.visited ? 0 : 30) + (d.deal ? 25 : 0) - d.cost / 100;
+  const best = opts.sort((a, b) => score(b) - score(a))[0];
+  return 'trip:' + best.id + ':' + best.fare;
 }
 // 想去的下一個地方的旅費（沒去過的優先）
 function travelTarget(s) {
@@ -219,6 +223,8 @@ function travelTarget(s) {
   return Math.min(...(fresh.length ? fresh : opts).map((d) => d.cost)) + 30;
 }
 function tripChoice(s) {
+  // 有餘錢就買當地的紀念品
+  W.souvenirs(s).filter((o) => !o.reason && s.cr - o.price > moneyNeed(s) + 100).slice(0, 1).forEach((o) => W.buySouvenir(s, o.id));
   const acts = R.actions(s).filter((a) => a.enabled);
   if (s.body < 30) return 'rest';
   const d = W.destInfo(s, s.trip.dest);
@@ -399,6 +405,7 @@ function runOne(strat, bg, season, seed) {
       if (careful && D.OUTDOOR.includes(choice) && R.outdoorRisk(s) >= 0.03) choice = R.isNight(s) ? 'rest' : (['label', 'smile', 'farm', 'clinic', 'chat', 'rest'].find((id) => enabled(s, id)) || 'rest');
       if (process.env.TRACE) console.log('D' + s.day + '/' + slot, choice, '$' + s.cr, 'need', moneyNeed(s), 'body', s.body, 'spark', s.spark.toFixed(1));
       act(s, choice, rng, S.moral);
+      if (process.env.CHECK) { const bad = s.cards.find((c) => !c.tags); if (bad) { console.log('BAD CARD after', choice, JSON.stringify(bad)); process.exit(1); } }
       if (s.body <= 0) break;
     }
     if (s.day === R.reviewDay(s)) signals.push(R.signal(s));
@@ -454,7 +461,7 @@ if (process.env.ECON) {
 // STRAT=名稱：只跑一個策略
 const only = process.env.STRAT ? process.env.STRAT.split(',') : Object.keys(STRATEGIES);
 console.log('訊號門檻：' + D.THRESHOLDS.join(' / ') + '　靈魂上限：' + R.SOUL_LIMIT + ' 克　每個策略 ' + RUNS + ' 局\n');
-for (const strat of only) {
+for (const strat of (process.env.BGS ? [] : only)) {
   const res = [];
   for (let i = 0; i < RUNS; i++) res.push(runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % seasons.length], 1000 + i));
   const count = (f) => res.filter(f).length;

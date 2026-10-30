@@ -87,6 +87,7 @@
         { id: 'phone', x: 190, y: 86, w: 16, h: 14, label: '手機', sub: '商店與今天的動態' },
         { id: 'rest', x: 50, y: 100, w: 70, h: 34, label: night ? '早點睡' : '休息', sub: '身體 +' + (22 + (IE.World.decorOn(s, 'bed') ? 3 : 0)), off: off('rest') },
         { id: 'objects', x: 54, y: 30, w: 80, h: 20, label: '靈感物件', sub: s.objects.length + '/' + s.objSlots + ' 件・按一下排列' },
+        { id: 'gear', x: 54, y: 56, w: 48, h: 36, label: '道具掛牆', sub: '買過的裝備會掛在這裡・按一下打開浮城百貨' },
         { id: 'works', x: 140, y: 12, w: 66, h: 48, label: '作品牆', sub: s.works.length + ' 件作品・賣畫與天空區委託' },
         { id: 'city', x: 226, y: 22, w: 74, h: 70, label: '窗外', sub: '看看浮城的橫切面' },
         { id: 'decor', x: 122, y: 136, w: 18, h: 12, label: '家具目錄', sub: '用錢把這裡變成一個家' },
@@ -143,6 +144,14 @@
       if (has('poster')) {
         rect(c, 104, 58, 20, 28, '#1b1b28'); rect(c, 105, 59, 18, 26, '#d6334a');
         rect(c, 108, 62, 12, 10, '#1b1b28'); rect(c, 110, 64, 8, 6, '#ffd36b'); rect(c, 107, 76, 14, 2, '#1b1b28'); rect(c, 109, 80, 10, 2, '#1b1b28');
+      }
+      // 道具掛牆：買過的裝備都掛在這裡
+      const GEAR = [['helmet', 'helmet'], ['gasmask', 'gasmask'], ['lifejacket', 'jacket'], ['tank', 'tank'], ['harpoon', 'harpoon'], ['bag', 'backpack'], ['amulet', 'amulet'], ['earplugs', 'earplug'], ['insurance', 'paper']];
+      const owned = GEAR.filter(([g]) => s.gear[g]);
+      if (owned.length) {
+        rect(c, 54, 56, 48, 36, '#5a4a3a');
+        for (let yy = 59; yy < 92; yy += 4) for (let xx = 57; xx < 102; xx += 4) rect(c, xx, yy, 1, 1, '#3b2a1e');
+        owned.slice(0, 6).forEach(([g, ic], i) => { rect(c, 61 + (i % 3) * 14, 57 + Math.floor(i / 3) * 17, 2, 2, '#c9d1dc'); icon(c, ic, IE.Icons.ITEM_PAL[ic], 56 + (i % 3) * 14, 60 + Math.floor(i / 3) * 17); });
       }
       // 床
       if (has('bed')) {
@@ -211,7 +220,7 @@
       }
       // 你：白天在房間裡踱步，晚上站在書桌前
       const px = night ? 166 : 150 + Math.round(Math.sin(t * 0.4) * 26), py = 134;
-      P.sprite(c, 'player', px, py - 24 + (night ? 0 : Math.round(Math.abs(Math.sin(t * 3)) * -1)), { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5), flip: !night && Math.cos(t * 0.4) < 0 });
+      P.sprite(c, IE.Chars.spr(s), px, py - 24 + (night ? 0 : Math.round(Math.abs(Math.sin(t * 3)) * -1)), { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5), flip: !night && Math.cos(t * 0.4) < 0 });
       IE.Scenes.City.drawStones(c, s, px + 13, py - 6);
       if (Math.random() < Math.max(0, s.spark - 0.5) * 0.05) this.fx.add({ x: px + 8, y: py - 24, vx: (Math.random() - 0.5) * 6, vy: -10 - Math.random() * 8, life: 1.4, color: Math.random() < 0.7 ? '#ffc247' : '#ff8a3c' });
       // 窗口的光
@@ -252,7 +261,7 @@
       rect(c, 130, 124, 30, 8, '#eef1f7'); rect(c, 132, 126, 12, 1, '#8d99b4'); rect(c, 112, 124, 8, 8, '#1b1b28');
       rect(c, 178, 116, 26, 18, '#e8edf6'); rect(c, 180, 114, 4, 4, '#e8edf6');
       s.objects.forEach((id, i) => { const o = D.OBJ[id]; if (o && i < 2) icon(c, o.icon, o.pal, 180 + i * 10, 120); });
-      P.sprite(c, 'player', 90, 108, { desat: Math.max(0, 1 - s.spark / 2.5) });
+      P.sprite(c, IE.Chars.spr(s), 90, 108, { desat: Math.max(0, 1 - s.spark / 2.5) });
       IE.Scenes.City.drawStones(c, s, 96, 119);
       if (night) { const bx = 160 + Math.sin(t * 0.5) * 140; c.fillStyle = 'rgba(200,255,250,0.1)'; c.beginPath(); c.moveTo(bx - 3, 0); c.lineTo(bx + 3, 0); c.lineTo(bx + 20, 146); c.lineTo(bx - 20, 146); c.closePath(); c.fill(); }
       if (season.weather !== 'heat') { c.fillStyle = 'rgba(170,210,255,0.35)'; for (let i = 0; i < 30; i++) c.fillRect((i * 37 + t * 50) % 320, 22 + (i * 29 + t * 160) % 120, 1, 3); }
@@ -271,7 +280,7 @@
   // =====================================================================
   // 島：浮城的建築群
   const ISLANDS = [[70, 40, 50, 36], [40, 88, 44, 32], [92, 80, 70, 30], [140, 84, 40, 30], [228, 96, 46, 30], [176, 78, 30, 26],
-    [250, 60, 44, 28], [104, 118, 42, 22], [14, 128, 44, 26], [272, 128, 46, 34]];
+    [250, 60, 44, 28], [104, 118, 42, 22], [14, 128, 44, 26], [272, 128, 46, 34], [220, 62, 26, 18]];
   const SKY = [[186, 14, 46, 22], [232, 20, 48, 24]];
   const BRIDGES = [[120, 96, 20, 3], [162, 92, 14, 3], [206, 90, 22, 3], [84, 100, 8, 3], [112, 76, 3, 6], [246, 88, 3, 8], [120, 110, 3, 8], [58, 120, 3, 8], [272, 124, 3, 4]];
   const CityMap = scene('map', {
@@ -286,7 +295,7 @@
           const a = acts.find((x) => x.id === p.act);
           off = !a || !a.enabled;
           sub = a ? (a.enabled ? a.name : a.name + '：' + (a.reason || '')) : isNight(s) ? '晚上不開放' : '';
-        } else sub = { room: '回家', antique: '買賣古董與旅行素材', gallery: '賣畫、接委託', world: '世界地圖：出國找素材' }[p.ui] || '';
+        } else sub = { room: '回家', antique: '買賣古董與旅行素材', gallery: '賣畫、接委託', world: '世界地圖：出國找素材', store: '生活、保命、潛水、創作、房屋、黑市' }[p.ui] || '';
         return { id: p.id, x: p.x - 10, y: p.y - 10, w: 20, h: 20, label: p.name, sub, off, place: p };
       });
     },
@@ -374,6 +383,7 @@
     shelter: ['...##...', '..####..', '.######.', '########', '#.####.#', '#.#..#.#', '#.#..#.#', '########'],
     market: ['########', '#.#.#.#.', '########', '.#....#.', '.#.##.#.', '.#.##.#.', '.#....#.', '.######.'],
     plane: ['...#....', '...##...', '#..##...', '########', '#..##...', '...##...', '...#....', '........'],
+    shop: ['..####..', '.#....#.', '########', '#......#', '#.#..#.#', '#......#', '#......#', '########'],
   };
   function MAP_ICON(c, id, x, y, col) {
     const rows = MI[id] || MI.home;
@@ -437,7 +447,7 @@
         const def = D.DEST[d.id];
         const rare = d.sites.some((x) => x.rare && x.rare.ready);
         return { id: d.id, x: def.x - 6, y: def.y - 6, w: 12, h: 12, label: d.name + (d.visited ? '　✓' : ''),
-          sub: d.locked ? '🔒 ' + d.lockText : d.kind.name + '・$' + d.cost.toLocaleString() + '・' + d.stay + ' 天' + (rare ? '・極稀有素材時機已到' : ''),
+          sub: d.locked ? '🔒 ' + d.lockText : d.kind.name + '・$' + d.cost.toLocaleString() + (d.deal ? '（特價）' : '') + '・' + d.stay + ' 天' + (rare ? '・極稀有素材時機已到' : ''),
           off: d.locked, color: d.kind.color, dest: d, rare };
       });
       out.push({ id: 'home', x: D.HOME.x - 6, y: D.HOME.y - 6, w: 12, h: 12, label: '浮城', sub: s.trip ? '你現在在' + D.DEST[s.trip.dest].name : '你在這裡', color: '#ff4fb4' });
@@ -489,19 +499,21 @@
         c.fillStyle = col;
         c.beginPath(); c.moveTo(cx, cy - 4); c.lineTo(cx + 3, cy); c.lineTo(cx, cy + 4); c.lineTo(cx - 3, cy); c.closePath(); c.fill();
         if (sp.dest.visited) rect(c, cx - 1, cy - 1, 2, 2, '#ffffff');
+        if (sp.dest.deal && !sp.off) { rect(c, cx + 3, cy - 9, 7, 5, '#ff4d5e'); rect(c, cx + 4, cy - 8, 1, 1, '#ffffff'); rect(c, cx + 8, cy - 6, 1, 1, '#ffffff'); rect(c, cx + 5, cy - 7, 3, 1, '#ffffff'); }
         if (sp.off) { rect(c, cx - 1, cy - 1, 3, 2, '#1b1b28'); }
         // 極稀有素材的時機到了：金光
         if (sp.rare && Math.random() < 0.3) this.fx.add({ x: cx + (Math.random() - 0.5) * 8, y: cy + (Math.random() - 0.5) * 8, vy: -8, life: 0.8, color: '#ffd36b' });
         if (sp.id === this.hover) { c.strokeStyle = '#ffffff'; c.strokeRect(sp.x + 0.5, sp.y + 0.5, 11, 11); }
       });
       // 旅行中：你在目的地
-      if (s.trip) { const d = D.DEST[s.trip.dest]; P.sprite(c, 'player', d.x - 4, d.y - 18 + Math.round(Math.sin(t * 3)), {}); }
+      if (s.trip) { const d = D.DEST[s.trip.dest]; P.sprite(c, IE.Chars.spr(s), d.x - 4, d.y - 18 + Math.round(Math.sin(t * 3)), {}); }
       this.fx.draw(c);
     },
     drawText() {
       const s = S();
       if (!s) return;
       P.text('世界地圖・2080', 4, 3, { size: 7, color: '#e8edf6', stroke: '#0a0e17' });
+      P.text('護照印章 ' + IE.World.stamps(s) + '・去過 ' + Object.keys(s.visited || {}).length + '/' + D.DESTINATIONS.length, 4, 13, { size: 5, color: '#ffd36b', stroke: '#0a0e17' });
       P.text('你有 $' + Math.round(s.cr).toLocaleString(), 316, 168, { size: 7, color: '#8be28f', stroke: '#0a0e17', align: 'right' });
       const K = D.KINDS;
       let x = 4;
@@ -528,6 +540,7 @@
           sub: !a ? '晚上不能探索' : a.enabled ? st.desc : a.reason, off: !a || !a.enabled, rare: h && h.ready && !h.found, site: st };
       });
       out.push({ id: 'rest', x: 2, y: 140, w: 34, h: 30, label: isNight(s) ? '早點睡' : '在旅館休息', sub: '身體 +18' });
+      out.push({ id: 'souvenir', x: 38, y: 142, w: 30, h: 28, label: '紀念品店', sub: '只在當地買得到的靈感物件・不用花時段' });
       const back = acts.find((x) => x.id === 'tripback');
       out.push({ id: 'tripback', x: 284, y: 140, w: 34, h: 30, label: '提早回程', sub: back ? '旅費不會退還' : '晚上沒有航班', off: !back });
       return out;
@@ -555,6 +568,8 @@
         if (sp.rare && Math.random() < 0.4) this.fx.add({ x: cx + (Math.random() - 0.5) * 14, y: cy - 6 + (Math.random() - 0.5) * 10, vy: -10, life: 0.9, color: '#ffd36b' });
         if (sp.id === this.hover) { c.strokeStyle = '#ffffff'; c.strokeRect(sp.x + 0.5, sp.y + 0.5, sp.w - 1, sp.h - 1); }
       });
+      // 紀念品攤
+      rect(c, 40, 150, 26, 18, '#8a5a3b'); for (let i = 0; i < 4; i++) rect(c, 40 + i * 7, 144, 6, 6, i % 2 ? '#ff4fb4' : '#ffd36b'); rect(c, 44, 154, 6, 6, '#37c3d6'); rect(c, 54, 154, 6, 6, '#9be36b');
       // 旅館與飛機
       rect(c, 4, 146, 28, 22, '#eef1f7'); rect(c, 4, 142, 28, 5, '#d6334a'); rect(c, 8, 152, 5, 6, night ? '#ffd36b' : '#37c3d6'); rect(c, 22, 152, 5, 6, night ? '#ffd36b' : '#37c3d6'); rect(c, 14, 160, 6, 8, '#6b4a32');
       const py = 152 + Math.round(Math.sin(t * 2));
@@ -562,7 +577,7 @@
       // 你（在水上的地方坐船）
       const bob = Math.round(Math.sin(t * 2) * (d.landmark === 'sunken' || d.landmark === 'pyramid' ? 1.5 : 0.5));
       if (d.landmark === 'sunken' || d.landmark === 'pyramid') { rect(c, 140, 158 + bob, 40, 5, '#1b1b28'); rect(c, 136, 155 + bob, 6, 4, '#1b1b28'); rect(c, 178, 155 + bob, 6, 4, '#1b1b28'); rect(c, 142, 158 + bob, 36, 1, '#e8c25a'); }
-      P.sprite(c, 'player', 152, 134 + bob, { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5) });
+      P.sprite(c, IE.Chars.spr(s), 152, 134 + bob, { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5) });
       IE.Scenes.City.drawStones(c, s, 165, 152 + bob);
       if (night) { c.fillStyle = 'rgba(5,7,20,0.35)'; c.fillRect(0, 0, 320, 180); }
       this.fx.draw(c);
@@ -719,6 +734,116 @@
       for (let i = 0; i < 6; i++) { const fx = (t * (10 + i * 3) + i * 70) % 360 - 20; rect(c, fx, 40 + i * 14, 5, 2, ['#ffc247', '#ff4fb4', '#9be36b'][i % 3]); }
       if (Math.random() < 0.2) IE.Maps.Trip.fx.add({ x: Math.random() * 320, y: 178, vy: -20, life: 3, color: '#bff3fb' });
       c.fillStyle = 'rgba(4,22,31,0.25)'; c.fillRect(0, 0, 320, 180);
+    },
+    nyc(c, t, d) {
+      for (let i = 0; i < 11; i++) { const x = i * 30 + 2, h = 30 + hash(i + 4) * 70, w = 18 + hash(i) * 8; rect(c, x, 116 - h, w, h, P.mix('#3a4562', '#8e9bb0', hash(i + 9) * 0.5)); for (let k = 0; k < h / 7; k++) for (let q = 0; q < 3; q++) if (hash(i * 31 + k * 3 + q) > 0.5) rect(c, x + 3 + q * 5, 120 - h + k * 7, 2, 3, '#ffd36b'); }
+      rect(c, 150, 30, 10, 86, '#5a6478'); rect(c, 152, 18, 6, 12, '#8e9bb0'); rect(c, 154, 8, 2, 10, '#c9d1dc');
+      rect(c, 262, 70, 6, 46, '#3d8b5a'); rect(c, 258, 64, 14, 8, '#3d8b5a'); rect(c, 270, 54, 3, 12, '#3d8b5a'); rect(c, 268, 50, 7, 5, Math.sin(t * 4) > 0 ? '#ffd36b' : '#e8c25a');
+      water(c, t, 112);
+    },
+    geyser(c, t, d) {
+      c.fillStyle = '#3a3a48'; c.beginPath(); c.moveTo(0, 110); c.lineTo(80, 70); c.lineTo(140, 100); c.lineTo(220, 60); c.lineTo(320, 96); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      ground(c, d.ground, 128);
+      const ph = (t * 0.25) % 1, hgt = ph < 0.3 ? Math.sin(ph / 0.3 * Math.PI) * 90 : 0;
+      if (hgt > 1) { c.fillStyle = 'rgba(232,240,248,0.85)'; c.fillRect(156, 128 - hgt, 10, hgt); c.fillStyle = 'rgba(232,240,248,0.4)'; c.beginPath(); c.arc(161, 128 - hgt, 14, 0, Math.PI * 2); c.fill(); }
+      for (let i = 0; i < 5; i++) { c.fillStyle = 'rgba(255,255,255,0.12)'; c.beginPath(); c.arc(60 + i * 50 + Math.sin(t + i) * 4, 118 - (t * 6 + i * 9) % 30, 6, 0, Math.PI * 2); c.fill(); }
+      [[40, 120], [250, 118]].forEach(([x, y]) => { rect(c, x, y - 10, 16, 10, '#d6334a'); rect(c, x - 2, y - 12, 20, 3, '#1b1b28'); rect(c, x + 6, y - 6, 4, 6, '#ffd36b'); });
+    },
+    moai(c, t, d) {
+      water(c, t, 128, 'rgba(14,90,110,0.9)');
+      ground(c, d.ground, 118);
+      rect(c, 0, 128, 320, 52, 'rgba(14,90,110,0.9)');
+      [[50, 1], [100, 1.2], [150, 1.4], [200, 1.2], [250, 1]].forEach(([x, k]) => {
+        const h = 50 * k;
+        rect(c, x, 118 - h, 22 * k, h, '#6b5a4a'); rect(c, x - 2, 118 - h + 4, 26 * k, 8 * k, '#5a4a3a');
+        rect(c, x + 3 * k, 118 - h + 14 * k, 5 * k, 3, '#2a2018'); rect(c, x + 13 * k, 118 - h + 14 * k, 5 * k, 3, '#2a2018'); rect(c, x + 8 * k, 118 - h + 18 * k, 5 * k, 12 * k, '#7a6a5a');
+        rect(c, x - 2, 116, 26 * k, 4, '#4a4a3a');
+      });
+    },
+    machu(c, t, d) {
+      c.fillStyle = '#2f5a3a'; c.beginPath(); c.moveTo(200, 128); c.lineTo(250, 20); c.lineTo(300, 128); c.closePath(); c.fill();
+      for (let i = 0; i < 6; i++) rect(c, 30 + i * 4, 128 - i * 10, 180 - i * 8, 10, P.mix('#3d6b2a', '#8a8a6a', (i % 2) * 0.4));
+      for (let i = 0; i < 8; i++) { rect(c, 60 + i * 16, 70, 12, 10, '#9a9a8a'); rect(c, 62 + i * 16, 66, 8, 4, '#8a5a3b'); }
+      for (let i = 0; i < 10; i++) { c.fillStyle = 'rgba(255,255,255,' + (0.2 + 0.1 * Math.sin(t + i)) + ')'; c.fillRect((i * 37 + t * 8) % 340 - 20, 40 + (i % 4) * 14, 40, 6); }
+      ground(c, d.ground, 128);
+    },
+    petra(c, t, d) {
+      rect(c, 0, 0, 90, 130, '#a8503a'); rect(c, 230, 0, 90, 130, '#a8503a');
+      rect(c, 90, 20, 140, 110, '#c46a4a');
+      rect(c, 120, 36, 80, 6, '#e08a6a'); for (let i = 0; i < 6; i++) rect(c, 124 + i * 14, 42, 6, 40, '#e08a6a');
+      rect(c, 118, 82, 84, 6, '#e08a6a'); for (let i = 0; i < 4; i++) rect(c, 128 + i * 20, 88, 8, 42, '#e08a6a');
+      rect(c, 154, 98, 12, 32, '#3a1a10');
+      if (Math.sin(t * 0.7) > 0.3) { c.fillStyle = 'rgba(255,211,107,0.18)'; c.fillRect(154, 98, 12, 32); }
+      ground(c, d.ground, 130);
+    },
+    wall(c, t, d) {
+      c.fillStyle = '#3d5a3a'; c.beginPath(); c.moveTo(0, 120); c.lineTo(60, 70); c.lineTo(120, 100); c.lineTo(190, 60); c.lineTo(260, 96); c.lineTo(320, 70); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      c.fillStyle = '#a8a08a';
+      for (let x = 0; x < 320; x++) { const y = 106 - Math.sin(x * 0.03) * 20 - (x > 160 ? (x - 160) * 0.12 : 0); c.fillRect(x, y, 1, 8); if (x % 6 < 3) c.fillRect(x, y - 3, 1, 3); }
+      [[60, 82], [190, 70], [290, 64]].forEach(([x, y]) => { rect(c, x, y - 18, 16, 20, '#9a907a'); rect(c, x + 6, y - 12, 4, 6, '#3a3a2a'); if (Math.sin(t * 5 + x) > 0.4) rect(c, x + 6, y - 24, 4, 6, '#ff8a3c'); });
+      ground(c, d.ground, 128);
+    },
+    pompeii(c, t, d) {
+      c.fillStyle = '#5a4a4a'; c.beginPath(); c.moveTo(150, 128); c.lineTo(230, 30); c.lineTo(250, 30); c.lineTo(320, 128); c.closePath(); c.fill();
+      for (let i = 0; i < 6; i++) { c.fillStyle = 'rgba(90,90,100,0.5)'; c.beginPath(); c.arc(240 + Math.sin(t * 0.5 + i) * 10, 24 - i * 6 - (t * 3 % 6), 6 + i * 2, 0, Math.PI * 2); c.fill(); }
+      for (let i = 0; i < 6; i++) { rect(c, 20 + i * 22, 70, 8, 58, '#d6c8b0'); rect(c, 17 + i * 22, 66, 14, 4, '#e8dcc4'); }
+      rect(c, 16, 62, 130, 4, '#e8dcc4');
+      ground(c, d.ground, 128);
+      c.fillStyle = 'rgba(120,110,110,0.4)'; for (let i = 0; i < 30; i++) c.fillRect((i * 41 + t * 15) % 320, (i * 23 + t * 25) % 180, 1, 1);
+    },
+    stonehenge(c, t, d) {
+      for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI, x = 160 - Math.cos(a) * 120, h = 36 + (i % 2) * 6, y = 128 - Math.sin(a) * 10; rect(c, x - 6, y - h, 12, h, '#8a8a8a'); rect(c, x - 6, y - h, 12, 2, '#a8a8a8'); if (i % 2 === 0 && i < 8) rect(c, x - 6, y - h - 5, 30, 5, '#9a9a9a'); }
+      ground(c, d.ground, 128);
+      const sx = 160 + Math.sin(t * 0.2) * 20; c.fillStyle = 'rgba(255,211,107,0.15)'; c.beginPath(); c.moveTo(sx, 60); c.lineTo(sx - 8, 128); c.lineTo(sx + 8, 128); c.closePath(); c.fill();
+    },
+    nazca(c, t, d) {
+      ground(c, d.ground, 60);
+      c.strokeStyle = '#f2d6b0'; c.lineWidth = 1;
+      // 蜂鳥
+      c.beginPath(); c.moveTo(120, 90); c.lineTo(160, 100); c.lineTo(200, 86); c.moveTo(160, 100); c.lineTo(150, 130); c.moveTo(160, 100); c.lineTo(175, 125); c.moveTo(160, 100); c.lineTo(166, 70); c.lineTo(168, 62); c.stroke();
+      // 蜘蛛
+      c.beginPath(); c.arc(60, 140, 10, 0, Math.PI * 2); for (let i = 0; i < 4; i++) { c.moveTo(50, 136 + i * 3); c.lineTo(36, 128 + i * 6); c.moveTo(70, 136 + i * 3); c.lineTo(84, 128 + i * 6); } c.stroke();
+      for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(0, 70 + i * 18); c.lineTo(320, 100 + i * 24); c.stroke(); }
+      const px = (t * 25) % 380 - 30; rect(c, px, 30, 10, 2, '#eef1f7'); rect(c, px + 3, 27, 2, 8, '#c9d1dc');
+    },
+    fossil(c, t, d) {
+      c.fillStyle = '#a8503a'; c.beginPath(); c.moveTo(0, 90); c.lineTo(60, 70); c.lineTo(110, 86); c.lineTo(170, 64); c.lineTo(240, 88); c.lineTo(320, 72); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      for (let y = 90; y < 130; y += 6) rect(c, 0, y, 320, 1, 'rgba(0,0,0,0.12)');
+      ground(c, d.ground, 128);
+      // 恐龍骨架
+      rect(c, 120, 140, 70, 3, '#e8dcc4'); for (let i = 0; i < 8; i++) rect(c, 126 + i * 7, 132, 2, 8, '#e8dcc4');
+      rect(c, 188, 132, 12, 6, '#e8dcc4'); rect(c, 196, 134, 2, 2, '#3b2a1e'); rect(c, 100, 142, 22, 2, '#e8dcc4');
+      [[240, 150], [250, 156], [262, 152]].forEach(([x, y]) => { c.fillStyle = '#e8dcc4'; c.beginPath(); c.ellipse(x, y, 4, 5, 0, 0, Math.PI * 2); c.fill(); });
+    },
+    tunguska(c, t, d) {
+      ground(c, d.ground, 110);
+      for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2, r = 30 + (i % 5) * 18, x = 160 + Math.cos(a) * r * 1.6, y = 140 + Math.sin(a) * r * 0.4; c.save(); c.translate(x, y); c.rotate(a); rect(c, 0, -1, 14, 2, '#5a4a3a'); c.restore(); }
+      const g = c.createRadialGradient(160, 140, 1, 160, 140, 30); g.addColorStop(0, 'rgba(255,138,60,' + (0.25 + 0.1 * Math.sin(t * 3)) + ')'); g.addColorStop(1, 'rgba(255,138,60,0)');
+      c.fillStyle = g; c.fillRect(120, 110, 80, 60);
+      for (let i = 0; i < 20; i++) rect(c, i * 17, 110 - 20 - hash(i) * 30, 2, 20 + hash(i) * 30, '#2a3a2a');
+    },
+    dish(c, t, d) {
+      c.fillStyle = '#2f5a2a'; c.beginPath(); c.moveTo(0, 60); c.lineTo(320, 60); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      c.fillStyle = '#c9d1dc'; c.beginPath(); c.ellipse(160, 110, 130, 26, 0, 0, Math.PI); c.fill();
+      c.fillStyle = '#8e9bb0'; c.beginPath(); c.ellipse(160, 110, 120, 20, 0, 0, Math.PI); c.fill();
+      [[50, 40], [270, 40], [160, 24]].forEach(([x, y]) => { rect(c, x, y, 3, 90 - y + 20, '#5a6478'); c.strokeStyle = '#5a6478'; c.beginPath(); c.moveTo(x + 1, y); c.lineTo(160, 62); c.stroke(); });
+      rect(c, 140, 56, 40, 10, '#4a5568'); if (Math.sin(t * 4) > 0) rect(c, 158, 66, 4, 3, '#ff4d5e');
+      ground(c, d.ground, 132);
+    },
+    shangrila(c, t, d) {
+      c.fillStyle = '#e8edf6'; c.beginPath(); c.moveTo(0, 100); c.lineTo(70, 30); c.lineTo(130, 90); c.lineTo(200, 20); c.lineTo(270, 80); c.lineTo(320, 50); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      c.fillStyle = '#8db7d6'; c.beginPath(); c.moveTo(200, 20); c.lineTo(230, 130); c.lineTo(170, 130); c.closePath(); c.fill();
+      rect(c, 120, 92, 80, 30, '#eef1f7'); rect(c, 116, 86, 88, 8, '#d6334a'); rect(c, 140, 76, 40, 10, '#e8c25a'); rect(c, 152, 100, 16, 22, '#8a3b2a');
+      for (let i = 0; i < 12; i++) rect(c, 60 + i * 18, 78 + Math.sin(t * 2 + i) * 2, 6, 5, ['#d6334a', '#ffd36b', '#37c3d6', '#9be36b', '#eef1f7'][i % 5]);
+      ground(c, d.ground, 128);
+    },
+    eldorado(c, t, d) {
+      for (let i = 0; i < 16; i++) { const x = i * 21, h = 30 + hash(i) * 30; c.fillStyle = i % 2 ? '#1d4a2a' : '#2f7a43'; c.beginPath(); c.arc(x, 100 - h * 0.3, h * 0.5, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#1e5a6a'; c.beginPath(); c.ellipse(160, 140, 130, 22, 0, 0, Math.PI * 2); c.fill();
+      for (let x = 40; x < 290; x += 3) rect(c, x, 140 + Math.round(Math.sin(x * 0.1 + t * 2)), 2, 1, '#37c3d6');
+      const rx = 150 + Math.sin(t * 0.4) * 30; rect(c, rx, 134, 26, 4, '#e8c25a'); rect(c, rx + 10, 124, 6, 10, '#ffd36b');
+      if (Math.random() < 0.3) IE.Maps.Trip.fx.add({ x: rx + 13 + (Math.random() - 0.5) * 10, y: 126, vy: -10, life: 0.8, color: '#ffd36b' });
+      ground(c, d.ground, 162);
     },
     library(c, t, d) {
       rect(c, 0, 0, 320, 130, '#3a2a10');

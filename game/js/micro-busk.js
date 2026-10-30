@@ -183,7 +183,7 @@
         // 你、琴、帽子
         const glow = Math.min(1, st.soloNotes / 20 + st.rounds / 8);
         if (glow > 0.05) { c.fillStyle = 'rgba(255,194,71,' + (0.08 + glow * 0.12) + ')'; c.beginPath(); c.arc(160, 80, 30 + glow * 10, 0, Math.PI * 2); c.fill(); }
-        P.sprite(c, 'player', 148, 62, { scale: 3, desat: Math.max(0, 0.6 - glow) });
+        P.sprite(c, IE.Chars.spr(IE.Game.state), 148, 62, { scale: 3, desat: Math.max(0, 0.6 - glow) });
         c.fillStyle = '#1b1b28'; c.fillRect(136, 96, 48, 8);
         for (let i = 0; i < 8; i++) { c.fillStyle = '#e8edf6'; c.fillRect(138 + i * 6, 97, 5, 6); }
         c.fillStyle = '#5a3b2a'; c.fillRect(170, 112, 18, 5); c.fillRect(173, 108, 12, 4);

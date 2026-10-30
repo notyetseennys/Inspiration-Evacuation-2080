@@ -301,7 +301,7 @@
         if (!alien) {
           const cur = Math.max(0, s.spark - st.drain);
           c.fillStyle = '#0b0f1a'; c.fillRect(4, 132, 40, 44);
-          P.sprite(c, 'player', 12, 140, { scale: 2, desat: Math.max(0, 1 - cur / 2.5) });
+          P.sprite(c, IE.Chars.spr(IE.Game.state), 12, 140, { scale: 2, desat: Math.max(0, 1 - cur / 2.5) });
           c.fillStyle = '#26334d'; c.fillRect(4, 172, 40, 3);
           c.fillStyle = '#ffc247'; c.fillRect(4, 172, Math.round(40 * Math.min(1, cur / 4)), 3);
         }

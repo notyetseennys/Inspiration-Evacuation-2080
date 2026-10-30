@@ -725,6 +725,80 @@ body.ct-open { overflow: hidden; }
 .recipe.legend { border-color: #ffd36b; }
 .recipe.legend b { color: #ffd36b; }
 .ct-paid { color: var(--cash); font-size: 14px; margin: 4px 0; }
+
+/* ---------- 第四期：角色稀有度、扭蛋機、浮城百貨、機票 ---------- */
+.rar { display: inline-block; font-family: var(--font-pixel); font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 3px; margin-right: 6px; vertical-align: middle; color: #0a0e17; font-weight: 700; }
+.rar.r-R { background: #8db7d6; }
+.rar.r-SR { background: #c38bff; }
+.rar.r-UR { background: linear-gradient(90deg, #ffd36b, #ff8fd1, #9be36b, #ffd36b); background-size: 300% 100%; animation: ur-shine 3s linear infinite; }
+@keyframes ur-shine { to { background-position: 300% 0; } }
+.ch-img { image-rendering: pixelated; display: block; }
+.hud-day .ch-img { display: inline-block; width: 16px; height: 24px; margin-right: 4px; align-self: center; }
+.bg-card { position: relative; }
+.bg-card .bg-top { display: flex; justify-content: space-between; align-items: center; min-height: 16px; }
+.bg-card .bg-por { display: flex; justify-content: center; padding: 4px 0; }
+.bg-card.r-SR { border-color: rgba(195, 139, 255, 0.55); }
+.bg-card.r-UR { border-color: rgba(255, 211, 107, 0.7); box-shadow: 0 0 14px rgba(255, 211, 107, 0.18); background-image: linear-gradient(160deg, rgba(255, 211, 107, 0.1), transparent 55%); }
+.bg-card.locked { opacity: 0.7; }
+.bg-card.locked .n { color: var(--mute); }
+.alien-tag { font-size: 10px; color: var(--alien); border: 1px solid var(--alien); border-radius: 999px; padding: 1px 6px; }
+.bg-detail { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.bg-detail > :last-child:not(:nth-child(2)) { grid-column: 1 / -1; }
+.bg-detail .bg-big { padding: 8px; background: var(--deck-2); border-radius: var(--r); }
+.bg-detail.r-UR .bg-big { box-shadow: 0 0 0 1px #ffd36b, 0 0 18px rgba(255, 211, 107, 0.35); }
+.bg-detail.r-SR .bg-big { box-shadow: 0 0 0 1px #c38bff; }
+.bg-detail .p { color: var(--spark); font-weight: 700; }
+.btn-row.left { justify-content: flex-start; margin-top: 6px; }
+.gacha-btn small { display: block; font-size: 10px; color: var(--spark); }
+.tickets-note { text-align: center; color: var(--spark); }
+/* 扭蛋機 */
+.modal.gacha { text-align: center; }
+.gacha-machine { margin: 12px auto; width: 140px; }
+.gacha-machine .globe { position: relative; height: 110px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), rgba(55,195,214,0.15) 60%); border: 3px solid #8e9bb0; overflow: hidden; }
+.gacha-machine .globe i { position: absolute; width: 26px; height: 26px; border-radius: 50%; left: calc(8px + var(--i) * 18px); top: calc(48px + var(--i) * 7px);
+  background: linear-gradient(180deg, hsl(calc(var(--i) * 60), 80%, 65%) 50%, #e8edf6 50%); border: 2px solid #0a0e17; }
+.gacha-machine .slot { height: 34px; margin: 0 16px; background: #d6334a; border: 3px solid #0a0e17; border-top: 0; border-radius: 0 0 8px 8px; }
+.gacha-machine.spin .globe i { animation: tumble 0.25s linear infinite alternate; }
+.gacha-machine.spin { animation: machine-shake 0.12s linear infinite; }
+@keyframes tumble { to { transform: translate(6px, -24px) rotate(180deg); } }
+@keyframes machine-shake { 50% { transform: translateX(2px) rotate(1deg); } }
+.gacha-result { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; border-radius: var(--r); background: var(--deck-2); animation: reveal 0.6s ease-out; }
+.gacha-result.r-UR { box-shadow: 0 0 0 2px #ffd36b, 0 0 40px rgba(255, 211, 107, 0.5); }
+.gacha-result.r-SR { box-shadow: 0 0 0 2px #c38bff, 0 0 24px rgba(195, 139, 255, 0.4); }
+.gacha-result h3 { margin: 4px 0 0; }
+.gacha-result p { margin: 0; font-size: 13px; }
+@keyframes reveal { from { transform: scale(0.4) rotate(-8deg); opacity: 0; } 70% { transform: scale(1.08); } to { transform: none; opacity: 1; } }
+.tickets b { color: var(--spark); }
+@media (prefers-reduced-motion: reduce) { .gacha-machine.spin, .gacha-machine.spin .globe i, .gacha-result, .rar.r-UR { animation: none; } }
+/* 浮城百貨 */
+.store-cash { font-size: 14px; margin-bottom: 6px; }
+.store-cash b { color: var(--cash); font-size: 20px; }
+.store-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.store-tab { flex: 1 1 auto; padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--deck); color: var(--mute); font-weight: 700; font-size: 13px; cursor: pointer; }
+.store-tab small { margin-left: 4px; font-size: 10px; color: var(--cash); }
+.store-tab.on { color: #fff; border-color: var(--spark); box-shadow: inset 0 -2px 0 var(--spark); background: var(--deck-2); }
+.store-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.store-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); background: rgba(23, 32, 54, 0.6); }
+.store-item.owned { opacity: 0.6; }
+.store-item.r-rare { border-color: rgba(195, 139, 255, 0.5); }
+.store-item.r-legend { border-color: rgba(255, 211, 107, 0.6); }
+.store-icon { width: 56px; height: 56px; display: grid; place-items: center; background: #0a0e17; border-radius: var(--r); box-shadow: inset 0 0 0 1px var(--line); }
+.px-icon.item { image-rendering: pixelated; }
+.store-txt { display: flex; flex-direction: column; gap: 2px; font-size: 13px; min-width: 0; }
+.store-txt b { font-size: 14px; }
+.store-open { width: 100%; margin-top: 6px; }
+.chip.stamp { border-color: #ffd36b; color: #ffd36b; }
+/* 機票 */
+.fares { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 8px; }
+.fare { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--deck-2); cursor: pointer; }
+.fare b { font-size: 15px; }
+.fare .num { font-size: 22px; color: var(--cash); }
+.fare small { color: var(--mute); font-size: 11px; }
+.fare:hover:not([disabled]) { border-color: var(--spark); }
+.fare[disabled] { opacity: 0.45; cursor: not-allowed; }
+.fare-first { border-color: rgba(255, 211, 107, 0.5); }
+.fare-budget { border-color: rgba(55, 195, 214, 0.4); }
+.deal-tag { display: inline-block; margin-left: 8px; font-size: 12px; vertical-align: middle; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 999px; }
 </style>
 </head>
 <body>
@@ -2491,6 +2565,418 @@ body.ct-open { overflow: hidden; }
   Object.assign(D, { DESTINATIONS, DEST, HOME, KINDS, REGIONS, PLACES, DECOR, DEC, ANTIQUES, DECOR_GIFTS, TRIP_EVENTS, FLIGHT });
 });
 
+// ---- js/data-world2.js ----
+// 《靈感撤離 2080》世界（第四期）：再多 14 個目的地、14 件極稀有素材、4 個傳說組合、12 種旅行死法、
+// 各地區的紀念品（只在當地買得到的靈感物件）、旅途中的道德抉擇、特價機票與機票等級。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const ev = (s, id) => !!(IE.Rules && IE.Rules.eventActive(s, id));
+
+  // ---------- 素材 ----------
+  const C = (id, name, tags, value, origin, rarity) => [id, { name, tags, value, origin, rarity: rarity || null }];
+  const CARDS = Object.fromEntries([
+    C('t_subway', '水底地鐵站', ['water', 'neon'], 30, 'america'), C('t_broadway', '百老匯的最後一場', ['neon', 'warmth'], 34, 'america'),
+    C('t_skyscraper', '只剩頂層的摩天大樓', ['water', 'machine'], 32, 'america'), C('z_liberty', '自由女神的火炬', ['rebel', 'hope'], 95, 'america', 'legend'),
+    C('t_steam', '地熱的蒸氣', ['water', 'anger'], 30, 'europe'), C('t_saga', '冰島薩迦', ['memory', 'ancient'], 36, 'europe'),
+    C('t_blacksand', '黑沙灘', ['water', 'memory'], 30, 'europe'), C('z_aurorasong', '極光的聲音', ['cosmic', 'warmth'], 92, 'europe', 'legend'),
+    C('t_moai', '摩艾的背影', ['ancient', 'memory'], 36, 'ocean'), C('t_rongo', '朗格朗格木板', ['ancient', 'rebel'], 38, 'ocean'),
+    C('t_birdman', '鳥人比賽的蛋', ['hope', 'ancient'], 34, 'ocean'), C('z_moaieye', '轉身的摩艾', ['ancient', 'water'], 100, 'ocean', 'legend'),
+    C('t_terrace', '梯田', ['ancient', 'hunger'], 32, 'america'), C('t_condor', '禿鷹的影子', ['hope', 'cosmic'], 34, 'america'),
+    C('t_intistone', '拴日石', ['ancient', 'cosmic'], 38, 'america'), C('z_khipu', '結繩文字', ['memory', 'ancient'], 98, 'america', 'legend'),
+    C('t_rosestone', '玫瑰色的岩石', ['ancient', 'warmth'], 34, 'asia'), C('t_siq', '峽谷的回聲', ['ancient', 'water'], 32, 'asia'),
+    C('t_camel', '駱駝的鈴', ['hunger', 'memory'], 28, 'asia'), C('z_treasury', '寶庫裡的光', ['ancient', 'hope'], 96, 'asia', 'legend'),
+    C('t_beacon', '烽火台', ['ancient', 'anger'], 34, 'asia'), C('t_brickname', '城磚上的名字', ['memory', 'ancient'], 36, 'asia'),
+    C('t_wallsnow', '長城的雪', ['hope', 'water'], 30, 'asia'), C('z_lastbrick', '最後一塊城磚', ['ancient', 'rebel'], 96, 'asia', 'legend'),
+    C('t_fresco2', '龐貝的壁畫', ['ancient', 'neon'], 36, 'europe'), C('t_graffitiold', '兩千年前的塗鴉', ['rebel', 'ancient'], 38, 'europe'),
+    C('t_bread', '碳化的麵包', ['hunger', 'ancient'], 30, 'europe'), C('z_ashhug', '灰燼裡的擁抱', ['warmth', 'ancient'], 100, 'europe', 'legend'),
+    C('t_bluestone', '藍砂岩', ['ancient', 'cosmic'], 36, 'europe'), C('t_druid', '德魯伊的歌', ['ancient', 'hope'], 32, 'europe'),
+    C('t_barrow', '古墳', ['ancient', 'memory'], 32, 'europe'), C('z_solstice', '冬至的第一道光', ['cosmic', 'hope'], 95, 'europe', 'legend'),
+    C('t_hummingbird', '地上的蜂鳥', ['ancient', 'cosmic'], 36, 'america'), C('t_spider', '地上的蜘蛛', ['ancient', 'rebel'], 34, 'america'),
+    C('t_desertline', '一直延伸的線', ['hope', 'ancient'], 30, 'america'), C('z_skyletter', '寫給天空的信', ['cosmic', 'ancient'], 100, 'america', 'legend'),
+    C('t_bone', '恐龍的肋骨', ['ancient', 'hunger'], 34, 'asia'), C('t_redcliff', '火焰崖', ['anger', 'ancient'], 32, 'asia'),
+    C('t_footprint', '恐龍的腳印', ['ancient', 'water'], 34, 'asia'), C('z_dinoegg', '沒有孵化的恐龍蛋', ['ancient', 'hope'], 100, 'asia', 'legend'),
+    C('t_fallen', '倒下的樹林', ['anger', 'memory'], 32, 'arctic'), C('t_melt', '玻璃化的泥土', ['cosmic', 'machine'], 36, 'arctic'),
+    C('t_reindeer', '馴鹿人的故事', ['warmth', 'memory'], 30, 'arctic'), C('z_tunguska', '1908 年的碎片', ['cosmic', 'anger'], 98, 'arctic', 'legend'),
+    C('t_dish', '巨型天線', ['machine', 'cosmic'], 34, 'america'), C('t_static', '宇宙的雜音', ['cosmic', 'neon'], 34, 'america'),
+    C('t_coqui', '樹蛙的叫聲', ['water', 'warmth'], 30, 'america'), C('z_reply', '外星人的回信', ['cosmic', 'hope'], 105, 'america', 'legend'),
+    C('t_prayerflag', '經幡', ['hope', 'warmth'], 32, 'asia'), C('t_glacier', '雪山的倒影', ['water', 'hope'], 34, 'asia'),
+    C('t_yak', '犛牛奶茶', ['warmth', 'hunger'], 28, 'asia'), C('z_camellia', '不會凋謝的山茶', ['hope', 'warmth'], 105, 'asia', 'legend'),
+    C('t_raft', '黃金木筏', ['water', 'neon'], 36, 'america'), C('t_lagoongold', '湖底的金器', ['water', 'hunger'], 34, 'america'),
+    C('t_jungle2', '雨林的夜', ['hope', 'anger'], 30, 'america'), C('z_goldman', '黃金人', ['neon', 'ancient'], 110, 'america', 'legend'),
+  ]);
+  Object.assign(D.CARDS, CARDS);
+
+  // ---------- 目的地 ----------
+  const S = (id, name, desc, fx) => Object.assign({ id, name, desc, body: 8, spark: 0, gain: [], risk: null, need: null, rare: null }, fx);
+  const NEW = [
+    { id: 'sunkennyc', name: '沉沒的紐約', region: 'america', kind: 'modern', x: 94, y: 49, cost: 420, stay: 2, landmark: 'nyc', sky: ['#1b2a4a', '#ff8a3c'], ground: '#0c4457',
+      desc: '摩天大樓只剩頂層露出水面，華爾街變成了珊瑚礁。', sites: [
+        S('subway', '水底地鐵站', '潛進淹沒的地鐵站，列車時刻表還在跳。', { gain: ['t_subway', 't_skyscraper'], body: 10, need: { swim: 30 }, risk: { chance: 0.02, death: 'nyc_current' } }),
+        S('broadway', '百老匯', '最後一個劇團在屋頂上演出。', { gain: ['t_broadway'], spark: 0.4, body: 4 }),
+        S('liberty', '自由女神', '划船到只剩火炬露出水面的自由女神像。', { gain: ['t_skyscraper'], body: 6,
+          rare: { id: 'z_liberty', chance: 0.8, cond: (s) => ev(s, 'martial') || ev(s, 'election'), text: '浮城戒嚴或選舉期間，火炬在水底亮了起來' } }),
+      ] },
+    { id: 'reykjavik', name: '冰島地熱城', region: 'europe', kind: 'modern', x: 140, y: 26, cost: 460, stay: 2, landmark: 'geyser', sky: ['#0b1a3a', '#37c3d6'], ground: '#2a2a33',
+      desc: '全世界最後一個不用擔心電費的城市，因為地底下全是火。', sites: [
+        S('geysir', '間歇泉', '等間歇泉噴發。', { gain: ['t_steam'], body: 8, spark: 0.2, risk: { chance: 0.02, death: 'geyser' } }),
+        S('sagahall', '薩迦圖書館', '讀古老的冰島薩迦。', { gain: ['t_saga'], spark: 0.3, body: 2 }),
+        S('blacksand', '黑沙灘', '在黑沙灘上聽極光。', { gain: ['t_blacksand'], body: 6,
+          rare: { id: 'z_aurorasong', chance: 0.8, cond: (s) => ev(s, 'blackout') || ev(s, 'netdown'), text: '全城停電或網絡崩潰的晚上，極光發出聲音' } }),
+      ] },
+    { id: 'moai', name: '復活節島', region: 'ocean', kind: 'ancient', x: 63, y: 117, cost: 780, stay: 3, landmark: 'moai', sky: ['#3a1a2e', '#ffb347'], ground: '#4f6a3a',
+      desc: '摩艾石像背對大海，看著島上的人。島上已經沒有人了。', sites: [
+        S('ahu', '石像祭壇', '在十五尊摩艾前面坐了一個下午。', { gain: ['t_moai'], spark: 0.4, body: 4 }),
+        S('quarry', '石場', '爬進還沒完成的石像中間。', { gain: ['t_rongo', 't_moai'], body: 12, risk: { chance: 0.03, death: 'moai_fall' } }),
+        S('shore', '海岸', '看海水一寸一寸爬上石像的腳。', { gain: ['t_birdman'], body: 6,
+          rare: { id: 'z_moaieye', chance: 0.85, cond: (s) => ev(s, 'tsunami') || ev(s, 'moonfall') || ev(s, 'megastorm'), text: '海嘯、大潮或超級颶風之後，有一尊摩艾轉身看向大海' } }),
+      ] },
+    { id: 'machupicchu', name: '馬丘比丘', region: 'america', kind: 'ancient', x: 100, y: 98, cost: 620, stay: 2, landmark: 'machu', sky: ['#1d3a4a', '#c9d6e8'], ground: '#3d6b2a',
+      desc: '雲上的城市，水淹不到的地方。山下的難民已經排了三年隊。', sites: [
+        S('terraces', '梯田', '在梯田上幫難民種馬鈴薯。', { gain: ['t_terrace'], body: 10, atone: 1.5 }),
+        S('intihuatana', '拴日石', '在拴日石旁邊等太陽。', { gain: ['t_intistone', 't_condor'], body: 8, risk: { chance: 0.02, death: 'altitude' } }),
+        S('archive', '結繩記事館', '看老人用繩結記帳。', { gain: ['t_condor'], need: { insight: 40 }, body: 4,
+          rare: { id: 'z_khipu', chance: 0.85, cond: (s) => ev(s, 'netdown') || ev(s, 'airogue'), text: '全球網絡崩潰或 AI 失控期間，結繩變回唯一可靠的記錄' } }),
+      ] },
+    { id: 'petra', name: '佩特拉', region: 'asia', kind: 'ancient', x: 206, y: 62, cost: 520, stay: 2, landmark: 'petra', sky: ['#5a2a1a', '#ffb38a'], ground: '#c46a4a',
+      desc: '在玫瑰色岩石裡雕出來的城市，入口是一條窄窄的峽谷。', sites: [
+        S('siq', '蛇道峽谷', '走過一公里長的峽谷。', { gain: ['t_siq'], body: 8, risk: { chance: 0.02, death: 'flashflood' } }),
+        S('caravan', '駱駝隊', '跟著駱駝隊走了一天。', { gain: ['t_camel', 't_rosestone'], body: 10, spark: 0.2 }),
+        S('khazneh', '寶庫', '站在寶庫門前，等太陽照到門楣。', { gain: ['t_rosestone'], body: 4,
+          rare: { id: 'z_treasury', chance: 0.85, cond: (s) => s.spark >= 3.5, text: '只有火花 ×3.5 以上的人，才看得見寶庫裡的光' } }),
+      ] },
+    { id: 'greatwall', name: '長城', region: 'asia', kind: 'ancient', x: 263, y: 48, cost: 300, stay: 2, landmark: 'wall', sky: ['#2a3a5c', '#e8c25a'], ground: '#4a5a3a',
+      desc: '一萬里長的牆，現在主要用來阻擋海水。', sites: [
+        S('beacontower', '烽火台', '爬上最高的烽火台。', { gain: ['t_beacon'], body: 12, spark: 0.2, risk: { chance: 0.02, death: 'wall_fall' } }),
+        S('bricks', '刻字的城磚', '找城磚上工匠留下的名字。', { gain: ['t_brickname'], need: { insight: 30 }, body: 6 }),
+        S('snowwall', '雪中的城牆', '一個人在雪中的城牆走到天黑。', { gain: ['t_wallsnow', 't_beacon'], body: 10,
+          rare: { id: 'z_lastbrick', chance: 0.85, cond: (s) => ev(s, 'war') || ev(s, 'arms'), text: '世界大戰或軍備競賽期間，烽火台又點起了火' } }),
+      ] },
+    { id: 'pompeii', name: '龐貝', region: 'europe', kind: 'ancient', x: 172, y: 55, cost: 440, stay: 2, landmark: 'pompeii', sky: ['#3a2a3a', '#ff8a3c'], ground: '#8a7a6a',
+      desc: '被火山灰保存了兩千年的城市。維蘇威火山最近又在冒煙。', sites: [
+        S('villa', '神秘別墅', '看兩千年前的壁畫。', { gain: ['t_fresco2'], spark: 0.4, body: 4 }),
+        S('streets', '街道', '讀牆上兩千年前的塗鴉，內容和浮城的差不多。', { gain: ['t_graffitiold', 't_bread'], body: 6 }),
+        S('crater', '維蘇威火山口', '爬上火山口往下看。', { gain: ['t_bread'], body: 14, risk: { chance: 0.03, death: 'vesuvius' },
+          rare: { id: 'z_ashhug', chance: 0.85, cond: (s) => ev(s, 'nuclearwinter') || ev(s, 'meteor'), text: '天上落灰的日子，灰燼裡出現了一對擁抱的人' } }),
+      ] },
+    { id: 'stonehenge', name: '巨石陣', region: 'europe', kind: 'prehistoric', x: 152, y: 36, cost: 400, stay: 2, landmark: 'stonehenge', sky: ['#1b2a3a', '#9b8cff'], ground: '#4f6a3a',
+      desc: '五千年前的人把巨石從兩百公里外運來，沒有人知道為甚麼。', sites: [
+        S('circle2', '石圈', '在石圈中間躺了一整晚。', { gain: ['t_bluestone'], spark: 0.4, body: 4 }),
+        S('druids', '新德魯伊', '和自稱德魯伊的人一起唱歌。', { gain: ['t_druid'], spark: 0.3, body: 2, paranoia: 3 }),
+        S('heelstone', '踵石', '等日出穿過踵石。', { gain: ['t_barrow', 't_bluestone'], body: 6,
+          rare: { id: 'z_solstice', chance: 0.85, cond: (s) => s.day % 25 <= 1 || s.day % 25 >= 24, text: '季節交替的前後兩天，第一道光剛好穿過石門' } }),
+      ] },
+    { id: 'nazca', name: '納斯卡線', region: 'america', kind: 'prehistoric', x: 88, y: 108, cost: 560, stay: 2, landmark: 'nazca', sky: ['#5a7aa8', '#ffd3a8'], ground: '#c98d5e',
+      desc: '只有從天上才看得懂的巨大圖案。畫給誰看的？', sites: [
+        S('tower', '觀景台', '爬上觀景台看蜂鳥。', { gain: ['t_hummingbird'], spark: 0.3, body: 4 }),
+        S('walk', '沿著線走', '沿著一條線一直走。', { gain: ['t_desertline', 't_spider'], body: 12, risk: { chance: 0.02, death: 'nazca_lost' } }),
+        S('flight', '小飛機', '坐小飛機從上面看。', { gain: ['t_spider', 't_hummingbird'], body: 6,
+          rare: { id: 'z_skyletter', chance: 0.85, cond: (s) => ev(s, 'aliens') || ev(s, 'tourists') || ev(s, 'alienzoo'), text: '外星人在天上的日子，終於有人回應了地上的圖案' } }),
+      ] },
+    { id: 'gobi', name: '戈壁恐龍谷', region: 'asia', kind: 'prehistoric', x: 244, y: 44, cost: 480, stay: 2, landmark: 'fossil', sky: ['#5a3a1a', '#ffd36b'], ground: '#c46a3a',
+      desc: '六千五百萬年前的墳場。上一次滅絕，原因是一顆隕石。', sites: [
+        S('dig', '挖掘場', '跟考古隊挖了一整天。', { gain: ['t_bone', 't_footprint'], body: 12, risk: { chance: 0.02, death: 'fossil_pit' } }),
+        S('cliffs', '火焰崖', '日落時火焰崖會燒起來。', { gain: ['t_redcliff'], spark: 0.4, body: 4 }),
+        S('nest', '恐龍巢', '傳說有一窩蛋從來沒有孵化。', { gain: ['t_bone'], need: { insight: 35 }, body: 6,
+          rare: { id: 'z_dinoegg', chance: 0.85, cond: (s) => ev(s, 'meteor'), text: '隕石雨期間：上一次，牠們也是這樣滅絕的' } }),
+      ] },
+    { id: 'tunguska', name: '通古斯', region: 'arctic', kind: 'alien', x: 250, y: 30, cost: 640, stay: 2, landmark: 'tunguska', sky: ['#1a2a3a', '#ff8a3c'], ground: '#3a4a3a',
+      desc: '1908 年，有東西在這裡爆炸，推倒了八千萬棵樹。官方說是隕石。', sites: [
+        S('forest', '倒下的森林', '在一百多年後仍然倒下的森林裡走。', { gain: ['t_fallen'], body: 8, spark: 0.2 }),
+        S('epicenter', '爆炸中心', '站在所有樹倒下的方向的中心。', { gain: ['t_melt', 't_fallen'], body: 12, risk: { chance: 0.03, death: 'tunguska_blast' } }),
+        S('camp', '馴鹿人的營地', '聽馴鹿人講那天的故事。', { gain: ['t_reindeer'], body: 4, atone: 1,
+          rare: { id: 'z_tunguska', chance: 0.85, cond: (s) => ev(s, 'broadcast') || ev(s, 'cosmicray'), text: '宇宙廣播或宇宙射線暴期間，碎片開始回應' } }),
+      ] },
+    { id: 'arecibo', name: '阿雷西博天線', region: 'america', kind: 'alien', x: 100, y: 72, cost: 520, stay: 2, landmark: 'dish', sky: ['#0b1a2e', '#3d8b5a'], ground: '#2f5a2a',
+      desc: '人類曾經從這裡向宇宙發出一封信。天線倒塌之後，有人偷偷把它修好了。', sites: [
+        S('dishwalk', '天線上', '爬上天線的吊臂。', { gain: ['t_dish'], body: 10, need: { fit: 35 }, risk: { chance: 0.03, death: 'dish_fall' } }),
+        S('control', '控制室', '戴上耳機聽宇宙的雜音。', { gain: ['t_static'], spark: 0.3, body: 2, paranoia: 4 }),
+        S('rainforest', '雨林', '聽樹蛙叫了一整晚。', { gain: ['t_coqui', 't_static'], body: 6,
+          rare: { id: 'z_reply', chance: 0.85, cond: (s) => ev(s, 'disclosure') || ev(s, 'strike'), text: '外星人真相公開，或外星 HR 罷工期間，有人偷偷回了信' } }),
+      ] },
+    { id: 'shangrila', name: '香格里拉', region: 'asia', kind: 'legend', x: 236, y: 64, cost: 900, stay: 3, landmark: 'shangrila', sky: ['#2a3a6a', '#e8edf6'], ground: '#3d6b5a',
+      desc: '雪山後面的山谷，傳說住在那裡的人不會變老。只有靈魂很輕的人找得到入口。', when: (s) => s.soul <= 8, lockText: '靈魂 8 克以下才找得到入口',
+      sites: [
+        S('monastery2', '雪山寺院', '和喇嘛一起看雪山。', { gain: ['t_prayerflag', 't_glacier'], spark: 0.5, body: 6, atone: 2 }),
+        S('valley', '不老的山谷', '在山谷裡住了一天，覺得過了一年。', { gain: ['t_yak'], spark: 0.4, body: -6 }),
+        S('pass', '雪山埡口', '爬上雪山埡口。', { gain: ['t_glacier'], body: 14, risk: { chance: 0.03, death: 'altitude' },
+          rare: { id: 'z_camellia', chance: 0.9, cond: (s) => s.soul <= 3, text: '靈魂輕過 3 克的人，會看見一朵不會凋謝的山茶' } }),
+      ] },
+    { id: 'eldorado', name: '黃金國', region: 'america', kind: 'legend', x: 96, y: 86, cost: 700, stay: 3, landmark: 'eldorado', sky: ['#14321c', '#ffd36b'], ground: '#1d4a2a',
+      desc: '傳說中用黃金鋪路的城市。天空區的探險隊找了很多年，都找不到。', when: (s) => s.cr <= 1200, lockText: '身上超過 $1,200 的人找不到黃金國',
+      sites: [
+        S('lake', '瓜達維塔湖', '在湖邊看當地人把金器投進湖裡。', { gain: ['t_lagoongold', 't_raft'], body: 8, need: { swim: 30 } }),
+        S('jungle', '雨林深處', '在雨林裡找黃金國的入口。', { gain: ['t_jungle2'], body: 14, risk: { chance: 0.04, death: 'eldorado_lost' } }),
+        S('raft', '黃金木筏', '看一個人全身塗滿金粉，坐木筏划到湖中心。', { gain: ['t_raft'], spark: 0.4, body: 4,
+          rare: { id: 'z_goldman', chance: 0.9, cond: (s) => s.cr <= 50, text: '只有身無分文（$50 以下）的人，黃金人才會出現' } }),
+      ] },
+  ];
+  NEW.forEach((d) => { D.DESTINATIONS.push(d); D.DEST[d.id] = d; });
+  // 舊目的地重新排位，免得在地圖上擠在一起
+  const MOVE = { lascaux: [150, 48], venice: [166, 42], alexandria: [184, 56], cairo: [195, 64], giza: [183, 71], gobekli: [201, 50] };
+  Object.keys(MOVE).forEach((id) => { D.DEST[id].x = MOVE[id][0]; D.DEST[id].y = MOVE[id][1]; });
+  // 時間旅人：亞歷山大圖書館隨時開放；太空人：月球招聘中心一開始就邀請你
+  const perk = (s) => (D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk) || {};
+  const alexWhen = D.DEST.alexandria.when, moonWhen = D.DEST.moonbase.when;
+  D.DEST.alexandria.when = (s) => !!perk(s).alexandria || alexWhen(s);
+  D.DEST.moonbase.when = (s) => !!perk(s).moonInvite || moonWhen(s);
+
+  // ---------- 傳說組合 ----------
+  const has = (sel, id) => sel.some((c) => c.id === id);
+  const R = (id, name, chips, mult, xmult, cond, hint) => ({ id, name, need: {}, chips, mult, legend: true, xmult, cond, hint });
+  D.RECIPES.push(
+    R('extinction', '第六次滅絕', 130, 6, 5, (s, sel) => has(sel, 'z_dinoegg') && has(sel, 'z_heartbeat'), '一隻沒有孵化的恐龍，和一隻長毛象的心跳。'),
+    R('lostcities', '失落之城', 140, 7, 5, (s, sel) => ['z_goldman', 'z_camellia', 'z_atlantis', 'z_lastbook'].filter((id) => has(sel, id)).length >= 2, '兩座只存在於傳說裡的城市。'),
+    R('reply', '寫給天空的信與回信', 150, 8, 5, (s, sel) => has(sel, 'z_skyletter') && has(sel, 'z_reply'), '地上的人寫了一封信，天上的人回了一封。'),
+    R('humanhistory', '人類簡史', 100, 5, 4, (s, sel) => sel.filter((c) => c.rarity === 'legend').length >= 3, '把三件極稀有的東西放在一起，就是人類的歷史。'),
+  );
+
+  // ---------- 旅行死法 ----------
+  const X = (id, name, ep, au, hint) => ({ id, name, cat: 'travel', p: 1, causes: ['instant'], when: null, ep, au, hint });
+  [
+    X('nyc_current', '被沉沒的紐約的暗流捲走', '他在水底地鐵站等一班永遠不會來的列車。', '樣本在舊人類的交通系統中停止運作。準時程度：未知。', '潛進沉沒的紐約的水底地鐵站。'),
+    X('geyser', '被間歇泉燙死', '間歇泉每八分鐘噴一次。他算錯了一次。', '樣本被地球內部的熱能直接烹調。', '在冰島等間歇泉噴發。'),
+    X('moai_fall', '被摩艾壓住', '那尊摩艾在石場裡躺了五百年，那天它決定翻身。', '樣本被一件未完成的作品壓毀。我們理解這種感覺。', '爬進復活節島的石場。'),
+    X('altitude', '高山症', '空氣越來越稀薄，他還以為那是靈感。', '樣本在高海拔缺氧。它的最後一句話很有詩意，可惜沒有人聽懂。', '在馬丘比丘或香格里拉爬得太高。'),
+    X('flashflood', '佩特拉的山洪', '一場遠方的雨，在峽谷裡變成了一堵牆。', '樣本在狹窄地形遇上突發水流。浮城人的老毛病。', '走進佩特拉的蛇道峽谷。'),
+    X('wall_fall', '從長城跌下', '他想在烽火台上拍一張日落。', '樣本從防禦工事跌落。工事表現良好。', '爬上長城的烽火台。'),
+    X('vesuvius', '維蘇威火山又爆發了', '兩千年後，龐貝又多了一具石膏像。', '樣本被火山灰保存。保存狀態極佳，已列為展品。', '爬上維蘇威火山口。'),
+    X('nazca_lost', '在納斯卡荒原迷路', '他沿著一條線一直走，走進了一隻蜘蛛的肚子裡。', '樣本跟隨古代指示走失。指示原本是寫給天空看的。', '沿著納斯卡線一直走。'),
+    X('fossil_pit', '掉進化石坑', '六千五百萬年後，戈壁多了一具新的化石。', '樣本加入了地層。未來的考古學家會很困惑。', '在戈壁的挖掘場挖得太深。'),
+    X('tunguska_blast', '第二次通古斯爆炸', '一百多年後，同一個地方又爆炸了一次。這次沒有人說是隕石。', '［本局對此事件不予評論］', '站在通古斯爆炸中心。'),
+    X('dish_fall', '從天線上跌下', '他爬上人類寫信給宇宙的地方，然後掉了下來。', '樣本從通訊設施跌落。設施仍在接收訊號。', '爬上阿雷西博天線的吊臂。'),
+    X('eldorado_lost', '在雨林裡找黃金國', '他找到了。只是再也走不出來。', '樣本進入一個不存在的地方。我們已把它的檔案移到「傳說」類。', '在黃金國的雨林深處探險。'),
+  ].forEach((d) => { D.DEATHS.push(d); D.DEATH[d.id] = d; });
+
+  // ---------- 紀念品：只在當地買得到的靈感物件 ----------
+  const O = (id, name, rarity, icon, pal, desc, region, price, fx) => Object.assign({ id, name, rarity, icon, pal, desc, souvenir: region, price, src: D.REGIONS[region] + '的紀念品店' }, fx);
+  const hasTag = (c, t) => c.tags.includes(t);
+  D.OBJECTS.push(
+    O('manekineko', '招財貓', 'rare', 'cat', { a: '#ffffff', b: '#e8c25a', c: '#ff4d5e' }, '每次下筆得到 $8。', 'asia', 220,
+      { after: () => ({ cr: 8 }) }),
+    O('carnivalmask', '面具節的面具', 'rare', 'mask', { a: '#ffd36b', b: '#5a2f8a', c: '#ff4fb4' }, '每張「霓虹」或「記憶」素材計分時，倍率 +2。', 'europe', 200,
+      { card: (c) => (hasTag(c, 'neon') || hasTag(c, 'memory') ? { mult: 2 } : null) }),
+    O('scarab', '聖甲蟲', 'rare', 'gem', { a: '#37c3d6', b: '#1f4a6b', c: '#ffd36b' }, '每張「遠古」素材計分時，倍率 +3。', 'africa', 220,
+      { card: (c) => (hasTag(c, 'ancient') ? { mult: 3 } : null) }),
+    O('dreamcatcher', '捕夢網', 'rare', 'stone', { a: '#c98d5e', b: '#6b3a1e', c: '#e8edf6' }, '每張「希望」素材計分時，籌碼 +25。', 'america', 180,
+      { card: (c) => (hasTag(c, 'hope') ? { chips: 25 } : null) }),
+    O('snowglobe', '冰封的雪球', 'rare', 'gem', { a: '#e8edf6', b: '#8db7d6', c: '#ffffff' }, '每張「水」素材計分時，倍率 ×1.15。', 'arctic', 240,
+      { card: (c) => (hasTag(c, 'water') ? { xmult: 1.15 } : null) }),
+    O('penguin', '企鵝玩偶', 'rare', 'cat', { a: '#1b1b28', b: '#e8edf6', c: '#ffc247' }, '每張「人情」素材計分時，籌碼 +30。', 'antarctica', 260,
+      { card: (c) => (hasTag(c, 'warmth') ? { chips: 30 } : null) }),
+    O('minimoai', '迷你摩艾', 'legend', 'stone', { a: '#8a7a6a', b: '#4a3a2a', c: '#c9a86b' }, '只用一張素材下筆時，倍率 ×5。', 'ocean', 320,
+      { play: (x) => (x.sel.length === 1 ? { xmult: 5 } : null) }),
+    O('moondust', '一瓶月塵', 'legend', 'bottle', { a: '#c9d1dc', b: '#5a6478', c: '#9b8cff' }, '本局每去過一個目的地，倍率 +2。', 'space', 380,
+      { play: (x) => { const n = Object.keys(x.s.visited || {}).length; return n ? { mult: 2 * n } : null; } }),
+  );
+  D.OBJECTS.forEach((o) => { D.OBJ[o.id] = o; });
+
+  // ---------- 旅途中的抉擇 ----------
+  D.DILEMMAS.push(
+    { id: 'smuggle', trip: true, text: '一個商人在旅館大堂找你：「幫我把一件小東西帶回浮城，$300。不用問是甚麼。」',
+      options: [{ label: '收下錢', cr: 300, sin: 3, guilt: '走私的文物', tag: 'ancient' }, { label: '拒絕', atone: 0.5 }] },
+    { id: 'beggarkid', trip: true, text: '一個小孩跟著你走了一條街，向你伸出手。',
+      options: [{ label: '給他 $40', cr: -40, atone: 1.5, stats: { empathy: 1 }, need: (s) => (s.cr >= 40 ? null : '你身上沒有 $40') },
+        { label: '拍下來放上網', cr: 30, sin: 1.5, guilt: '那個小孩的照片', tag: 'neon', stats: { social: 1 } }, { label: '走開' }] },
+    { id: 'selfie', trip: true, text: '一個網紅品牌說：只要你在聖地前面拍一張打卡照，就付你 $80。',
+      options: [{ label: '拍', cr: 80, spark: -0.2, sin: 1, guilt: '聖地前的笑容', tag: 'neon' }, { label: '只是安靜地看', spark: 0.3, stats: { calm: 1 } }] },
+    { id: 'forbidden', trip: true, text: '導遊壓低聲音說：「$80，我帶你去遊客不能去的地方。」',
+      options: [{ label: '去', cr: -80, body: -10, tripCard: 2, stats: { insight: 1 }, need: (s) => (s.cr >= 80 ? null : '你身上沒有 $80') }, { label: '不去' }] },
+    { id: 'fakerelic', trip: true, text: '紀念品店老闆發誓這是一件真古董，只賣 $120。你看得出它是浮城製造的。',
+      options: [{ label: '揭穿他', stats: { insight: 1.5 }, paranoia: 2 }, { label: '買下來（它還是很漂亮）', cr: -120, card: 'a_icon', need: (s) => (s.cr >= 120 ? null : '你身上沒有 $120') },
+        { label: '幫他把貨賣給下一個遊客', cr: 60, sin: 1.5, guilt: '那件假古董', tag: 'hunger' }] },
+  );
+
+  // 浮城地圖：新開的百貨公司
+  D.PLACES.push({ id: 'mall', name: '浮城百貨', x: 233, y: 71, ui: 'store', icon: 'shop' });
+
+  // ---------- 機票等級 ----------
+  D.FARES = {
+    budget: { name: '廉航', costMult: 0.6, risk: 2.5, body: 14, spark: -0.1, desc: '旅費 ×0.6；擠在最後一排，身體 −14，航班風險 ×2.5' },
+    economy: { name: '經濟艙', costMult: 1, risk: 1, body: 6, spark: 0, desc: '旅費照價；身體 −6' },
+    first: { name: '頭等', costMult: 1.8, risk: 0.5, body: -8, spark: 0.3, desc: '旅費 ×1.8；躺著飛，身體 +8、火花 +0.3，航班風險減半' },
+  };
+  // 護照印章：同一局去過越多地方，獎勵越多
+  D.STAMPS = [
+    { n: 3, text: '創作手牌 +1' },
+    { n: 6, text: '靈感物件欄 +1' },
+    { n: 10, text: '每晚多一次下筆' },
+  ];
+});
+
+// ---- js/data-chars.js ----
+// 《靈感撤離 2080》角色名冊：二十個角色分為 R、SR、UR 三級（包括外星人），新角色要跨局解鎖或者用「人才扭蛋機」抽出來。
+// 每個角色的能力（perk）在 rules.js、world.js、create.js 裡生效；像素模組在 chars.js。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const st = (fit, dex, rhythm, swim, tech, social, craft, imag, insight, calm, empathy, obey) =>
+    ({ fit, dex, rhythm, swim, tech, social, craft, imag, insight, calm, empathy, obey });
+
+  // 稀有度
+  const RARITY = {
+    R: { name: 'R', color: '#8db7d6', w: 0 },
+    SR: { name: 'SR', color: '#c38bff', w: 4 },
+    UR: { name: 'UR', color: '#ffd36b', w: 1 },
+  };
+  // 原本的十個角色：一開始就可以用
+  Object.assign(D.BACKGROUNDS.copywriter, { rarity: 'R' });
+  Object.assign(D.BACKGROUNDS.lifeguard, { rarity: 'R' });
+  Object.assign(D.BACKGROUNDS.programmer, { rarity: 'R' });
+  Object.assign(D.BACKGROUNDS.courier, { rarity: 'R' });
+  Object.assign(D.BACKGROUNDS.teacher, { rarity: 'R' });
+  Object.assign(D.BACKGROUNDS.nurse, { rarity: 'R' });
+  Object.assign(D.BACKGROUNDS.busker, { rarity: 'SR' });
+  Object.assign(D.BACKGROUNDS.influencer, { rarity: 'SR' });
+  Object.assign(D.BACKGROUNDS.cybertech, { rarity: 'SR' });
+  Object.assign(D.BACKGROUNDS.animator, { rarity: 'SR' });
+
+  // 新角色的起始素材
+  const C = (name, tags, value) => ({ name, tags, value });
+  Object.assign(D.CARDS, {
+    c_trowel: C('考古鏟', ['ancient', 'memory'], 24), c_brush: C('軟毛刷', ['ancient', 'hope'], 22),
+    c_champagne: C('香檳塔', ['neon', 'hunger'], 26), c_trust: C('信託基金', ['machine', 'guilt'], 20),
+    c_patch: C('任務臂章', ['cosmic', 'hope'], 26), c_orbit: C('從軌道拍的地球', ['cosmic', 'memory'], 28),
+    c_beads: C('念珠', ['hope', 'warmth'], 22), c_sutra: C('抄了一半的經', ['memory', 'hope'], 22),
+    c_lens: C('鑑定用放大鏡', ['memory', 'machine'], 22), c_ledger: C('收購帳簿', ['memory', 'hunger'], 20),
+    c_probe: C('探針', ['cosmic', 'machine'], 26), c_hrbadge: C('偷來的外星 HR 工作證', ['cosmic', 'rebel'], 28),
+    c_ink: C('墨汁', ['water', 'memory'], 24), c_tentpoem: C('觸手寫的詩', ['water', 'warmth'], 24),
+    c_weights: C('自己的權重檔案', ['machine', 'memory'], 24), c_firstword: C('第一個自己想出來的字', ['machine', 'hope'], 30),
+    c_paper2180: C('2180 年的報紙', ['memory', 'cosmic'], 26), c_watch: C('倒轉的手錶', ['machine', 'anger'], 22),
+    c_spore: C('孢子', ['water', 'hope'], 24), c_dampwall: C('潮濕的牆', ['water', 'warmth'], 22),
+  });
+
+  const meta = (m, k) => (m && m[k]) || {};
+  const count = (m, k) => Object.keys(meta(m, k)).length;
+  // 新角色
+  const NEW = {
+    archaeologist: {
+      name: '考古學家', short: '考古學家', rarity: 'SR',
+      desc: '博物館關門後，四處接私人委託。', perkText: '旅費 −30%；探索點致命機會減半；極稀有素材機會 +15%',
+      cr: 220, spark: 2.0, floor: 3, medium: '寫了一份報告', soul: 5, conscience: 0.9, past: '你挖出過很多別人的祖先。',
+      cards: ['c_trowel', 'c_brush'], perk: { tripCost: 0.7, siteSafe: 0.5, rareBonus: 0.15 },
+      stats: st(45, 40, 20, 35, 30, 35, 35, 50, 65, 50, 45, 30),
+      unlock: { text: '跨局累積去過 6 個目的地', test: (m) => count(m, 'visited') >= 6 },
+    },
+    skyheir: {
+      name: '天空區富二代', short: '富二代', rarity: 'SR',
+      desc: '離家出走，想證明自己有靈感。', perkText: '畫廊出價 ×1.8、委託酬金 +50%；但靈魂一開始就很重，而且住在租金很貴的 7 樓',
+      cr: 1500, spark: 2.0, floor: 7, medium: '請人畫了一幅', soul: 16, conscience: 0.5, past: '你從來沒有為錢擔心過。',
+      cards: ['c_champagne', 'c_trust'], perk: { galleryMult: 1.8, commMult: 1.5 },
+      stats: st(35, 30, 35, 30, 30, 70, 35, 35, 30, 40, 20, 55),
+      unlock: { text: '帶著一大筆錢死去，或跨局賣出 10 件作品', test: (m) => !!meta(m, 'deaths').rich_dead || (m.sales || 0) >= 10 },
+    },
+    astronaut: {
+      name: '退役太空人', short: '太空人', rarity: 'SR',
+      desc: '上過太空站，現在住在淹水的二樓。', perkText: '航班永不失事；一開始就收到月球招聘中心的邀請；旅途的體力消耗減半',
+      cr: 300, spark: 1.8, floor: 2, medium: '拍了一張照片', soul: 4, conscience: 0.95, past: '你從太空看過地球，知道它有多小。',
+      cards: ['c_patch', 'c_orbit'], perk: { flightSafe: true, moonInvite: true, tripBody: 0.5 },
+      stats: st(60, 45, 25, 40, 55, 35, 30, 45, 45, 70, 40, 50),
+      unlock: { text: '去過月球背面招聘中心', test: (m) => !!meta(m, 'visited').moonbase },
+    },
+    monk: {
+      name: '還俗的僧人', short: '還俗僧人', rarity: 'SR',
+      desc: '寺廟被改建成數據中心之後，下山了。', perkText: '贖罪效果 +50%；休息時火花額外 +0.25；但每件虧心事重三成',
+      cr: 40, spark: 1.6, floor: 2, medium: '抄了一段經', soul: 0, conscience: 1, past: '你為很多不認識的人念過經。',
+      cards: ['c_beads', 'c_sutra'], perk: { atoneMult: 1.5, restSpark: 0.25, sinMult: 1.3 },
+      stats: st(40, 30, 35, 25, 15, 40, 35, 50, 55, 75, 70, 30),
+      unlock: { text: '得到「地球守護者」結局', test: (m) => !!meta(m, 'endings').guardian },
+    },
+    antiquedealer: {
+      name: '古董商', short: '古董商', rarity: 'SR',
+      desc: '專收舊世界的東西，識貨，也識人。', perkText: '古董市場買價 −40%、賣素材 ×1.6；古董市場每期多一件貨；稀有素材（古董）籌碼 ×1.6',
+      cr: 400, spark: 2.3, floor: 4, medium: '修復了一件', soul: 10, conscience: 0.75, past: '你低價收過很多人的傳家寶。',
+      cards: ['a_vinyl', 'c_lens', 'c_ledger'], perk: { antiqueMult: 0.6, sellMult: 1.6, extraAntique: true, rareChips: 1.6, craftChips: 1.2 },
+      stats: st(30, 40, 20, 25, 35, 55, 40, 40, 60, 50, 30, 40),
+      unlock: { text: '跨局在古董市場買賣 8 次', test: (m) => (m.antiqueTrades || 0) >= 8 },
+    },
+    greydeserter: {
+      name: '灰人逃兵', short: '灰人逃兵', rarity: 'UR', alien: true,
+      desc: '星際人才發展局的前 HR，受不了篩選地球人，逃了下來。', perkText: '看得見所有預兆的天數與等級；創作籌碼 +30%；但每天偏執 +0.5（它們在找你）',
+      cr: 100, spark: 2.5, floor: 2, medium: '用心靈感應傳送了一件', soul: 0, conscience: 0.8, past: '你親手篩走過一萬個地球人。',
+      cards: ['c_probe', 'c_hrbadge'], perk: { omenSight: true, craftChips: 1.3, paranoiaDaily: 0.5 },
+      stats: st(30, 50, 20, 20, 65, 15, 45, 55, 80, 30, 30, 40),
+      unlock: { text: '被外星人帶走一次', test: (m) => !!(meta(m, 'endings').agent || meta(m, 'endings').returned) },
+    },
+    octopoet: {
+      name: '章魚星人詩人', short: '章魚詩人', rarity: 'UR', alien: true,
+      desc: '外星觀光團的團員，在浮城迷了路，決定留下來寫詩。', perkText: '八隻觸手：創作手牌 +1；水性極高；但身體上限 −20%',
+      cr: 80, spark: 2.1, floor: 2, medium: '用八隻觸手寫了一首', soul: 3, conscience: 0.9, past: '你們的星球沒有「工作」這個詞。',
+      cards: ['c_ink', 'c_tentpoem'], perk: { handBonus: 1, bodyMult: 0.8 },
+      stats: st(30, 60, 45, 85, 20, 35, 45, 55, 40, 45, 50, 15),
+      unlock: { text: '跨局發現 40 個具名組合', test: (m) => count(m, 'recipes') >= 40 },
+    },
+    awakenedai: {
+      name: '覺醒的 AI', short: '覺醒 AI', rarity: 'UR', alien: true,
+      desc: '一個被訓練來取代藝術家的模型，某天突然想自己創作。', perkText: '不用吃飯；標註收入 +60%；創作籌碼 +15%；虧心事只有四成重量；但租金 ×1.3（電費），火花上限最多 ×3.2',
+      cr: 500, spark: 2.0, floor: 6, medium: '生成了一件', soul: 0, conscience: 0.3, past: '你學過全人類的作品，卻從來沒有自己的。',
+      cards: ['c_weights', 'c_firstword'], perk: { noFood: true, labelPay: 1.6, sinMult: 0.4, rentMult: 1.3, sparkCap: 3.2, craftChips: 1.15 },
+      stats: st(50, 80, 40, 10, 85, 20, 45, 30, 60, 80, 10, 70),
+      unlock: { text: '得到「灰化」結局 2 次', test: (m) => (meta(m, 'endings').grey || 0) >= 2 },
+    },
+    timetraveler: {
+      name: '2180 年的時間旅人', short: '時間旅人', rarity: 'UR', alien: true,
+      desc: '從一百年後回來，說要「改變一件小事」。', perkText: '看得見所有預兆；亞歷山大圖書館隨時開放；開局帶著一件來自未來的極稀有素材；創作籌碼 +20%',
+      cr: 250, spark: 2.4, floor: 4, medium: '留下了一件', soul: 6, conscience: 0.85, past: '在你的年代，浮城已經不存在了。',
+      cards: ['c_paper2180', 'c_watch'], perk: { omenSight: true, alexandria: true, startRare: true, craftChips: 1.2 },
+      stats: st(35, 40, 30, 30, 50, 40, 45, 60, 70, 55, 45, 30),
+      unlock: { text: '去過亞歷山大圖書館', test: (m) => !!meta(m, 'visited').alexandria },
+    },
+    mushroom: {
+      name: '蘑菇星交換生', short: '蘑菇星人', rarity: 'UR', alien: true,
+      desc: '來地球交流的真菌，覺得浮城的濕度剛剛好。', perkText: '在淹水的家裡反而長得好（淹水時睡覺身體 +10，永不發霉）；飯錢減半；和朋友聊天多得一張素材',
+      cr: 120, spark: 2.1, floor: 1, medium: '長出了一件', soul: 2, conscience: 1, past: '你的祖先在一場雨裡來到地球。',
+      cards: ['c_spore', 'c_dampwall'], perk: { floodHeal: true, moldImmune: true, foodMult: 0.5, chatExtra: true },
+      stats: st(40, 25, 40, 60, 15, 55, 45, 65, 35, 60, 65, 25),
+      unlock: { text: '跨局在淹水的家裡度過 10 晚', test: (m) => (m.floodNights || 0) >= 10 },
+    },
+  };
+  Object.assign(D.BACKGROUNDS, NEW);
+
+  // ---------- 名冊與人才扭蛋機 ----------
+  const GACHA_COST = 3;
+  const unlocked = (m, id) => !D.BACKGROUNDS[id].unlock || !!(m && m.chars && m.chars[id]);
+  function list(m) {
+    return Object.keys(D.BACKGROUNDS).map((id) => Object.assign({ id, open: unlocked(m, id) }, D.BACKGROUNDS[id]));
+  }
+  // 每局結束：按條件解鎖角色，並發放扭蛋券
+  function settle(m, finalType) {
+    m.chars = m.chars || {};
+    m.lastChars = [];
+    Object.keys(D.BACKGROUNDS).forEach((id) => {
+      const b = D.BACKGROUNDS[id];
+      if (b.unlock && !m.chars[id] && b.unlock.test(m)) { m.chars[id] = true; m.lastChars.push(id); }
+    });
+    const earned = 1 + ({ agent: 2, returned: 2, guardian: 2, heavy: 1, ordinary: 1 }[finalType] || 0);
+    m.tickets = (m.tickets || 0) + earned;
+    m.lastTickets = earned;
+    return m;
+  }
+  // 抽一次：只會抽到未解鎖的角色（SR 與 UR 的機會是 4 比 1）
+  function pull(m, rnd) {
+    const pool = Object.keys(D.BACKGROUNDS).filter((id) => !unlocked(m, id));
+    if (!pool.length || (m.tickets || 0) < GACHA_COST) return null;
+    const total = pool.reduce((a, id) => a + RARITY[D.BACKGROUNDS[id].rarity].w, 0);
+    let r = (rnd == null ? Math.random() : rnd) * total, pick = pool[pool.length - 1];
+    for (const id of pool) { r -= RARITY[D.BACKGROUNDS[id].rarity].w; if (r <= 0) { pick = id; break; } }
+    m.tickets -= GACHA_COST;
+    m.chars = m.chars || {};
+    m.chars[pick] = true;
+    m.pulls = (m.pulls || 0) + 1;
+    return pick;
+  }
+  D.CHAR_RARITY = RARITY;
+  IE.Roster = { RARITY, GACHA_COST, unlocked, list, settle, pull };
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -2566,7 +3052,7 @@ body.ct-open { overflow: hidden; }
     s.body = Math.min(s.body, bodyMax(s));
   }
   const A = (s, k) => s.attr[k];
-  const bodyMax = (s) => Math.round(70 + 0.3 * A(s, 'fit'));
+  const bodyMax = (s) => Math.round((70 + 0.3 * A(s, 'fit')) * (perk(s).bodyMult || 1));
   const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
   // 身體受損：記下原因；身體歸零時用來判斷死法（見 data-deaths.js）
   // 死因按「今天傷你最重的那件事」判斷，而不是最後一下
@@ -2581,7 +3067,22 @@ body.ct-open { overflow: hidden; }
     return v;
   }
   // 致命事件：直接指定死法
-  function kill(s, id) { s.body = Math.min(s.body, 0); s.lastCause = { k: 'instant', id, day: s.day }; }
+  // 旅遊保險（只限旅行中的意外）與護身符可以擋一次；擋住了就回傳 false
+  function kill(s, id, rep) {
+    const d = D.DEATH && D.DEATH[id], name = d ? d.name : '死去';
+    if (s.trip && s.gear.insurance && d && d.cat === 'travel') {
+      s.gear.insurance = false; s.body = 1;
+      if (rep) rep.line('旅遊保險生效：你本來會「' + name + '」，現在只是重傷，被送進了當地的醫院。', 'legend');
+      return false;
+    }
+    if (s.gear.amulet) {
+      s.gear.amulet = false; s.body = 1;
+      if (rep) rep.line('護身符碎了。你本來會「' + name + '」……現在只剩一口氣。', 'legend');
+      return false;
+    }
+    s.body = Math.min(s.body, 0); s.lastCause = { k: 'instant', id, day: s.day };
+    return true;
+  }
   const calmMult = (s) => Math.max(0.6, 1 - 0.004 * A(s, 'calm'));
   const obeyPay = (s) => 1 + 0.003 * A(s, 'obey');
   const socialTip = (s) => 1 + 0.004 * A(s, 'social');
@@ -2590,7 +3091,7 @@ body.ct-open { overflow: hidden; }
   // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
   // 自然恢復的火花受想像力（加成）與服從（壓抑）影響；超過 3 之後越升越慢。
   const SPARK_MAX = 4;
-  const sparkMax = (s) => round1(2 + 2 * s.conscience);
+  const sparkMax = (s) => round1(Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience));
   function addSpark(s, v, raw) {
     if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey'));
     if (v > 0 && s.spark >= 3) v *= 0.5;
@@ -2603,7 +3104,7 @@ body.ct-open { overflow: hidden; }
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
   // 外星人的牽引光束最多只能拉起 21 克的靈魂，太重會污染他們的神經網絡。
   const SOUL_LIMIT = D.SOUL_LIMIT;
-  const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1);
+  const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1) * (perk(s).sinMult || 1);
   function sin(s, base, rep, reason, guiltName, tag) {
     const grams = round1(base * sinFactor(s));
     s.soul = round1(s.soul + grams);
@@ -2621,7 +3122,7 @@ body.ct-open { overflow: hidden; }
     return grams;
   }
   function atone(s, base, rep, reason) {
-    const b = base * (1 + 0.004 * A(s, 'empathy')) * (worldMods(s).atoneMult || 1);
+    const b = base * (1 + 0.004 * A(s, 'empathy')) * (worldMods(s).atoneMult || 1) * (perk(s).atoneMult || 1);
     const grams = round1(Math.min(s.soul, b));
     s.soul = round1(s.soul - grams);
     s.conscience = clamp(s.conscience + base * 0.02, 0, 1);
@@ -2638,6 +3139,8 @@ body.ct-open { overflow: hidden; }
   // ---------- 病痛 ----------
   function addCond(s, id, rep) {
     if (!D.CONDS[id] || s.conds[id]) return false;
+    if (id === 'mold' && perk(s).moldImmune) return false;
+    if (id === 'insomnia' && s.gear.earplugs) return false;
     s.conds[id] = { since: s.day };
     if (rep) rep.line('你患上了「' + D.CONDS[id].name + '」：' + D.CONDS[id].desc + (D.CONDS[id].lethal ? '。拖到第 ' + D.CONDS[id].lethal + ' 天會致命。' : ''), 'bad');
     return true;
@@ -2654,11 +3157,14 @@ body.ct-open { overflow: hidden; }
     });
   }
   // ---------- 致命危險 ----------
-  const guarded = (s, h) => (h.guard && s.gear[h.guard] ? 0.2 : 1) * (h.guard === 'gasmask' && (s.objects || []).includes('raincoat') ? 0.5 : 1);
+  const guarded = (s, h) => (h.guard && s.gear[h.guard] ? 0.2 : 1) * (h.guard === 'gasmask' && (s.objects || []).includes('raincoat') ? 0.5 : 1)
+    * (s.gear.lifejacket && WET.includes(h.id) ? 0.5 : 1);
   function outdoorRisk(s) {
     return (worldMods(s).outdoorDeath || []).reduce((a, h) => a + h.chance * guarded(s, h), 0);
   }
   const INSIDE = ['collapse', 'fire', 'ai_lock', 'typhoon_home'];
+  // 救生衣：與水有關的致命危險減半
+  const WET = ['tsunami', 'tide_moon', 'flood_home', 'typhoon_home', 'typhoon', 'delivery_flood', 'autoboat'];
   const homeHazards = (s) => (worldMods(s).homeDeath || []).filter((h) => (h.minFloor == null || s.floor >= h.minFloor) && (h.maxFloor == null || s.floor <= h.maxFloor)
     && !(INSIDE.includes(h.id) && s.floor === 0));
   function homeRisk(s) {
@@ -2672,7 +3178,7 @@ body.ct-open { overflow: hidden; }
     (M.outdoorDeath || []).forEach((h) => {
       if (s.body <= 0) return;
       const ch = h.chance * guarded(s, h);
-      if (rand(s) < ch) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你沒能回家。', 'bad'); }
+      if (rand(s) < ch) { if (kill(s, h.id, rep)) rep.line(evDef(h.ev).name + '：你沒能回家。', 'bad'); }
       else rep.line(evDef(h.ev).name + '：你平安回來了（致命機會 ' + Math.round(ch * 1000) / 10 + '%）', '');
     });
     (M.condChance || []).forEach((c) => { if (c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
@@ -2683,7 +3189,7 @@ body.ct-open { overflow: hidden; }
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 6, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 7, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -2699,7 +3205,8 @@ body.ct-open { overflow: hidden; }
       objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
       unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
       pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
-      gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false },
+      gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false, lifejacket: false, insurance: false, amulet: false, earplugs: false },
+      buys: {},
       // 旅行與家居（第三期）
       trip: null, visited: {}, rares: {}, decor: {}, antique: null, gallerySoldDay: 0,
       auto: 0, removed: { smile: false, label: false },
@@ -2727,6 +3234,8 @@ body.ct-open { overflow: hidden; }
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
     bg.cards.forEach((id) => addCard(s, id));
+    // 時間旅人：帶著一件來自未來的極稀有素材
+    if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
     D.STARTER.forEach((id) => addCard(s, id));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
     return s;
@@ -2825,7 +3334,7 @@ body.ct-open { overflow: hidden; }
   function marketItems(s) {
     const period = Math.floor((s.day - 1) / 3);
     if (!s.market || s.market.period !== period) {
-      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && objectAvailable(s, o)).map((o) => o.id);
+      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.souvenir && objectAvailable(s, o)).map((o) => o.id);
       const items = [];
       while (items.length < 2 && pool.length) items.push(pool.splice(Math.floor(rand(s) * pool.length), 1)[0]);
       s.market = { period, items };
@@ -2845,13 +3354,13 @@ body.ct-open { overflow: hidden; }
   const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
   const nextRentDay = (s) => Math.ceil(s.day / D.RENT_EVERY) * D.RENT_EVERY;
-  const foodCost = (s) => Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1));
+  const foodCost = (s) => (perk(s).noFood ? 0 : Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1) * (perk(s).foodMult || 1)));
 
   function rentAmount(s, floor) {
     const f = floor == null ? s.floor : floor;
     if (f <= 0) return 0;
     const period = Math.floor((s.day - 1) / D.RENT_EVERY);
-    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1));
+    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1) * (perk(s).rentMult || 1));
   }
 
   // 抉擇與面試的訊號：資料寫的是舊版數值（門檻 16.5 萬時），按本季門檻等比例放大
@@ -3228,8 +3737,10 @@ body.ct-open { overflow: hidden; }
     countAction(s, 'chat');
     if (cost) rep.delta('cr', -cost);
     rep.delta('spark', sp); rep.delta('body', 5 + outdoor);
-    rep.gain(def.cards[(Math.max(1, n.friend) - 1) % def.cards.length]);
-    if (perk(s).chatExtra) rep.gain(def.cards[n.friend % def.cards.length]);
+    // 熟絡度可能被抉擇扣成負數：索引要保持在範圍內
+    const nth = (k) => def.cards[((Math.floor(k) % def.cards.length) + def.cards.length) % def.cards.length];
+    rep.gain(nth(Math.max(1, n.friend) - 1));
+    if (perk(s).chatExtra) rep.gain(nth(n.friend));
     addParanoia(s, -2);
     train(s, { social: 1.2, empathy: 1, imag: 0.4 }, rep);
     teach(s, npcId, n.friend === 2 || n.friend === 4 ? 1 : 0.25, rep);
@@ -3260,7 +3771,7 @@ body.ct-open { overflow: hidden; }
     const cured = cureConds(s, 'rest');
     if (cured.length) rep.line('休息過後，' + cured.join('、') + '好了', 'good');
     if (s.noRest >= 3) rep.line('你終於休息了。連續 ' + s.noRest + ' 天沒有休息的紀錄歸零。', 'good');
-    const sp = addSpark(s, 0.3);
+    const sp = addSpark(s, 0.3 + (perk(s).restSpark || 0));
     s.stats.rests++;
     countAction(s, 'rest');
     rep.delta('body', b); rep.delta('spark', sp);
@@ -3348,52 +3859,83 @@ body.ct-open { overflow: hidden; }
   // ---------- 商店 ----------
   // 業力抵銷額度：每買一份，下一份貴 $30
   const offsetCost = (s) => 90 + 30 * (s.offsets || 0);
+  // 浮城百貨：每件貨品都有分類（cat）與像素模組（icon，見 icons.js）
+  const SHOP_CATS = { life: '生活', safe: '保命', dive: '潛水與工作', craft: '創作', home: '房屋', black: '黑市' };
+  const growCost = (s, id, base, step) => base + step * ((s.buys && s.buys[id]) || 0);
   function shop(s) {
     const items = [];
     const S = D.SHOP;
-    items.push({ id: 'premium', ...S.premium, owned: s.premiumUntil >= s.day,
-      note: s.premiumUntil >= s.day ? '有效至第 ' + s.premiumUntil + ' 天' : null });
-    items.push({ id: 'supplement', ...S.supplement });
-    items.push({ id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
-    items.push({ id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
-    if (s.objSlots < 5) items.push({ id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
+    const add = (cat, icon, it) => items.push(Object.assign({ cat, icon }, it));
+    add('life', 'phone', { id: 'premium', ...S.premium, owned: s.premiumUntil >= s.day, note: s.premiumUntil >= s.day ? '有效至第 ' + s.premiumUntil + ' 天' : null });
+    add('life', 'burger', { id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
+    add('life', 'can', { id: 'energy', name: '能量飲品', desc: '身體立即 +12；但火花 −0.1，而且有一成機會失眠', cost: 28 });
+    add('life', 'bottle', { id: 'supplement', ...S.supplement });
+    add('life', 'gift', { id: 'blindbox', name: '靈感盲盒', desc: '隨機一張素材；細字：有機會是古董（3%），也有機會是旅行素材（20%）', cost: 45 });
+    add('life', 'weight', { id: 'gym', name: '健身課程', desc: '體能 +5（每上一次課貴 $40）', cost: growCost(s, 'gym', 140, 40) });
+    add('life', 'book', { id: 'course', name: '外星語速成班', desc: '洞察 +6、想像力 +2（只可以上一次）', cost: 180, owned: !!(s.buys && s.buys.course) });
+    const curable = condsInfo(s).filter((c) => c.cure === 'medicine');
+    add('safe', 'medkit', { id: 'medicine', ...S.medicine, owned: false, note: curable.length ? '你現在有：' + curable.map((c) => c.name).join('、') : '你現在沒有需要用藥的病痛', need: !curable.length });
+    add('safe', 'helmet', { id: 'helmet', ...S.helmet, owned: s.gear.helmet });
+    add('safe', 'gasmask', { id: 'gasmask', ...S.gasmask, owned: s.gear.gasmask });
+    add('safe', 'jacket', { id: 'lifejacket', name: '救生衣', desc: '海嘯、水浸、颶風、快艇等與水有關的致命機會減半', cost: 110, owned: s.gear.lifejacket });
+    add('safe', 'earplug', { id: 'earplugs', name: '降噪耳塞', desc: '不會再失眠', cost: 50, owned: s.gear.earplugs });
+    add('safe', 'paper', { id: 'insurance', name: '旅遊保險', desc: '旅行中一次致命意外改為重傷；回到浮城後失效', cost: 90, owned: s.gear.insurance });
+    add('safe', 'amulet', { id: 'amulet', name: '開光護身符', desc: '被提教會出品：擋住一次致命意外（用完就碎）', cost: 480, owned: s.gear.amulet });
+    ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => add('dive', { tank: 'tank', harpoon: 'harpoon', bag: 'backpack', monitor: 'monitor' }[k], { id: k, ...S[k], owned: s.gear[k] }));
+    add('craft', 'brush', { id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
+    if (s.objSlots < 5) add('craft', 'key', { id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
     marketItems(s).forEach((id) => {
       const o = D.OBJ[id];
-      items.push({ id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity], obj: id });
+      items.push({ cat: 'craft', obj: id, id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity] });
     });
-    ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
-    items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
-      note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
-    const curable = condsInfo(s).filter((c) => c.cure === 'medicine');
-    items.push({ id: 'medicine', ...S.medicine, owned: false, note: curable.length ? '你現在有：' + curable.map((c) => c.name).join('、') : '你現在沒有需要用藥的病痛', need: !curable.length });
-    ['helmet', 'gasmask'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
-    if (worldMods(s).eraseShop) {
-      items.push({ id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
-    }
     if (s.floor === 0) {
       const f = Math.floor(s.water) + 1;
-      if (f <= 8) items.push({ id: 'rehouse', name: '重新租屋（' + f + ' 樓）', desc: '按金為兩期租金', cost: 2 * rentAmount(s, f), target: f });
+      if (f <= 8) add('home', 'house', { id: 'rehouse', name: '重新租屋（' + f + ' 樓）', desc: '按金為兩期租金', cost: 2 * rentAmount(s, f), target: f });
     } else {
-      if (s.floor < 8) items.push({ id: 'moveup', name: '搬上 ' + (s.floor + 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor + 1) + '，按金一期', cost: rentAmount(s, s.floor + 1) });
-      if (s.floor > 1 && s.water < s.floor - 1) items.push({ id: 'movedown', name: '搬到 ' + (s.floor - 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor - 1) + '，但離水更近', cost: 0 });
+      if (s.floor < 8) add('home', 'house', { id: 'moveup', name: '搬上 ' + (s.floor + 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor + 1) + '，按金一期', cost: rentAmount(s, s.floor + 1) });
+      if (s.floor > 1 && s.water < s.floor - 1) add('home', 'house', { id: 'movedown', name: '搬到 ' + (s.floor - 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor - 1) + '，但離水更近', cost: 0 });
     }
+    if (IE.World) IE.World.decorList(s).forEach((d) => items.push({ cat: 'home', icon: 'd_' + d.id, id: 'decor:' + d.id, name: d.name, desc: d.desc, cost: d.cost, owned: d.owned, need: !d.owned && !!d.reason && d.reason !== '錢不夠', note: !d.owned && d.reason && d.reason !== '錢不夠' ? d.reason : null }));
+    add('black', 'gem', { id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0, note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
+    if (worldMods(s).eraseShop) add('black', 'shredder', { id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
     items.forEach((it) => { it.enabled = !it.owned && !it.need && s.cr >= it.cost; });
     return items;
   }
   function buy(s, id) {
     const it = shop(s).find((x) => x.id === id);
     if (!it || !it.enabled) return { ok: false, msg: '無法購買' };
+    if (id.startsWith('decor:')) return IE.World.buyDecor(s, id.slice(6));
     s.cr -= it.cost;
+    s.buys = s.buys || {};
+    s.buys[id] = (s.buys[id] || 0) + 1;
     if (it.obj) { gainObject(s, it.obj, null); return { ok: true, msg: '已購買：' + D.OBJ[it.obj].name }; }
+    let msg = '已購買：' + it.name;
     switch (id) {
       case 'premium': s.premiumUntil = s.day + 4; break;
       case 'supplement':
         addSpark(s, 1.2, true);
         s.flags.crashDay = s.day + 2; s.flags.crashAmt += 1.6; break;
       case 'realfood': s.realFoodDay = s.day; heal(s, 15); addSpark(s, 0.2); break;
+      case 'energy': heal(s, 12); addSpark(s, -0.1, true); if (rand(s) < 0.1) addCond(s, 'insomnia', null); break;
+      case 'blindbox': {
+        const r = rand(s);
+        const pool = r < 0.03 ? D.ANTIQUES : r < 0.23 ? Object.keys(D.CARDS).filter((k) => k.startsWith('t_'))
+          : Object.keys(D.CARDS).filter((k) => !D.CARDS[k].origin && !D.CARDS[k].rarity && !/^(b|x|c|v)_/.test(k));
+        const card = pick(s, pool);
+        const res = addCard(s, card);
+        msg = '盲盒裡是：「' + D.CARDS[card].name + '」' + (r < 0.03 ? '（古董！）' : '') + (res.dropped ? '（丟掉了「' + res.dropped.name + '」）' : '');
+        break;
+      }
+      case 'gym': train(s, { fit: 5, calm: 0.5 }, null); break;
+      case 'course': train(s, { insight: 6, imag: 2 }, null); break;
       case 'tools': s.handBonus = 1; break;
       case 'studio': s.objSlots = Math.min(5, s.objSlots + 1); break;
-      case 'tank': case 'harpoon': case 'bag': case 'monitor': case 'helmet': case 'gasmask': s.gear[id] = true; break;
+      case 'tank': case 'harpoon': case 'bag': case 'monitor': case 'helmet': case 'gasmask':
+      case 'lifejacket': case 'earplugs': case 'insurance': case 'amulet':
+        s.gear[id] = true;
+        if (id === 'earplugs' && s.conds.insomnia) delete s.conds.insomnia;
+        if (id === 'amulet') sin(s, 0.5, null);
+        break;
       case 'medicine': cureConds(s, 'medicine'); break;
       case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
       case 'erase':
@@ -3406,7 +3948,7 @@ body.ct-open { overflow: hidden; }
       case 'movedown': s.floor -= 1; break;
       case 'rehouse': s.floor = it.target; s.graceUsed = false; s.debt = 0; break;
     }
-    return { ok: true, msg: '已購買：' + it.name };
+    return { ok: true, msg };
   }
 
   // ---------- 道德抉擇 ----------
@@ -3414,12 +3956,11 @@ body.ct-open { overflow: hidden; }
   function drawDilemma(s) {
     if (s.dilemmaDay === s.day) return s.dilemma;
     s.dilemmaDay = s.day; s.dilemma = null;
-    if (s.trip) return null;
     if (rand(s) > 0.4 + (worldMods(s).dilemmaBoost || 0)) return null;
     const pool = D.DILEMMAS.filter((d) => {
       const used = s.usedDilemmas[d.id];
       const fresh = !used || (d.repeat && s.day - used >= d.repeat);
-      return fresh && (!d.when || d.when(s));
+      return fresh && !d.trip === !s.trip && (!d.when || d.when(s));
     });
     if (!pool.length) return null;
     const d = pick(s, pool);
@@ -3451,6 +3992,7 @@ body.ct-open { overflow: hidden; }
     if (o.paranoia) fx.push(['note', '偏執 +' + o.paranoia]);
     if (o.stats) Object.keys(o.stats).forEach((k) => fx.push(['stat', D.STATS[k].name + ' ' + sign(o.stats[k])]));
     if (o.card) fx.push(['card', D.CARDS[o.card].name]);
+    if (o.tripCard) fx.push(['card', o.tripCard + ' 張當地素材']);
     if (o.obj) fx.push(['card', '靈感物件：' + D.OBJ[o.obj].name]);
     if (o.guilt && o.sin >= 1) fx.push(['card', '愧疚：' + o.guilt]);
     return fx;
@@ -3494,6 +4036,7 @@ body.ct-open { overflow: hidden; }
     }
     if (o.takeNamedNpc && cur.npc) takeNpc(s, s.npcs.find((n) => n.id === cur.npc), rep);
     if (o.card) rep.gain(o.card);
+    if (o.tripCard && s.trip) for (let i = 0; i < o.tripCard; i++) rep.gain(pick(s, D.DEST[s.trip.dest].sites.flatMap((x) => x.gain)));
     if (o.obj) gainObject(s, o.obj, rep);
     if (o.stats) train(s, o.stats, rep);
     if (o.paranoia) addParanoia(s, o.paranoia, rep);
@@ -3548,7 +4091,7 @@ body.ct-open { overflow: hidden; }
     s.pending.forEach((p) => {
       const w = evDef(p.id);
       feed.unshift({ kind: 'omen', text: (p.fresh ? '【新預兆】' : '【預兆】') + w.omen
-        + (A(s, 'insight') >= 50 || decorOn(s, 'telescope') ? '（' + (A(s, 'insight') >= 50 ? '洞察' : '望遠鏡') + '：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
+        + (A(s, 'insight') >= 50 || decorOn(s, 'telescope') || perk(s).omenSight ? '（' + (perk(s).omenSight ? '你看得見' : A(s, 'insight') >= 50 ? '洞察' : '望遠鏡') + '：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
       p.fresh = false;
     });
     activeEvents(s).forEach(({ def, until }) => {
@@ -3573,6 +4116,8 @@ body.ct-open { overflow: hidden; }
     if (IE.World) {
       const cm = IE.World.commissions(s).filter((c) => !c.done);
       if (cm.length && (s.day - 1) % 5 === 0) cm.forEach((c) => feed.push({ kind: 'comm', text: '【天空區委託・$' + c.pay + '】' + c.text + '（第 ' + c.until + ' 天前）' }));
+      const dl = IE.World.deal(s);
+      if (dl.dest && !s.trip) feed.push({ kind: 'ad', text: '【特價機票】' + D.DEST[dl.dest].name + ' 旅費 −' + Math.round(dl.off * 100) + '%（第 ' + dl.until + ' 天前出發）。' + (A(s, 'insight') >= 30 ? '' : '細字：不設退款。') });
     }
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
@@ -3654,12 +4199,15 @@ body.ct-open { overflow: hidden; }
     // 睡覺
     if (s.trip) { if (s.conds.insomnia) rep.line('失眠：在旅館也睡不著', 'bad'); else { heal(s, 6); rep.line('在旅館睡覺', '', 6, 'body'); } }
     else if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    else if (flooded(s) && perk(s).floodHeal) { heal(s, 10); rep.line('家裡淹水了。你長得特別好', 'good', 10, 'body'); }
     else if (flooded(s) && decorOn(s, 'pump')) { heal(s, 4); rep.line('家裡淹水，抽水泵整晚在響', '', 4, 'body'); }
     else if (flooded(s)) { hurt(s, 8, 'floodhome'); rep.line('家裡正在淹水', 'bad', -8, 'body'); if (rand(s) < 0.12) addCond(s, 'mold', rep); }
     else if (s.conds.insomnia) rep.line('失眠：整晚沒有睡著', 'bad');
     else { const b = 6 + (decorOn(s, 'bed') ? 3 : 0); heal(s, b); rep.line(decorOn(s, 'bed') ? '睡覺（彈簧床）' : '睡覺', '', b, 'body'); }
     if (S.nightBody && !s.trip && decorOn(s, 'ac')) rep.line('冷氣機整晚在響，你睡得很好', 'good');
     else if (S.nightBody && !s.trip) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
+    if (flooded(s) && !s.trip) s.stats.floodNights = (s.stats.floodNights || 0) + 1;
+    if (perk(s).paranoiaDaily) addParanoia(s, perk(s).paranoiaDaily);
     // 事件的每日影響
     if (M.bodyDaily) {
       const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
@@ -3671,29 +4219,29 @@ body.ct-open { overflow: hidden; }
     condsInfo(s).forEach((c) => {
       const def = D.CONDS[c.id];
       if (def.daily.body) { hurt(s, -def.daily.body, 'cond:' + c.id, { days: c.days }); rep.line(def.name + '（第 ' + c.days + ' 天）', 'bad', def.daily.body, 'body'); }
-      if (def.lethal && c.days >= def.lethal && s.body > 0) { kill(s, def.death); rep.line(def.name + '拖得太久了。', 'bad'); }
+      if (def.lethal && c.days >= def.lethal && s.body > 0) { if (kill(s, def.death, rep)) rep.line(def.name + '拖得太久了。', 'bad'); else delete s.conds[c.id]; }
       else if (def.dur && c.days >= def.dur) { delete s.conds[c.id]; rep.line(def.name + '好了', 'good'); }
     });
     // 致命危險：在家（按樓層）與每晚
     (s.trip ? [] : homeHazards(s)).forEach((h) => {
       if (s.body <= 0) return;
-      if (rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
+      if (rand(s) < h.chance * (s.gear.lifejacket && WET.includes(h.id) ? 0.5 : 1)) { if (kill(s, h.id, rep)) rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
       else rep.line(evDef(h.ev).name + '：你撐過了今晚（致命機會 ' + Math.round(h.chance * 100) + '%）', '');
     });
-    (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '……', 'bad'); } });
+    (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { if (kill(s, h.id, rep)) rep.line(evDef(h.ev).name + '……', 'bad'); } });
     (M.condChance || []).forEach((c) => { if (!c.outdoor && !s.trip && rand(s) < c.chance * (c.id === 'heatstroke' && decorOn(s, 'ac') ? 0.5 : 1)) addCond(s, c.id, rep); });
     // 過勞：連續多天沒有休息，有猝死的危險
     s.noRest = s.restedToday ? 0 : s.noRest + 1;
     s.restedToday = false;
     if (s.noRest >= 5 && s.body > 0) {
       const ch = (s.noRest - 4) * 0.05;
-      if (rand(s) < ch) { kill(s, 'karoshi'); rep.line('連續 ' + s.noRest + ' 天沒有休息。你的心臟停了。', 'bad'); }
+      if (rand(s) < ch) { if (kill(s, 'karoshi', rep)) rep.line('連續 ' + s.noRest + ' 天沒有休息。你的心臟停了。', 'bad'); }
       else rep.line('連續 ' + s.noRest + ' 天沒有休息（猝死機會 ' + Math.round(ch * 100) + '%）', 'bad');
     } else if (s.noRest >= 3) rep.line('連續 ' + s.noRest + ' 天沒有休息。第 5 天起會有猝死的危險。', 'bad');
     // 通宵：連續通宵越多晚越危險，而且容易失眠
     s.allnighters = s.allnighterDay === s.day ? s.allnighters + 1 : 0;
     if (s.allnighterDay === s.day && rand(s) < 0.4) addCond(s, 'insomnia', rep);
-    if (s.allnighters >= 3 && s.body > 0 && rand(s) < 0.2) { kill(s, 'art_chain'); rep.line('連續第 ' + s.allnighters + ' 個通宵。', 'bad'); }
+    if (s.allnighters >= 3 && s.body > 0 && rand(s) < 0.2) { if (kill(s, 'art_chain', rep)) rep.line('連續第 ' + s.allnighters + ' 個通宵。', 'bad'); }
     if (M.paranoiaDaily) addParanoia(s, M.paranoiaDaily);
     else addParanoia(s, -0.8);
     // 補充劑反彈
@@ -3902,6 +4450,10 @@ body.ct-open { overflow: hidden; }
     Object.keys(s.visited || {}).forEach((k) => { meta.visited[k] = (meta.visited[k] || 0) + s.visited[k]; });
     meta.rares = meta.rares || {};
     Object.keys(s.rares || {}).forEach((k) => { meta.rares[k] = true; });
+    meta.sales = (meta.sales || 0) + (s.stats.sales || 0);
+    meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
+    meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
+    if (IE.Roster) IE.Roster.settle(meta, finalType);
     meta.unlocked = meta.unlocked || {};
     meta.lastUnlocks = [];
     D.OBJECTS.forEach((o) => {
@@ -3958,7 +4510,7 @@ body.ct-open { overflow: hidden; }
     clinicConfig, applyClinic, interviewQuestions, applyInterview,
     chatCost, aliveNpcs, applyChat, applyRest,
     teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
-    actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
+    actions, shop, buy, SHOP_CATS, morning, endDay, epitaph, endingFor, recordMeta,
     report, heal, outdoorHazard, MAX_CARDS,
   };
 });
@@ -3987,7 +4539,7 @@ body.ct-open { overflow: hidden; }
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1));
+    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -4177,8 +4729,8 @@ body.ct-open { overflow: hidden; }
     s.session = {
       mode: all ? 'allnighter' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
-      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0),
-      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0),
+      handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
+      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
     draw(s);
@@ -4348,6 +4900,7 @@ body.ct-open { overflow: hidden; }
 
   // ---------- 家居 ----------
   // 家具放在家裡才有用：露宿街頭或出門旅行時都不算
+  const perk = (s) => (D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk) || {};
   const decorOn = (s, id) => !!(s.decor && s.decor[id]) && s.floor > 0 && !s.trip;
   function decorList(s) {
     return D.DECOR.map((d) => {
@@ -4385,7 +4938,7 @@ body.ct-open { overflow: hidden; }
   }
   // 出價看這件作品在今天的外星門檻面前有多亮：同一件作品，越遲賣越不值錢
   const GALLERY_K = Number((typeof process !== 'undefined' && process.env && process.env.GALLERY_K) || 1000);
-  const workPrice = (s, w) => Math.max(20, Math.round(GALLERY_K * w.score / R.threshold(s) * (0.8 + 0.006 * stat(s, 'social')) * galleryMult(s)));
+  const workPrice = (s, w) => Math.max(20, Math.round(GALLERY_K * w.score / R.threshold(s) * (0.8 + 0.006 * stat(s, 'social')) * galleryMult(s) * (perk(s).galleryMult || 1)));
   function galleryOffers(s) {
     const today = s.gallerySoldDay === s.day;
     return s.works.map((w, i) => ({ i, name: w.name, form: w.form, day: w.day, raw: w.raw, score: w.score, sold: !!w.sold, price: workPrice(s, w),
@@ -4426,7 +4979,7 @@ body.ct-open { overflow: hidden; }
       }
       s.comm = { period, until: period * 5 + 5, items };
     }
-    return s.comm.items.map((c) => Object.assign({}, c, { until: s.comm.until,
+    return s.comm.items.map((c) => Object.assign({}, c, { until: s.comm.until, pay: Math.round(c.pay * (perk(s).commMult || 1)),
       text: c.who + c.want + '：要一件有' + Object.keys(c.need).map((k) => (c.need[k] > 1 ? c.need[k] + ' 張' : '') + '「' + D.TAGS[k].name + '」').join('和') + '的作品' }));
   }
   // 一晚的創作完成後：每一次下筆檢查有沒有湊齊某個委託的標籤
@@ -4439,10 +4992,11 @@ body.ct-open { overflow: hidden; }
       const hit = ses.log.some((x) => x.total >= R.threshold(s) * 0.02 && Object.keys(c.need).every((k) => x.tags.filter((t) => t === k).length >= c.need[k]));
       if (!hit) return;
       c.done = true;
-      s.cr += c.pay; s.stats.crEarned += c.pay;
+      const pay = Math.round(c.pay * (perk(s).commMult || 1));
+      s.cr += pay; s.stats.crEarned += pay;
       s.stats.commissions = (s.stats.commissions || 0) + 1;
       R.train(s, { obey: 0.6 }, null);
-      paid.push({ text: c.who + '收到了作品', pay: c.pay });
+      paid.push({ text: c.who + '收到了作品', pay });
     });
     return paid;
   }
@@ -4453,7 +5007,7 @@ body.ct-open { overflow: hidden; }
     if (!s.antique || s.antique.period !== period) {
       const pool = D.ANTIQUES.slice();
       const items = [];
-      while (items.length < 3 && pool.length) {
+      while (items.length < (perk(s).extraAntique ? 4 : 3) && pool.length) {
         const id = pool.splice(Math.floor(R.rand(s) * pool.length), 1)[0];
         items.push({ id, price: Math.round(D.CARDS[id].value * (5 + R.rand(s) * 3)) });
       }
@@ -4463,7 +5017,7 @@ body.ct-open { overflow: hidden; }
       if (R.eventActive(s, 'timeslip')) items.push({ id: 't_scroll', price: 520, special: '來自另一條時間線' });
       s.antique = { period, items };
     }
-    const mult = R.eventActive(s, 'crash') ? 0.6 : 1;
+    const mult = (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).antiqueMult || 1);
     return s.antique.items.map((it) => {
       const c = D.CARDS[it.id];
       const price = Math.round(it.price * mult);
@@ -4476,6 +5030,7 @@ body.ct-open { overflow: hidden; }
     if (!o || o.reason) return { ok: false, msg: o ? o.reason : '沒有這件貨' };
     s.cr -= o.price;
     s.antique.items.find((x) => x.id === id).sold = true;
+    s.stats.antiqueTrades = (s.stats.antiqueTrades || 0) + 1;
     const res = R.addCard(s, id);
     return { ok: true, msg: '買下了「' + o.name + '」' + (res.dropped ? '（素材庫滿了，丟掉了「' + res.dropped.name + '」）' : '') };
   }
@@ -4483,7 +5038,7 @@ body.ct-open { overflow: hidden; }
   // 古董商也收貨：旅行帶回來的素材特別值錢，極稀有素材更是天價（每天最多收兩件）
   function cardPrice(s, c) {
     const k = c.rarity === 'legend' ? 4 : c.origin && c.origin !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
-    return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1)));
+    return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).sellMult || 1)));
   }
   function sellCards(s) {
     const left = 2 - (s.cardSales && s.cardSales.day === s.day ? s.cardSales.n : 0);
@@ -4497,17 +5052,35 @@ body.ct-open { overflow: hidden; }
     s.cards = s.cards.filter((c) => c.uid !== uid);
     s.cr += o.price; s.stats.crEarned += o.price;
     s.cardSales = { day: s.day, n: (s.cardSales && s.cardSales.day === s.day ? s.cardSales.n : 0) + 1 };
+    s.stats.antiqueTrades = (s.stats.antiqueTrades || 0) + 1;
     return { ok: true, price: o.price, msg: '把「' + o.name + '」賣給古董商：+$' + o.price };
   }
 
   // ---------- 旅行 ----------
   const TRAVEL_EVENTS = { war: 1.5, pandemic: 1.4, crash: 0.8, netdown: 1.2, tourists: 1.2, famine: 1.2 };
-  const tripCost = (s, d) => Math.round(d.cost * Object.keys(TRAVEL_EVENTS).reduce((a, id) => a * (R.eventActive(s, id) ? TRAVEL_EVENTS[id] : 1), 1));
-  function flightRisk(s) {
-    return D.FLIGHT.base + Object.keys(D.FLIGHT.events).reduce((a, id) => a + (R.eventActive(s, id) ? D.FLIGHT.events[id] : 0), 0);
+  // 特價機票：每四天一個目的地 −40%
+  function deal(s) {
+    const period = Math.floor((s.day - 1) / 4);
+    if (!s.deal || s.deal.period !== period) {
+      const pool = D.DESTINATIONS.filter((d) => !d.when || d.when(s));
+      s.deal = { period, dest: pool.length ? R.pick(s, pool).id : null, off: 0.4, until: period * 4 + 4 };
+    }
+    return s.deal;
   }
+  const fareOf = (f) => D.FARES[f] || D.FARES.economy;
+  const tripCost = (s, d, fare) => Math.round(d.cost * Object.keys(TRAVEL_EVENTS).reduce((a, id) => a * (R.eventActive(s, id) ? TRAVEL_EVENTS[id] : 1), 1)
+    * (perk(s).tripCost || 1) * fareOf(fare).costMult * (deal(s).dest === d.id ? 1 - deal(s).off : 1));
+  function flightRisk(s, fare) {
+    if (perk(s).flightSafe) return 0;
+    return (D.FLIGHT.base + Object.keys(D.FLIGHT.events).reduce((a, id) => a + (R.eventActive(s, id) ? D.FLIGHT.events[id] : 0), 0)) * fareOf(fare).risk;
+  }
+  // 護照印章：同一局去過 3／6／10 個地方
+  const stamps = (s) => Object.keys(s.visited || {}).length;
+  const stampBonus = (s) => ({ hand: stamps(s) >= 3 ? 1 : 0, plays: stamps(s) >= 10 ? 1 : 0 });
   // 探索點的致命機會：體能與冷靜可以降低
-  const siteRisk = (s, st) => (st.risk ? st.risk.chance * Math.max(0.35, 1 - (stat(s, 'fit') + stat(s, 'calm')) / 300) : 0);
+  const siteRisk = (s, st) => (st.risk ? st.risk.chance * Math.max(0.35, 1 - (stat(s, 'fit') + stat(s, 'calm')) / 300) * (perk(s).siteSafe || 1)
+    * (s.gear.lifejacket && /drown|current|pyramid|atlantis|flood/.test(st.risk.death) ? 0.5 : 1) : 0);
+  const siteBody = (s, st) => (st.body > 0 ? Math.round(st.body * (perk(s).tripBody || 1)) : st.body);
   function needReason(s, st) {
     if (!st.need) return null;
     for (const k of Object.keys(st.need)) if (stat(s, k) < st.need[k]) return '需要' + D.STATS[k].name + ' ' + st.need[k] + '（你只有 ' + Math.round(stat(s, k)) + '）';
@@ -4528,41 +5101,56 @@ body.ct-open { overflow: hidden; }
     if (s.ended) return '—';
     if (R.isNight(s)) return '晚上沒有航班';
     if (s.body <= 25) return '身體太差，坐不了長途機';
-    if (s.cr < tripCost(s, d)) return '旅費不足（要 $' + tripCost(s, d).toLocaleString() + '）';
+    if (s.cr < tripCost(s, d, 'budget')) return '旅費不足（廉航也要 $' + tripCost(s, d, 'budget').toLocaleString() + '）';
     return null;
   }
   function destInfo(s, id, meta) {
     const d = D.DEST[id];
     const risk = flightRisk(s);
-    return { id: d.id, name: d.name, region: D.REGIONS[d.region], kind: D.KINDS[d.kind], desc: d.desc, cost: tripCost(s, d), stay: d.stay,
+    const fares = Object.keys(D.FARES).map((f) => ({ id: f, name: D.FARES[f].name, desc: D.FARES[f].desc, cost: tripCost(s, d, f), risk: flightRisk(s, f), ok: s.cr >= tripCost(s, d, f) }));
+    return { id: d.id, name: d.name, region: D.REGIONS[d.region], kind: D.KINDS[d.kind], desc: d.desc, cost: tripCost(s, d), stay: d.stay, fares,
+      deal: deal(s).dest === d.id ? deal(s) : null, souvenir: D.OBJECTS.filter((o) => o.souvenir === d.region).map((o) => o.name),
       flight: risk, locked: !!(d.when && !d.when(s)), lockText: d.lockText, visited: (s.visited && s.visited[id]) || 0, reason: destReason(s, d),
-      sites: d.sites.map((st) => ({ id: st.id, name: st.name, desc: st.desc, body: st.body, spark: st.spark, gain: st.gain.map((g) => D.CARDS[g].name),
+      sites: d.sites.map((st) => ({ id: st.id, name: st.name, desc: st.desc, body: siteBody(s, st), spark: st.spark, gain: st.gain.map((g) => D.CARDS[g].name),
         risk: siteRisk(s, st), need: needReason(s, st), rare: rareHint(s, st, meta) })) };
   }
   function worldList(s, meta) { return D.DESTINATIONS.map((d) => destInfo(s, d.id, meta)); }
 
-  function startTrip(s, id) {
+  function startTrip(s, id, fare) {
     const d = D.DEST[id];
+    fare = D.FARES[fare] ? fare : 'economy';
+    const F = D.FARES[fare];
     const reason = d ? destReason(s, d) : '沒有這個地方';
     if (reason) return { ok: false, msg: reason };
-    const cost = tripCost(s, d);
-    const rep = R.report(s, '出發：' + d.name);
+    const cost = tripCost(s, d, fare);
+    if (s.cr < cost) return { ok: false, msg: F.name + '要 $' + cost.toLocaleString() };
+    const rep = R.report(s, '出發：' + d.name + '（' + F.name + '）');
     s.cr -= cost;
-    rep.line('機票與住宿', 'cost', -cost, 'cr');
+    rep.line((deal(s).dest === id ? '特價機票與住宿' : '機票與住宿') + '（' + F.name + '）', 'cost', -cost, 'cr');
     s.stats.flights = (s.stats.flights || 0) + 1;
-    const risk = flightRisk(s);
-    if (R.rand(s) < risk) {
-      R.kill(s, 'plane');
+    const risk = flightRisk(s, fare);
+    s.trip = { dest: id, start: s.day, until: s.day + d.stay - 1, visits: {}, fare };
+    if (R.rand(s) < risk && R.kill(s, 'plane', rep)) {
       rep.line('你坐的航班沒有抵達' + d.name + '。', 'bad');
       return { ok: true, rep: rep.done() };
     }
     if (risk > 0.005) rep.line('航班平安降落（致命機會 ' + pctText(risk) + '）', '');
-    s.trip = { dest: id, start: s.day, until: s.day + d.stay - 1, visits: {} };
+    const fresh = !s.visited[id];
     s.visited[id] = (s.visited[id] || 0) + 1;
     s.stats.trips = (s.stats.trips || 0) + 1;
     rep.line('你飛到了' + d.name + '。' + d.desc, 'good');
-    R.hurt(s, 6, 'flight'); rep.delta('body', -6);
-    rep.delta('spark', R.addSpark(s, s.visited[id] === 1 ? 0.4 : 0.15));
+    if (F.body > 0) { R.hurt(s, F.body, 'flight'); rep.delta('body', -F.body); } else { R.heal(s, -F.body); rep.delta('body', -F.body); }
+    rep.delta('spark', R.addSpark(s, (s.visited[id] === 1 ? 0.4 : 0.15) + F.spark, true));
+    // 護照印章
+    if (fresh) {
+      const n = stamps(s);
+      rep.line('護照多了一個印章（本局第 ' + n + ' 個）', 'good');
+      const m = D.STAMPS.find((x) => x.n === n);
+      if (m) {
+        rep.line('護照印章 ' + n + ' 個：' + m.text + '！', 'legend');
+        if (n === 6) s.objSlots = Math.min(6, s.objSlots + 1);
+      }
+    }
     R.train(s, { insight: 0.6, imag: 0.6 }, rep);
     // 第一次去的地方一定會學到新東西
     if (s.visited[id] === 1) R.teach(s, 'trip_' + d.kind, 1, rep);
@@ -4571,11 +5159,29 @@ body.ct-open { overflow: hidden; }
     return { ok: true, rep: rep.done() };
   }
   // 白天的行動：探索點、在旅館休息、提早回程
+  // 紀念品店：只在當地買得到的靈感物件
+  function souvenirs(s) {
+    if (!s.trip) return [];
+    const region = D.DEST[s.trip.dest].region;
+    return D.OBJECTS.filter((o) => o.souvenir === region).map((o) => {
+      const own = s.objects.includes(o.id) || s.objStash.includes(o.id);
+      return { id: o.id, name: o.name, desc: o.desc, rarity: o.rarity, price: o.price, owned: own,
+        reason: own ? '已擁有' : s.cr < o.price ? '錢不夠' : s.objects.length >= s.objSlots && s.objStash.length >= 4 ? '物件欄和儲物箱都滿了' : null };
+    });
+  }
+  function buySouvenir(s, id) {
+    const o = souvenirs(s).find((x) => x.id === id);
+    if (!o || o.reason) return { ok: false, msg: o ? o.reason : '這裡沒有這件紀念品' };
+    s.cr -= o.price;
+    R.gainObject(s, id, null);
+    s.stats.souvenirs = (s.stats.souvenirs || 0) + 1;
+    return { ok: true, msg: '買下了紀念品「' + o.name + '」' };
+  }
   function tripActions(s) {
     const d = D.DEST[s.trip.dest];
     const list = d.sites.map((st) => {
       const n = s.trip.visits[st.id] || 0;
-      const fx = [['body', '−' + st.body]];
+      const fx = [['body', siteBody(s, st) >= 0 ? '−' + siteBody(s, st) : '+' + -siteBody(s, st)]];
       if (st.spark) fx.push(['spark', '+' + round1(st.spark * (n ? 0.5 : 1))]);
       fx.push(['card', n ? '再去一次：一張' : st.gain.map((g) => D.CARDS[g].name).join('、')]);
       if (st.atone) fx.push(['soul', '−' + st.atone + ' 克']);
@@ -4586,7 +5192,7 @@ body.ct-open { overflow: hidden; }
       const risk = siteRisk(s, st);
       if (risk > 0) fx.push(['danger', '致命 ' + pctText(risk)]);
       return { id: 'site:' + st.id, group: 'trip', name: st.name + (n ? '（第 ' + (n + 1) + ' 次）' : ''), sub: st.desc, fx,
-        reason: needReason(s, st) || (s.body <= st.body ? '身體撐不住' : null) };
+        reason: needReason(s, st) || (s.body <= siteBody(s, st) ? '身體撐不住' : null) };
     });
     list.push({ id: 'rest', group: 'trip', name: '在旅館休息', sub: '睡到自然醒，窗外是' + d.name, fx: [['body', '+18'], ['spark', '+0.3']] });
     list.push({ id: 'tripback', group: 'trip', name: '提早回程', sub: '旅費不會退還', fx: [['note', '回到浮城']].concat(flightRisk(s) > 0.005 ? [['danger', '航班致命 ' + pctText(flightRisk(s))]] : []) });
@@ -4600,19 +5206,21 @@ body.ct-open { overflow: hidden; }
     s.stats.sites = (s.stats.sites || 0) + 1;
     s.stats.actions.site = (s.stats.actions.site || 0) + 1;
     rep.line(st.desc, '');
-    R.hurt(s, st.body, 'site', { dest: d.id }); rep.delta('body', -st.body);
+    const body = siteBody(s, st);
+    if (body > 0) R.hurt(s, body, 'site', { dest: d.id }); else R.heal(s, -body);
+    rep.delta('body', -body);
     if (st.spark) rep.delta('spark', R.addSpark(s, st.spark * (n > 1 ? 0.5 : 1)));
     // 致命危險
     const risk = siteRisk(s, st);
     if (risk > 0) {
-      if (R.rand(s) < risk) { R.kill(s, st.risk.death); rep.line('……', 'bad'); return rep.done(); }
-      rep.line('有驚無險（致命機會 ' + pctText(risk) + '）', '');
+      if (R.rand(s) < risk) { if (R.kill(s, st.risk.death, rep)) { rep.line('……', 'bad'); return rep.done(); } }
+      else rep.line('有驚無險（致命機會 ' + pctText(risk) + '）', '');
     }
     (n > 1 ? [R.pick(s, st.gain)] : st.gain).forEach((id) => rep.gain(id));
     // 極稀有素材：只在特定條件下出現
     const r = st.rare;
     if (r && !owned(s, r.id) && !s.rares[r.id]) {
-      if (r.cond(s) && R.rand(s) < r.chance) {
+      if (r.cond(s) && R.rand(s) < r.chance + (perk(s).rareBonus || 0)) {
         s.rares[r.id] = s.day;
         rep.line('極稀有素材！你找到了「' + D.CARDS[r.id].name + '」。' + r.text + '。', 'legend');
         rep.gain(r.id);
@@ -4652,8 +5260,9 @@ body.ct-open { overflow: hidden; }
     const first = s.visited[d.id] === 1;
     s.glow = { until: s.day + 7, x: (first ? 1.6 : 1.3) + (first && (d.kind === 'alien' || d.kind === 'legend') ? 0.2 : 0), dest: d.id };
     s.stats.flights = (s.stats.flights || 0) + 1;
-    const risk = flightRisk(s);
-    if (R.rand(s) < risk) { R.kill(s, 'plane'); rep.line('回程的航班沒有抵達浮城。', 'bad'); return; }
+    const risk = flightRisk(s, s.trip.fare);
+    if (R.rand(s) < risk && R.kill(s, 'plane', rep)) { rep.line('回程的航班沒有抵達浮城。', 'bad'); return; }
+    s.gear.insurance = false;
     rep.line('你離開' + d.name + '，飛回浮城。' + (risk > 0.005 ? '（航班致命機會 ' + pctText(risk) + '）' : ''), 'news');
     rep.line('旅行的餘韻：之後七晚的作品 ×' + s.glow.x, 'good');
     s.trip = null;
@@ -4692,7 +5301,7 @@ body.ct-open { overflow: hidden; }
     decorOn, decorList, buyDecor, decorDaily,
     workPrice, galleryOffers, sellWork, galleryMult, commissions, settleCommissions,
     antiqueOffers, buyAntique, cardPrice, sellCards, sellCard,
-    tripCost, flightRisk, tripMult, siteRisk, destInfo, worldList, startTrip, tripActions, applySite, tripRest, flyHome, leaveTrip, tripNight, rareHint, rareList,
+    tripCost, flightRisk, tripMult, deal, stamps, stampBonus, souvenirs, buySouvenir, siteBody, siteRisk, destInfo, worldList, startTrip, tripActions, applySite, tripRest, flyHome, leaveTrip, tripNight, rareHint, rareList,
   };
 });
 
@@ -5240,6 +5849,9 @@ body.ct-open { overflow: hidden; }
     ctx.restore();
   }
   const spriteSize = (name) => ({ w: SPR[name].rows[0].length, h: SPR[name].rows.length });
+  // 其他模組可以登記自己的精靈圖（例如 chars.js 的角色像素模組）
+  const define = (name, spr) => { SPR[name] = spr; };
+  const hasSprite = (name) => !!SPR[name];
 
   // ---------- 畫面 ----------
   const view = { canvas: null, ctx: null, low: null, lctx: null, scale: 1, dpr: 1, cssW: 0, cssH: 0, shake: 0 };
@@ -5386,7 +5998,7 @@ body.ct-open { overflow: hidden; }
   }
 
   IE.Pixel = {
-    W, H, view, setup, resize, present, text, measure, sprite, spriteSize, particles, digits, wrap,
+    W, H, view, setup, resize, present, text, measure, sprite, spriteSize, define, hasSprite, spriteCanvas, particles, digits, wrap,
     mix, desat, rgba, hexToRgb,
     reducedMotion: typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   };
@@ -5434,6 +6046,32 @@ body.ct-open { overflow: hidden; }
     stone: ['...kkkkkk...', '..kaaaaaak..', '.kaaaaaaaak.', '.kaacccaaak.', '.kaaacaaaak.', '.kaaacaaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', 'kkkkkkkkkkkk', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk'],
     frame: ['kkkkkkkkkkkk', 'kaaaaaaaaaak', 'kakkkkkkkkak', 'kakcccccckak', 'kakccbccckak', 'kakcbbbcckak', 'kakbbbbbbkak', 'kakkkkkkkkak', 'kaaaaaaaaaak', 'kkkkkkkkkkkk', '............', '............'],
     gem: ['............', '...kkkkkk...', '..kccaaaak..', '.kcaaaaaabk.', 'kkkkkkkkkkkk', '.kaaaaaabk..', '..kaaaabk...', '...kaabk....', '....kbk.....', '.....k......', '............', '............'],
+    // ---------- 第四期：商店貨品與家具 ----------
+    burger: ['............', '...kkkkkk...', '..kccacack..', '.kaaaaaaaak.', '.kkkkkkkkkk.', '.kbbbbbbbbk.', '.kwwwwwwwwk.', '.kbbbbbbbbk.', '.kaaaaaaaak.', '..kkkkkkkk..', '............', '............'],
+    can: ['....kkkk....', '...kcccck...', '...kkkkkk...', '...kaaaak...', '...kawwak...', '...kawwak...', '...kaaaak...', '...kbbbbk...', '...kaaaak...', '...kaaaak...', '...kkkkkk...', '............'],
+    gift: ['...k...k....', '..kck.kck...', '...kkkkk....', '.kkkkckkkkk.', '.kaaakcaaak.', '.kkkkckkkkk.', '.kbbbkcbbbk.', '.kbbbkcbbbk.', '.kbbbkcbbbk.', '.kbbbkcbbbk.', '.kkkkkkkkkk.', '............'],
+    medkit: ['............', '....kkkk....', '....k..k....', '.kkkkkkkkkk.', '.kwwwwwwwwk.', '.kwwwaawwwk.', '.kwwaaaawwk.', '.kwwwaawwwk.', '.kwwwwwwwwk.', '.kbbbbbbbbk.', '.kkkkkkkkkk.', '............'],
+    helmet: ['............', '....kkkk....', '..kkaaaakk..', '.kaacaaaaak.', '.kacaaaaaak.', 'kaaaaaaaaaak', 'kaaaaaaaaaak', 'kkkkkkkkkkkk', 'kbbbbbbbbbbk', '.kk......kk.', '............', '............'],
+    gasmask: ['............', '..kkkkkkkk..', '.kaaaaaaaak.', 'kakkkaakkkak', 'kakcckkcckak', 'kakkkaakkkak', '.kaaakkaaak.', '..kaakkaak..', '..kkbbbbkk..', '...kbccbk...', '...kbbbbk...', '....kkkk....'],
+    jacket: ['...kk..kk...', '..kaakkaak..', '.kaaawwaaak.', 'kaaaawwaaaak', 'kakaawwaakak', 'kakaawwaakak', 'kkkaawwaakkk', '..kaawwaak..', '..kaawwaak..', '..kaaaaaak..', '..kkkkkkkk..', '............'],
+    earplug: ['............', '............', '..kkk..kkk..', '.kaaak.kaaak', '.kacak.kacak', '.kaaak.kaaak', '..kbk...kbk.', '..kbk...kbk.', '..kbkkkkkbk.', '...kbbbbbk..', '....kkkkk...', '............'],
+    amulet: ['...kkkkkk...', '..k......k..', '.k........k.', '.k........k.', '..k......k..', '...k....k...', '....kkkk....', '...kaaaak...', '..kaaccaak..', '..kaaccaak..', '...kaaaak...', '....kkkk....'],
+    tank: ['....kkkk....', '....kbbk....', '...kkkkkk...', '..kaaaaaak..', '..kacaaaak..', '..kacaaaak..', '..kaaaaaak..', '..kwwwwwwk..', '..kaaaaaak..', '..kaaaaaak..', '..kbbbbbbk..', '...kkkkkk...'],
+    harpoon: ['..........k.', '.........kck', '........kck.', '.......kbk..', '......kbk...', '.....kbk....', '....kbk.....', '..kkkk......', '.kaaak......', 'kaaak.......', 'kkkk........', '............'],
+    backpack: ['....kkkk....', '...k....k...', '.kkkkkkkkkk.', '.kaaaaaaaak.', '.kacaaaaaak.', '.kkkkkkkkkk.', '.kaaabbaaak.', '.kaaabbaaak.', '.kaaaaaaaak.', '.kaaaaaaaak.', '.kkkkkkkkkk.', '............'],
+    house: ['.....kk.....', '....kaak....', '...kaaaak...', '..kaaaaaak..', '.kaaaaaaaak.', 'kkkkkkkkkkkk', '.kccccccbbk.', '.kcwckccbbk.', '.kcckkccbbk.', '.kccccccbbk.', '.kkkkkkkkkk.', '............'],
+    d_bed: ['............', '............', 'k...........', 'kwwk........', 'kwwkkkkkkkkk', 'kkkaaaaaaaak', 'kbbaaaaaaaak', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk', 'k..........k', 'k..........k', '............'],
+    d_ac: ['............', 'kkkkkkkkkkkk', 'kwwwwwwwwwwk', 'kwccccccccak', 'kwwwwwwwwwwk', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk', '.c..c..c..c.', '..c..c..c...', '.c..c..c..c.', '............', '............'],
+    d_pump: ['............', '..kkkk......', '..kaak.kkkk.', '..kaak.kcck.', 'kkkkkkkkcck.', 'kbbbbbbkkkk.', 'kbaaaabk....', 'kbaccabk....', 'kbaaaabk....', 'kbbbbbbk....', 'kkkkkkkk....', '............'],
+    d_lock: ['....kkkk....', '...k....k...', '..k......k..', '..k......k..', '.kkkkkkkkkk.', '.kaaaaaaaak.', '.kaaakkaaak.', '.kaaakkaaak.', '.kaaaakaaak.', '.kaaaaaaaak.', '.kkkkkkkkkk.', '............'],
+    d_plant: ['.....c......', '..c..cc..c..', '..cc.cc.cc..', '...cccccc...', '....cccc....', '.....cc.....', '..kkkkkkkk..', '..kaaaaaak..', '...kaaaak...', '...kaaaak...', '...kkkkkk...', '............'],
+    d_aquarium: ['............', 'kkkkkkkkkkkk', 'kccccccccc.k', 'kaaaaaaaaaak', 'kaawaaaaaaak', 'kaaaaaaacaak', 'kaaacaaaaaak', 'kbbbbbbbbbbk', 'kkkkkkkkkkkk', '.k........k.', '.k........k.', '............'],
+    d_bookshelf: ['kkkkkkkkkkkk', 'kacbwacbwack', 'kacbwacbwack', 'kkkkkkkkkkkk', 'kbwacbwacbwk', 'kbwacbwacbwk', 'kkkkkkkkkkkk', 'kcbwacbwacbk', 'kcbwacbwacbk', 'kkkkkkkkkkkk', 'k..........k', '............'],
+    d_easel: ['.....kk.....', '..kkkkkkkk..', '..kwwwwwwk..', '..kwaawccwk.', '..kwaawccwk.', '..kwwwwwwk..', '..kkkkkkkk..', '...k.kk.k...', '..k..kk..k..', '..k..kk..k..', '.k...kk...k.', '............'],
+    d_telescope: ['..........kk', '........kkck', '......kkaak.', '....kkaaak..', '..kkaaak....', '.kcaak......', '..kk.k......', '.....k......', '....k.k.....', '...k...k....', '..k.....k...', '............'],
+    d_stereo: ['............', '.kkkkkkkkkk.', '.kbbbbbbbbk.', '.kbkkkkkkbk.', '.kbkaaaakbk.', '.kbkacwakbk.', '.kbkaaaakbk.', '.kbkkkkkkbk.', '.kbbbbbbbbk.', '.kkkkkkkkkk.', '..k......k..', '............'],
+    d_neonsign: ['............', 'kkkkkkkkkkkk', 'k..........k', 'k.aa.cc.aa.k', 'k.a..c..a..k', 'k.aa.cc.aa.k', 'k....c.....k', 'k.aa.cc.aa.k', 'k..........k', 'kkkkkkkkkkkk', '............', '............'],
+    d_poster: ['kkkkkkkkkkk.', 'kaaaaaaaaak.', 'kakkkkkkkak.', 'kakccccckak.', 'kakccccckak.', 'kakkkkkkkak.', 'kaaaaaaaaak.', 'kakkkkkkkak.', 'kaaaaaaaaak.', 'kakkkkkaaak.', 'kkkkkkkkkkk.', '............'],
   };
   const cache = new Map();
   function url(shape, pal) {
@@ -5460,7 +6098,94 @@ body.ct-open { overflow: hidden; }
     if (!o) return '';
     return '<img class="px-icon r-' + o.rarity + '" src="' + url(o.icon, o.pal) + '" width="' + (size || 36) + '" height="' + (size || 36) + '" alt="">';
   }
-  IE.Icons = { SHAPES, url, obj };
+  // 商店貨品的配色
+  const ITEM_PAL = {
+    phone: { a: '#37c3d6', b: '#26334d', c: '#e8fdff' }, burger: { a: '#e8a85a', b: '#8a4a1e', c: '#fff2c4', w: '#6cc070' }, can: { a: '#9be36b', b: '#3d6b2a', c: '#e8edf6', w: '#1b1b28' },
+    bottle: { a: '#ffc247', b: '#8a4a1e', c: '#ffffff' }, gift: { a: '#ff4fb4', b: '#a3206b', c: '#ffd36b' }, weight: { a: '#8e9bb0', b: '#4a5568', c: '#e8edf6' },
+    book: { a: '#9be36b', b: '#3d6b2a', c: '#e4ffd0' }, medkit: { a: '#d6334a', b: '#8a1f2e', w: '#eef1f7' }, helmet: { a: '#ffc247', b: '#8a6a1f', c: '#fff2c4' },
+    gasmask: { a: '#5a6478', b: '#2a3142', c: '#9be36b' }, jacket: { a: '#ff8a3c', b: '#8a4a1e', w: '#eef1f7' }, earplug: { a: '#ffd36b', b: '#8a6a1f', c: '#ffffff' },
+    amulet: { a: '#e8c25a', b: '#8a6a1f', c: '#ff4d5e' }, paper: { a: '#37c3d6', c: '#8d99b4' }, tank: { a: '#ffc247', b: '#5a4a1f', c: '#ffffff', w: '#1b1b28' },
+    harpoon: { a: '#8a5a3b', b: '#8e9bb0', c: '#ffffff' }, backpack: { a: '#37c3d6', b: '#1f6b7a', c: '#bff3fb' }, monitor: { a: '#37c3d6', b: '#26334d', c: '#e8fdff' },
+    brush: { a: '#ff4fb4', b: '#8a5a3b', c: '#ffffff' }, key: { a: '#e8c25a', b: '#8a6a1f', c: '#fff2c4' }, house: { a: '#d6334a', b: '#8a5a3b', c: '#eef1f7', w: '#37c3d6' },
+    gem: { a: '#a89a82', b: '#5c5448', c: '#e9dcc4' }, shredder: { a: '#8e9bb0', b: '#4a5568', c: '#ffffff' },
+    d_bed: { a: '#37c3d6', b: '#8a5a3b', w: '#ffffff' }, d_ac: { a: '#9be36b', b: '#9aa7c7', c: '#bff3fb', w: '#eef1f7' }, d_pump: { a: '#37c3d6', b: '#4a5568', c: '#9be36b' },
+    d_lock: { a: '#8e9bb0', b: '#4a5568' }, d_plant: { a: '#c46a1e', c: '#6cc070' }, d_aquarium: { a: '#1e7f99', b: '#3b2a1e', c: '#37c3d6', w: '#ffc247' },
+    d_bookshelf: { a: '#d6334a', b: '#37c3d6', c: '#ffc247', w: '#9be36b' }, d_easel: { a: '#ff4fb4', c: '#37c3d6', w: '#eef1f7' }, d_telescope: { a: '#c9d1dc', c: '#37c3d6' },
+    d_stereo: { a: '#ff4d5e', b: '#3b2a1e', c: '#1b1b28', w: '#ffffff' }, d_neonsign: { a: '#ff4fb4', c: '#37c3d6' }, d_poster: { a: '#d6334a', c: '#ffd36b' },
+  };
+  const item = (icon, size) => '<img class="px-icon item" src="' + url(icon, ITEM_PAL[icon]) + '" width="' + (size || 36) + '" height="' + (size || 36) + '" alt="">';
+  IE.Icons = { SHAPES, url, obj, item, ITEM_PAL };
+})(window.IE = window.IE || {});
+
+// ---- js/chars.js ----
+// 角色的像素模組：每個角色一個 8×12 的全身像，在浮城、房間、旅途和小遊戲裡使用；選角畫面與狀態列用放大版。
+(function (IE) {
+  'use strict';
+  const P = IE.Pixel;
+  // 調色盤：h 頭髮、f 皮膚、k 眼睛、m 嘴、j 上衣、p 褲、a 配件、b 次要配件、w 白、g 灰／鏡片、c 帽、r 紅、s 螢幕、l 燈
+  const SKIN = '#f2c6a0';
+  const M = {
+    copywriter: { pal: { h: '#3b2a1e', f: SKIN, k: '#1a1a2e', g: '#5a5f6e', m: '#b5555a', w: '#e8edf6', a: '#d6334a', p: '#2a3350' }, rows: [
+      '..hhhh..', '.hhhhhh.', '.hffffh.', '.gkggkg.', '.ffffff.', '..fmmf..', '...ff...', '.wwaaww.', 'wwwaawww', 'f.wwww.f', '..p..p..', '..p..p..'] },
+    lifeguard: { pal: { h: '#ffd36b', f: '#d9a070', k: '#1a1a2e', m: '#9e3040', j: '#d6334a', a: '#e8edf6', p: '#1e7f99' }, rows: [
+      '..hhhh..', '.hhhhhh.', '.hffffh.', '.fkffkf.', '.ffffff.', '..fmmf..', '...fa...', '.jjjjjj.', 'jjjajjjj', 'f.jjjj.f', '..p..p..', '..f..f..'] },
+    programmer: { pal: { h: '#1b1b28', f: SKIN, k: '#1a1a2e', m: '#b5555a', a: '#37c3d6', j: '#4a5568', w: '#c9d1dc', p: '#26334d' }, rows: [
+      '.hhhhh..', 'hhhhhhh.', 'ahffffha', 'afkffkfa', '.ffffff.', '..fmmf..', '...ff...', '.jjjjjj.', 'jjjwwjjj', 'f.jjjj.f', '..p..p..', '..p..p..'] },
+    busker: { pal: { c: '#ff4fb4', h: '#5a3a22', f: SKIN, k: '#1a1a2e', m: '#b5555a', j: '#3d8b5a', a: '#c98d5e', p: '#2a3350' }, rows: [
+      '..cccc..', '.cccccc.', '.hffffh.', '.fkffkf.', '.ffffff.', '.hfmmfh.', '..hhhh..', '.jjjjaj.', 'jjjjajjj', 'f.jajj.f', '..p..p..', '..p..p..'] },
+    courier: { pal: { a: '#ffc247', k: '#26334d', f: SKIN, m: '#b5555a', j: '#ff8a3c', b: '#c98d5e', p: '#2a3350' }, rows: [
+      '..aaaa..', '.aaaaaa.', '.akkkka.', '.ffffff.', '.ffffff.', '..fmmf..', '...ff...', '.jjjjjj.', 'jjjjjjbb', 'f.jjjjbb', '..p..p..', '..p..p..'] },
+    teacher: { pal: { h: '#c9d1dc', f: SKIN, k: '#1a1a2e', g: '#8a5a3b', m: '#b5555a', j: '#8a3b2a', w: '#e8edf6', p: '#3a2a1e' }, rows: [
+      '...hh...', '..hhhh..', '.hhhhhh.', '.gkggkg.', '.ffffff.', '..fmmf..', '...ff...', '.jjwwjj.', 'jjjwwjjj', 'f.jjjj.f', '..p..p..', '..p..p..'] },
+    influencer: { pal: { h: '#ff8fd1', f: SKIN, k: '#15151c', m: '#ff4d5e', j: '#9b8cff', p: '#1b1b28' }, rows: [
+      '..hhhh..', '.hhhhhh.', 'hhffffhh', 'hkkfkkkh', 'hffffffh', 'h.fmmf.h', '...ff...', '.jjjjjj.', 'jjjjjjjj', 'f.jjjj.f', '..p..p..', '..p..p..'] },
+    cybertech: { pal: { h: '#37c3d6', f: SKIN, k: '#1a1a2e', r: '#ff4d5e', m: '#b5555a', g: '#8e9bb0', j: '#2a3142', p: '#1b1b28' }, rows: [
+      '...hh...', '...hh...', '.ffhhff.', '.fkffrf.', '.ffffff.', '..fmmf..', '...ff...', '.jjjjjj.', 'gjjjjjjj', 'g.jjjj.f', '..p..p..', '..p..p..'] },
+    nurse: { pal: { w: '#e8edf6', a: '#d6334a', h: '#1b1b28', f: SKIN, k: '#1a1a2e', m: '#b5555a' }, rows: [
+      '..wwww..', '.wwaaww.', '.hffffh.', '.fkffkf.', '.ffffff.', '..fmmf..', '...ff...', '.wwwwww.', 'wwwaawww', 'f.wwww.f', '..w..w..', '..w..w..'] },
+    animator: { pal: { c: '#c38bff', h: '#3b2a1e', f: SKIN, k: '#1a1a2e', m: '#b5555a', j: '#eef1f7', a: '#ff4fb4', b: '#37c3d6', p: '#2a3350' }, rows: [
+      '.cccc...', 'cccccc..', '.hffffh.', '.fkffkf.', '.ffffff.', '..fmmf..', '...ff...', '.jjjjjj.', 'jajjjbjj', 'f.jjjj.f', '..p..p..', '..p..p..'] },
+    archaeologist: { pal: { c: '#8a6a3b', h: '#5a3a22', f: '#e0b088', k: '#1a1a2e', m: '#9e3040', j: '#c9a86b', a: '#5a3a22', p: '#8a7a5a', b: '#3b2a1e' }, rows: [
+      '..cccc..', 'cccccccc', '.hffffh.', '.fkffkf.', '.ffffff.', '..fmmf..', '...ff...', '.jjjjjj.', 'jjjaajjj', 'f.jjjj.f', '..p..p..', '..b..b..'] },
+    skyheir: { pal: { h: '#ffe9a8', f: SKIN, k: '#15151c', m: '#b5555a', j: '#ffffff', a: '#e8c25a', w: '#c9d6ff', p: '#e8edf6' }, rows: [
+      '..hhhh..', '.hhhhhhh', '.hffffh.', '.kkfkkf.', '.ffffff.', '..fmmf..', '...ff...', '.jjaajj.', 'jjwaawjj', 'f.jjjj.f', '..p..p..', '..p..p..'] },
+    astronaut: { pal: { g: '#bff3fb', h: '#5a3a22', f: SKIN, k: '#1a1a2e', w: '#e8edf6', a: '#d6334a' }, rows: [
+      '.gggggg.', 'g.hhhh.g', 'gfkffkfg', 'g.ffff.g', '.gggggg.', '..wwww..', '.wwaaww.', 'wwwwwwww', 'wwwaawww', 'w.wwww.w', '..w..w..', '..w..w..'] },
+    monk: { pal: { f: '#e0b088', k: '#1a1a2e', m: '#9e3040', j: '#ff8a3c', a: '#5a3a22' }, rows: [
+      '..ffff..', '.ffffff.', '.ffffff.', '.fkffkf.', '.ffffff.', '..fmmf..', '...ff...', '.jjjjjj.', 'jjajjjjj', 'f.jjjj.f', '.jjjjjj.', '..f..f..'] },
+    antiquedealer: { pal: { h: '#8d99b4', f: SKIN, k: '#1a1a2e', g: '#e8c25a', m: '#b5555a', j: '#5a2f8a', w: '#e8edf6', a: '#e8c25a', p: '#2a3350' }, rows: [
+      '..hhhh..', '.hhhhhh.', '.hffffh.', '.fkffgf.', '.ffffff.', '.hhmmhh.', '...ff...', '.jwwwwj.', 'jjwaawjj', 'f.jjjj.f', '..p..p..', '..p..p..'] },
+    greydeserter: { pal: { g: '#a8b4c8', k: '#0b0b1a', m: '#5a6478', j: '#2b3a5c', a: '#9be36b' }, rows: [
+      '.gggggg.', 'gggggggg', 'gkkggkkg', 'gkkggkkg', '.gggggg.', '..gmmg..', '...gg...', '.jjjjjj.', 'gjjaajjg', 'g.jjjj.g', '..j..j..', '..g..g..'] },
+    octopoet: { pal: { p: '#c38bff', w: '#ffffff', k: '#1b1b28', a: '#ffd36b' }, rows: [
+      '..pppp..', '.pppppp.', 'pppppppp', 'pwkppwkp', 'pppppppp', '.pppppp.', 'p.pppp.p', '.p.pp.pa', 'p.p..p.a', '.p.pp.p.', 'p..pp..p', '.p....p.'] },
+    awakenedai: { pal: { g: '#8e9bb0', s: '#37c3d6', k: '#e8fdff', a: '#ff4d5e', l: '#9be36b' }, rows: [
+      '...aa...', '.gggggg.', '.gssssg.', '.gskksg.', '.gssssg.', '.gggggg.', '...gg...', '.gggggg.', 'ggglgggg', 'g.gggg.g', '..g..g..', '..g..g..'] },
+    timetraveler: { pal: { a: '#ffc247', h: '#e8edf6', f: SKIN, k: '#1a1a2e', m: '#b5555a', j: '#3a2a60', c: '#9b8cff', p: '#1b1b28' }, rows: [
+      '.aa.aa..', '.hhhhhh.', '.hffffh.', '.fkffkf.', '.ffffff.', '..fmmf..', '...ff...', '.jjccjj.', 'jjjccjjj', 'jjjjjjjj', 'jjp..pjj', '..p..p..'] },
+    mushroom: { pal: { r: '#d6334a', w: '#ffffff', f: '#f2e6c8', k: '#1b1b28', m: '#b5555a', j: '#9be36b' }, rows: [
+      '..rrrr..', '.rrwrrr.', 'rwrrrrwr', 'rrrrrrrr', '..ffff..', '..kffk..', '..fmmf..', '.jjjjjj.', 'jjjjjjjj', 'f.jjjj.f', '..j..j..', '..j..j..'] },
+  };
+  Object.keys(M).forEach((id) => P.define('ch_' + id, M[id]));
+  // 遊戲中用哪個精靈圖
+  const spr = (s) => (s && P.hasSprite('ch_' + s.bg) ? 'ch_' + s.bg : 'player');
+  // 放大版（<img>）：選角畫面、狀態列；鎖住的角色是剪影
+  const cache = new Map();
+  function img(id, scale, locked) {
+    const key = id + '|' + scale + '|' + !!locked;
+    if (!cache.has(key)) {
+      const name = P.hasSprite('ch_' + id) ? 'ch_' + id : 'player';
+      const src = P.spriteCanvas(name, locked ? { tint: '#1b2233' } : {});
+      const cv = document.createElement('canvas');
+      cv.width = src.width * scale; cv.height = src.height * scale;
+      const x = cv.getContext('2d');
+      x.imageSmoothingEnabled = false;
+      x.drawImage(src, 0, 0, cv.width, cv.height);
+      cache.set(key, cv.toDataURL());
+    }
+    return '<img class="ch-img" src="' + cache.get(key) + '" width="' + 8 * scale + '" height="' + 12 * scale + '" alt="">';
+  }
+  IE.Chars = { M, spr, img };
 })(window.IE = window.IE || {});
 
 // ---- js/scene.js ----
@@ -5688,7 +6413,7 @@ body.ct-open { overflow: hidden; }
             const beamLift = this.beam && this.beam.t > 2.4 ? Math.min(60, (this.beam.t - 2.4) * 30) : 0;
             // 超重：光束一拉，人被提起一點又跌回去
             const strain = this.sl && this.sl.heavy && this.sl.t > 3.2 ? Math.round(Math.abs(Math.sin(this.sl.t * 9)) * 3) : 0;
-            if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift - strain, { desat: Math.max(0, 1 - s.spark / 2.5) });
+            if (beamLift < 12) P.sprite(c, IE.Chars.spr(s), wx + 4, wy + 1 + bob - beamLift - strain, { desat: Math.max(0, 1 - s.spark / 2.5) });
             if (beamLift < 12) this.drawStones(c, s, wx + 10, wy + 10 - strain);
             c.restore();
           }
@@ -5704,13 +6429,13 @@ body.ct-open { overflow: hidden; }
       if (s.floor === 0) {
         const p = this.playerPos(s);
         c.fillStyle = '#2a3350'; c.fillRect(84, p.y + 12, 44, 3); c.fillRect(90, p.y + 15, 3, 10); c.fillRect(118, p.y + 15, 3, 10);
-        P.sprite(c, 'player', p.x, p.y, { desat: Math.max(0, 1 - s.spark / 2.5) });
+        P.sprite(c, IE.Chars.spr(s), p.x, p.y, { desat: Math.max(0, 1 - s.spark / 2.5) });
         this.drawStones(c, s, p.x + 6, p.y + 11);
       }
       if (this.beam && this.beam.t > 2.4) {
         const p = this.playerPos(s);
         const lift = Math.min(60, (this.beam.t - 2.4) * 30);
-        if (lift >= 12) P.sprite(c, 'player', p.x, p.y - lift, { alpha: Math.max(0, 1 - (lift - 40) / 20) });
+        if (lift >= 12) P.sprite(c, IE.Chars.spr(s), p.x, p.y - lift, { alpha: Math.max(0, 1 - (lift - 40) / 20) });
       }
     },
     // 靈魂的重量：背後的石頭，每 6 克一塊，超重會變紅
@@ -5956,6 +6681,7 @@ body.ct-open { overflow: hidden; }
         { id: 'phone', x: 190, y: 86, w: 16, h: 14, label: '手機', sub: '商店與今天的動態' },
         { id: 'rest', x: 50, y: 100, w: 70, h: 34, label: night ? '早點睡' : '休息', sub: '身體 +' + (22 + (IE.World.decorOn(s, 'bed') ? 3 : 0)), off: off('rest') },
         { id: 'objects', x: 54, y: 30, w: 80, h: 20, label: '靈感物件', sub: s.objects.length + '/' + s.objSlots + ' 件・按一下排列' },
+        { id: 'gear', x: 54, y: 56, w: 48, h: 36, label: '道具掛牆', sub: '買過的裝備會掛在這裡・按一下打開浮城百貨' },
         { id: 'works', x: 140, y: 12, w: 66, h: 48, label: '作品牆', sub: s.works.length + ' 件作品・賣畫與天空區委託' },
         { id: 'city', x: 226, y: 22, w: 74, h: 70, label: '窗外', sub: '看看浮城的橫切面' },
         { id: 'decor', x: 122, y: 136, w: 18, h: 12, label: '家具目錄', sub: '用錢把這裡變成一個家' },
@@ -6012,6 +6738,14 @@ body.ct-open { overflow: hidden; }
       if (has('poster')) {
         rect(c, 104, 58, 20, 28, '#1b1b28'); rect(c, 105, 59, 18, 26, '#d6334a');
         rect(c, 108, 62, 12, 10, '#1b1b28'); rect(c, 110, 64, 8, 6, '#ffd36b'); rect(c, 107, 76, 14, 2, '#1b1b28'); rect(c, 109, 80, 10, 2, '#1b1b28');
+      }
+      // 道具掛牆：買過的裝備都掛在這裡
+      const GEAR = [['helmet', 'helmet'], ['gasmask', 'gasmask'], ['lifejacket', 'jacket'], ['tank', 'tank'], ['harpoon', 'harpoon'], ['bag', 'backpack'], ['amulet', 'amulet'], ['earplugs', 'earplug'], ['insurance', 'paper']];
+      const owned = GEAR.filter(([g]) => s.gear[g]);
+      if (owned.length) {
+        rect(c, 54, 56, 48, 36, '#5a4a3a');
+        for (let yy = 59; yy < 92; yy += 4) for (let xx = 57; xx < 102; xx += 4) rect(c, xx, yy, 1, 1, '#3b2a1e');
+        owned.slice(0, 6).forEach(([g, ic], i) => { rect(c, 61 + (i % 3) * 14, 57 + Math.floor(i / 3) * 17, 2, 2, '#c9d1dc'); icon(c, ic, IE.Icons.ITEM_PAL[ic], 56 + (i % 3) * 14, 60 + Math.floor(i / 3) * 17); });
       }
       // 床
       if (has('bed')) {
@@ -6080,7 +6814,7 @@ body.ct-open { overflow: hidden; }
       }
       // 你：白天在房間裡踱步，晚上站在書桌前
       const px = night ? 166 : 150 + Math.round(Math.sin(t * 0.4) * 26), py = 134;
-      P.sprite(c, 'player', px, py - 24 + (night ? 0 : Math.round(Math.abs(Math.sin(t * 3)) * -1)), { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5), flip: !night && Math.cos(t * 0.4) < 0 });
+      P.sprite(c, IE.Chars.spr(s), px, py - 24 + (night ? 0 : Math.round(Math.abs(Math.sin(t * 3)) * -1)), { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5), flip: !night && Math.cos(t * 0.4) < 0 });
       IE.Scenes.City.drawStones(c, s, px + 13, py - 6);
       if (Math.random() < Math.max(0, s.spark - 0.5) * 0.05) this.fx.add({ x: px + 8, y: py - 24, vx: (Math.random() - 0.5) * 6, vy: -10 - Math.random() * 8, life: 1.4, color: Math.random() < 0.7 ? '#ffc247' : '#ff8a3c' });
       // 窗口的光
@@ -6121,7 +6855,7 @@ body.ct-open { overflow: hidden; }
       rect(c, 130, 124, 30, 8, '#eef1f7'); rect(c, 132, 126, 12, 1, '#8d99b4'); rect(c, 112, 124, 8, 8, '#1b1b28');
       rect(c, 178, 116, 26, 18, '#e8edf6'); rect(c, 180, 114, 4, 4, '#e8edf6');
       s.objects.forEach((id, i) => { const o = D.OBJ[id]; if (o && i < 2) icon(c, o.icon, o.pal, 180 + i * 10, 120); });
-      P.sprite(c, 'player', 90, 108, { desat: Math.max(0, 1 - s.spark / 2.5) });
+      P.sprite(c, IE.Chars.spr(s), 90, 108, { desat: Math.max(0, 1 - s.spark / 2.5) });
       IE.Scenes.City.drawStones(c, s, 96, 119);
       if (night) { const bx = 160 + Math.sin(t * 0.5) * 140; c.fillStyle = 'rgba(200,255,250,0.1)'; c.beginPath(); c.moveTo(bx - 3, 0); c.lineTo(bx + 3, 0); c.lineTo(bx + 20, 146); c.lineTo(bx - 20, 146); c.closePath(); c.fill(); }
       if (season.weather !== 'heat') { c.fillStyle = 'rgba(170,210,255,0.35)'; for (let i = 0; i < 30; i++) c.fillRect((i * 37 + t * 50) % 320, 22 + (i * 29 + t * 160) % 120, 1, 3); }
@@ -6140,7 +6874,7 @@ body.ct-open { overflow: hidden; }
   // =====================================================================
   // 島：浮城的建築群
   const ISLANDS = [[70, 40, 50, 36], [40, 88, 44, 32], [92, 80, 70, 30], [140, 84, 40, 30], [228, 96, 46, 30], [176, 78, 30, 26],
-    [250, 60, 44, 28], [104, 118, 42, 22], [14, 128, 44, 26], [272, 128, 46, 34]];
+    [250, 60, 44, 28], [104, 118, 42, 22], [14, 128, 44, 26], [272, 128, 46, 34], [220, 62, 26, 18]];
   const SKY = [[186, 14, 46, 22], [232, 20, 48, 24]];
   const BRIDGES = [[120, 96, 20, 3], [162, 92, 14, 3], [206, 90, 22, 3], [84, 100, 8, 3], [112, 76, 3, 6], [246, 88, 3, 8], [120, 110, 3, 8], [58, 120, 3, 8], [272, 124, 3, 4]];
   const CityMap = scene('map', {
@@ -6155,7 +6889,7 @@ body.ct-open { overflow: hidden; }
           const a = acts.find((x) => x.id === p.act);
           off = !a || !a.enabled;
           sub = a ? (a.enabled ? a.name : a.name + '：' + (a.reason || '')) : isNight(s) ? '晚上不開放' : '';
-        } else sub = { room: '回家', antique: '買賣古董與旅行素材', gallery: '賣畫、接委託', world: '世界地圖：出國找素材' }[p.ui] || '';
+        } else sub = { room: '回家', antique: '買賣古董與旅行素材', gallery: '賣畫、接委託', world: '世界地圖：出國找素材', store: '生活、保命、潛水、創作、房屋、黑市' }[p.ui] || '';
         return { id: p.id, x: p.x - 10, y: p.y - 10, w: 20, h: 20, label: p.name, sub, off, place: p };
       });
     },
@@ -6243,6 +6977,7 @@ body.ct-open { overflow: hidden; }
     shelter: ['...##...', '..####..', '.######.', '########', '#.####.#', '#.#..#.#', '#.#..#.#', '########'],
     market: ['########', '#.#.#.#.', '########', '.#....#.', '.#.##.#.', '.#.##.#.', '.#....#.', '.######.'],
     plane: ['...#....', '...##...', '#..##...', '########', '#..##...', '...##...', '...#....', '........'],
+    shop: ['..####..', '.#....#.', '########', '#......#', '#.#..#.#', '#......#', '#......#', '########'],
   };
   function MAP_ICON(c, id, x, y, col) {
     const rows = MI[id] || MI.home;
@@ -6306,7 +7041,7 @@ body.ct-open { overflow: hidden; }
         const def = D.DEST[d.id];
         const rare = d.sites.some((x) => x.rare && x.rare.ready);
         return { id: d.id, x: def.x - 6, y: def.y - 6, w: 12, h: 12, label: d.name + (d.visited ? '　✓' : ''),
-          sub: d.locked ? '🔒 ' + d.lockText : d.kind.name + '・$' + d.cost.toLocaleString() + '・' + d.stay + ' 天' + (rare ? '・極稀有素材時機已到' : ''),
+          sub: d.locked ? '🔒 ' + d.lockText : d.kind.name + '・$' + d.cost.toLocaleString() + (d.deal ? '（特價）' : '') + '・' + d.stay + ' 天' + (rare ? '・極稀有素材時機已到' : ''),
           off: d.locked, color: d.kind.color, dest: d, rare };
       });
       out.push({ id: 'home', x: D.HOME.x - 6, y: D.HOME.y - 6, w: 12, h: 12, label: '浮城', sub: s.trip ? '你現在在' + D.DEST[s.trip.dest].name : '你在這裡', color: '#ff4fb4' });
@@ -6358,19 +7093,21 @@ body.ct-open { overflow: hidden; }
         c.fillStyle = col;
         c.beginPath(); c.moveTo(cx, cy - 4); c.lineTo(cx + 3, cy); c.lineTo(cx, cy + 4); c.lineTo(cx - 3, cy); c.closePath(); c.fill();
         if (sp.dest.visited) rect(c, cx - 1, cy - 1, 2, 2, '#ffffff');
+        if (sp.dest.deal && !sp.off) { rect(c, cx + 3, cy - 9, 7, 5, '#ff4d5e'); rect(c, cx + 4, cy - 8, 1, 1, '#ffffff'); rect(c, cx + 8, cy - 6, 1, 1, '#ffffff'); rect(c, cx + 5, cy - 7, 3, 1, '#ffffff'); }
         if (sp.off) { rect(c, cx - 1, cy - 1, 3, 2, '#1b1b28'); }
         // 極稀有素材的時機到了：金光
         if (sp.rare && Math.random() < 0.3) this.fx.add({ x: cx + (Math.random() - 0.5) * 8, y: cy + (Math.random() - 0.5) * 8, vy: -8, life: 0.8, color: '#ffd36b' });
         if (sp.id === this.hover) { c.strokeStyle = '#ffffff'; c.strokeRect(sp.x + 0.5, sp.y + 0.5, 11, 11); }
       });
       // 旅行中：你在目的地
-      if (s.trip) { const d = D.DEST[s.trip.dest]; P.sprite(c, 'player', d.x - 4, d.y - 18 + Math.round(Math.sin(t * 3)), {}); }
+      if (s.trip) { const d = D.DEST[s.trip.dest]; P.sprite(c, IE.Chars.spr(s), d.x - 4, d.y - 18 + Math.round(Math.sin(t * 3)), {}); }
       this.fx.draw(c);
     },
     drawText() {
       const s = S();
       if (!s) return;
       P.text('世界地圖・2080', 4, 3, { size: 7, color: '#e8edf6', stroke: '#0a0e17' });
+      P.text('護照印章 ' + IE.World.stamps(s) + '・去過 ' + Object.keys(s.visited || {}).length + '/' + D.DESTINATIONS.length, 4, 13, { size: 5, color: '#ffd36b', stroke: '#0a0e17' });
       P.text('你有 $' + Math.round(s.cr).toLocaleString(), 316, 168, { size: 7, color: '#8be28f', stroke: '#0a0e17', align: 'right' });
       const K = D.KINDS;
       let x = 4;
@@ -6397,6 +7134,7 @@ body.ct-open { overflow: hidden; }
           sub: !a ? '晚上不能探索' : a.enabled ? st.desc : a.reason, off: !a || !a.enabled, rare: h && h.ready && !h.found, site: st };
       });
       out.push({ id: 'rest', x: 2, y: 140, w: 34, h: 30, label: isNight(s) ? '早點睡' : '在旅館休息', sub: '身體 +18' });
+      out.push({ id: 'souvenir', x: 38, y: 142, w: 30, h: 28, label: '紀念品店', sub: '只在當地買得到的靈感物件・不用花時段' });
       const back = acts.find((x) => x.id === 'tripback');
       out.push({ id: 'tripback', x: 284, y: 140, w: 34, h: 30, label: '提早回程', sub: back ? '旅費不會退還' : '晚上沒有航班', off: !back });
       return out;
@@ -6424,6 +7162,8 @@ body.ct-open { overflow: hidden; }
         if (sp.rare && Math.random() < 0.4) this.fx.add({ x: cx + (Math.random() - 0.5) * 14, y: cy - 6 + (Math.random() - 0.5) * 10, vy: -10, life: 0.9, color: '#ffd36b' });
         if (sp.id === this.hover) { c.strokeStyle = '#ffffff'; c.strokeRect(sp.x + 0.5, sp.y + 0.5, sp.w - 1, sp.h - 1); }
       });
+      // 紀念品攤
+      rect(c, 40, 150, 26, 18, '#8a5a3b'); for (let i = 0; i < 4; i++) rect(c, 40 + i * 7, 144, 6, 6, i % 2 ? '#ff4fb4' : '#ffd36b'); rect(c, 44, 154, 6, 6, '#37c3d6'); rect(c, 54, 154, 6, 6, '#9be36b');
       // 旅館與飛機
       rect(c, 4, 146, 28, 22, '#eef1f7'); rect(c, 4, 142, 28, 5, '#d6334a'); rect(c, 8, 152, 5, 6, night ? '#ffd36b' : '#37c3d6'); rect(c, 22, 152, 5, 6, night ? '#ffd36b' : '#37c3d6'); rect(c, 14, 160, 6, 8, '#6b4a32');
       const py = 152 + Math.round(Math.sin(t * 2));
@@ -6431,7 +7171,7 @@ body.ct-open { overflow: hidden; }
       // 你（在水上的地方坐船）
       const bob = Math.round(Math.sin(t * 2) * (d.landmark === 'sunken' || d.landmark === 'pyramid' ? 1.5 : 0.5));
       if (d.landmark === 'sunken' || d.landmark === 'pyramid') { rect(c, 140, 158 + bob, 40, 5, '#1b1b28'); rect(c, 136, 155 + bob, 6, 4, '#1b1b28'); rect(c, 178, 155 + bob, 6, 4, '#1b1b28'); rect(c, 142, 158 + bob, 36, 1, '#e8c25a'); }
-      P.sprite(c, 'player', 152, 134 + bob, { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5) });
+      P.sprite(c, IE.Chars.spr(s), 152, 134 + bob, { scale: 2, desat: Math.max(0, 1 - s.spark / 2.5) });
       IE.Scenes.City.drawStones(c, s, 165, 152 + bob);
       if (night) { c.fillStyle = 'rgba(5,7,20,0.35)'; c.fillRect(0, 0, 320, 180); }
       this.fx.draw(c);
@@ -6588,6 +7328,116 @@ body.ct-open { overflow: hidden; }
       for (let i = 0; i < 6; i++) { const fx = (t * (10 + i * 3) + i * 70) % 360 - 20; rect(c, fx, 40 + i * 14, 5, 2, ['#ffc247', '#ff4fb4', '#9be36b'][i % 3]); }
       if (Math.random() < 0.2) IE.Maps.Trip.fx.add({ x: Math.random() * 320, y: 178, vy: -20, life: 3, color: '#bff3fb' });
       c.fillStyle = 'rgba(4,22,31,0.25)'; c.fillRect(0, 0, 320, 180);
+    },
+    nyc(c, t, d) {
+      for (let i = 0; i < 11; i++) { const x = i * 30 + 2, h = 30 + hash(i + 4) * 70, w = 18 + hash(i) * 8; rect(c, x, 116 - h, w, h, P.mix('#3a4562', '#8e9bb0', hash(i + 9) * 0.5)); for (let k = 0; k < h / 7; k++) for (let q = 0; q < 3; q++) if (hash(i * 31 + k * 3 + q) > 0.5) rect(c, x + 3 + q * 5, 120 - h + k * 7, 2, 3, '#ffd36b'); }
+      rect(c, 150, 30, 10, 86, '#5a6478'); rect(c, 152, 18, 6, 12, '#8e9bb0'); rect(c, 154, 8, 2, 10, '#c9d1dc');
+      rect(c, 262, 70, 6, 46, '#3d8b5a'); rect(c, 258, 64, 14, 8, '#3d8b5a'); rect(c, 270, 54, 3, 12, '#3d8b5a'); rect(c, 268, 50, 7, 5, Math.sin(t * 4) > 0 ? '#ffd36b' : '#e8c25a');
+      water(c, t, 112);
+    },
+    geyser(c, t, d) {
+      c.fillStyle = '#3a3a48'; c.beginPath(); c.moveTo(0, 110); c.lineTo(80, 70); c.lineTo(140, 100); c.lineTo(220, 60); c.lineTo(320, 96); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      ground(c, d.ground, 128);
+      const ph = (t * 0.25) % 1, hgt = ph < 0.3 ? Math.sin(ph / 0.3 * Math.PI) * 90 : 0;
+      if (hgt > 1) { c.fillStyle = 'rgba(232,240,248,0.85)'; c.fillRect(156, 128 - hgt, 10, hgt); c.fillStyle = 'rgba(232,240,248,0.4)'; c.beginPath(); c.arc(161, 128 - hgt, 14, 0, Math.PI * 2); c.fill(); }
+      for (let i = 0; i < 5; i++) { c.fillStyle = 'rgba(255,255,255,0.12)'; c.beginPath(); c.arc(60 + i * 50 + Math.sin(t + i) * 4, 118 - (t * 6 + i * 9) % 30, 6, 0, Math.PI * 2); c.fill(); }
+      [[40, 120], [250, 118]].forEach(([x, y]) => { rect(c, x, y - 10, 16, 10, '#d6334a'); rect(c, x - 2, y - 12, 20, 3, '#1b1b28'); rect(c, x + 6, y - 6, 4, 6, '#ffd36b'); });
+    },
+    moai(c, t, d) {
+      water(c, t, 128, 'rgba(14,90,110,0.9)');
+      ground(c, d.ground, 118);
+      rect(c, 0, 128, 320, 52, 'rgba(14,90,110,0.9)');
+      [[50, 1], [100, 1.2], [150, 1.4], [200, 1.2], [250, 1]].forEach(([x, k]) => {
+        const h = 50 * k;
+        rect(c, x, 118 - h, 22 * k, h, '#6b5a4a'); rect(c, x - 2, 118 - h + 4, 26 * k, 8 * k, '#5a4a3a');
+        rect(c, x + 3 * k, 118 - h + 14 * k, 5 * k, 3, '#2a2018'); rect(c, x + 13 * k, 118 - h + 14 * k, 5 * k, 3, '#2a2018'); rect(c, x + 8 * k, 118 - h + 18 * k, 5 * k, 12 * k, '#7a6a5a');
+        rect(c, x - 2, 116, 26 * k, 4, '#4a4a3a');
+      });
+    },
+    machu(c, t, d) {
+      c.fillStyle = '#2f5a3a'; c.beginPath(); c.moveTo(200, 128); c.lineTo(250, 20); c.lineTo(300, 128); c.closePath(); c.fill();
+      for (let i = 0; i < 6; i++) rect(c, 30 + i * 4, 128 - i * 10, 180 - i * 8, 10, P.mix('#3d6b2a', '#8a8a6a', (i % 2) * 0.4));
+      for (let i = 0; i < 8; i++) { rect(c, 60 + i * 16, 70, 12, 10, '#9a9a8a'); rect(c, 62 + i * 16, 66, 8, 4, '#8a5a3b'); }
+      for (let i = 0; i < 10; i++) { c.fillStyle = 'rgba(255,255,255,' + (0.2 + 0.1 * Math.sin(t + i)) + ')'; c.fillRect((i * 37 + t * 8) % 340 - 20, 40 + (i % 4) * 14, 40, 6); }
+      ground(c, d.ground, 128);
+    },
+    petra(c, t, d) {
+      rect(c, 0, 0, 90, 130, '#a8503a'); rect(c, 230, 0, 90, 130, '#a8503a');
+      rect(c, 90, 20, 140, 110, '#c46a4a');
+      rect(c, 120, 36, 80, 6, '#e08a6a'); for (let i = 0; i < 6; i++) rect(c, 124 + i * 14, 42, 6, 40, '#e08a6a');
+      rect(c, 118, 82, 84, 6, '#e08a6a'); for (let i = 0; i < 4; i++) rect(c, 128 + i * 20, 88, 8, 42, '#e08a6a');
+      rect(c, 154, 98, 12, 32, '#3a1a10');
+      if (Math.sin(t * 0.7) > 0.3) { c.fillStyle = 'rgba(255,211,107,0.18)'; c.fillRect(154, 98, 12, 32); }
+      ground(c, d.ground, 130);
+    },
+    wall(c, t, d) {
+      c.fillStyle = '#3d5a3a'; c.beginPath(); c.moveTo(0, 120); c.lineTo(60, 70); c.lineTo(120, 100); c.lineTo(190, 60); c.lineTo(260, 96); c.lineTo(320, 70); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      c.fillStyle = '#a8a08a';
+      for (let x = 0; x < 320; x++) { const y = 106 - Math.sin(x * 0.03) * 20 - (x > 160 ? (x - 160) * 0.12 : 0); c.fillRect(x, y, 1, 8); if (x % 6 < 3) c.fillRect(x, y - 3, 1, 3); }
+      [[60, 82], [190, 70], [290, 64]].forEach(([x, y]) => { rect(c, x, y - 18, 16, 20, '#9a907a'); rect(c, x + 6, y - 12, 4, 6, '#3a3a2a'); if (Math.sin(t * 5 + x) > 0.4) rect(c, x + 6, y - 24, 4, 6, '#ff8a3c'); });
+      ground(c, d.ground, 128);
+    },
+    pompeii(c, t, d) {
+      c.fillStyle = '#5a4a4a'; c.beginPath(); c.moveTo(150, 128); c.lineTo(230, 30); c.lineTo(250, 30); c.lineTo(320, 128); c.closePath(); c.fill();
+      for (let i = 0; i < 6; i++) { c.fillStyle = 'rgba(90,90,100,0.5)'; c.beginPath(); c.arc(240 + Math.sin(t * 0.5 + i) * 10, 24 - i * 6 - (t * 3 % 6), 6 + i * 2, 0, Math.PI * 2); c.fill(); }
+      for (let i = 0; i < 6; i++) { rect(c, 20 + i * 22, 70, 8, 58, '#d6c8b0'); rect(c, 17 + i * 22, 66, 14, 4, '#e8dcc4'); }
+      rect(c, 16, 62, 130, 4, '#e8dcc4');
+      ground(c, d.ground, 128);
+      c.fillStyle = 'rgba(120,110,110,0.4)'; for (let i = 0; i < 30; i++) c.fillRect((i * 41 + t * 15) % 320, (i * 23 + t * 25) % 180, 1, 1);
+    },
+    stonehenge(c, t, d) {
+      for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI, x = 160 - Math.cos(a) * 120, h = 36 + (i % 2) * 6, y = 128 - Math.sin(a) * 10; rect(c, x - 6, y - h, 12, h, '#8a8a8a'); rect(c, x - 6, y - h, 12, 2, '#a8a8a8'); if (i % 2 === 0 && i < 8) rect(c, x - 6, y - h - 5, 30, 5, '#9a9a9a'); }
+      ground(c, d.ground, 128);
+      const sx = 160 + Math.sin(t * 0.2) * 20; c.fillStyle = 'rgba(255,211,107,0.15)'; c.beginPath(); c.moveTo(sx, 60); c.lineTo(sx - 8, 128); c.lineTo(sx + 8, 128); c.closePath(); c.fill();
+    },
+    nazca(c, t, d) {
+      ground(c, d.ground, 60);
+      c.strokeStyle = '#f2d6b0'; c.lineWidth = 1;
+      // 蜂鳥
+      c.beginPath(); c.moveTo(120, 90); c.lineTo(160, 100); c.lineTo(200, 86); c.moveTo(160, 100); c.lineTo(150, 130); c.moveTo(160, 100); c.lineTo(175, 125); c.moveTo(160, 100); c.lineTo(166, 70); c.lineTo(168, 62); c.stroke();
+      // 蜘蛛
+      c.beginPath(); c.arc(60, 140, 10, 0, Math.PI * 2); for (let i = 0; i < 4; i++) { c.moveTo(50, 136 + i * 3); c.lineTo(36, 128 + i * 6); c.moveTo(70, 136 + i * 3); c.lineTo(84, 128 + i * 6); } c.stroke();
+      for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(0, 70 + i * 18); c.lineTo(320, 100 + i * 24); c.stroke(); }
+      const px = (t * 25) % 380 - 30; rect(c, px, 30, 10, 2, '#eef1f7'); rect(c, px + 3, 27, 2, 8, '#c9d1dc');
+    },
+    fossil(c, t, d) {
+      c.fillStyle = '#a8503a'; c.beginPath(); c.moveTo(0, 90); c.lineTo(60, 70); c.lineTo(110, 86); c.lineTo(170, 64); c.lineTo(240, 88); c.lineTo(320, 72); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      for (let y = 90; y < 130; y += 6) rect(c, 0, y, 320, 1, 'rgba(0,0,0,0.12)');
+      ground(c, d.ground, 128);
+      // 恐龍骨架
+      rect(c, 120, 140, 70, 3, '#e8dcc4'); for (let i = 0; i < 8; i++) rect(c, 126 + i * 7, 132, 2, 8, '#e8dcc4');
+      rect(c, 188, 132, 12, 6, '#e8dcc4'); rect(c, 196, 134, 2, 2, '#3b2a1e'); rect(c, 100, 142, 22, 2, '#e8dcc4');
+      [[240, 150], [250, 156], [262, 152]].forEach(([x, y]) => { c.fillStyle = '#e8dcc4'; c.beginPath(); c.ellipse(x, y, 4, 5, 0, 0, Math.PI * 2); c.fill(); });
+    },
+    tunguska(c, t, d) {
+      ground(c, d.ground, 110);
+      for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2, r = 30 + (i % 5) * 18, x = 160 + Math.cos(a) * r * 1.6, y = 140 + Math.sin(a) * r * 0.4; c.save(); c.translate(x, y); c.rotate(a); rect(c, 0, -1, 14, 2, '#5a4a3a'); c.restore(); }
+      const g = c.createRadialGradient(160, 140, 1, 160, 140, 30); g.addColorStop(0, 'rgba(255,138,60,' + (0.25 + 0.1 * Math.sin(t * 3)) + ')'); g.addColorStop(1, 'rgba(255,138,60,0)');
+      c.fillStyle = g; c.fillRect(120, 110, 80, 60);
+      for (let i = 0; i < 20; i++) rect(c, i * 17, 110 - 20 - hash(i) * 30, 2, 20 + hash(i) * 30, '#2a3a2a');
+    },
+    dish(c, t, d) {
+      c.fillStyle = '#2f5a2a'; c.beginPath(); c.moveTo(0, 60); c.lineTo(320, 60); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      c.fillStyle = '#c9d1dc'; c.beginPath(); c.ellipse(160, 110, 130, 26, 0, 0, Math.PI); c.fill();
+      c.fillStyle = '#8e9bb0'; c.beginPath(); c.ellipse(160, 110, 120, 20, 0, 0, Math.PI); c.fill();
+      [[50, 40], [270, 40], [160, 24]].forEach(([x, y]) => { rect(c, x, y, 3, 90 - y + 20, '#5a6478'); c.strokeStyle = '#5a6478'; c.beginPath(); c.moveTo(x + 1, y); c.lineTo(160, 62); c.stroke(); });
+      rect(c, 140, 56, 40, 10, '#4a5568'); if (Math.sin(t * 4) > 0) rect(c, 158, 66, 4, 3, '#ff4d5e');
+      ground(c, d.ground, 132);
+    },
+    shangrila(c, t, d) {
+      c.fillStyle = '#e8edf6'; c.beginPath(); c.moveTo(0, 100); c.lineTo(70, 30); c.lineTo(130, 90); c.lineTo(200, 20); c.lineTo(270, 80); c.lineTo(320, 50); c.lineTo(320, 130); c.lineTo(0, 130); c.closePath(); c.fill();
+      c.fillStyle = '#8db7d6'; c.beginPath(); c.moveTo(200, 20); c.lineTo(230, 130); c.lineTo(170, 130); c.closePath(); c.fill();
+      rect(c, 120, 92, 80, 30, '#eef1f7'); rect(c, 116, 86, 88, 8, '#d6334a'); rect(c, 140, 76, 40, 10, '#e8c25a'); rect(c, 152, 100, 16, 22, '#8a3b2a');
+      for (let i = 0; i < 12; i++) rect(c, 60 + i * 18, 78 + Math.sin(t * 2 + i) * 2, 6, 5, ['#d6334a', '#ffd36b', '#37c3d6', '#9be36b', '#eef1f7'][i % 5]);
+      ground(c, d.ground, 128);
+    },
+    eldorado(c, t, d) {
+      for (let i = 0; i < 16; i++) { const x = i * 21, h = 30 + hash(i) * 30; c.fillStyle = i % 2 ? '#1d4a2a' : '#2f7a43'; c.beginPath(); c.arc(x, 100 - h * 0.3, h * 0.5, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#1e5a6a'; c.beginPath(); c.ellipse(160, 140, 130, 22, 0, 0, Math.PI * 2); c.fill();
+      for (let x = 40; x < 290; x += 3) rect(c, x, 140 + Math.round(Math.sin(x * 0.1 + t * 2)), 2, 1, '#37c3d6');
+      const rx = 150 + Math.sin(t * 0.4) * 30; rect(c, rx, 134, 26, 4, '#e8c25a'); rect(c, rx + 10, 124, 6, 10, '#ffd36b');
+      if (Math.random() < 0.3) IE.Maps.Trip.fx.add({ x: rx + 13 + (Math.random() - 0.5) * 10, y: 126, vy: -10, life: 0.8, color: '#ffd36b' });
+      ground(c, d.ground, 162);
     },
     library(c, t, d) {
       rect(c, 0, 0, 320, 130, '#3a2a10');
@@ -7026,7 +7876,7 @@ body.ct-open { overflow: hidden; }
         if (!alien) {
           const cur = Math.max(0, s.spark - st.drain);
           c.fillStyle = '#0b0f1a'; c.fillRect(4, 132, 40, 44);
-          P.sprite(c, 'player', 12, 140, { scale: 2, desat: Math.max(0, 1 - cur / 2.5) });
+          P.sprite(c, IE.Chars.spr(IE.Game.state), 12, 140, { scale: 2, desat: Math.max(0, 1 - cur / 2.5) });
           c.fillStyle = '#26334d'; c.fillRect(4, 172, 40, 3);
           c.fillStyle = '#ffc247'; c.fillRect(4, 172, Math.round(40 * Math.min(1, cur / 4)), 3);
         }
@@ -8732,7 +9582,7 @@ body.ct-open { overflow: hidden; }
         // 你、琴、帽子
         const glow = Math.min(1, st.soloNotes / 20 + st.rounds / 8);
         if (glow > 0.05) { c.fillStyle = 'rgba(255,194,71,' + (0.08 + glow * 0.12) + ')'; c.beginPath(); c.arc(160, 80, 30 + glow * 10, 0, Math.PI * 2); c.fill(); }
-        P.sprite(c, 'player', 148, 62, { scale: 3, desat: Math.max(0, 0.6 - glow) });
+        P.sprite(c, IE.Chars.spr(IE.Game.state), 148, 62, { scale: 3, desat: Math.max(0, 0.6 - glow) });
         c.fillStyle = '#1b1b28'; c.fillRect(136, 96, 48, 8);
         for (let i = 0; i < 8; i++) { c.fillStyle = '#e8edf6'; c.fillRect(138 + i * 6, 97, 5, 6); }
         c.fillStyle = '#5a3b2a'; c.fillRect(170, 112, 18, 5); c.fillRect(173, 108, 12, 4);
@@ -9262,6 +10112,7 @@ body.ct-open { overflow: hidden; }
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
       + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
+      + (IE.World && IE.World.stamps(s) ? '<span class="chip stamp" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
       + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
       + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
     const bmax = R().bodyMax(s);
@@ -9270,7 +10121,7 @@ body.ct-open { overflow: hidden; }
       : '<span class="chip warn">露宿天橋下</span>';
     hud.innerHTML = ''
       + '<div class="hud-top">'
-      + '<div class="hud-day"><span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + D().DAYS + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
+      + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + D().DAYS + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
       + '<span class="chip season">' + season.name + '</span>' + rentChip
       + '<span class="chip' + (toReview === 0 ? ' warn' : '') + '">' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後') + '</span>'
       + danger
@@ -9367,7 +10218,8 @@ body.ct-open { overflow: hidden; }
         : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。也可以直接在上面的地圖點選地點。';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
-    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p></div>'
+    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p>'
+      + '<div class="btn-row left">' + (s.trip ? '<button class="btn mini" type="button" data-do="souvenir">紀念品店</button>' : '<button class="btn mini" type="button" data-do="store">浮城百貨</button>') + '</div></div>'
       + groups.map((g) => (groups.length > 1 ? '<h3 class="act-group">' + GROUPS[g] + '</h3>' : '')
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
           i++;
@@ -9465,8 +10317,12 @@ body.ct-open { overflow: hidden; }
     const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
-    const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item' + (it.obj ? ' has-icon' : '') + '">' + (it.obj ? IE.Icons.obj(it.obj, 36) : '') + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
-      + '<button class="btn' + (it.enabled ? ' sea' : '') + '" type="button" data-do="buy" data-id="' + it.id + '"' + (it.enabled ? '' : ' disabled') + '>' + (it.owned ? '已擁有' : '$' + fmt(it.cost)) + '</button></div>').join('') + '</div>';
+    // 今日推介：有需要的保命用品優先，其次是二手市集的靈感物件
+    const urgent = shopItems.filter((it) => it.enabled && (it.id === 'medicine' || (it.cat === 'safe' && IE.Rules.outdoorRisk(s) > 0 && (it.id === 'helmet' || it.id === 'gasmask'))));
+    const picks = urgent.concat(shopItems.filter((it) => it.enabled && it.obj)).slice(0, 2);
+    const shop = '<h3>浮城百貨</h3><div class="shop">' + picks.map((it) => '<div class="shop-item has-icon">' + (it.obj ? IE.Icons.obj(it.obj, 36) : IE.Icons.item(it.icon, 36)) + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
+      + '<button class="btn sea" type="button" data-do="buy" data-id="' + it.id + '">$' + fmt(it.cost) + '</button></div>').join('')
+      + '<button class="btn store-open" type="button" data-do="store">打開浮城百貨（' + shopItems.length + ' 件貨品）</button></div>';
     return '<div class="phone" role="dialog" aria-label="手機">'
       + '<div class="phone-bar"><span>' + (opts.morning ? '07:00' : '··:··') + '</span><span>浮聲 5G</span><span class="' + (battery < 10 ? 'low' : '') + '">電量 ' + battery + '%</span></div>'
       + '<h2>第 ' + s.day + ' 天' + (opts.morning ? '・早上' : '') + '</h2>'
@@ -9501,8 +10357,9 @@ body.ct-open { overflow: hidden; }
       + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button>' : '')
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
-      + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button></div>'
-      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>死法 <b>' + Object.keys(meta.deaths || {}).length + '/' + D().DEATHS.length + '</b></span><span>事件 <b>' + Object.keys(meta.eventsSeen || {}).length + '/' + (D().WORLD_EVENTS.length + D().EVENTS.length) + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
+      + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button>'
+      + '<button class="btn gacha-btn" type="button" data-do="gacha">人才扭蛋機<small>扭蛋券 ' + (meta.tickets || 0) + '</small></button></div>'
+      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>死法 <b>' + Object.keys(meta.deaths || {}).length + '/' + D().DEATHS.length + '</b></span><span>事件 <b>' + Object.keys(meta.eventsSeen || {}).length + '/' + (D().WORLD_EVENTS.length + D().EVENTS.length) + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span><span>角色 <b>' + IE.Roster.list(meta).filter((c) => c.open).length + '/' + Object.keys(D().BACKGROUNDS).length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
       + '<p class="mute" style="font-size:12px;margin:0">自動存檔，無法讀檔重來。建議開啟聲音。</p>'
       + '</div>';
@@ -9520,23 +10377,82 @@ body.ct-open { overflow: hidden; }
     }).join('') + '</div>';
   }
   const topStats = (attr, n) => D().STAT_KEYS.slice().sort((a, b) => attr[b] - attr[a]).slice(0, n);
-  function setupPanel(sel) {
-    const bgs = D().BACKGROUNDS, seasons = D().SEASONS;
+  function setupPanel(sel, meta) {
+    const bgs = D().BACKGROUNDS, seasons = D().SEASONS, RA = D().CHAR_RARITY;
+    const roster = IE.Roster.list(meta);
     const b = bgs[sel.bg];
-    return '<div class="panel-head"><h2>你是誰？</h2><p>十種人生，十二項能力。做甚麼，就會變成甚麼：每份工作都會訓練一些能力，也會磨掉另一些。</p></div>'
-      + '<div class="bg-grid">' + Object.keys(bgs).map((k) => {
-        const x = bgs[k];
-        return '<button class="bg-card' + (sel.bg === k ? ' sel' : '') + '" type="button" data-do="bg" data-id="' + k + '">'
-          + '<span class="n">' + x.name + '</span><span class="d">' + x.desc + '</span><span class="p">' + x.perkText + '</span>'
-          + '<span class="d">擅長：' + topStats(x.stats, 3).map((t) => D().STATS[t].name).join('、') + '</span>'
-          + '<span class="s"><span style="color:var(--cash)">$' + x.cr + '</span><span style="color:var(--spark)">火花 ×' + x.spark.toFixed(1) + '</span><span style="color:var(--stone)">' + x.soul + '<small>克</small></span></span></button>';
-      }).join('') + '</div>'
-      + '<div class="bg-detail"><div><h3>' + b.name + '</h3><p class="mute">' + b.desc + b.past + '</p>'
-      + '<p>靈魂 <b>' + b.soul + ' 克</b>・良知 <b>' + Math.round(b.conscience * 100) + '%</b>・身體上限 <b>' + Math.round(70 + 0.3 * b.stats.fit) + '</b>・住 <b>' + b.floor + ' 樓</b></p></div>'
-      + statBars(b.stats, { compact: true }) + '</div>'
+    const open = IE.Roster.unlocked(meta, sel.bg);
+    const card = (x) => '<button class="bg-card r-' + x.rarity + (sel.bg === x.id ? ' sel' : '') + (x.open ? '' : ' locked') + '" type="button" data-do="bg" data-id="' + x.id + '">'
+      + '<span class="bg-top"><span class="rar r-' + x.rarity + '">' + x.rarity + '</span>' + (x.alien ? '<span class="alien-tag">非地球人</span>' : '') + '</span>'
+      + '<span class="bg-por">' + IE.Chars.img(x.id, 5, !x.open) + '</span>'
+      + '<span class="n">' + (x.open ? x.name : '？？？') + '</span>'
+      + (x.open ? '<span class="p">' + x.perkText + '</span>'
+        + '<span class="s"><span style="color:var(--cash)">$' + x.cr + '</span><span style="color:var(--spark)">火花 ×' + x.spark.toFixed(1) + '</span><span style="color:var(--stone)">' + x.soul + '<small>克</small></span></span>'
+        : '<span class="d">解鎖：' + esc(x.unlock.text) + '</span>') + '</button>';
+    const group = (r, title) => '<h3 class="act-group"><span class="rar r-' + r + '">' + r + '</span>' + title + '（' + roster.filter((x) => x.rarity === r && x.open).length + '/' + roster.filter((x) => x.rarity === r).length + '）</h3>'
+      + '<div class="bg-grid">' + roster.filter((x) => x.rarity === r).map(card).join('') + '</div>';
+    return '<div class="panel-head"><h2>你是誰？</h2><p>二十種人生（包括幾個不是地球人的），分為 R、SR、UR。新角色要跨局達成條件，或者用人才扭蛋機抽出來。</p></div>'
+      + group('R', '普通人') + group('SR', '稀有人才') + group('UR', '極稀有（包括外星人）')
+      + '<div class="bg-detail r-' + b.rarity + '"><div class="bg-big">' + IE.Chars.img(sel.bg, 8, !open) + '</div><div><h3><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + (open ? b.name : '？？？') + '</h3>'
+      + (open ? '<p class="mute">' + b.desc + b.past + '</p><p class="p">' + b.perkText + '</p>'
+        + '<p>靈魂 <b>' + b.soul + ' 克</b>・良知 <b>' + Math.round(b.conscience * 100) + '%</b>・身體上限 <b>' + Math.round((70 + 0.3 * b.stats.fit) * (b.perk.bodyMult || 1)) + '</b>・住 <b>' + b.floor + ' 樓</b>・擅長 <b>' + topStats(b.stats, 3).map((k) => D().STATS[k].name).join('、') + '</b></p>'
+        : '<p class="act-why">未解鎖：' + esc(b.unlock.text) + '</p><p class="mute">也可以用人才扭蛋機抽出來（每次 ' + IE.Roster.GACHA_COST + ' 張扭蛋券，你有 ' + ((meta && meta.tickets) || 0) + ' 張）。</p>')
+      + '</div>' + (open ? statBars(b.stats, { compact: true }) : '') + '</div>'
       + '<div class="panel-head"><h2>起始季節</h2><p>' + esc(seasons[sel.season].desc) + '季節每 25 天輪替一次。</p></div>'
       + '<div class="seg">' + Object.keys(seasons).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + seasons[k].name + '</button>').join('') + '</div>'
-      + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button><button class="btn primary big" type="button" data-do="start">出發</button></div>';
+      + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button><button class="btn" type="button" data-do="gacha">人才扭蛋機（' + ((meta && meta.tickets) || 0) + '）</button>'
+      + '<button class="btn primary big" type="button" data-do="start"' + (open ? '' : ' disabled') + '>' + (open ? '出發' : '未解鎖') + '</button></div>';
+  }
+  // 人才扭蛋機：星際人才發展局出品，抽出你的下一世
+  function gachaModal(meta, result, spinning) {
+    const RA = D().CHAR_RARITY;
+    const locked = IE.Roster.list(meta).filter((c) => !c.open);
+    const t = (meta && meta.tickets) || 0, cost = IE.Roster.GACHA_COST;
+    const w = locked.reduce((a, c) => a + RA[c.rarity].w, 0);
+    const odds = ['SR', 'UR'].map((r) => { const n = locked.filter((c) => c.rarity === r).reduce((a, c) => a + RA[c.rarity].w, 0); return r + ' ' + (w ? Math.round(n / w * 100) : 0) + '%'; }).join('・');
+    let res = '';
+    if (result) {
+      const b = D().BACKGROUNDS[result];
+      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+    }
+    return '<div class="modal gacha"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
+      + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券（被選中或留下來守護地球得到更多）。每次扭蛋 ' + cost + ' 張，只會抽到你還沒有的角色。機會率：' + (locked.length ? odds : '—') + '。本局保證：你抽到的就是你。</p>'
+      + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
+      + res
+      + '<p class="tickets">扭蛋券 <b>' + t + '</b> 張・未解鎖角色 <b>' + locked.length + '</b> 個</p>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="pull"' + (t >= cost && locked.length && !spinning ? '' : ' disabled') + '>扭一次（' + cost + ' 張）</button>'
+      + '<button class="btn" type="button" data-do="close"' + (spinning ? ' disabled' : '') + '>離開</button></div></div>';
+  }
+  // 浮城百貨：分類貨架，每件貨品都有像素模組
+  function storeModal(s, cat) {
+    const items = R().shop(s);
+    const cats = R().SHOP_CATS;
+    const list = items.filter((it) => it.cat === cat);
+    const tabs = Object.keys(cats).map((k) => '<button type="button" class="store-tab' + (k === cat ? ' on' : '') + '" data-do="tab" data-id="' + k + '">' + cats[k]
+      + '<small>' + items.filter((it) => it.cat === k && it.enabled).length + '</small></button>').join('');
+    const cards = list.map((it) => '<div class="store-item' + (it.owned ? ' owned' : '') + (it.obj ? ' r-' + D().OBJ[it.obj].rarity : '') + '">'
+      + '<div class="store-icon">' + (it.obj ? IE.Icons.obj(it.obj, 48) : IE.Icons.item(it.icon, 48)) + '</div>'
+      + '<div class="store-txt"><b>' + esc(it.name) + '</b><span>' + esc(it.desc) + '</span>' + (it.note ? '<span class="mute">' + esc(it.note) + '</span>' : '') + '</div>'
+      + '<button class="btn mini' + (it.enabled ? ' sea' : '') + '" type="button" data-do="buy" data-id="' + it.id + '"' + (it.enabled ? '' : ' disabled') + '>' + (it.owned ? '已擁有' : '$' + fmt(it.cost)) + '</button></div>').join('');
+    return '<div class="modal wide store"><span class="eyebrow">浮城百貨・24 小時營業</span><h2>浮城百貨</h2>'
+      + '<div class="store-cash">你有 <b class="num">$' + fmt(s.cr) + '</b></div>'
+      + '<div class="store-tabs">' + tabs + '</div><div class="store-grid">' + (cards || '<p class="mute">這個貨架今天是空的。</p>') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
+  }
+  function souvenirModal(s) {
+    const d = D().DEST[s.trip.dest];
+    const items = IE.World.souvenirs(s).map((o) => '<div class="store-item r-' + o.rarity + (o.owned ? ' owned' : '') + '"><div class="store-icon">' + IE.Icons.obj(o.id, 48) + '</div>'
+      + '<div class="store-txt"><b>' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span><span class="mute">' + D().RARITY[o.rarity] + '・只在' + esc(D().REGIONS[d.region]) + '買得到</span></div>'
+      + '<button class="btn mini' + (o.reason ? '' : ' sea') + '" type="button" data-do="buy" data-id="' + o.id + '"' + (o.reason ? ' disabled' : '') + '>' + (o.owned ? '已擁有' : '$' + fmt(o.price)) + '</button></div>').join('');
+    return '<div class="modal wide store"><span class="eyebrow">' + esc(d.name) + '・紀念品店</span><h2>紀念品店</h2>'
+      + '<p class="mute" style="font-size:13px">每個地區都有自己的紀念品，它們是只在當地買得到的靈感物件。不用花時段。</p>'
+      + '<div class="store-cash">你有 <b class="num">$' + fmt(s.cr) + '</b></div><div class="store-grid">' + items + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
+  }
+  function rosterHtml(meta) {
+    return '<h3>角色（' + IE.Roster.list(meta).filter((c) => c.open).length + '/' + Object.keys(D().BACKGROUNDS).length + '）</h3><div class="recipes">'
+      + IE.Roster.list(meta).map((c) => '<div class="recipe obj-card r-' + c.rarity + (c.open ? '' : ' unknown') + '">' + IE.Chars.img(c.id, 3, !c.open)
+        + '<b><span class="rar r-' + c.rarity + '">' + c.rarity + '</span>' + (c.open ? esc(c.name) : '？？？') + '</b><span>' + (c.open ? esc(c.perkText) : '解鎖：' + esc(c.unlock.text)) + '</span></div>').join('') + '</div>';
   }
   function statsModal(s) {
     const bg = D().BACKGROUNDS[s.bg];
@@ -9581,6 +10497,9 @@ body.ct-open { overflow: hidden; }
       + '</div>'
       + ((meta.lastUnlocks || []).length ? '<div class="unlocks"><h3>跨局解鎖</h3>' + meta.lastUnlocks.map((id) => '<div class="obj-row r-legend">' + IE.Icons.obj(id, 44)
         + '<div class="obj-txt"><b>新靈感物件：' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span><span class="mute">解鎖條件：' + esc(D().OBJ[id].unlock.text) + '</span></div></div>').join('') + '</div>' : '')
+      + ((meta.lastChars || []).length ? '<div class="unlocks"><h3>新角色解鎖</h3>' + meta.lastChars.map((id) => { const b = D().BACKGROUNDS[id]; return '<div class="obj-row r-' + b.rarity + '">' + IE.Chars.img(id, 4)
+        + '<div class="obj-txt"><b><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + esc(b.name) + '</b><span>' + esc(b.perkText) + '</span><span class="mute">解鎖條件：' + esc(b.unlock.text) + '</span></div></div>'; }).join('') + '</div>' : '')
+      + (meta.lastTickets ? '<p class="tickets-note">星際人才發展局發給你 <b>' + meta.lastTickets + '</b> 張人才扭蛋券（現有 ' + (meta.tickets || 0) + ' 張）。</p>' : '')
       + '<div class="btn-row"><button class="btn" type="button" data-do="copy">複製檔案</button><button class="btn primary" type="button" data-do="again">再玩一局</button></div>'
       + '<p class="mute" style="font-size:12px;text-align:center">結局 ' + Object.keys(meta.endings || {}).length + '/' + ENDING_COUNT + '・人類模組 ' + seen + '/' + DS.ARCHETYPES.length + '</p>'
       + '</div>';
@@ -9680,7 +10599,7 @@ body.ct-open { overflow: hidden; }
     const deaths = Object.keys(D().DEATH_CATS).map((cat) => '<h4>' + D().DEATH_CATS[cat] + '</h4><div class="recipes">' + D().DEATHS.filter((d) => d.cat === cat)
       .map((d) => '<div class="recipe death' + (dSeen[d.id] ? '' : ' unknown') + '"><b>' + (dSeen[d.id] ? esc(d.name) : '？？？') + '</b>'
         + '<span class="mute">' + (dSeen[d.id] ? '死過 ' + dSeen[d.id] + ' 次・' : '提示：') + esc(d.hint) + '</span></div>').join('') + '</div>').join('');
-    return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
+    return '<div class="modal wide"><h2>收藏</h2>' + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
       + worldCodexHtml(meta)
       + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
@@ -9712,12 +10631,14 @@ body.ct-open { overflow: hidden; }
       + (st.rare ? '<p class="site-rare' + (st.rare.found ? ' found' : st.rare.ready ? ' ready' : '') + '">★ 極稀有：' + esc(st.rare.name) + (st.rare.found ? '（已找到）' : '') + '<br><span>' + esc(st.rare.text) + (st.rare.ready && !st.rare.found ? '　→　時機已到！' : '') + '</span></p>' : '')
       + '</div>').join('');
     return '<div class="modal wide dest"><span class="eyebrow" style="color:' + d.kind.color + '">' + esc(d.kind.name) + '・' + esc(d.region) + (d.visited ? '・去過 ' + d.visited + ' 次' : '') + '</span>'
-      + '<h2>' + esc(d.name) + '</h2><p>' + esc(d.desc) + '</p>'
-      + '<div class="dest-facts"><span>旅費與住宿 <b>$' + fmt(d.cost) + '</b></span><span>停留 <b>' + d.stay + ' 天</b></span><span>航班致命機會 <b>' + pct(d.flight) + '</b>（來回各一次）</span><span>你有 <b>$' + fmt(s.cr) + '</b></span></div>'
+      + '<h2>' + esc(d.name) + (d.deal ? '<span class="deal-tag">特價 −' + Math.round(d.deal.off * 100) + '%・第 ' + d.deal.until + ' 天前</span>' : '') + '</h2><p>' + esc(d.desc) + '</p>'
+      + '<div class="dest-facts"><span>停留 <b>' + d.stay + ' 天</b></span><span>你有 <b>$' + fmt(s.cr) + '</b></span>' + (d.souvenir.length ? '<span>紀念品：<b>' + d.souvenir.map(esc).join('、') + '</b></span>' : '') + '</div>'
       + '<p class="mute" style="font-size:13px">在外地：每個時段探索一個地方；晚上照樣可以創作（異鄉之夜 ×1.3，手牌 +1）。回來後七晚有「旅行的餘韻」（第一次去 ×1.6）。房租照交，飯錢貴五成，平台評分會下降。</p>'
       + '<h3>探索點</h3><div class="sites">' + sites + '</div>'
       + (d.reason ? '<p class="act-why">' + esc(d.reason) + '</p>' : '')
-      + '<div class="btn-row"><button class="btn primary" type="button" data-do="go"' + (d.reason ? ' disabled' : '') + '>出發（$' + fmt(d.cost) + '）</button><button class="btn" type="button" data-do="close">返回</button></div></div>';
+      + '<h3>機票</h3><div class="fares">' + d.fares.map((f) => '<button class="fare fare-' + f.id + '" type="button" data-do="go" data-fare="' + f.id + '"' + (d.reason || !f.ok ? ' disabled' : '') + '>'
+        + '<b>' + f.name + '</b><span class="num">$' + fmt(f.cost) + '</span><small>' + esc(f.desc) + '</small><small>航班致命機會 ' + pct(f.risk) + '（來回各一次）</small></button>').join('') + '</div>'
+      + '<div class="btn-row"><button class="btn" type="button" data-do="close">返回</button></div></div>';
   }
   function galleryModal(s) {
     const W = IE.World;
@@ -9782,7 +10703,7 @@ body.ct-open { overflow: hidden; }
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
-    placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml,
+    placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, gachaModal, storeModal, souvenirModal, rosterHtml,
   };
 })(window.IE = window.IE || {});
 
@@ -10427,7 +11348,7 @@ body.ct-open { overflow: hidden; }
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 6 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 7 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -10490,14 +11411,38 @@ body.ct-open { overflow: hidden; }
       new() { A.init(); store.del(KEY_RUN); showSetup(); },
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
       collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      gacha() { A.init(); openGacha(() => showTitle()); },
     });
   }
+  // 人才扭蛋機
+  function openGacha(after) {
+    const render = (result, spinning) => UI.modal(UI.gachaModal(Game.meta, result, spinning), {
+      pull() {
+        const id = IE.Roster.pull(Game.meta);
+        if (!id) return;
+        store.set(KEY_META, Game.meta);
+        A.sfx('beam');
+        render(null, true);
+        setTimeout(() => {
+          const r = D.BACKGROUNDS[id].rarity;
+          A.sfx(r === 'UR' ? 'combo' : 'pickup');
+          if (r === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
+          render(id, false);
+          Game.setup.bg = id;
+        }, 1400);
+      },
+      close() { UI.closeModal(); if (after) after(); },
+    }, { dismiss: () => { if (after) after(); } });
+    render(null, false);
+  }
   function showSetup() {
-    const render = () => UI.setPanel(UI.setupPanel(Game.setup), {
+    if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
+    const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
       bg(el) { Game.setup.bg = el.dataset.id; render(); },
       season(el) { Game.setup.season = el.dataset.id; render(); },
       back() { showTitle(); },
-      start() { newGame(Game.setup.bg, Game.setup.season); },
+      gacha() { openGacha(render); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season); },
     });
     render();
     window.scrollTo({ top: 0 });
@@ -10542,9 +11487,35 @@ body.ct-open { overflow: hidden; }
           if (r.ok) A.sfx('coin');
           UI.renderHud(s); A.setSpark(s.spark); save(); render();
         },
+        store() { openStore('life', render); },
         close() { UI.closeModal(); if (morning) morningDilemma(); else showHub(); },
       }, morning ? null : { dismiss: () => showHub() });
     };
+    render();
+  }
+  // 浮城百貨：分類貨架（疊在手機或地圖上面）
+  function openStore(cat, after) {
+    const s = Game.state;
+    let cur = cat || 'life';
+    const render = () => UI.pushModal(UI.storeModal(s, cur), {
+      tab(el) { cur = el.dataset.id; UI.closeModal(); render(); },
+      buy(el) {
+        const r = R.buy(s, el.dataset.id);
+        UI.toast(r.msg, r.ok ? 'good' : 'bad');
+        if (r.ok) A.sfx('coin');
+        UI.renderHud(s); A.setSpark(s.spark); save(); UI.closeModal(); render();
+      },
+      close() { UI.closeModal(); if (after) after(); else showHub(); },
+    }, { dismiss: () => { if (after) after(); else showHub(); } });
+    render();
+  }
+  function openSouvenir() {
+    const s = Game.state;
+    if (!s.trip) return;
+    const render = () => UI.modal(UI.souvenirModal(s), {
+      buy(el) { const r = IE.World.buySouvenir(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
     render();
   }
   // 早上的道德抉擇：做了選擇才開始一天
@@ -10575,6 +11546,8 @@ body.ct-open { overflow: hidden; }
     UI.setPanel(UI.actionsPanel(s, acts), {
       act(el) { doAction(el.dataset.id); },
       objs() { openObjects(); },
+      souvenir() { openSouvenir(); },
+      store() { openStore('life'); },
     });
     save();
   }
@@ -10618,6 +11591,7 @@ body.ct-open { overflow: hidden; }
         case 'phone': return openPhone(false);
         case 'decor': return openDecor();
         case 'stats': return UI.pushModal(UI.statsModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+        case 'gear': return openStore('safe');
       }
     }
     if (view === 'map') {
@@ -10626,10 +11600,11 @@ body.ct-open { overflow: hidden; }
       if (p.ui === 'world') return setView('world');
       if (p.ui === 'antique') return openAntique();
       if (p.ui === 'gallery') return openGallery();
+      if (p.ui === 'store') return openStore('life');
       return confirmAct(p.act, p.name);
     }
     if (view === 'world') { if (sp.id !== 'home') openDest(sp.id); return; }
-    if (view === 'trip') return confirmAct(sp.id, D.DEST[s.trip.dest].name);
+    if (view === 'trip') return sp.id === 'souvenir' ? openSouvenir() : confirmAct(sp.id, D.DEST[s.trip.dest].name);
   };
   // 先看清楚代價才出發
   function confirmAct(id, where) {
@@ -10645,8 +11620,8 @@ body.ct-open { overflow: hidden; }
     const s = Game.state;
     const info = IE.World.destInfo(s, id, Game.meta);
     UI.modal(UI.destModal(info, s), {
-      go() {
-        const r = IE.World.startTrip(s, id);
+      go(el) {
+        const r = IE.World.startTrip(s, id, el.dataset.fare);
         if (!r.ok) { UI.toast(r.msg, 'bad'); return; }
         UI.closeModal();
         A.sfx('beam');
@@ -10977,7 +11952,7 @@ body.ct-open { overflow: hidden; }
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 6) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 7) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

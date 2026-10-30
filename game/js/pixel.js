@@ -134,6 +134,9 @@
     ctx.restore();
   }
   const spriteSize = (name) => ({ w: SPR[name].rows[0].length, h: SPR[name].rows.length });
+  // 其他模組可以登記自己的精靈圖（例如 chars.js 的角色像素模組）
+  const define = (name, spr) => { SPR[name] = spr; };
+  const hasSprite = (name) => !!SPR[name];
 
   // ---------- 畫面 ----------
   const view = { canvas: null, ctx: null, low: null, lctx: null, scale: 1, dpr: 1, cssW: 0, cssH: 0, shake: 0 };
@@ -280,7 +283,7 @@
   }
 
   IE.Pixel = {
-    W, H, view, setup, resize, present, text, measure, sprite, spriteSize, particles, digits, wrap,
+    W, H, view, setup, resize, present, text, measure, sprite, spriteSize, define, hasSprite, spriteCanvas, particles, digits, wrap,
     mix, desat, rgba, hexToRgb,
     reducedMotion: typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   };

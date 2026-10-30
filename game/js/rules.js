@@ -72,7 +72,7 @@
     s.body = Math.min(s.body, bodyMax(s));
   }
   const A = (s, k) => s.attr[k];
-  const bodyMax = (s) => Math.round(70 + 0.3 * A(s, 'fit'));
+  const bodyMax = (s) => Math.round((70 + 0.3 * A(s, 'fit')) * (perk(s).bodyMult || 1));
   const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
   // 身體受損：記下原因；身體歸零時用來判斷死法（見 data-deaths.js）
   // 死因按「今天傷你最重的那件事」判斷，而不是最後一下
@@ -87,7 +87,22 @@
     return v;
   }
   // 致命事件：直接指定死法
-  function kill(s, id) { s.body = Math.min(s.body, 0); s.lastCause = { k: 'instant', id, day: s.day }; }
+  // 旅遊保險（只限旅行中的意外）與護身符可以擋一次；擋住了就回傳 false
+  function kill(s, id, rep) {
+    const d = D.DEATH && D.DEATH[id], name = d ? d.name : '死去';
+    if (s.trip && s.gear.insurance && d && d.cat === 'travel') {
+      s.gear.insurance = false; s.body = 1;
+      if (rep) rep.line('旅遊保險生效：你本來會「' + name + '」，現在只是重傷，被送進了當地的醫院。', 'legend');
+      return false;
+    }
+    if (s.gear.amulet) {
+      s.gear.amulet = false; s.body = 1;
+      if (rep) rep.line('護身符碎了。你本來會「' + name + '」……現在只剩一口氣。', 'legend');
+      return false;
+    }
+    s.body = Math.min(s.body, 0); s.lastCause = { k: 'instant', id, day: s.day };
+    return true;
+  }
   const calmMult = (s) => Math.max(0.6, 1 - 0.004 * A(s, 'calm'));
   const obeyPay = (s) => 1 + 0.003 * A(s, 'obey');
   const socialTip = (s) => 1 + 0.004 * A(s, 'social');
@@ -96,7 +111,7 @@
   // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
   // 自然恢復的火花受想像力（加成）與服從（壓抑）影響；超過 3 之後越升越慢。
   const SPARK_MAX = 4;
-  const sparkMax = (s) => round1(2 + 2 * s.conscience);
+  const sparkMax = (s) => round1(Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience));
   function addSpark(s, v, raw) {
     if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey'));
     if (v > 0 && s.spark >= 3) v *= 0.5;
@@ -109,7 +124,7 @@
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
   // 外星人的牽引光束最多只能拉起 21 克的靈魂，太重會污染他們的神經網絡。
   const SOUL_LIMIT = D.SOUL_LIMIT;
-  const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1);
+  const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1) * (perk(s).sinMult || 1);
   function sin(s, base, rep, reason, guiltName, tag) {
     const grams = round1(base * sinFactor(s));
     s.soul = round1(s.soul + grams);
@@ -127,7 +142,7 @@
     return grams;
   }
   function atone(s, base, rep, reason) {
-    const b = base * (1 + 0.004 * A(s, 'empathy')) * (worldMods(s).atoneMult || 1);
+    const b = base * (1 + 0.004 * A(s, 'empathy')) * (worldMods(s).atoneMult || 1) * (perk(s).atoneMult || 1);
     const grams = round1(Math.min(s.soul, b));
     s.soul = round1(s.soul - grams);
     s.conscience = clamp(s.conscience + base * 0.02, 0, 1);
@@ -144,6 +159,8 @@
   // ---------- 病痛 ----------
   function addCond(s, id, rep) {
     if (!D.CONDS[id] || s.conds[id]) return false;
+    if (id === 'mold' && perk(s).moldImmune) return false;
+    if (id === 'insomnia' && s.gear.earplugs) return false;
     s.conds[id] = { since: s.day };
     if (rep) rep.line('你患上了「' + D.CONDS[id].name + '」：' + D.CONDS[id].desc + (D.CONDS[id].lethal ? '。拖到第 ' + D.CONDS[id].lethal + ' 天會致命。' : ''), 'bad');
     return true;
@@ -160,11 +177,14 @@
     });
   }
   // ---------- 致命危險 ----------
-  const guarded = (s, h) => (h.guard && s.gear[h.guard] ? 0.2 : 1) * (h.guard === 'gasmask' && (s.objects || []).includes('raincoat') ? 0.5 : 1);
+  const guarded = (s, h) => (h.guard && s.gear[h.guard] ? 0.2 : 1) * (h.guard === 'gasmask' && (s.objects || []).includes('raincoat') ? 0.5 : 1)
+    * (s.gear.lifejacket && WET.includes(h.id) ? 0.5 : 1);
   function outdoorRisk(s) {
     return (worldMods(s).outdoorDeath || []).reduce((a, h) => a + h.chance * guarded(s, h), 0);
   }
   const INSIDE = ['collapse', 'fire', 'ai_lock', 'typhoon_home'];
+  // 救生衣：與水有關的致命危險減半
+  const WET = ['tsunami', 'tide_moon', 'flood_home', 'typhoon_home', 'typhoon', 'delivery_flood', 'autoboat'];
   const homeHazards = (s) => (worldMods(s).homeDeath || []).filter((h) => (h.minFloor == null || s.floor >= h.minFloor) && (h.maxFloor == null || s.floor <= h.maxFloor)
     && !(INSIDE.includes(h.id) && s.floor === 0));
   function homeRisk(s) {
@@ -178,7 +198,7 @@
     (M.outdoorDeath || []).forEach((h) => {
       if (s.body <= 0) return;
       const ch = h.chance * guarded(s, h);
-      if (rand(s) < ch) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你沒能回家。', 'bad'); }
+      if (rand(s) < ch) { if (kill(s, h.id, rep)) rep.line(evDef(h.ev).name + '：你沒能回家。', 'bad'); }
       else rep.line(evDef(h.ev).name + '：你平安回來了（致命機會 ' + Math.round(ch * 1000) / 10 + '%）', '');
     });
     (M.condChance || []).forEach((c) => { if (c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
@@ -189,7 +209,7 @@
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 6, seed, rngState: seed, bg: opts.bg, season: opts.season,
+      v: 7, seed, rngState: seed, bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -205,7 +225,8 @@
       objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
       unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
       pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
-      gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false },
+      gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false, lifejacket: false, insurance: false, amulet: false, earplugs: false },
+      buys: {},
       // 旅行與家居（第三期）
       trip: null, visited: {}, rares: {}, decor: {}, antique: null, gallerySoldDay: 0,
       auto: 0, removed: { smile: false, label: false },
@@ -233,6 +254,8 @@
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
     bg.cards.forEach((id) => addCard(s, id));
+    // 時間旅人：帶著一件來自未來的極稀有素材
+    if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
     D.STARTER.forEach((id) => addCard(s, id));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
     return s;
@@ -331,7 +354,7 @@
   function marketItems(s) {
     const period = Math.floor((s.day - 1) / 3);
     if (!s.market || s.market.period !== period) {
-      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && objectAvailable(s, o)).map((o) => o.id);
+      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.souvenir && objectAvailable(s, o)).map((o) => o.id);
       const items = [];
       while (items.length < 2 && pool.length) items.push(pool.splice(Math.floor(rand(s) * pool.length), 1)[0]);
       s.market = { period, items };
@@ -351,13 +374,13 @@
   const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
   const nextRentDay = (s) => Math.ceil(s.day / D.RENT_EVERY) * D.RENT_EVERY;
-  const foodCost = (s) => Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1));
+  const foodCost = (s) => (perk(s).noFood ? 0 : Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1) * (perk(s).foodMult || 1)));
 
   function rentAmount(s, floor) {
     const f = floor == null ? s.floor : floor;
     if (f <= 0) return 0;
     const period = Math.floor((s.day - 1) / D.RENT_EVERY);
-    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1));
+    return Math.round(D.BASE_RENT * D.FLOOR_RENT[f] * (1 + 0.03 * period + s.rentHike) * (worldMods(s).rentMult || 1) * (perk(s).rentMult || 1));
   }
 
   // 抉擇與面試的訊號：資料寫的是舊版數值（門檻 16.5 萬時），按本季門檻等比例放大
@@ -734,8 +757,10 @@
     countAction(s, 'chat');
     if (cost) rep.delta('cr', -cost);
     rep.delta('spark', sp); rep.delta('body', 5 + outdoor);
-    rep.gain(def.cards[(Math.max(1, n.friend) - 1) % def.cards.length]);
-    if (perk(s).chatExtra) rep.gain(def.cards[n.friend % def.cards.length]);
+    // 熟絡度可能被抉擇扣成負數：索引要保持在範圍內
+    const nth = (k) => def.cards[((Math.floor(k) % def.cards.length) + def.cards.length) % def.cards.length];
+    rep.gain(nth(Math.max(1, n.friend) - 1));
+    if (perk(s).chatExtra) rep.gain(nth(n.friend));
     addParanoia(s, -2);
     train(s, { social: 1.2, empathy: 1, imag: 0.4 }, rep);
     teach(s, npcId, n.friend === 2 || n.friend === 4 ? 1 : 0.25, rep);
@@ -766,7 +791,7 @@
     const cured = cureConds(s, 'rest');
     if (cured.length) rep.line('休息過後，' + cured.join('、') + '好了', 'good');
     if (s.noRest >= 3) rep.line('你終於休息了。連續 ' + s.noRest + ' 天沒有休息的紀錄歸零。', 'good');
-    const sp = addSpark(s, 0.3);
+    const sp = addSpark(s, 0.3 + (perk(s).restSpark || 0));
     s.stats.rests++;
     countAction(s, 'rest');
     rep.delta('body', b); rep.delta('spark', sp);
@@ -854,52 +879,83 @@
   // ---------- 商店 ----------
   // 業力抵銷額度：每買一份，下一份貴 $30
   const offsetCost = (s) => 90 + 30 * (s.offsets || 0);
+  // 浮城百貨：每件貨品都有分類（cat）與像素模組（icon，見 icons.js）
+  const SHOP_CATS = { life: '生活', safe: '保命', dive: '潛水與工作', craft: '創作', home: '房屋', black: '黑市' };
+  const growCost = (s, id, base, step) => base + step * ((s.buys && s.buys[id]) || 0);
   function shop(s) {
     const items = [];
     const S = D.SHOP;
-    items.push({ id: 'premium', ...S.premium, owned: s.premiumUntil >= s.day,
-      note: s.premiumUntil >= s.day ? '有效至第 ' + s.premiumUntil + ' 天' : null });
-    items.push({ id: 'supplement', ...S.supplement });
-    items.push({ id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
-    items.push({ id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
-    if (s.objSlots < 5) items.push({ id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
+    const add = (cat, icon, it) => items.push(Object.assign({ cat, icon }, it));
+    add('life', 'phone', { id: 'premium', ...S.premium, owned: s.premiumUntil >= s.day, note: s.premiumUntil >= s.day ? '有效至第 ' + s.premiumUntil + ' 天' : null });
+    add('life', 'burger', { id: 'realfood', ...S.realfood, owned: s.realFoodDay === s.day, note: s.realFoodDay === s.day ? '今天已經吃過' : null });
+    add('life', 'can', { id: 'energy', name: '能量飲品', desc: '身體立即 +12；但火花 −0.1，而且有一成機會失眠', cost: 28 });
+    add('life', 'bottle', { id: 'supplement', ...S.supplement });
+    add('life', 'gift', { id: 'blindbox', name: '靈感盲盒', desc: '隨機一張素材；細字：有機會是古董（3%），也有機會是旅行素材（20%）', cost: 45 });
+    add('life', 'weight', { id: 'gym', name: '健身課程', desc: '體能 +5（每上一次課貴 $40）', cost: growCost(s, 'gym', 140, 40) });
+    add('life', 'book', { id: 'course', name: '外星語速成班', desc: '洞察 +6、想像力 +2（只可以上一次）', cost: 180, owned: !!(s.buys && s.buys.course) });
+    const curable = condsInfo(s).filter((c) => c.cure === 'medicine');
+    add('safe', 'medkit', { id: 'medicine', ...S.medicine, owned: false, note: curable.length ? '你現在有：' + curable.map((c) => c.name).join('、') : '你現在沒有需要用藥的病痛', need: !curable.length });
+    add('safe', 'helmet', { id: 'helmet', ...S.helmet, owned: s.gear.helmet });
+    add('safe', 'gasmask', { id: 'gasmask', ...S.gasmask, owned: s.gear.gasmask });
+    add('safe', 'jacket', { id: 'lifejacket', name: '救生衣', desc: '海嘯、水浸、颶風、快艇等與水有關的致命機會減半', cost: 110, owned: s.gear.lifejacket });
+    add('safe', 'earplug', { id: 'earplugs', name: '降噪耳塞', desc: '不會再失眠', cost: 50, owned: s.gear.earplugs });
+    add('safe', 'paper', { id: 'insurance', name: '旅遊保險', desc: '旅行中一次致命意外改為重傷；回到浮城後失效', cost: 90, owned: s.gear.insurance });
+    add('safe', 'amulet', { id: 'amulet', name: '開光護身符', desc: '被提教會出品：擋住一次致命意外（用完就碎）', cost: 480, owned: s.gear.amulet });
+    ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => add('dive', { tank: 'tank', harpoon: 'harpoon', bag: 'backpack', monitor: 'monitor' }[k], { id: k, ...S[k], owned: s.gear[k] }));
+    add('craft', 'brush', { id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
+    if (s.objSlots < 5) add('craft', 'key', { id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
     marketItems(s).forEach((id) => {
       const o = D.OBJ[id];
-      items.push({ id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity], obj: id });
+      items.push({ cat: 'craft', obj: id, id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity] });
     });
-    ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
-    items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
-      note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
-    const curable = condsInfo(s).filter((c) => c.cure === 'medicine');
-    items.push({ id: 'medicine', ...S.medicine, owned: false, note: curable.length ? '你現在有：' + curable.map((c) => c.name).join('、') : '你現在沒有需要用藥的病痛', need: !curable.length });
-    ['helmet', 'gasmask'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
-    if (worldMods(s).eraseShop) {
-      items.push({ id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
-    }
     if (s.floor === 0) {
       const f = Math.floor(s.water) + 1;
-      if (f <= 8) items.push({ id: 'rehouse', name: '重新租屋（' + f + ' 樓）', desc: '按金為兩期租金', cost: 2 * rentAmount(s, f), target: f });
+      if (f <= 8) add('home', 'house', { id: 'rehouse', name: '重新租屋（' + f + ' 樓）', desc: '按金為兩期租金', cost: 2 * rentAmount(s, f), target: f });
     } else {
-      if (s.floor < 8) items.push({ id: 'moveup', name: '搬上 ' + (s.floor + 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor + 1) + '，按金一期', cost: rentAmount(s, s.floor + 1) });
-      if (s.floor > 1 && s.water < s.floor - 1) items.push({ id: 'movedown', name: '搬到 ' + (s.floor - 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor - 1) + '，但離水更近', cost: 0 });
+      if (s.floor < 8) add('home', 'house', { id: 'moveup', name: '搬上 ' + (s.floor + 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor + 1) + '，按金一期', cost: rentAmount(s, s.floor + 1) });
+      if (s.floor > 1 && s.water < s.floor - 1) add('home', 'house', { id: 'movedown', name: '搬到 ' + (s.floor - 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor - 1) + '，但離水更近', cost: 0 });
     }
+    if (IE.World) IE.World.decorList(s).forEach((d) => items.push({ cat: 'home', icon: 'd_' + d.id, id: 'decor:' + d.id, name: d.name, desc: d.desc, cost: d.cost, owned: d.owned, need: !d.owned && !!d.reason && d.reason !== '錢不夠', note: !d.owned && d.reason && d.reason !== '錢不夠' ? d.reason : null }));
+    add('black', 'gem', { id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0, note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
+    if (worldMods(s).eraseShop) add('black', 'shredder', { id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
     items.forEach((it) => { it.enabled = !it.owned && !it.need && s.cr >= it.cost; });
     return items;
   }
   function buy(s, id) {
     const it = shop(s).find((x) => x.id === id);
     if (!it || !it.enabled) return { ok: false, msg: '無法購買' };
+    if (id.startsWith('decor:')) return IE.World.buyDecor(s, id.slice(6));
     s.cr -= it.cost;
+    s.buys = s.buys || {};
+    s.buys[id] = (s.buys[id] || 0) + 1;
     if (it.obj) { gainObject(s, it.obj, null); return { ok: true, msg: '已購買：' + D.OBJ[it.obj].name }; }
+    let msg = '已購買：' + it.name;
     switch (id) {
       case 'premium': s.premiumUntil = s.day + 4; break;
       case 'supplement':
         addSpark(s, 1.2, true);
         s.flags.crashDay = s.day + 2; s.flags.crashAmt += 1.6; break;
       case 'realfood': s.realFoodDay = s.day; heal(s, 15); addSpark(s, 0.2); break;
+      case 'energy': heal(s, 12); addSpark(s, -0.1, true); if (rand(s) < 0.1) addCond(s, 'insomnia', null); break;
+      case 'blindbox': {
+        const r = rand(s);
+        const pool = r < 0.03 ? D.ANTIQUES : r < 0.23 ? Object.keys(D.CARDS).filter((k) => k.startsWith('t_'))
+          : Object.keys(D.CARDS).filter((k) => !D.CARDS[k].origin && !D.CARDS[k].rarity && !/^(b|x|c|v)_/.test(k));
+        const card = pick(s, pool);
+        const res = addCard(s, card);
+        msg = '盲盒裡是：「' + D.CARDS[card].name + '」' + (r < 0.03 ? '（古董！）' : '') + (res.dropped ? '（丟掉了「' + res.dropped.name + '」）' : '');
+        break;
+      }
+      case 'gym': train(s, { fit: 5, calm: 0.5 }, null); break;
+      case 'course': train(s, { insight: 6, imag: 2 }, null); break;
       case 'tools': s.handBonus = 1; break;
       case 'studio': s.objSlots = Math.min(5, s.objSlots + 1); break;
-      case 'tank': case 'harpoon': case 'bag': case 'monitor': case 'helmet': case 'gasmask': s.gear[id] = true; break;
+      case 'tank': case 'harpoon': case 'bag': case 'monitor': case 'helmet': case 'gasmask':
+      case 'lifejacket': case 'earplugs': case 'insurance': case 'amulet':
+        s.gear[id] = true;
+        if (id === 'earplugs' && s.conds.insomnia) delete s.conds.insomnia;
+        if (id === 'amulet') sin(s, 0.5, null);
+        break;
       case 'medicine': cureConds(s, 'medicine'); break;
       case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
       case 'erase':
@@ -912,7 +968,7 @@
       case 'movedown': s.floor -= 1; break;
       case 'rehouse': s.floor = it.target; s.graceUsed = false; s.debt = 0; break;
     }
-    return { ok: true, msg: '已購買：' + it.name };
+    return { ok: true, msg };
   }
 
   // ---------- 道德抉擇 ----------
@@ -920,12 +976,11 @@
   function drawDilemma(s) {
     if (s.dilemmaDay === s.day) return s.dilemma;
     s.dilemmaDay = s.day; s.dilemma = null;
-    if (s.trip) return null;
     if (rand(s) > 0.4 + (worldMods(s).dilemmaBoost || 0)) return null;
     const pool = D.DILEMMAS.filter((d) => {
       const used = s.usedDilemmas[d.id];
       const fresh = !used || (d.repeat && s.day - used >= d.repeat);
-      return fresh && (!d.when || d.when(s));
+      return fresh && !d.trip === !s.trip && (!d.when || d.when(s));
     });
     if (!pool.length) return null;
     const d = pick(s, pool);
@@ -957,6 +1012,7 @@
     if (o.paranoia) fx.push(['note', '偏執 +' + o.paranoia]);
     if (o.stats) Object.keys(o.stats).forEach((k) => fx.push(['stat', D.STATS[k].name + ' ' + sign(o.stats[k])]));
     if (o.card) fx.push(['card', D.CARDS[o.card].name]);
+    if (o.tripCard) fx.push(['card', o.tripCard + ' 張當地素材']);
     if (o.obj) fx.push(['card', '靈感物件：' + D.OBJ[o.obj].name]);
     if (o.guilt && o.sin >= 1) fx.push(['card', '愧疚：' + o.guilt]);
     return fx;
@@ -1000,6 +1056,7 @@
     }
     if (o.takeNamedNpc && cur.npc) takeNpc(s, s.npcs.find((n) => n.id === cur.npc), rep);
     if (o.card) rep.gain(o.card);
+    if (o.tripCard && s.trip) for (let i = 0; i < o.tripCard; i++) rep.gain(pick(s, D.DEST[s.trip.dest].sites.flatMap((x) => x.gain)));
     if (o.obj) gainObject(s, o.obj, rep);
     if (o.stats) train(s, o.stats, rep);
     if (o.paranoia) addParanoia(s, o.paranoia, rep);
@@ -1054,7 +1111,7 @@
     s.pending.forEach((p) => {
       const w = evDef(p.id);
       feed.unshift({ kind: 'omen', text: (p.fresh ? '【新預兆】' : '【預兆】') + w.omen
-        + (A(s, 'insight') >= 50 || decorOn(s, 'telescope') ? '（' + (A(s, 'insight') >= 50 ? '洞察' : '望遠鏡') + '：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
+        + (A(s, 'insight') >= 50 || decorOn(s, 'telescope') || perk(s).omenSight ? '（' + (perk(s).omenSight ? '你看得見' : A(s, 'insight') >= 50 ? '洞察' : '望遠鏡') + '：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
       p.fresh = false;
     });
     activeEvents(s).forEach(({ def, until }) => {
@@ -1079,6 +1136,8 @@
     if (IE.World) {
       const cm = IE.World.commissions(s).filter((c) => !c.done);
       if (cm.length && (s.day - 1) % 5 === 0) cm.forEach((c) => feed.push({ kind: 'comm', text: '【天空區委託・$' + c.pay + '】' + c.text + '（第 ' + c.until + ' 天前）' }));
+      const dl = IE.World.deal(s);
+      if (dl.dest && !s.trip) feed.push({ kind: 'ad', text: '【特價機票】' + D.DEST[dl.dest].name + ' 旅費 −' + Math.round(dl.off * 100) + '%（第 ' + dl.until + ' 天前出發）。' + (A(s, 'insight') >= 30 ? '' : '細字：不設退款。') });
     }
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
@@ -1160,12 +1219,15 @@
     // 睡覺
     if (s.trip) { if (s.conds.insomnia) rep.line('失眠：在旅館也睡不著', 'bad'); else { heal(s, 6); rep.line('在旅館睡覺', '', 6, 'body'); } }
     else if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    else if (flooded(s) && perk(s).floodHeal) { heal(s, 10); rep.line('家裡淹水了。你長得特別好', 'good', 10, 'body'); }
     else if (flooded(s) && decorOn(s, 'pump')) { heal(s, 4); rep.line('家裡淹水，抽水泵整晚在響', '', 4, 'body'); }
     else if (flooded(s)) { hurt(s, 8, 'floodhome'); rep.line('家裡正在淹水', 'bad', -8, 'body'); if (rand(s) < 0.12) addCond(s, 'mold', rep); }
     else if (s.conds.insomnia) rep.line('失眠：整晚沒有睡著', 'bad');
     else { const b = 6 + (decorOn(s, 'bed') ? 3 : 0); heal(s, b); rep.line(decorOn(s, 'bed') ? '睡覺（彈簧床）' : '睡覺', '', b, 'body'); }
     if (S.nightBody && !s.trip && decorOn(s, 'ac')) rep.line('冷氣機整晚在響，你睡得很好', 'good');
     else if (S.nightBody && !s.trip) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
+    if (flooded(s) && !s.trip) s.stats.floodNights = (s.stats.floodNights || 0) + 1;
+    if (perk(s).paranoiaDaily) addParanoia(s, perk(s).paranoiaDaily);
     // 事件的每日影響
     if (M.bodyDaily) {
       const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
@@ -1177,29 +1239,29 @@
     condsInfo(s).forEach((c) => {
       const def = D.CONDS[c.id];
       if (def.daily.body) { hurt(s, -def.daily.body, 'cond:' + c.id, { days: c.days }); rep.line(def.name + '（第 ' + c.days + ' 天）', 'bad', def.daily.body, 'body'); }
-      if (def.lethal && c.days >= def.lethal && s.body > 0) { kill(s, def.death); rep.line(def.name + '拖得太久了。', 'bad'); }
+      if (def.lethal && c.days >= def.lethal && s.body > 0) { if (kill(s, def.death, rep)) rep.line(def.name + '拖得太久了。', 'bad'); else delete s.conds[c.id]; }
       else if (def.dur && c.days >= def.dur) { delete s.conds[c.id]; rep.line(def.name + '好了', 'good'); }
     });
     // 致命危險：在家（按樓層）與每晚
     (s.trip ? [] : homeHazards(s)).forEach((h) => {
       if (s.body <= 0) return;
-      if (rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
+      if (rand(s) < h.chance * (s.gear.lifejacket && WET.includes(h.id) ? 0.5 : 1)) { if (kill(s, h.id, rep)) rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
       else rep.line(evDef(h.ev).name + '：你撐過了今晚（致命機會 ' + Math.round(h.chance * 100) + '%）', '');
     });
-    (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '……', 'bad'); } });
+    (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { if (kill(s, h.id, rep)) rep.line(evDef(h.ev).name + '……', 'bad'); } });
     (M.condChance || []).forEach((c) => { if (!c.outdoor && !s.trip && rand(s) < c.chance * (c.id === 'heatstroke' && decorOn(s, 'ac') ? 0.5 : 1)) addCond(s, c.id, rep); });
     // 過勞：連續多天沒有休息，有猝死的危險
     s.noRest = s.restedToday ? 0 : s.noRest + 1;
     s.restedToday = false;
     if (s.noRest >= 5 && s.body > 0) {
       const ch = (s.noRest - 4) * 0.05;
-      if (rand(s) < ch) { kill(s, 'karoshi'); rep.line('連續 ' + s.noRest + ' 天沒有休息。你的心臟停了。', 'bad'); }
+      if (rand(s) < ch) { if (kill(s, 'karoshi', rep)) rep.line('連續 ' + s.noRest + ' 天沒有休息。你的心臟停了。', 'bad'); }
       else rep.line('連續 ' + s.noRest + ' 天沒有休息（猝死機會 ' + Math.round(ch * 100) + '%）', 'bad');
     } else if (s.noRest >= 3) rep.line('連續 ' + s.noRest + ' 天沒有休息。第 5 天起會有猝死的危險。', 'bad');
     // 通宵：連續通宵越多晚越危險，而且容易失眠
     s.allnighters = s.allnighterDay === s.day ? s.allnighters + 1 : 0;
     if (s.allnighterDay === s.day && rand(s) < 0.4) addCond(s, 'insomnia', rep);
-    if (s.allnighters >= 3 && s.body > 0 && rand(s) < 0.2) { kill(s, 'art_chain'); rep.line('連續第 ' + s.allnighters + ' 個通宵。', 'bad'); }
+    if (s.allnighters >= 3 && s.body > 0 && rand(s) < 0.2) { if (kill(s, 'art_chain', rep)) rep.line('連續第 ' + s.allnighters + ' 個通宵。', 'bad'); }
     if (M.paranoiaDaily) addParanoia(s, M.paranoiaDaily);
     else addParanoia(s, -0.8);
     // 補充劑反彈
@@ -1408,6 +1470,10 @@
     Object.keys(s.visited || {}).forEach((k) => { meta.visited[k] = (meta.visited[k] || 0) + s.visited[k]; });
     meta.rares = meta.rares || {};
     Object.keys(s.rares || {}).forEach((k) => { meta.rares[k] = true; });
+    meta.sales = (meta.sales || 0) + (s.stats.sales || 0);
+    meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
+    meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
+    if (IE.Roster) IE.Roster.settle(meta, finalType);
     meta.unlocked = meta.unlocked || {};
     meta.lastUnlocks = [];
     D.OBJECTS.forEach((o) => {
@@ -1464,7 +1530,7 @@
     clinicConfig, applyClinic, interviewQuestions, applyInterview,
     chatCost, aliveNpcs, applyChat, applyRest,
     teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
-    actions, shop, buy, morning, endDay, epitaph, endingFor, recordMeta,
+    actions, shop, buy, SHOP_CATS, morning, endDay, epitaph, endingFor, recordMeta,
     report, heal, outdoorHazard, MAX_CARDS,
   };
 });

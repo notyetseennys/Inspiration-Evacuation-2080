@@ -32,7 +32,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 6 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 7 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -95,14 +95,38 @@
       new() { A.init(); store.del(KEY_RUN); showSetup(); },
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
       collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      gacha() { A.init(); openGacha(() => showTitle()); },
     });
   }
+  // 人才扭蛋機
+  function openGacha(after) {
+    const render = (result, spinning) => UI.modal(UI.gachaModal(Game.meta, result, spinning), {
+      pull() {
+        const id = IE.Roster.pull(Game.meta);
+        if (!id) return;
+        store.set(KEY_META, Game.meta);
+        A.sfx('beam');
+        render(null, true);
+        setTimeout(() => {
+          const r = D.BACKGROUNDS[id].rarity;
+          A.sfx(r === 'UR' ? 'combo' : 'pickup');
+          if (r === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
+          render(id, false);
+          Game.setup.bg = id;
+        }, 1400);
+      },
+      close() { UI.closeModal(); if (after) after(); },
+    }, { dismiss: () => { if (after) after(); } });
+    render(null, false);
+  }
   function showSetup() {
-    const render = () => UI.setPanel(UI.setupPanel(Game.setup), {
+    if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
+    const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
       bg(el) { Game.setup.bg = el.dataset.id; render(); },
       season(el) { Game.setup.season = el.dataset.id; render(); },
       back() { showTitle(); },
-      start() { newGame(Game.setup.bg, Game.setup.season); },
+      gacha() { openGacha(render); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season); },
     });
     render();
     window.scrollTo({ top: 0 });
@@ -147,9 +171,35 @@
           if (r.ok) A.sfx('coin');
           UI.renderHud(s); A.setSpark(s.spark); save(); render();
         },
+        store() { openStore('life', render); },
         close() { UI.closeModal(); if (morning) morningDilemma(); else showHub(); },
       }, morning ? null : { dismiss: () => showHub() });
     };
+    render();
+  }
+  // 浮城百貨：分類貨架（疊在手機或地圖上面）
+  function openStore(cat, after) {
+    const s = Game.state;
+    let cur = cat || 'life';
+    const render = () => UI.pushModal(UI.storeModal(s, cur), {
+      tab(el) { cur = el.dataset.id; UI.closeModal(); render(); },
+      buy(el) {
+        const r = R.buy(s, el.dataset.id);
+        UI.toast(r.msg, r.ok ? 'good' : 'bad');
+        if (r.ok) A.sfx('coin');
+        UI.renderHud(s); A.setSpark(s.spark); save(); UI.closeModal(); render();
+      },
+      close() { UI.closeModal(); if (after) after(); else showHub(); },
+    }, { dismiss: () => { if (after) after(); else showHub(); } });
+    render();
+  }
+  function openSouvenir() {
+    const s = Game.state;
+    if (!s.trip) return;
+    const render = () => UI.modal(UI.souvenirModal(s), {
+      buy(el) { const r = IE.World.buySouvenir(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
+      close() { UI.closeModal(); showHub(); },
+    }, { dismiss: () => showHub() });
     render();
   }
   // 早上的道德抉擇：做了選擇才開始一天
@@ -180,6 +230,8 @@
     UI.setPanel(UI.actionsPanel(s, acts), {
       act(el) { doAction(el.dataset.id); },
       objs() { openObjects(); },
+      souvenir() { openSouvenir(); },
+      store() { openStore('life'); },
     });
     save();
   }
@@ -223,6 +275,7 @@
         case 'phone': return openPhone(false);
         case 'decor': return openDecor();
         case 'stats': return UI.pushModal(UI.statsModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+        case 'gear': return openStore('safe');
       }
     }
     if (view === 'map') {
@@ -231,10 +284,11 @@
       if (p.ui === 'world') return setView('world');
       if (p.ui === 'antique') return openAntique();
       if (p.ui === 'gallery') return openGallery();
+      if (p.ui === 'store') return openStore('life');
       return confirmAct(p.act, p.name);
     }
     if (view === 'world') { if (sp.id !== 'home') openDest(sp.id); return; }
-    if (view === 'trip') return confirmAct(sp.id, D.DEST[s.trip.dest].name);
+    if (view === 'trip') return sp.id === 'souvenir' ? openSouvenir() : confirmAct(sp.id, D.DEST[s.trip.dest].name);
   };
   // 先看清楚代價才出發
   function confirmAct(id, where) {
@@ -250,8 +304,8 @@
     const s = Game.state;
     const info = IE.World.destInfo(s, id, Game.meta);
     UI.modal(UI.destModal(info, s), {
-      go() {
-        const r = IE.World.startTrip(s, id);
+      go(el) {
+        const r = IE.World.startTrip(s, id, el.dataset.fare);
         if (!r.ok) { UI.toast(r.msg, 'bad'); return; }
         UI.closeModal();
         A.sfx('beam');
@@ -582,7 +636,7 @@
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 6) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 7) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;
