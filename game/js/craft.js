@@ -20,13 +20,13 @@
     const SR = IE.Stages ? IE.Stages.scoring(s) : null;
     const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
     if (dark) return '<button type="button" class="cc dark" data-uid="' + c.uid + '"><span class="cc-name">？？？</span><span class="cc-tags"><span class="t">停電</span></span><span class="cc-foot"><b class="cc-val num">?</b></span></button>';
-    const off = SR && SR.forbidden(c), blocked = SR && !off && SR.blocked(c);
+    const off = C().forbidden(s, c), blocked = SR && !off && SR.blocked(c);
     const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
     const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
     return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
-      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'
@@ -75,7 +75,7 @@
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
       + '<div class="ct-stagebar" hidden></div>'
-      + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><p class="ct-info"></p>'
+      + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
@@ -127,13 +127,15 @@
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
-    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : ses.mode === 'sketch' ? '・速寫（只下筆一次）' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
     $('.ct-objs').innerHTML = slots.join('');
     $('.ct-schools').innerHTML = schoolsHtml(s);
     renderTools();
+    renderAbility();
     renderStage();
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
@@ -141,10 +143,10 @@
     $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
-    pb.textContent = '下筆（' + ses.plays + '）';
+    pb.textContent = ses.plays > 0 ? '下筆（' + ses.plays + '）' : '完成今晚';
     db.textContent = '改稿（' + ses.discards + '）';
-    pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
-    db.disabled = st.busy || !st.sel.length || ses.discards <= 0;
+    pb.disabled = st.busy || (ses.plays > 0 && !st.sel.length);
+    db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length);
     renderPreview();
   }
   // 工具卡欄
@@ -161,6 +163,80 @@
     }
     $('.ct-tools').innerHTML = out.join('');
   }
+  // 招牌能力（第八期）：按角色顯示可以用的按鈕
+  function renderAbility() {
+    const s = st.s, ses = s.session, A = D().ABILITIES[s.bg], bar = $('.ct-abil');
+    if (!A) { bar.innerHTML = ''; return; }
+    const b = (k, label, extra) => { const why = C().abilityState(s, k); return '<button type="button" class="ab-btn" data-ab="' + k + '"' + (why || st.busy ? ' disabled' : '') + ' title="' + esc(why || A.desc) + '">' + label + (extra ? '<small>' + extra + '</small>' : '') + '</button>'; };
+    let btns = '';
+    switch (s.bg) {
+      case 'copywriter': btns = ses.packaged ? '<span class="ab-on">已包裝：今晚符合 KPI</span>' : b('package', '包裝', '靈魂 +1 克'); break;
+      case 'teacher': btns = b('mark', '批改選中的一張', '籌碼 +6'); break;
+      case 'busker': btns = b('encore', '安哥', '重播上一筆 ×0.6') + (!ses.log.length && D().BACKGROUNDS[s.bg].perk.noEarlyDiscard ? '<span class="ab-note">即興：第一筆之前不准改稿</span>' : ''); break;
+      case 'influencer': btns = ses.live ? '<span class="ab-on live">● 直播中</span>' : b('live', '開直播', '×1.6／兩成翻車'); break;
+      case 'animator': btns = b('frames', '逐格', '看牌庫頂三張'); break;
+      case 'skyheir': btns = b('buyPlay', '買下筆', '$' + C().buyPrice(s, 'play')) + b('buyDiscard', '買改稿', '$' + C().buyPrice(s, 'discard')); break;
+      case 'greydeserter': btns = b('bribe', '賄賂評審', '$' + C().bribePrice(s)); break;
+      case 'timetraveler': btns = b('rewind', '倒帶', '撤回上一筆・偏執 +6'); break;
+      case 'antiquedealer': btns = b('forge', '做舊選中的一張', '靈魂 +2 克') + '<button type="button" class="ab-btn" data-ct="deck">鑑定（賣素材）</button>'; break;
+      default: btns = '<span class="ab-note">' + esc(A.desc) + '</span>';
+    }
+    bar.innerHTML = '<span class="ab-name"><span class="lbl">招牌能力</span>' + esc(A.name) + '</span>' + btns;
+  }
+  async function useAbility(k) {
+    const s = st.s;
+    if (st.busy) return;
+    if (k === 'encore') return doEncore();
+    if (k === 'frames') return pickFrame();
+    if (k === 'bribe') {
+      const rules = s.session.stage ? s.session.stage.rules : [];
+      if (rules.length > 1) {
+        UI().pushModal('<div class="modal"><h2>賄賂哪一位評審？</h2><p class="mute">花 $' + C().bribePrice(s) + '，今晚取消一條規則。</p><div class="btn-row">'
+          + rules.map((id) => '<button class="btn" type="button" data-do="pick" data-id="' + id + '">' + esc(IE.Stages.BOSS[id].name) + '</button>').join('') + '</div></div>',
+        { pick(el) { UI().closeModal(); finishAbility(C().useAbility(s, 'bribe', el.dataset.id)); } }, { dismiss: () => {} });
+        return;
+      }
+    }
+    const arg = (k === 'mark' || k === 'forge') ? st.sel[0] : null;
+    if ((k === 'mark' || k === 'forge') && st.sel.length !== 1) { $('.ct-info').textContent = '先選一張素材，再按「' + (k === 'mark' ? '批改' : '做舊') + '」。'; return; }
+    finishAbility(C().useAbility(s, k, arg));
+  }
+  function finishAbility(r) {
+    $('.ct-info').innerHTML = esc(r.msg);
+    if (r.ok) { A().sfx('pickup'); burst($('.ct-abil'), 24, 0.8, '#ffd36b'); st.sel = []; } else A().sfx('wrong');
+    render();
+  }
+  // 逐格：看牌庫頂三張，挑一張加入手牌
+  function pickFrame() {
+    const s = st.s;
+    const r = C().useAbility(s, 'frames');
+    if (!r.ok || !r.peek) return finishAbility(r);
+    UI().pushModal('<div class="modal"><h2>逐格</h2><p class="mute">牌庫頂的三張。挑一張加入手牌。</p><div class="peek">'
+      + r.peek.map((u) => { const c = s.cards.find((x) => x.uid === u); return '<button type="button" class="peek-btn" data-do="pick" data-id="' + u + '">' + cardEl(s, c, {}) + '</button>'; }).join('') + '</div></div>',
+    { pick(el) { UI().closeModal(); finishAbility(C().useAbility(s, 'frames', Number(el.dataset.id))); } }, { dismiss: () => {} });
+  }
+  // 安哥：重播上一筆
+  async function doEncore() {
+    const s = st.s, ses = s.session;
+    const uids = ses.lastUids || [];
+    if (!uids.length) return;
+    st.busy = true; st.fast = false; st.chipN = 0;
+    const r = C().useAbility(s, 'encore');
+    if (!r.ok) { st.busy = false; return finishAbility(r); }
+    $('.ct-tags').innerHTML = '';
+    $('.ct-played').innerHTML = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean).map((c) => cardEl(s, c, { stage: true, dim: !r.res.scoring.includes(c.uid) })).join('');
+    tag('安哥！觀眾要求再唱一次', 'new');
+    A().fx('xmult', 3);
+    await wait(380);
+    await animate(r.res);
+    await showTotal(r.res);
+    $('.ct-played').innerHTML = '';
+    $('.ct-total').hidden = true;
+    st.busy = false;
+    render();
+    if ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)) await endNight();
+  }
+
   // 關卡之夜：目標分數與評審規則
   function renderStage() {
     const s = st.s, ses = s.session, bar = $('.ct-stagebar');
@@ -227,6 +303,8 @@
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
     if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
+    const ab = e.target.closest('[data-ab]');
+    if (ab && !ab.disabled && !st.busy) { useAbility(ab.dataset.ab); return; }
     const ob = e.target.closest('.ct-obj[data-obj]');
     if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
@@ -239,20 +317,21 @@
     else if (k === 'discard') doDiscard();
     else if (k === 'sort') { nextSort(); store.set('ie2080.sort', st.sortBy); render(); }
     else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
-    else if (k === 'deck') UI().pushModal(deckHtml(st.s), { close: UI().closeModal }, { dismiss: () => {} });
+    else if (k === 'deck') openDeck();
     else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
     else if (k === 'leave') leave();
   }
   // 排序：標籤 → 媒材 → 籌碼
   const SORTS = { tag: ['medium', '按媒材'], medium: ['value', '按籌碼'], value: ['tag', '按標籤'] };
   function nextSort() { st.sortBy = (SORTS[st.sortBy] || SORTS.value)[0]; }
+  const s0 = () => st.s;
   function toggle(uid) {
     const SR = IE.Stages ? IE.Stages.scoring(st.s) : null;
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
-    else if (SR && c && SR.forbidden(c)) { $('.ct-info').textContent = '外星評審：這張素材不能用。'; return; }
-    else if (st.sel.length < (SR ? SR.maxCards : 5)) st.sel.push(uid);
-    else { if (SR && SR.maxCards < 5) $('.ct-info').textContent = '外星評審：每次最多下筆 ' + SR.maxCards + ' 張。'; return; }
+    else if (c && C().forbidden(s0(), c)) { $('.ct-info').textContent = c.guilt && D().BACKGROUNDS[s0().bg].perk.noGuilt ? '你沒有良知：「愧疚」不能下筆。' : '外星評審：這張素材不能用。'; return; }
+    else if (st.sel.length < C().maxCards(s0())) st.sel.push(uid);
+    else { $('.ct-info').textContent = '每次最多下筆 ' + C().maxCards(s0()) + ' 張。'; return; }
     A().fx('card', st.sel.length * 2);
     render();
   }
@@ -275,6 +354,11 @@
     else A().sfx('wrong');
     render();
   }
+  function openDeck(replace) {
+    const s = st.s;
+    const h = { close: UI().closeModal, sellcard(el) { const r = C().useAbility(s, 'sell', Number(el.dataset.id)); A().sfx(r.ok ? 'coin' : 'wrong'); $('.ct-info').innerHTML = esc(r.msg); render(); openDeck(true); } };
+    if (replace) UI().modal(deckHtml(s), h, { dismiss: () => {} }); else UI().pushModal(deckHtml(s), h, { dismiss: () => {} });
+  }
   // 牌庫檢視：還沒抽的素材按標籤分佈
   function deckHtml(s) {
     const ses = s.session;
@@ -291,7 +375,15 @@
       + '<h3>標籤</h3><div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
       + '<h3>媒材</h3><div class="dk-media">' + media + '</div>'
       + '<h3>未抽的素材</h3><div class="dk-cards">' + left.slice().sort((a, b) => b.value - a.value).map((c) => '<span class="dk-card">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '・' + M[D().mediumOf(c)].name + '・' + c.value + '</small></span>').join('') + '</div>'
+      + (D().BACKGROUNDS[s.bg].perk.appraise ? appraiseHtml(s) : '')
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">返回</button></div></div>';
+  }
+  // 古董商的「鑑定」：不在手上的素材都可以賣
+  function appraiseHtml(s) {
+    const ses = s.session;
+    const list = s.cards.filter((c) => !ses.hand.includes(c.uid)).sort((a, b) => C().sellPrice(s, b) - C().sellPrice(s, a));
+    return '<h3>鑑定：賣掉不在手上的素材</h3><div class="dk-sell">' + list.map((c) => '<span class="dk-card sell">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '</small>'
+      + '<button class="btn mini sea" type="button" data-do="sellcard" data-id="' + c.uid + '">賣 $' + C().sellPrice(s, c) + '</button></span>').join('') + '</div>';
   }
   function leave() {
     if (st.busy) return;
@@ -415,8 +507,11 @@
   }
 
   // ---------- 下筆 ----------
+  // 最後一筆之後仍然可以用的能力（安哥、倒帶）：不要自動結束今晚
+  const canStillAct = (s) => ['encore', 'rewind'].some((k) => C().ability(s) && (s.bg === 'busker' ? k === 'encore' : s.bg === 'timetraveler' && k === 'rewind') && !C().abilityState(s, k));
   async function doPlay() {
     const s = st.s, ses = s.session;
+    if (!st.busy && ses.plays <= 0) { await endNight(); return; }
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
     st.busy = true; st.fast = false; st.chipN = 0;
     const uids = st.sel.slice();
@@ -450,7 +545,7 @@
     render();
     root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 220, delay: i * 30, fill: 'backwards' }));
-    if (ses.plays <= 0 || !ses.hand.length) await endNight();
+    if ((ses.plays <= 0 || !ses.hand.length) && !canStillAct(s)) await endNight();
   }
 
   async function animate(res) {
@@ -549,6 +644,16 @@
           if (x.x !== 1) shake(6);
           await wait(360);
           break;
+        case 'live':
+          tag(x.x >= 1 ? '直播觀眾瘋狂洗版 ×' + x.x : '直播翻車 ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          if (x.x < 1) shake(8);
+          await wait(360);
+          break;
+        case 'encore':
+          tag('安哥 ×' + x.x, 'kpi-good');
+          await wait(260);
+          break;
         case 'world':
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
@@ -630,6 +735,7 @@
   async function doDiscard() {
     const s = st.s, ses = s.session;
     if (st.busy || !st.sel.length || ses.discards <= 0) return;
+    if (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length) { $('.ct-info').textContent = '即興：第一筆之前不准改稿。'; A().sfx('wrong'); return; }
     st.busy = true;
     const uids = st.sel.slice();
     root.querySelectorAll('.ct-hand .cc').forEach((el) => {
@@ -667,13 +773,14 @@
     const panel = document.createElement('div');
     panel.className = 'ct-end';
     panel.innerHTML = '<div class="ct-end-card">'
-      + '<span class="mute">今晚的作品</span>'
+      + '<span class="mute">' + (res.session.mode === 'sketch' ? '今晚的速寫' : '今晚的作品') + '</span>'
       + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
       + '<div class="ct-end-score num">0</div>'
       + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
       + (res.stage ? stageResultHtml(res.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'

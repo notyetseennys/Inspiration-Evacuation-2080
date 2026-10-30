@@ -18,6 +18,7 @@
   const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
   const has = (c, t) => c.tags.includes(t);
   const med = (c) => D.mediumOf(c);
+  const perkOf = (s) => D.BACKGROUNDS[s.bg].perk || {};
   function mediaCounts(cards) {
     const m = {};
     cards.forEach((c) => { const k = med(c); m[k] = (m[k] || 0) + 1; });
@@ -31,7 +32,7 @@
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
+    return Math.round(c.value * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -51,9 +52,9 @@
     // 媒材：四張或以上同一種 = 連作（相當於同花）；五種各一 = 跨界（相當於順子）；五張同一種配合標籤 = 三部曲、傑作
     const media = mediaCounts(cards), mdistinct = Object.keys(media).length;
     const m0 = Object.keys(media).sort((a, b) => media[b] - media[a])[0];
-    const same = n === 5 && mdistinct === 1, cross = n === 5 && mdistinct === 5, run = (media[m0] || 0) >= 4;
+    const same = n >= 5 && mdistinct === 1, cross = n >= 5 && mdistinct === 5, run = (media[m0] || 0) >= 4;
     let id, keys = null, all = false;
-    if (n === 5 && c1 >= 5 && c2 >= 5) { id = 'film'; keys = [t0, t1]; }
+    if (n >= 5 && c1 >= n && c2 >= n) { id = 'film'; keys = [t0, t1]; }
     else if (same && c1 >= 5) { id = 'opus'; keys = [t0]; all = true; }
     else if (same && c1 >= 3 && c2 >= 2) { id = 'trilogy'; keys = [t0, t1]; all = true; }
     else if (c1 >= 5) { id = 'epic'; keys = [t0]; }
@@ -62,7 +63,7 @@
     else if (run) { id = 'series'; }
     else if (c1 >= 3 && c2 >= 2) { id = 'novel'; keys = [t0, t1]; }
     else if (cross) { id = 'crossover'; all = true; }
-    else if (n === 5 && distinct >= 7) { id = 'collage'; }
+    else if (n >= 5 && distinct >= 7) { id = 'collage'; }
     else if (c1 >= 3) { id = 'song'; keys = [t0]; }
     else if (c1 >= 2 && c2 >= 2) { id = 'couplet'; keys = [t0, t1]; }
     else if (c1 >= 2) { id = 'poem'; keys = [t0]; }
@@ -98,6 +99,8 @@
   }
   function kpiMod(s, sel, recs) {
     const k = RL.kpi(s);
+    // 文案的「包裝」：今晚的作品一律當作符合 KPI
+    if (s.session && s.session.packaged) return k.tag ? Math.max(1, k.mod) : k.special === 'pliable' ? 1.5 : 1;
     if (k.tag) return sel.some((c) => c.tags.includes(k.tag)) ? k.mod : 1;
     if (k.special === 'lean') return sel.length >= 4 ? 0.5 : 1;
     if (k.special === 'pliable') return s.spark < 2 ? 1.5 : 1;
@@ -110,9 +113,12 @@
   // AI 模仿：同一種形式用得越密，AI 學得越快，倍率越低（每天消退四成）
   // 機械流（三件）完全不受 AI 模仿影響；某些物件令 AI 學得更快或更慢
   function aiFactor(s, form, objs, schools) {
+    const P = perkOf(s);
     if ((schools || []).some((x) => x.def.noAI && x.n >= x.def.noAI)) return 1;
-    const speed = objs.reduce((a, o) => a * (o.def.aiMult || (o.def.aiDouble ? 2 : 1)), 1);
+    const speed = objs.reduce((a, o) => a * (o.def.aiMult || (o.def.aiDouble ? 2 : 1)), 1) * (P.aiSpeed || 1);
     const heat = ((s.style && s.style[form]) || 0) * speed;
+    // 覺醒的 AI：模仿自己反而越來越強
+    if (P.aiInvert) return Math.min(2, r2(1 + 0.12 * heat));
     const pen = 0.1 * Math.max(0, heat - 2) * (objs.some((o) => o.def.aiHalf) ? 0.5 : 1);
     return Math.max(0.4, r2(1 - pen));
   }
@@ -138,7 +144,7 @@
   }
   function activeSchools(s, objs) {
     const n = schoolCounts(s, objs);
-    return Object.keys(n).filter((k) => n[k] >= 2 && D.SCHOOLS[k]).map((k) => ({ id: k, n: n[k], def: D.SCHOOLS[k] }));
+    return Object.keys(n).filter((k) => n[k] >= 2 && D.SCHOOLS[k] && !(k === 'hunger' && perkOf(s).noHunger)).map((k) => ({ id: k, n: n[k], def: D.SCHOOLS[k] }));
   }
   // 外星評審「純粹主義」令物件與流派全部失效
   const objsOff = (s) => !!(s.session && s.session.stage && IE.Stages && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].noObjects));
@@ -174,7 +180,7 @@
     F.scoring.forEach((c, i) => {
       // 外星評審的規則：某些素材不計分
       if (SR && SR.blocked(c)) { steps.push(snap({ t: 'blocked', uid: c.uid })); return; }
-      let reps = 1 + (c.mod === 'echo' ? 1 : 0);
+      let reps = 1 + (c.mod === 'echo' ? 1 : 0) + (perkOf(s).allTwice ? 1 : 0);
       objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, i)); });
       schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, i, x.n)); });
       for (let r = 0; r < reps; r++) {
@@ -276,8 +282,11 @@
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
 
   // ---------- 一晚的創作 ----------
+  // 標準模式（60 天）：不是關卡之夜的晚上，「創作」是只下筆一次的速寫，令一局保持在一小時左右
+  const stageTonight = (s) => !!(IE.Stages && IE.Stages.today(s) && !(s.stageDone && s.stageDone[s.day]));
+  const isSketch = (s, mode) => mode === 'normal' && RL.modeOf(s).sketch && !stageTonight(s);
   function canStart(s, mode) {
-    const cost = mode === 'allnighter' ? C.allnighterCost : C.cost;
+    const cost = mode === 'allnighter' ? C.allnighterCost : isSketch(s, mode) ? C.sketchCost : C.cost;
     if (s.spark < 1) return '火花不足 ×1.0，你甚麼都想不出來';
     if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
     if (s.cr < cost) return '連 $' + cost + ' 材料費都付不起';
@@ -290,20 +299,24 @@
     return a;
   }
   function start(s, mode) {
-    const all = mode === 'allnighter';
+    const all = mode === 'allnighter', sketch = isSketch(s, mode);
     const m = objMods(s);
     const perk = D.BACKGROUNDS[s.bg].perk;
-    const refund = { cr: all ? C.allnighterCost : C.cost, body: all ? 15 : 4, spark: s.spark };
+    const refund = { cr: all ? C.allnighterCost : sketch ? C.sketchCost : C.cost, body: all ? 15 : sketch ? 2 : 4, spark: s.spark };
     s.cr -= refund.cr;
     RL.hurt(s, refund.body, all ? 'allnighter' : 'create');
     if (all) { RL.addSpark(s, -0.2, true); s.allnighterDay = s.day; }
     s.session = {
-      mode: all ? 'allnighter' : 'normal', day: s.day,
+      mode: all ? 'allnighter' : sketch ? 'sketch' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
       handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
-      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: Math.max(0, C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
+      plays: (perk.playsSet || C.plays) + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: Math.max(0, C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
+    // 速寫：只下筆一次、改稿一次
+    if (sketch) { s.session.plays = 1; s.session.discards = Math.min(1, s.session.discards); }
+    s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
+    s.session.abil = { used: 0, bought: 0 };
     // 關卡之夜：設定目標分數與外星評審的規則
     if (IE.Stages) IE.Stages.onStart(s, s.session);
     draw(s);
@@ -322,14 +335,55 @@
       if (cardOf(s, uid)) ses.hand.push(uid);
     }
   }
+  // 每次下筆最多幾張：一般五張；章魚星人詩人八張；外星評審「小品展」三張
+  function maxCards(s) {
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    return Math.min(perkOf(s).maxCards || 5, SR ? SR.maxCards : 8);
+  }
+  // 不能下筆的素材：外星評審禁止的；覺醒的 AI 不能用「愧疚」
+  function forbidden(s, c) {
+    if (!c) return false;
+    if (perkOf(s).noGuilt && c.guilt) return true;
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    return !!(SR && SR.forbidden(c));
+  }
+  // 時間旅人的「倒帶」：每次下筆之前存一份狀態
+  const snapshot = (s) => JSON.stringify(s, (k, v) => (k === 'undo' || k === 'dayStart' ? undefined : v));
+  function restore(s, snap) {
+    const o = JSON.parse(snap);
+    Object.keys(s).forEach((k) => { if (k !== 'dayStart' && !(k in o)) delete s[k]; });
+    Object.assign(s, o);
+  }
   function play(s, uids) {
     const ses = s.session;
-    if (!ses || ses.plays <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return null;
+    if (!ses || ses.plays <= 0 || !uids.length || uids.length > maxCards(s) || !uids.every((u) => ses.hand.includes(u))) return null;
+    if (uids.some((u) => forbidden(s, cardOf(s, u)))) return null;
     const SR = IE.Stages ? IE.Stages.scoring(s) : null;
-    if (SR && (uids.length > SR.maxCards || uids.some((u) => SR.forbidden(cardOf(s, u))))) return null;
+    const P = perkOf(s);
+    if (P.rewind) ses.undo = snapshot(s);
     const res = scorePlay(s, uids, { roll: RL.rand(s) });
-    // 用過的素材會磨損；寫進作品的愧疚會被卸下
-    res.scoring.forEach((u) => { const c = cardOf(s, u); if (c) c.wear = (c.wear || 0) + 1; });
+    // 過氣網紅的「直播」：每一筆 ×1.6，兩成機會翻車 ×0.4
+    if (ses.live) {
+      const crash = RL.rand(s) < 0.15, m = crash ? 0.4 : 1.8;
+      res.total = Math.round(res.total * m); res.raw = Math.round(res.raw * m);
+      res.steps.push({ t: 'live', x: m });
+      s.rating = Math.max(1, Math.min(5, s.rating + (crash ? -0.15 : 0.05)));
+      res.live = crash ? 'crash' : 'ok';
+    }
+    // 用過的素材會磨損（蘑菇星人的素材會腐爛：磨損加倍）；寫進作品的愧疚會被卸下
+    const notes0 = [];
+    res.scoring.forEach((u) => {
+      const c = cardOf(s, u);
+      if (!c) return;
+      const before = c.wear || 0;
+      c.wear = before + (P.wearX2 ? 2 : 1);
+      // 考古學家的「出土」：素材用到第四次，有機會變成古董
+      if (P.unearth && before < 4 && c.wear >= 4 && !c.guilt && D.ANTIQUES && RL.rand(s) < P.unearth) {
+        const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
+        notes0.push('出土：「' + c.name + '」原來是「' + def.name + '」');
+        Object.assign(c, { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+      }
+    });
     const guilt = res.scoring.map((u) => cardOf(s, u)).filter((c) => c && c.guilt);
     let relief = 0;
     if (guilt.length) {
@@ -345,6 +399,8 @@
     res.fresh = res.recipes.filter((id) => !s.discovered[id]);
     res.fresh.forEach((id) => { s.discovered[id] = true; });
     if (res.fresh.length) res.sparkUp = RL.addSpark(s, 0.15, true);
+    // 這一局第一次觸發傳說組合：金色扭蛋券
+    res.fresh.filter((id) => (D.RECIPES.find((r) => r.id === id) || {}).legend).forEach((id) => RL.gainTicket(s, 'gold', 1, '發現傳說組合「' + D.RECIPES.find((r) => r.id === id).name + '」'));
     res.recipes.forEach((id) => { s.usedRecipes[id] = true; });
     ses.fresh.push(...res.fresh);
     s.formsSeen = s.formsSeen || {};
@@ -363,10 +419,13 @@
     objs.forEach((o) => { if (o.def.after) cost(D.OBJ[o.id].name, o.def.after({ s })); });
     activeSchools(s, objs).forEach((x) => { if (x.def.after) cost(x.def.name, x.def.after({ s }, x.n)); });
     if (SR && SR.sinPerPlay) notes.push('天空區贊助：靈魂 +' + RL.sin(s, SR.sinPerPlay, null) + ' 克');
+    if (res.live) notes.push(res.live === 'crash' ? '直播翻車了：留言區一片嘲笑' : '直播觀眾很喜歡');
+    notes.push(...notes0);
     res.notes = notes;
     ses.notes.push(...notes);
     ses.total += res.total; ses.raw += res.raw;
     ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
+    ses.lastUids = uids.slice();
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
     ses.used.push(...uids.filter((u) => cardOf(s, u)));
@@ -376,7 +435,9 @@
   }
   function discard(s, uids) {
     const ses = s.session;
-    if (!ses || ses.discards <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return false;
+    if (!ses || ses.discards <= 0 || !uids.length || uids.length > Math.max(5, maxCards(s)) || !uids.every((u) => ses.hand.includes(u))) return false;
+    // 街頭樂手：即興，第一筆之前不准改稿
+    if (perkOf(s).noEarlyDiscard && !ses.log.length) return false;
     ses.hand = ses.hand.filter((u) => !uids.includes(u));
     ses.used.push(...uids);
     ses.discards--; ses.discardsUsed++;
@@ -402,6 +463,15 @@
     s.session = null;
     if (!ses.log.length) return { work: null, session: ses };
     const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
+    // 蘑菇星交換生的「菌絲」：一張用過的素材長出孢子
+    let spore = null;
+    if (perkOf(s).mycelium) {
+      const used = ses.used.map((u) => cardOf(s, u)).filter((c) => c && !c.guilt);
+      if (used.length) {
+        const c = RL.pick(s, used);
+        spore = RL.addCard(s, { id: 'spore', name: '孢子：' + c.name.slice(0, 8), tags: c.tags.slice(), value: Math.round(c.value * 0.7), medium: med(c), wear: 0 }).card;
+      }
+    }
     const tagCount = {};
     ses.log.forEach((x) => x.tags.forEach((t) => { tagCount[t] = (tagCount[t] || 0) + 1; }));
     const work = { day: s.day, quarter: s.quarter, name: workName(ses.log), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
@@ -414,7 +484,7 @@
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
     const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
     const stage = IE.Stages ? IE.Stages.settle(s, ses) : null;
-    return { work, session: ses, paid, stage };
+    return { work, session: ses, paid, stage, spore };
   }
   // 還未下筆就離開：退回材料費與體力
   function cancel(s) {
@@ -431,14 +501,133 @@
     Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * 0.6); if (s.style[k] < 0.05) delete s.style[k]; });
   }
 
+  // ---------- 角色的招牌能力（創作桌上使用，第八期） ----------
+  const ability = (s) => D.ABILITIES && D.ABILITIES[s.bg];
+  const periodOf = (s) => s.quarter;
+  const periodUsed = (s, k) => !!(s.abilPeriod && s.abilPeriod[k] === periodOf(s));
+  const buyPrice = (s, kind) => Math.round((kind === 'play' ? 60 : 30) * Math.pow(2, (s.session && s.session.abil.bought) || 0) * (IE.Meta ? IE.Meta.stakeMod(s, 'prices') : 1));
+  const bribePrice = (s) => Math.round(100 * (IE.Meta ? IE.Meta.stakeMod(s, 'prices') : 1));
+  const sellPrice = (s, c) => Math.round((5 + cardValue(s, c) / 2) * (perkOf(s).sellMult || 1));
+  // 現在可以用嗎？回傳 null 表示可以，否則回傳原因
+  function abilityState(s, kind) {
+    const ses = s.session, A = ability(s);
+    if (!ses || !A) return '沒有招牌能力';
+    const nightUsed = ses.abil.used > 0;
+    switch (kind) {
+      case 'package': return periodUsed(s, 'package') ? '這一期已經包裝過' : null;
+      case 'mark': return nightUsed ? '今晚已經批改過' : null;
+      case 'encore': return nightUsed ? '今晚已經安哥過' : ses.mode === 'sketch' ? '速寫沒有觀眾：只有正式創作的晚上才可以安哥' : !ses.log.length ? '先下筆一次，觀眾才會要求再唱' : null;
+      case 'live': return ses.live ? '直播已經開始' : null;
+      case 'frames': return nightUsed ? '今晚已經用過' : !ses.deck.length ? '牌庫已經抽完' : null;
+      case 'buyPlay': return s.cr < buyPrice(s, 'play') ? '錢不夠' : null;
+      case 'buyDiscard': return s.cr < buyPrice(s, 'discard') ? '錢不夠' : null;
+      case 'rewind': return nightUsed ? '今晚已經倒帶過' : !ses.undo || !ses.log.length ? '還沒有下筆' : null;
+      case 'bribe': return periodUsed(s, 'bribe') ? '這一期已經賄賂過' : !(ses.stage && ses.stage.rules.length) ? '只可以在外星評審之夜使用' : ses.log.length ? '要在第一筆之前賄賂' : s.cr < bribePrice(s) ? '錢不夠（$' + bribePrice(s) + '）' : null;
+      case 'forge': return periodUsed(s, 'forge') ? '這一期已經做舊過' : null;
+      case 'sell': return null;
+      default: return '不能使用';
+    }
+  }
+  function useAbility(s, kind, arg) {
+    const ses = s.session;
+    const why = abilityState(s, kind);
+    if (why) return { ok: false, msg: why };
+    const P = perkOf(s);
+    let msg = '', res = null, peek = null;
+    switch (kind) {
+      case 'package': {
+        ses.packaged = true;
+        s.abilPeriod = Object.assign(s.abilPeriod || {}, { package: periodOf(s) });
+        const g = RL.sin(s, 1, null);
+        msg = '包裝：今晚的作品全部「符合本季 KPI」。靈魂 +' + g + ' 克';
+        break;
+      }
+      case 'mark': {
+        const c = cardOf(s, arg);
+        if (!c || !ses.hand.includes(arg)) return { ok: false, msg: '先選一張手牌' };
+        c.value += 4; c.wear = 0;
+        msg = '批改：「' + c.name + '」重寫之後籌碼 +4，磨損歸零';
+        break;
+      }
+      case 'encore': {
+        res = scorePlay(s, ses.lastUids, { roll: RL.rand(s) });
+        res.total = Math.round(res.total * 0.4); res.raw = Math.round(res.raw * 0.4);
+        res.steps.push({ t: 'encore', x: 0.4 });
+        res.encore = true; res.notes = []; res.fresh = [];
+        ses.total += res.total; ses.raw += res.raw;
+        ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: ses.lastUids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat(), encore: true });
+        msg = '安哥！觀眾要求再唱一次（×0.4）';
+        break;
+      }
+      case 'live': ses.live = true; msg = '直播開始：之後每一筆 ×1.8，但有一成半機會翻車'; break;
+      case 'frames': {
+        if (arg == null) { peek = ses.deck.slice(0, 3); return { ok: true, peek, msg: '牌庫頂的三張' }; }
+        if (!ses.deck.slice(0, 3).includes(arg)) return { ok: false, msg: '只可以挑牌庫頂的三張' };
+        ses.deck = ses.deck.filter((u) => u !== arg);
+        ses.hand.push(arg);
+        msg = '逐格：把「' + cardOf(s, arg).name + '」加入手牌';
+        break;
+      }
+      case 'buyPlay': case 'buyDiscard': {
+        const price = buyPrice(s, kind === 'buyPlay' ? 'play' : 'discard');
+        s.cr -= price; ses.abil.bought++;
+        if (kind === 'buyPlay') ses.plays++; else ses.discards++;
+        msg = '鈔能力：花了 $' + price + (kind === 'buyPlay' ? '多買一次下筆' : '多買一次改稿');
+        break;
+      }
+      case 'rewind': {
+        const used = ses.abil.used;
+        restore(s, ses.undo);
+        s.session.abil.used = used + 1;
+        RL.addParanoia(s, 6, null);
+        msg = '倒帶：上一筆從來沒有發生過。偏執 +6';
+        break;
+      }
+      case 'bribe': {
+        const id = arg && ses.stage.rules.includes(arg) ? arg : ses.stage.rules[0];
+        const price = bribePrice(s);
+        s.cr -= price;
+        ses.stage.rules = ses.stage.rules.filter((x) => x !== id);
+        // 重新套用其餘規則的開局效果（例如「只看一筆」）
+        Object.assign(ses, ses.base);
+        ses.stage.rules.forEach((x) => { const b = IE.Stages.BOSS[x]; if (b.start) b.start(ses); });
+        draw(s);
+        s.abilPeriod = Object.assign(s.abilPeriod || {}, { bribe: periodOf(s) });
+        msg = '內鬼：花了 $' + price + '，評審「' + IE.Stages.BOSS[id].name + '」的規則今晚不算數';
+        return { ok: true, msg };
+      }
+      case 'forge': {
+        const c = cardOf(s, arg);
+        if (!c || c.guilt || (c.id && c.id.startsWith('a_'))) return { ok: false, msg: '選一張普通素材' };
+        const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
+        Object.assign(c, { id: nid, name: def.name + '（做舊）', tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        const g = RL.sin(s, 2, null);
+        s.abilPeriod = Object.assign(s.abilPeriod || {}, { forge: periodOf(s) });
+        msg = '做舊：它現在是一件「古董」了。靈魂 +' + g + ' 克';
+        return { ok: true, msg };
+      }
+      case 'sell': {
+        const c = cardOf(s, arg);
+        if (!c || ses.hand.includes(arg)) return { ok: false, msg: '只可以賣不在手上的素材' };
+        const price = sellPrice(s, c);
+        s.cards = s.cards.filter((x) => x.uid !== arg);
+        ses.deck = ses.deck.filter((u) => u !== arg); ses.used = ses.used.filter((u) => u !== arg);
+        s.cr += price;
+        return { ok: true, msg: '鑑定：把「' + c.name + '」賣了 $' + price };
+      }
+    }
+    if (['mark', 'encore', 'frames', 'rewind'].includes(kind)) ses.abil.used++;
+    s.stats.abilities = (s.stats.abilities || 0) + 1;
+    return { ok: true, msg, res };
+  }
+
   // ---------- 模擬用：找出這手牌最好的下筆 ----------
   function bestPlay(s) {
     const ses = s.session;
-    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
-    const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !(SR && SR.forbidden(c)));
+    const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
     if (!hand.length) return null;
     const cands = new Map();
-    const maxN = SR ? SR.maxCards : 5;
+    const maxN = maxCards(s);
     const add = (cards) => { const uids = cards.slice(0, maxN).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
     const byVal = hand.slice().sort((a, b) => b.value - a.value);
     add(byVal);
@@ -469,6 +658,6 @@
 
   IE.Create = {
     FORM, RANK, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
-    activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
+    isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });

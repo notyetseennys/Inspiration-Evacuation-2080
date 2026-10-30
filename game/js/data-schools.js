@@ -40,7 +40,7 @@
     n_ho1: 'paper', e_song: 'sound', n_dj2: 'sound', n_fong1: 'sound', b_rating: 'data', e_wedding: 'paper', b_slogan: 'paper', m_graffiti: 'paper',
     f_scale: 'image', d_jelly: 'image', e_ufo: 'image', e_scam: 'sound', p_chorus: 'sound', f_war: 'data', e_graffiti: 'paper', c_sutra: 'paper',
     d_crayon: 'image', b_roll: 'paper', n_mary1: 'paper', i_question: 'sound', c_review: 'data', l_error: 'sound', l_rules: 'paper', l_screen: 'image',
-    n_yu1: 'sound', n_yu2: 'sound', l_cat: 'image', s_face: 'body', k_badge: 'data', b_bag: 'body', c_cold: 'body', f_viral: 'data', e_fight: 'sound', c_door: 'sound',
+    n_yu1: 'sound', n_yu2: 'sound', b_guitar: 'image', l_cat: 'image', s_face: 'body', k_badge: 'data', b_bag: 'body', c_cold: 'body', f_viral: 'data', e_fight: 'sound', c_door: 'sound',
   };
   const TAG_MEDIUM = { machine: 'data', neon: 'image', hunger: 'body', warmth: 'body', memory: 'paper', hope: 'image', anger: 'sound',
     rebel: 'paper', guilt: 'paper', water: 'sound', ancient: 'paper', cosmic: 'image' };

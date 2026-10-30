@@ -14,7 +14,7 @@
   const seasons = Object.keys(D.SEASONS);
   const Game = IE.Game = {
     state: null, meta: store.get(KEY_META) || {}, scene: null, micro: null,
-    setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)] },
+    setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)], mode: 'standard' },
     celebrate(total) {
       const s = Game.state;
       const sc = Game.scene;
@@ -32,7 +32,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 8 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 9 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -96,12 +96,23 @@
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
       collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
       gacha() { A.init(); openGacha(() => showTitle()); },
+      history() { UI.modal(UI.historyModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      weekly() {
+        A.init(); store.del(KEY_RUN);
+        const w = IE.Meta.weekly(IE.Meta.weekKey()), mod = IE.Meta.WEEKLY_MODS[w.mod], rec = Game.meta.weekly && Game.meta.weekly[w.key];
+        UI.modal('<div class="modal"><span class="eyebrow">每週挑戰・' + w.key + '</span><h2>' + mod.name + '</h2><p>' + mod.desc + '。這一週所有人都用同一個種子：<b>' + D.BACKGROUNDS[w.bg].name + '</b>、' + D.SEASONS[w.season].name + '、外星評級 ' + w.stake + '、標準模式 60 天。</p>'
+          + '<p class="mute">' + (rec ? '你本週的最佳成績：第 ' + rec.day + ' 天・' + rec.stages + ' 關。' : '本週第一次完成可以得到一張外星扭蛋券。') + '</p>'
+          + '<div class="btn-row"><button class="btn primary" type="button" data-do="go">開始</button><button class="btn" type="button" data-do="close">返回</button></div></div>', {
+          go() { UI.closeModal(); newGame(w.bg, w.season, { seed: w.seed, stake: w.stake, weekly: { key: w.key, mod: w.mod }, mode: 'standard' }); },
+          close() { UI.closeModal(); },
+        }, { dismiss: () => {} });
+      },
       daily() {
         A.init(); store.del(KEY_RUN);
         const d = IE.Meta.daily(IE.Meta.dateKey());
         UI.modal('<div class="modal"><span class="eyebrow">每日挑戰・' + d.key + '</span><h2>今天的人才篩選</h2><p>今天所有人都用同一個種子：<b>' + D.BACKGROUNDS[d.bg].name + '</b>、' + D.SEASONS[d.season].name + '、外星評級 ' + d.stake + '。分數按存活天數與通過的關卡計算，只記錄你今天的最佳成績。</p>'
           + '<div class="btn-row"><button class="btn primary" type="button" data-do="go">開始</button><button class="btn" type="button" data-do="close">返回</button></div></div>', {
-          go() { UI.closeModal(); newGame(d.bg, d.season, { seed: d.seed, stake: d.stake, daily: d.key }); },
+          go() { UI.closeModal(); newGame(d.bg, d.season, { seed: d.seed, stake: d.stake, daily: d.key, mode: 'standard' }); },
           close() { UI.closeModal(); },
         }, { dismiss: () => {} });
       },
@@ -109,20 +120,21 @@
   }
   // 人才扭蛋機
   function openGacha(after) {
-    const render = (result, spinning) => UI.modal(UI.gachaModal(Game.meta, result, spinning), {
-      pull() {
-        const res = IE.Roster.pull(Game.meta);
+    const render = (result, spinning, type) => UI.modal(UI.gachaModal(Game.meta, result, spinning, type), {
+      pull(el) {
+        const type = el.dataset.id || 'silver';
+        const res = IE.Roster.pull(Game.meta, null, type);
         if (!res) return;
         store.set(KEY_META, Game.meta);
         A.sfx('beam');
-        render(null, true);
+        render(null, true, type);
         setTimeout(() => {
           if (res.type === 'char') {
             A.sfx(res.rarity === 'UR' ? 'combo' : 'pickup');
             if (res.rarity === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
             Game.setup.bg = res.id;
-          } else A.sfx(res.id === 'refund' || res.id === 'antique' ? 'coin' : 'wrong');
-          render(res, false);
+          } else A.sfx(res.id === 'refund' || res.id === 'antique' || res.id === 'tool' || res.id === 'refundGold' ? 'coin' : 'wrong');
+          render(res, false, type);
         }, res.type === 'char' && res.rarity === 'UR' ? 2400 : 1400);
       },
       close() { UI.closeModal(); if (after) after(); },
@@ -132,12 +144,17 @@
   function showSetup() {
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
-      bg(el) { Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render(); },
+      bg(el) {
+        Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render();
+        // 手機：選了角色就捲到角色資料
+        if (window.innerWidth <= 820) { const d = document.querySelector('.su-detail'); if (d) d.scrollIntoView({ behavior: IE.Pixel.reducedMotion ? 'auto' : 'smooth', block: 'start' }); }
+      },
       stake(el) { Game.setup.stake = Number(el.dataset.id); render(); },
       season(el) { Game.setup.season = el.dataset.id; render(); },
+      mode(el) { Game.setup.mode = el.dataset.id; render(); },
       back() { showTitle(); },
       gacha() { openGacha(render); },
-      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)) }); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)), mode: Game.setup.mode || 'standard' }); },
     });
     render();
     window.scrollTo({ top: 0 });
@@ -145,14 +162,16 @@
   function newGame(bg, season, o) {
     A.init();
     o = o || {};
-    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed, stake: o.stake || 1, daily: o.daily || null });
-    if (Game.meta.nextStart && Game.meta.nextStart.length) { Game.meta.nextStart = []; store.set(KEY_META, Game.meta); }
+    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard' });
+    Game.ticketShown = 0;
+    if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
     startDay();
   }
   function resumeRun() {
     const s = Game.state;
+    Game.ticketShown = (s.ticketLog || []).length;
     setScene(viewScene(currentView()));
     if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
@@ -160,10 +179,14 @@
   }
 
   // ---------- 一天 ----------
+  // 計時：只計遊戲畫面在前景的時間（用來量度一局實際玩了多久）
+  setInterval(() => { const s = Game.state; if (s && !s.ended && document.visibilityState === 'visible') s.playMs = (s.playMs || 0) + 1000; }, 1000);
   function startDay() {
     const s = Game.state;
     S.City.forceNight = false;
     const m = R.morning(s);
+    // 灰人逃兵被追捕的日子：白天要躲起來
+    if (R.hiding(s) && s.slot === 0) { s.slot = 1; UI.toast('追捕隊來了。你躲了一整個早上。', 'bad'); }
     IE.Maps.actions = R.actions(s);
     setScene(viewScene(currentView()));
     renderViews(true);
@@ -253,11 +276,29 @@
     A.setSpark(s.spark);
     UI.setPanel(UI.actionsPanel(s, acts), {
       act(el) { doAction(el.dataset.id); },
+      auto(el) { doAction('auto:' + el.dataset.id); },
+      rewindday() {
+        if (!R.rewindDay(s)) return;
+        A.sfx('beam');
+        UI.toast('倒帶：你回到了今天早上。', 'good');
+        startDay();
+      },
       objs() { openObjects(); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
     });
+    ticketToasts();
     save();
+  }
+  // 一局之中賺到扭蛋券：彈出提示
+  function ticketToasts() {
+    const s = Game.state, log = (s && s.ticketLog) || [];
+    Game.ticketShown = Game.ticketShown || 0;
+    while (Game.ticketShown < log.length) {
+      const t = log[Game.ticketShown++];
+      UI.toast(t.why + '：' + R.TICKET_NAME[t.type] + ' +' + t.n, 'good');
+      A.sfx('coin');
+    }
   }
 
   function doAction(id) {
@@ -268,6 +309,8 @@
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
+      case 'nightshift':
+        return afterAction(R.applyNightShift(s));
       case 'volunteer':
         return afterAction(R.applyVolunteer(s));
       case 'chat':
@@ -284,6 +327,8 @@
         return afterAction(IE.World.leaveTrip(s));
     }
     if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
+    // 照舊做：熟手自動完成小遊戲
+    if (id.startsWith('auto:')) { const rep = IE.Auto.apply(s, id.slice(5)); if (rep) { A.sfx('click'); afterAction(rep); } }
   }
   // 地圖上的熱點
   IE.Maps.onPick = function (view, sp) {
@@ -432,6 +477,8 @@
     const s = Game.state;
     Game.microToken = null; Game.micro = null;
     const rep = kind === 'interview' ? R.applyInterview(s, result.answers) : R.applyMicro(s, kind, result);
+    // 親手玩出的最高評級立即記入局外紀錄（之後可以「照舊做」）
+    if (s.microBest) { Game.meta.microBest = Object.assign(Game.meta.microBest || {}, s.microBest); store.set(KEY_META, Game.meta); }
     setScene(viewScene(currentView()));
     afterAction(rep);
   };
@@ -446,7 +493,10 @@
   }
   function afterSlot() {
     const s = Game.state;
+    if (s.body <= 0 && R.lastStand(s, null)) UI.toast('急救：你本來會倒下，但你替自己做了急救。', 'good');
     if (s.body <= 0) return finishRun(R.endingFor(s, 'death'));
+    // 外賣潛水員「趕單」：留在同一個時段
+    if (R.slotFree(s)) return showHub();
     if (R.isNight(s)) return endOfDay();
     s.slot++;
     showHub();
@@ -654,7 +704,7 @@
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 8) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 9) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

@@ -212,6 +212,14 @@
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
   const THRESHOLDS = [2300000, 6400000, 14400000, 24000000, 42000000];
+  // 一局的長度（第八期）：標準 60 天約一小時；長篇 100 天是以前的玩法。
+  // period：一個篩選期的天數；stageDays：每期的三個關卡之夜；season：季節長度；sketch：平常晚上只可以速寫。
+  const MODES = {
+    standard: { id: 'standard', name: '標準', desc: '60 天，約一小時', days: 60, period: 12, stageDays: [4, 8, 12], season: 20, shopEvery: 2, sketch: true,
+      thresholds: [1120000, 2700000, 5500000, 9400000, 16000000] },
+    long: { id: 'long', name: '長篇', desc: '100 天，以前的玩法', days: 100, period: 20, stageDays: [7, 14, 20], season: 25, shopEvery: 3, sketch: false,
+      thresholds: THRESHOLDS },
+  };
 
   // ---------- 十二項能力值 ----------
   // 0–100。做甚麼，就會變成甚麼：每個行動都會令相關能力值成長或退化。
@@ -237,7 +245,7 @@
   const BACKGROUNDS = {
     copywriter: {
       name: '前廣告公司文案', short: '前文案',
-      desc: '擅長寫作，有一點積蓄。', perkText: '創作籌碼 +15%',
+      desc: '擅長寫作，有一點積蓄。', perkText: '沒有其他特別能力：全靠招牌能力「包裝」',
       cr: 170, spark: 2.4, floor: 4, medium: '寫了一篇',
       soul: 9, conscience: 0.85, past: '你寫過的廣告騙過很多人。',
       cards: ['b_slogan', 'b_lanyard', 'b_novel'],
@@ -264,7 +272,7 @@
     },
     busker: {
       name: '街頭樂手', short: '街頭樂手',
-      desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢；街頭表演收入 +15%',
+      desc: '火花最高，但身無分文。', perkText: '街頭表演收入 +15%',
       cr: 60, spark: 2.4, floor: 2, medium: '寫了一首歌',
       soul: 4, conscience: 1, past: '你唱的歌從沒傷害過任何人。',
       cards: ['b_guitar', 'b_coins', 'b_song', 'b_echo'],
@@ -291,7 +299,7 @@
     },
     influencer: {
       name: '過氣網紅', short: '過氣網紅',
-      desc: '懂得甚麼會紅，但已經沒人在看。', perkText: '內容農場收入 +30%；懂得包裝，創作籌碼 +10%',
+      desc: '懂得甚麼會紅，但已經沒人在看。', perkText: '內容農場收入 +30%',
       cr: 260, spark: 2.2, floor: 4, medium: '剪了一條影片',
       soul: 10, conscience: 0.7, past: '你帶過的貨，很多都是假的。',
       cards: ['b_light', 'b_follow', 'b_live'],
@@ -309,7 +317,7 @@
     },
     nurse: {
       name: '夜班護士', short: '夜班護士',
-      desc: '冷靜，習慣照顧別人。', perkText: '做義工的贖罪效果 +50%',
+      desc: '冷靜，習慣照顧別人。', perkText: '做義工的贖罪效果 +20%',
       cr: 160, spark: 1.6, floor: 3, medium: '寫了一首詩',
       soul: 2, conscience: 1, past: '你送走過很多病人。',
       cards: ['b_nbadge', 'b_hand'],
@@ -487,7 +495,7 @@
 
   IE.DATA = {
     TAGS, CARDS, CARD_POOLS, RECIPES, RESONANCE, MEDLEY, KPIS, THRESHOLDS,
-    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_DAYS, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
+    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_DAYS, MODES, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
     LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, BIAS_LINES, FISH, DIVE_ZONES, SOUL_LIMIT,
     DAYS: 100, REVIEW_DAYS: [20, 40, 60, 80, 100], RENT_EVERY: 7, SLOTS: ['早上', '下午', '晚上'],
   };

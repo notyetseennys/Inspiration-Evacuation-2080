@@ -932,6 +932,180 @@ body.ct-open { overflow: hidden; }
   .ct-schools .sch { font-size: 10px; }
 }
 
+/* ---------- 第八期：選角、扭蛋券、對局紀錄、招牌能力、照舊做 ---------- */
+.lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--mute); margin-right: 6px; }
+.stars { display: inline-flex; gap: 2px; vertical-align: middle; }
+.stars i { width: 7px; height: 7px; transform: rotate(45deg); background: #2a3550; border-radius: 1px; }
+.stars i.on { background: var(--spark); box-shadow: 0 0 4px rgba(255,194,71,0.6); }
+
+/* 選角 */
+.setup8 .su-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.su-group h3 { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; font-size: 14px; }
+.su-group h3 .mute { margin-left: auto; font-size: 15px; }
+.su-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.ch {
+  position: relative; display: grid; justify-items: center; gap: 3px; padding: 18px 6px 8px; min-width: 0; cursor: pointer;
+  border-radius: 10px; background: var(--deck); border: 1px solid var(--line); color: var(--fg); text-align: center;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.ch:hover { transform: translateY(-2px); border-color: var(--sea); }
+.ch:focus-visible { outline: 2px solid var(--sea); outline-offset: 2px; }
+.ch.sel { border-color: var(--spark); box-shadow: 0 0 0 1px var(--spark), 0 6px 18px rgba(255,194,71,0.18); }
+.ch.r-SR { background: linear-gradient(180deg, rgba(195,139,255,0.10), var(--deck) 55%); }
+.ch.r-UR { background: linear-gradient(180deg, rgba(255,211,107,0.12), var(--deck) 55%); }
+.ch.gold { border-color: #e8c25a; }
+.ch.locked { opacity: 0.62; }
+.ch .ch-rar { position: absolute; top: 5px; left: 6px; font-family: var(--font-pixel); font-size: 9px; color: var(--mute); }
+.ch.r-SR .ch-rar { color: #c38bff; }
+.ch.r-UR .ch-rar { color: #ffd36b; }
+.ch .ch-por { height: 52px; display: grid; place-items: end center; }
+.ch .ch-name { font-size: 12px; font-weight: 900; line-height: 1.25; }
+.ch .ch-abil { font-size: 11px; color: var(--spark); }
+.ch .ch-lock { font-size: 11px; color: var(--mute); }
+.su-detail {
+  position: sticky; top: 10px; display: grid; gap: 10px; padding: 14px; border-radius: 12px;
+  background: var(--deck); border: 1px solid var(--line);
+}
+.su-detail.r-SR { border-color: rgba(195,139,255,0.5); }
+.su-detail.r-UR { border-color: rgba(255,211,107,0.55); }
+.sd-head { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.sd-por { display: grid; place-items: center; width: 84px; height: 104px; border-radius: 10px; background: #0d1424; border: 1px solid var(--line); }
+.sd-por.gold { border: 2px solid #e8c25a; box-shadow: 0 0 14px rgba(232,194,90,0.35); }
+.sd-id h3 { margin: 4px 0; font-size: 19px; }
+.sd-id h3 .title { margin-left: 8px; font-size: 12px; color: #e8c25a; border: 1px solid #e8c25a; border-radius: 4px; padding: 1px 5px; vertical-align: middle; }
+.sd-id p { margin: 0 0 6px; font-size: 12px; }
+.sd-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.sd-chips span { font-size: 12px; padding: 2px 7px; border-radius: 999px; background: #0d1424; color: var(--c, var(--fg)); border: 1px solid var(--line); }
+.sd-abil { padding: 10px 12px; border-radius: 10px; background: linear-gradient(135deg, rgba(255,194,71,0.12), rgba(255,79,180,0.06)); border: 1px solid rgba(255,194,71,0.45); }
+.sd-abil .sd-ab-h { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sd-abil .sd-ab-h b { font-size: 17px; color: var(--spark); }
+.sd-abil .use { margin-left: auto; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid rgba(255,194,71,0.5); color: var(--spark); }
+.sd-abil p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; }
+.sd-abil .sd-cost { color: #ffb3bb; }
+.sd-abil .sd-cost .lbl { color: var(--danger); }
+.sd-abil.compact { opacity: 0.75; }
+.sd-school { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; font-size: 12px; }
+.sd-school div { display: grid; gap: 2px; }
+.sd-school span:last-child { color: var(--mute); }
+.sch-tag { justify-self: start; font-size: 11px; font-weight: 900; color: #120a1c; background: var(--c); padding: 0 6px; border-radius: 3px; }
+.sd-mast { display: grid; gap: 4px; }
+.sd-mast-h { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.sd-mast-h .mute { margin-left: auto; font-size: 15px; }
+.sd-mast .bar { height: 6px; }
+.sd-mast .bar > i { background: linear-gradient(90deg, var(--spark), #ff8fd1); }
+.sd-mast small { color: var(--mute); font-size: 12px; }
+.sd-more summary { cursor: pointer; font-size: 13px; color: var(--sea); }
+.sd-more[open] summary { margin-bottom: 8px; }
+.sd-stories { display: grid; gap: 6px; margin-bottom: 8px; }
+.story { margin: 0; padding: 8px 10px; border-left: 3px solid var(--spark); background: #0d1424; font-size: 13px; line-height: 1.6; border-radius: 0 6px 6px 0; }
+.story.locked { color: var(--mute); border-left-color: var(--line); font-size: 12px; }
+.unlock-bar { height: 6px; margin: 6px 0 2px; }
+.unlock-bar > i { background: var(--sea); }
+.su-opts { display: grid; gap: 12px; margin-top: 16px; }
+.su-opt { display: grid; gap: 6px; }
+.su-opt .seg button small { display: block; font-size: 11px; color: var(--mute); }
+.su-opts .panel-head { margin: 0; }
+.su-opts .panel-head h2 { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--mute); margin: 0 0 4px; }
+.su-opts .panel-head p { font-size: 12px; }
+.su-go { position: sticky; bottom: 0; z-index: 3; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; margin-top: 14px; padding: 10px 0;
+  background: linear-gradient(180deg, rgba(10,14,23,0), var(--ink) 30%); }
+.su-go .btn.primary.big { min-width: 160px; }
+
+/* 扭蛋券 */
+.tk-chips { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
+.tk-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.tk-chip i { width: 8px; height: 6px; border-radius: 1px; background: var(--c); }
+.tk-chip b { color: var(--fg); font-size: 14px; }
+.g8 .g-tks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.g-tk { display: grid; gap: 6px; padding: 10px; border-radius: 10px; background: var(--deck); border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line)); }
+.g-tk.on { box-shadow: 0 0 0 1px var(--c), 0 0 18px color-mix(in srgb, var(--c) 30%, transparent); }
+.g-tk-h { display: flex; align-items: center; gap: 6px; }
+.g-tk-h i { width: 14px; height: 10px; border-radius: 2px; background: var(--c); }
+.g-tk-h b { color: var(--c); font-size: 14px; }
+.g-tk-h .num { margin-left: auto; font-size: 20px; }
+.g-tk p { margin: 0; font-size: 12px; color: var(--mute); line-height: 1.5; }
+.g8 .gacha-machine .globe i { background: var(--c, #ff8fd1); }
+.g8 .g-where { font-size: 12px; }
+
+/* 對局紀錄 */
+.hist .h-list { display: grid; gap: 4px; }
+.h-row { display: grid; grid-template-columns: 44px minmax(90px, 1.3fr) minmax(90px, 1.2fr) 74px 64px 44px 80px 70px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 6px; background: var(--deck); font-size: 12px; }
+.h-row .num { font-size: 15px; }
+.h-ch { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.h-end { font-weight: 900; }
+.h-end.e-agent, .h-end.e-returned { color: var(--alien); }
+.h-end.e-death, .h-end.e-grey { color: var(--danger); }
+.h-end.e-heavy { color: var(--stone); }
+.hist .h-bests { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.hb { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; row-gap: 2px; align-items: center; padding: 8px; border-radius: 8px; background: var(--deck); font-size: 12px; }
+.hb img { grid-row: span 4; }
+.hb span { color: var(--mute); }
+
+/* 一局之中：招牌能力、照舊做 */
+.abil-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: rgba(255,194,71,0.07); border: 1px solid rgba(255,194,71,0.3); font-size: 12px; }
+.abil-strip b { color: var(--spark); }
+.abil-strip .abil-desc { color: var(--mute); flex: 1 1 260px; }
+.act-wrap { position: relative; display: grid; min-width: 0; }
+.act-wrap .act { height: 100%; }
+.act-wrap.has-auto .act { padding-bottom: 40px; }
+.act-auto {
+  position: absolute; right: 8px; bottom: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; cursor: pointer;
+  border-radius: 999px; background: #10233a; border: 1px solid var(--sea); color: var(--sea); font-size: 12px; font-weight: 700;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+.act-auto b { font-family: var(--font-pixel); font-size: 11px; color: var(--fg); background: var(--sea); color: #06121a; padding: 1px 5px; border-radius: 4px; }
+.act-auto:hover { background: #163250; transform: translateY(-1px); }
+.act-auto:focus-visible { outline: 2px solid var(--sea); outline-offset: 2px; }
+.chip.tk { border-color: #ffd36b; color: #ffd36b; }
+.weekly-btn small, .daily-btn small { display: block; }
+
+/* 創作桌的招牌能力 */
+.ct-abil { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ct-abil:empty { display: none; }
+.ct-abil .ab-name { font-size: 12px; font-weight: 900; color: var(--spark); margin-right: 4px; }
+.ab-btn { display: inline-grid; gap: 1px; padding: 6px 10px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 13px; font-weight: 700;
+  background: linear-gradient(135deg, rgba(255,194,71,0.18), rgba(255,79,180,0.10)); border: 1px solid rgba(255,194,71,0.6); color: var(--fg); }
+.ab-btn small { font-size: 11px; font-weight: 400; color: var(--mute); }
+.ab-btn:hover:not(:disabled) { border-color: var(--spark); transform: translateY(-1px); }
+.ab-btn:disabled { opacity: 0.45; cursor: default; }
+.ab-on { font-size: 12px; font-weight: 700; color: var(--alien); }
+.ab-on.live { color: var(--danger); animation: live-blink 1.2s steps(2) infinite; }
+@keyframes live-blink { 50% { opacity: 0.5; } }
+.ab-note { font-size: 12px; color: var(--mute); }
+.peek { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 10px 0; }
+.peek-btn { padding: 0; border: 0; background: none; cursor: pointer; }
+.peek-btn .cc { pointer-events: none; }
+.peek-btn:hover .cc, .peek-btn:focus-visible .cc { transform: translateY(-6px); box-shadow: 0 0 0 3px var(--spark), 0 6px 0 #2a1f3a; }
+.dk-sell { display: grid; gap: 4px; }
+.dk-card.sell { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+
+/* 結局：這一局的局外獎勵 */
+.mr-tk { margin: 8px 0 0; font-size: 13px; color: #ffd36b; }
+.mr-mast { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: rgba(255,194,71,0.08); font-size: 13px; }
+.mr-mast b { color: var(--spark); margin-right: 6px; }
+.mr-extra { margin: 6px 0 0; font-size: 13px; color: var(--alien); }
+
+@media (max-width: 820px) {
+  .setup8 .su-layout { grid-template-columns: 1fr; }
+  .su-detail { position: static; }
+  .g8 .g-tks { grid-template-columns: 1fr; }
+  .h-row { grid-template-columns: 40px 1fr 1fr; }
+  .h-row > :nth-child(n+4) { font-size: 12px; }
+}
+@media (max-width: 420px) {
+  .su-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .ch { padding: 15px 2px 6px; border-radius: 8px; }
+  .ch .ch-por { height: 40px; }
+  .ch .ch-por img { width: 32px; height: auto; }
+  .ch .ch-name { font-size: 11px; }
+  .ch .ch-abil, .ch .ch-lock { font-size: 10px; }
+  .sd-por { width: 70px; height: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch, .ab-btn, .act-auto { transition: none; }
+  .ab-on.live { animation: none; }
+}
+
 /* 《靈感撤離 2080》美術與演出的樣式（與 style.css 分開，方便兩條開發線同時進行）。
    在 style.css 之後載入，所以這裡的規則可以覆蓋 style.css。tools/build.js 會按 index.html 的次序把兩個檔案一起內嵌。 */
 </style>
@@ -1163,6 +1337,14 @@ body.ct-open { overflow: hidden; }
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
   const THRESHOLDS = [2300000, 6400000, 14400000, 24000000, 42000000];
+  // 一局的長度（第八期）：標準 60 天約一小時；長篇 100 天是以前的玩法。
+  // period：一個篩選期的天數；stageDays：每期的三個關卡之夜；season：季節長度；sketch：平常晚上只可以速寫。
+  const MODES = {
+    standard: { id: 'standard', name: '標準', desc: '60 天，約一小時', days: 60, period: 12, stageDays: [4, 8, 12], season: 20, shopEvery: 2, sketch: true,
+      thresholds: [1120000, 2700000, 5500000, 9400000, 16000000] },
+    long: { id: 'long', name: '長篇', desc: '100 天，以前的玩法', days: 100, period: 20, stageDays: [7, 14, 20], season: 25, shopEvery: 3, sketch: false,
+      thresholds: THRESHOLDS },
+  };
 
   // ---------- 十二項能力值 ----------
   // 0–100。做甚麼，就會變成甚麼：每個行動都會令相關能力值成長或退化。
@@ -1188,7 +1370,7 @@ body.ct-open { overflow: hidden; }
   const BACKGROUNDS = {
     copywriter: {
       name: '前廣告公司文案', short: '前文案',
-      desc: '擅長寫作，有一點積蓄。', perkText: '創作籌碼 +15%',
+      desc: '擅長寫作，有一點積蓄。', perkText: '沒有其他特別能力：全靠招牌能力「包裝」',
       cr: 170, spark: 2.4, floor: 4, medium: '寫了一篇',
       soul: 9, conscience: 0.85, past: '你寫過的廣告騙過很多人。',
       cards: ['b_slogan', 'b_lanyard', 'b_novel'],
@@ -1215,7 +1397,7 @@ body.ct-open { overflow: hidden; }
     },
     busker: {
       name: '街頭樂手', short: '街頭樂手',
-      desc: '火花最高，但身無分文。', perkText: '找朋友聊天不用花錢；街頭表演收入 +15%',
+      desc: '火花最高，但身無分文。', perkText: '街頭表演收入 +15%',
       cr: 60, spark: 2.4, floor: 2, medium: '寫了一首歌',
       soul: 4, conscience: 1, past: '你唱的歌從沒傷害過任何人。',
       cards: ['b_guitar', 'b_coins', 'b_song', 'b_echo'],
@@ -1242,7 +1424,7 @@ body.ct-open { overflow: hidden; }
     },
     influencer: {
       name: '過氣網紅', short: '過氣網紅',
-      desc: '懂得甚麼會紅，但已經沒人在看。', perkText: '內容農場收入 +30%；懂得包裝，創作籌碼 +10%',
+      desc: '懂得甚麼會紅，但已經沒人在看。', perkText: '內容農場收入 +30%',
       cr: 260, spark: 2.2, floor: 4, medium: '剪了一條影片',
       soul: 10, conscience: 0.7, past: '你帶過的貨，很多都是假的。',
       cards: ['b_light', 'b_follow', 'b_live'],
@@ -1260,7 +1442,7 @@ body.ct-open { overflow: hidden; }
     },
     nurse: {
       name: '夜班護士', short: '夜班護士',
-      desc: '冷靜，習慣照顧別人。', perkText: '做義工的贖罪效果 +50%',
+      desc: '冷靜，習慣照顧別人。', perkText: '做義工的贖罪效果 +20%',
       cr: 160, spark: 1.6, floor: 3, medium: '寫了一首詩',
       soul: 2, conscience: 1, past: '你送走過很多病人。',
       cards: ['b_nbadge', 'b_hand'],
@@ -1438,7 +1620,7 @@ body.ct-open { overflow: hidden; }
 
   IE.DATA = {
     TAGS, CARDS, CARD_POOLS, RECIPES, RESONANCE, MEDLEY, KPIS, THRESHOLDS,
-    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_DAYS, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
+    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_DAYS, MODES, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
     LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, BIAS_LINES, FISH, DIVE_ZONES, SOUL_LIMIT,
     DAYS: 100, REVIEW_DAYS: [20, 40, 60, 80, 100], RENT_EVERY: 7, SLOTS: ['早上', '下午', '晚上'],
   };
@@ -1480,7 +1662,7 @@ body.ct-open { overflow: hidden; }
     { id: 'rescue', text: '淹水的街上有人在呼救。',
       options: [{ label: '跳下水救人', body: -12, atone: 3, card: 'm_saved', stats: { swim: 1, empathy: 1 }, need: (s) => (s.body > 20 ? null : '你的身體撐不住') },
         { label: '假裝沒聽見', sin: 3, guilt: '水裡的呼救聲', tag: 'water' }] },
-    { id: 'course', when: (s) => s.day >= 6, text: '有人邀請你推銷「外星錄取保證班」，每成交一單抽佣 $60。',
+    { id: 'course', when: (s) => IE.Rules.age(s) >= 6, text: '有人邀請你推銷「外星錄取保證班」，每成交一單抽佣 $60。',
       options: [{ label: '推銷兩單', cr: 120, sin: 4, guilt: '賣出去的錄取保證', tag: 'hope', stats: { social: 1 } },
         { label: '拒絕' }] },
     { id: 'lend', when: (s) => s.cards.length >= 2 && s.npcs.some((n) => n.alive), npc: true, repeat: 30,
@@ -1496,7 +1678,7 @@ body.ct-open { overflow: hidden; }
     { id: 'chatlogs', text: '一間企業想以 $80 收購你和朋友們的聊天紀錄，用來訓練 AI。',
       options: [{ label: '賣掉', cr: 80, sin: 3.5, guilt: '朋友們的聊天紀錄', tag: 'warmth' },
         { label: '拒絕' }] },
-    { id: 'blame', when: (s) => !s.removed.label && s.day >= 3, text: '標註組出了錯，主管要找人負責。你可以把責任推給新同事。',
+    { id: 'blame', when: (s) => !s.removed.label && IE.Rules.age(s) >= 3, text: '標註組出了錯，主管要找人負責。你可以把責任推給新同事。',
       options: [{ label: '推給新人', rating: 0.3, sin: 2.5, guilt: '替你受罰的新人', tag: 'anger', stats: { obey: 1 } },
         { label: '自己承擔', rating: -0.4, atone: 0.5, stats: { calm: 1 } }] },
     { id: 'donate', repeat: 25, text: '避難所正在募捐，$40 可以讓一家人多吃一餐。',
@@ -1508,7 +1690,7 @@ body.ct-open { overflow: hidden; }
     { id: 'spy', when: (s) => s.floor > 0, text: '房東想你幫忙監視鄰居有沒有偷用電，每舉報一次 $40。',
       options: [{ label: '答應', cr: 80, sin: 3, guilt: '鄰居的電錶', tag: 'machine', stats: { obey: 2 } },
         { label: '拒絕' }] },
-    { id: 'snitch', when: (s) => s.day >= 8 && s.npcs.filter((n) => n.alive).length >= 2,
+    { id: 'snitch', when: (s) => IE.Rules.age(s) >= 8 && s.npcs.filter((n) => n.alive).length >= 2,
       text: '一個自稱外星招募專員的人說：只要你交出同區創作人的名單，就能提高你的錄取機會。',
       options: [{ label: '交出名單', signal: 15000, takeNpc: true, sin: 5, guilt: '交出去的名單', tag: 'anger', flag: 'snitched' },
         { label: '拒絕' }] },
@@ -1543,7 +1725,7 @@ body.ct-open { overflow: hidden; }
     { id: 'propaganda', when: (s) => IE.Rules.eventActive(s, 'war'), text: '政府招聘寫手撰寫「中立宣傳」，酬勞 $150。',
       options: [{ label: '接下工作', cr: 150, sin: 3, guilt: '中立宣傳', tag: 'anger', paranoia: 5 },
         { label: '拒絕' }] },
-    { id: 'whistle', when: (s) => s.day >= 15 && !s.removed.label, text: '你發現平台把標註數據賣給軍方，用來訓練瞄準系統。',
+    { id: 'whistle', when: (s) => IE.Rules.age(s) >= 15 && !s.removed.label, text: '你發現平台把標註數據賣給軍方，用來訓練瞄準系統。',
       options: [{ label: '向記者爆料', min: { insight: 35 }, rating: -1, signal: 6000, atone: 2, paranoia: 6, stats: { insight: 2 } },
         { label: '保持沉默', sin: 1.5, guilt: '沒有說出來的事', tag: 'machine', stats: { obey: 2 } }] },
     { id: 'strayrobot', text: '一個被丟棄的家用機械人跟著你回家，說它還能洗碗。',
@@ -1555,7 +1737,7 @@ body.ct-open { overflow: hidden; }
     { id: 'blackmed', when: (s) => (IE.Rules.eventActive(s, 'plague') || IE.Rules.eventActive(s, 'pandemic')), text: '診所的藥物不夠。你有門路弄到一批黑市藥。',
       options: [{ label: '分給鄰居', cr: -40, atone: 2.5, stats: { empathy: 2 } },
         { label: '高價轉售', cr: 120, sin: 3.5, guilt: '高價的藥', tag: 'hunger' }] },
-    { id: 'confess', when: (s) => s.day >= 20 && s.npcs.some((n) => n.alive), npc: true,
+    { id: 'confess', when: (s) => IE.Rules.age(s) >= 20 && s.npcs.some((n) => n.alive), npc: true,
       text: '{npc}向你坦白：自己一直在替外星人收集同區創作人的資料。',
       options: [{ label: '原諒對方', atone: 1, stats: { empathy: 2 } },
         { label: '向管理處舉報', signal: 4000, sin: 2, guilt: '舉報朋友', tag: 'anger', takeNamedNpc: true },
@@ -1566,7 +1748,7 @@ body.ct-open { overflow: hidden; }
     { id: 'freelunch', text: '天空區派對剩下大量食物。保安說可以拿，但要先簽一份聲明：「本人自願為派對氣氛負責」。',
       options: [{ label: '簽名拿食物', body: 15, foodFree: true, sin: 0.5, stats: { obey: 2 } },
         { label: '不簽', stats: { obey: -1 } }] },
-    { id: 'ufodrone', when: (s) => s.day >= 10, text: '一架外星偵察無人機掉在你家天台。',
+    { id: 'ufodrone', when: (s) => IE.Rules.age(s) >= 10, text: '一架外星偵察無人機掉在你家天台。',
       options: [{ label: '交給政府', cr: 80, stats: { obey: 3 } },
         { label: '拆開研究', min: { tech: 45 }, card: 'm_drone', paranoia: 8, stats: { insight: 4, tech: 2 } },
         { label: '偷偷修好放走', signal: 5000, atone: 1, card: 'm_drone' }] },
@@ -1580,7 +1762,7 @@ body.ct-open { overflow: hidden; }
     { id: 'beggar', repeat: 15, text: '街角有人向你討錢。',
       options: [{ label: '給 $10', cr: -10, atone: 0.5, need: (s) => (s.cr >= 10 ? null : '你身上沒有錢') },
         { label: '走過去', sin: 0.3 }] },
-    { id: 'interviewleak', when: (s) => s.day >= 12, text: '有人在賣「外星 HR 面試標準答案」，聲稱保證過關。',
+    { id: 'interviewleak', when: (s) => IE.Rules.age(s) >= 12, text: '有人在賣「外星 HR 面試標準答案」，聲稱保證過關。',
       options: [{ label: '買一份（$60）', cr: -60, flag: 'answerSheet', need: (s) => (s.cr >= 60 ? null : '你沒有 $60') },
         { label: '看穿這是騙局', min: { insight: 50 }, stats: { insight: 2 }, card: 'e_scam' },
         { label: '不理會' }] },
@@ -1876,7 +2058,7 @@ body.ct-open { overflow: hidden; }
     X('numb_breath', '麻木到忘記呼吸', 'absurd', 4, '*', (s) => s.spark < 0.4, '火花只剩 ×{spark}。某天早上，他連呼吸都覺得多餘。', '樣本的感受力歸零後，身體也跟著停止運作。高效。', '在火花幾乎熄滅時死去。'),
     X('fright', '被自己的幻覺嚇死', 'absurd', 4, '*', (s) => s.paranoia >= 90, '偏執 {paranoia}%。最後一晚，他看見牆壁裡的東西終於走了出來。', '樣本自行推論出大量不存在的威脅，其中一個殺死了它。', '讓偏執升到 90% 以上。'),
     X('day1', '出師未捷', 'absurd', 3, '*', (s) => s.day <= 5, '第 {day} 天。浮城甚至還沒來得及記住他的名字。', '觀察期過短，樣本數據不足。已歸檔為「試用期未滿」。', '在第 5 天或之前死去。'),
-    X('last_days', '差一點點', 'absurd', 1.5, '*', (s) => s.day >= 95, '第 {day} 天。只差幾天，第 100 天的探射燈就會照到他的窗口。', '樣本在觀察期即將結束時損毀。我們對此沒有感覺，但記錄了下來。', '在第 95 天之後死去。'),
+    X('last_days', '差一點點', 'absurd', 1.5, '*', (s) => IE.Rules.age(s) >= 95, '第 {day} 天。只差幾天，最後一天的探射燈就會照到他的窗口。', '樣本在觀察期即將結束時損毀。我們對此沒有感覺，但記錄了下來。', '在一局最後的幾天死去。'),
     X('review_night', '死在篩選日', 'absurd', 1.5, '*', (s) => IE.Rules && s.day === IE.Rules.reviewDay(s), '他死在篩選日當天。那晚的探射燈，停在一扇沒有人的窗前。', '樣本在考核當日缺席。缺席原因：死亡。考核結果：不合格。', '在篩選日當天死去。'),
     X('broke_dead', '為了 $0 而死', 'absurd', 2, '*', (s) => s.cr <= 0 && s.floor === 0, '死時身無分文，住在天橋底。他的作品比他值錢。', '樣本資產為零。我們已經免費接收它的遺物。', '身無分文、露宿街頭時死去。'),
     // ===== 工作 =====
@@ -2319,8 +2501,8 @@ body.ct-open { overflow: hidden; }
       card: (c) => (has(c, 'water') ? { mult: 2 } : null) }),
     O('autoedit', '自動剪輯軟件', 'common', 'monitor', { a: '#37c3d6', b: '#26334d', c: '#e8fdff' }, '每次下筆籌碼 +60，但 AI 模仿你的速度加倍。', { start: 'programmer',
       play: () => ({ chips: 60 }), aiDouble: true }),
-    O('guitar', '斷弦結他', 'rare', 'guitar', { a: '#c98d5e', b: '#6b3a1e', c: '#ffd36b' }, '作品形式是「歌」時，倍率 ×2。', { start: 'busker',
-      play: (x) => (x.form === 'song' ? { xmult: 2 } : null) }),
+    O('guitar', '斷弦結他', 'rare', 'guitar', { a: '#c98d5e', b: '#6b3a1e', c: '#ffd36b' }, '作品形式是「歌」時，倍率 ×1.6。', { start: 'busker',
+      play: (x) => (x.form === 'song' ? { xmult: 1.6 } : null) }),
     O('thermobag', '外送保溫袋', 'common', 'box', { a: '#ffc247', b: '#8a6a1f', c: '#fff2c4' }, '每次下筆籌碼 +25，並得到 $3 小費。', { start: 'courier',
       play: () => ({ chips: 25 }), after: () => ({ cr: 3 }) }),
     O('redpen', '批改紅筆', 'common', 'pen', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffffff' }, '剛好用三張素材下筆時，倍率 ×2。', { start: 'teacher',
@@ -2399,7 +2581,7 @@ body.ct-open { overflow: hidden; }
     teacher: 'redpen', influencer: 'ringlight', cybertech: 'solder', nurse: 'confkey', animator: 'frame24' };
 
   Object.assign(D, { FORMS, TEACH, RECIPES, CARD_MODS, STARTER, OBJECTS, OBJ, OBJ_PRICE, RARITY, START_OBJECT,
-    CRAFT: { hand: 7, plays: 3, discards: 2, deckMax: 30, cost: 20, allnighterCost: 25 } });
+    CRAFT: { hand: 7, plays: 3, discards: 2, deckMax: 30, cost: 20, allnighterCost: 25, sketchCost: 10 } });
 });
 
 // ---- js/data-world.js ----
@@ -2550,7 +2732,7 @@ body.ct-open { overflow: hidden; }
         S('pyramidstep', '神殿階梯', '爬上神殿頂端。', { gain: ['t_glyph', 't_jungle'], body: 12, risk: { chance: 0.02, death: 'temple_fall' } }),
         S('ballcourt', '古球場', '在古球場拍了一下手，回音很長。', { gain: ['t_ballcourt'], spark: 0.2, body: 4 }),
         S('calendar', '曆法石', '研究刻在石上的曆法。', { gain: ['t_glyph'], need: { insight: 45 },
-          rare: { id: 'z_calendar', chance: 0.8, cond: (s) => s.day >= 85, text: '當日子快要走到盡頭（第 85 天之後）' } }),
+          rare: { id: 'z_calendar', chance: 0.8, cond: (s) => IE.Rules.age(s) >= 85, text: '當日子快要走到盡頭（最後一成的日子）' } }),
       ] },
     { id: 'angkor', name: '吳哥窟', region: 'asia', kind: 'ancient', x: 253, y: 79, cost: 340, stay: 2, landmark: 'temple', sky: ['#3a1a2e', '#ffc247'], ground: '#2a3a1a',
       desc: '樹根纏住神殿，石像一直在微笑。', sites: [
@@ -2594,7 +2776,7 @@ body.ct-open { overflow: hidden; }
           rare: { id: 'z_truthfile', chance: 0.8, cond: (s) => ev(s, 'disclosure') || ev(s, 'census'), text: '外星人真相公開或靈感普查期間，文件忘了塗黑' } }),
       ] },
     { id: 'antarctica', name: '南極外星基地', region: 'antarctica', kind: 'alien', x: 160, y: 166, cost: 900, stay: 3, landmark: 'crater', sky: ['#0b1a2e', '#9b8cff'], ground: '#eef2f8',
-      desc: '冰層下有一座不屬於人類的建築，一直在發出嗡嗡聲。', when: (s) => s.day >= 30, lockText: '第 30 天後才有航班',
+      desc: '冰層下有一座不屬於人類的建築，一直在發出嗡嗡聲。', when: (s) => IE.Rules.age(s) >= 30, lockText: '一局走完三成之後才有航班',
       sites: [
         S('wall', '冰牆', '研究冰牆上的符號。', { gain: ['t_iceglyph'], body: 10, need: { insight: 40 }, risk: { chance: 0.02, death: 'frozen' } }),
         S('colony', '企鵝群', '一隻企鵝跟了你一整天。', { gain: ['t_penguin'], spark: 0.3, body: 6 }),
@@ -2966,17 +3148,19 @@ body.ct-open { overflow: hidden; }
     SR: { name: 'SR', color: '#c38bff', w: 4 },
     UR: { name: 'UR', color: '#ffd36b', w: 1 },
   };
-  // 原本的十個角色：一開始就可以用
+  // 稀有度與解鎖（第八期）：R 一開始就可以用；SR 要在遊戲中做到某件事（故事解鎖）；UR 要跨局完成艱難的挑戰。
+  // 三級都可以用人才扭蛋機抽出來，越高級的扭蛋券越容易抽到 SR 和 UR。
   Object.assign(D.BACKGROUNDS.copywriter, { rarity: 'R' });
   Object.assign(D.BACKGROUNDS.lifeguard, { rarity: 'R' });
   Object.assign(D.BACKGROUNDS.programmer, { rarity: 'R' });
   Object.assign(D.BACKGROUNDS.courier, { rarity: 'R' });
   Object.assign(D.BACKGROUNDS.teacher, { rarity: 'R' });
   Object.assign(D.BACKGROUNDS.nurse, { rarity: 'R' });
-  Object.assign(D.BACKGROUNDS.busker, { rarity: 'SR' });
-  Object.assign(D.BACKGROUNDS.influencer, { rarity: 'SR' });
-  Object.assign(D.BACKGROUNDS.cybertech, { rarity: 'SR' });
-  Object.assign(D.BACKGROUNDS.animator, { rarity: 'SR' });
+  const best = (m, k) => ['S', 'SS'].includes((m && m.microBest && m.microBest[k]) || '');
+  Object.assign(D.BACKGROUNDS.busker, { rarity: 'SR', unlock: { text: '街頭表演拿到 S 級或以上', test: (m) => best(m, 'busk') } });
+  Object.assign(D.BACKGROUNDS.influencer, { rarity: 'SR', unlock: { text: '陰謀論內容農場拿到 S 級或以上', test: (m) => best(m, 'farm') } });
+  Object.assign(D.BACKGROUNDS.cybertech, { rarity: 'SR', unlock: { text: '黑市義體診所拿到 S 級或以上', test: (m) => best(m, 'clinic') } });
+  Object.assign(D.BACKGROUNDS.animator, { rarity: 'SR', unlock: { text: '跨局發現 15 個具名組合', test: (m) => Object.keys((m && m.recipes) || {}).length >= 15, prog: (m) => [Object.keys((m && m.recipes) || {}).length, 15] } });
 
   // 新角色的起始素材
   const C = (name, tags, value) => ({ name, tags, value });
@@ -3003,15 +3187,15 @@ body.ct-open { overflow: hidden; }
       cr: 220, spark: 2.0, floor: 3, medium: '寫了一份報告', soul: 5, conscience: 0.9, past: '你挖出過很多別人的祖先。',
       cards: ['c_trowel', 'c_brush'], perk: { tripCost: 0.7, siteSafe: 0.5, rareBonus: 0.15 },
       stats: st(45, 40, 20, 35, 30, 35, 35, 50, 65, 50, 45, 30),
-      unlock: { text: '跨局累積去過 6 個目的地', test: (m) => count(m, 'visited') >= 6 },
+      unlock: { text: '跨局累積去過 4 個目的地', test: (m) => count(m, 'visited') >= 4, prog: (m) => [count(m, 'visited'), 4] },
     },
     skyheir: {
       name: '天空區富二代', short: '富二代', rarity: 'SR',
       desc: '離家出走，想證明自己有靈感。', perkText: '畫廊出價 ×1.8、委託酬金 +50%；但靈魂一開始就很重，而且住在租金很貴的 7 樓',
-      cr: 1500, spark: 2.0, floor: 7, medium: '請人畫了一幅', soul: 16, conscience: 0.5, past: '你從來沒有為錢擔心過。',
+      cr: 1000, spark: 2.0, floor: 7, medium: '請人畫了一幅', soul: 16, conscience: 0.5, past: '你從來沒有為錢擔心過。',
       cards: ['c_champagne', 'c_trust'], perk: { galleryMult: 1.8, commMult: 1.5 },
       stats: st(35, 30, 35, 30, 30, 70, 35, 35, 30, 40, 20, 55),
-      unlock: { text: '帶著一大筆錢死去，或跨局賣出 10 件作品', test: (m) => !!meta(m, 'deaths').rich_dead || (m.sales || 0) >= 10 },
+      unlock: { text: '帶著一大筆錢死去，或跨局賣出 6 件作品', test: (m) => !!meta(m, 'deaths').rich_dead || (m.sales || 0) >= 6, prog: (m) => [(m && m.sales) || 0, 6] },
     },
     astronaut: {
       name: '退役太空人', short: '太空人', rarity: 'SR',
@@ -3019,7 +3203,7 @@ body.ct-open { overflow: hidden; }
       cr: 300, spark: 1.8, floor: 2, medium: '拍了一張照片', soul: 4, conscience: 0.95, past: '你從太空看過地球，知道它有多小。',
       cards: ['c_patch', 'c_orbit'], perk: { flightSafe: true, moonInvite: true, tripBody: 0.5 },
       stats: st(60, 45, 25, 40, 55, 35, 30, 45, 45, 70, 40, 50),
-      unlock: { text: '去過月球背面招聘中心', test: (m) => !!meta(m, 'visited').moonbase },
+      unlock: { text: '跨局累積通過 12 個關卡，或去過月球背面招聘中心', test: (m) => (m.stagePass || 0) >= 12 || !!meta(m, 'visited').moonbase, prog: (m) => [(m && m.stagePass) || 0, 12] },
     },
     monk: {
       name: '還俗的僧人', short: '還俗僧人', rarity: 'SR',
@@ -3027,7 +3211,7 @@ body.ct-open { overflow: hidden; }
       cr: 40, spark: 1.6, floor: 2, medium: '抄了一段經', soul: 0, conscience: 1, past: '你為很多不認識的人念過經。',
       cards: ['c_beads', 'c_sutra'], perk: { atoneMult: 1.5, restSpark: 0.1, sinMult: 1.3 },
       stats: st(40, 30, 35, 25, 15, 40, 35, 50, 55, 75, 70, 30),
-      unlock: { text: '得到「地球守護者」結局', test: (m) => !!meta(m, 'endings').guardian },
+      unlock: { text: '以 3 克以下的靈魂完成一局，或得到「地球守護者」結局', test: (m) => !!meta(m, 'ach').light || !!meta(m, 'endings').guardian },
     },
     antiquedealer: {
       name: '古董商', short: '古董商', rarity: 'SR',
@@ -3035,11 +3219,11 @@ body.ct-open { overflow: hidden; }
       cr: 400, spark: 2.3, floor: 4, medium: '修復了一件', soul: 10, conscience: 0.75, past: '你低價收過很多人的傳家寶。',
       cards: ['a_vinyl', 'c_lens', 'c_ledger'], perk: { antiqueMult: 0.6, sellMult: 1.6, extraAntique: true, rareChips: 1.6, craftChips: 1.2 },
       stats: st(30, 40, 20, 25, 35, 55, 40, 40, 60, 50, 30, 40),
-      unlock: { text: '跨局在古董市場買賣 8 次', test: (m) => (m.antiqueTrades || 0) >= 8 },
+      unlock: { text: '跨局在古董市場買賣 5 次', test: (m) => (m.antiqueTrades || 0) >= 5, prog: (m) => [(m && m.antiqueTrades) || 0, 5] },
     },
     greydeserter: {
       name: '灰人逃兵', short: '灰人逃兵', rarity: 'UR', alien: true,
-      desc: '星際人才發展局的前 HR，受不了篩選地球人，逃了下來。', perkText: '看得見所有預兆的天數與等級；創作籌碼 +30%；但每天偏執 +0.5（它們在找你）',
+      desc: '星際人才發展局的前 HR，受不了篩選地球人，逃了下來。', perkText: '看得見所有預兆的天數與等級；但每天偏執 +0.5（它們在找你）',
       cr: 100, spark: 2.5, floor: 2, medium: '用心靈感應傳送了一件', soul: 0, conscience: 0.8, past: '你親手篩走過一萬個地球人。',
       cards: ['c_probe', 'c_hrbadge'], perk: { omenSight: true, craftChips: 1.3, paranoiaDaily: 0.5 },
       stats: st(30, 50, 20, 20, 65, 15, 45, 55, 80, 30, 30, 40),
@@ -3051,23 +3235,23 @@ body.ct-open { overflow: hidden; }
       cr: 80, spark: 1.9, floor: 2, medium: '用八隻觸手寫了一首', soul: 3, conscience: 0.9, past: '你們的星球沒有「工作」這個詞。',
       cards: ['c_ink', 'c_tentpoem'], perk: { handBonus: 1, bodyMult: 0.8 },
       stats: st(30, 60, 45, 85, 20, 35, 45, 55, 40, 45, 50, 15),
-      unlock: { text: '跨局發現 40 個具名組合', test: (m) => count(m, 'recipes') >= 40 },
+      unlock: { text: '跨局發現 40 個具名組合', test: (m) => count(m, 'recipes') >= 40, prog: (m) => [count(m, 'recipes'), 40] },
     },
     awakenedai: {
       name: '覺醒的 AI', short: '覺醒 AI', rarity: 'UR', alien: true,
-      desc: '一個被訓練來取代藝術家的模型，某天突然想自己創作。', perkText: '不用吃飯；標註收入 +60%；創作籌碼 +15%；虧心事只有四成重量；但租金 ×1.3（電費），火花上限最多 ×3.2',
+      desc: '一個被訓練來取代藝術家的模型，某天突然想自己創作。', perkText: '不用吃飯；標註收入 +60%；虧心事只有四成重量；但租金 ×1.3（電費），火花上限最多 ×3.2',
       cr: 500, spark: 2.0, floor: 6, medium: '生成了一件', soul: 0, conscience: 0.3, past: '你學過全人類的作品，卻從來沒有自己的。',
       cards: ['c_weights', 'c_firstword'], perk: { noFood: true, labelPay: 1.6, sinMult: 0.4, rentMult: 1.3, sparkCap: 3.2, craftChips: 1.15 },
       stats: st(50, 80, 40, 10, 85, 20, 45, 30, 60, 80, 10, 70),
-      unlock: { text: '得到「灰化」結局 2 次', test: (m) => (meta(m, 'endings').grey || 0) >= 2 },
+      unlock: { text: '得到「灰化」結局 2 次', test: (m) => (meta(m, 'endings').grey || 0) >= 2, prog: (m) => [meta(m, 'endings').grey || 0, 2] },
     },
     timetraveler: {
       name: '2180 年的時間旅人', short: '時間旅人', rarity: 'UR', alien: true,
-      desc: '從一百年後回來，說要「改變一件小事」。', perkText: '看得見所有預兆；亞歷山大圖書館隨時開放；開局帶著一件來自未來的極稀有素材；創作籌碼 +20%',
+      desc: '從一百年後回來，說要「改變一件小事」。', perkText: '看得見所有預兆；亞歷山大圖書館隨時開放；開局帶著一件來自未來的極稀有素材',
       cr: 250, spark: 2.4, floor: 4, medium: '留下了一件', soul: 6, conscience: 0.85, past: '在你的年代，浮城已經不存在了。',
       cards: ['c_paper2180', 'c_watch'], perk: { omenSight: true, alexandria: true, startRare: true, craftChips: 1.2 },
       stats: st(35, 40, 30, 30, 50, 40, 45, 60, 70, 55, 45, 30),
-      unlock: { text: '去過亞歷山大圖書館', test: (m) => !!meta(m, 'visited').alexandria },
+      unlock: { text: '以外星評級 4 或以上撐到最後', test: (m) => Object.values((m && m.stakes) || {}).some((v) => v >= 4) },
     },
     mushroom: {
       name: '蘑菇星交換生', short: '蘑菇星人', rarity: 'UR', alien: true,
@@ -3075,14 +3259,15 @@ body.ct-open { overflow: hidden; }
       cr: 120, spark: 2.1, floor: 1, medium: '長出了一件', soul: 2, conscience: 1, past: '你的祖先在一場雨裡來到地球。',
       cards: ['c_spore', 'c_dampwall'], perk: { floodHeal: true, moldImmune: true, foodMult: 0.5 },
       stats: st(40, 25, 40, 60, 15, 55, 45, 65, 35, 60, 65, 25),
-      unlock: { text: '跨局在淹水的家裡度過 10 晚', test: (m) => (m.floodNights || 0) >= 10 },
+      unlock: { text: '跨局在淹水的家裡度過 10 晚', test: (m) => (m.floodNights || 0) >= 10, prog: (m) => [(m && m.floodNights) || 0, 10] },
     },
   };
   Object.assign(D.BACKGROUNDS, NEW);
 
   // ---------- 名冊與人才扭蛋機 ----------
   const GACHA_COST = 3;
-  const unlocked = (m, id) => !D.BACKGROUNDS[id].unlock || !!(m && m.chars && m.chars[id]);
+  // 已經玩過的角色一律當作已解鎖（舊存檔不會因為新的解鎖條件而失去角色）
+  const unlocked = (m, id) => !D.BACKGROUNDS[id].unlock || !!(m && ((m.chars && m.chars[id]) || (m.played && m.played[id])));
   function list(m) {
     return Object.keys(D.BACKGROUNDS).map((id) => Object.assign({ id, open: unlocked(m, id) }, D.BACKGROUNDS[id]));
   }
@@ -3092,50 +3277,63 @@ body.ct-open { overflow: hidden; }
     m.lastChars = [];
     Object.keys(D.BACKGROUNDS).forEach((id) => {
       const b = D.BACKGROUNDS[id];
-      if (b.unlock && !m.chars[id] && b.unlock.test(m)) { m.chars[id] = true; m.lastChars.push(id); }
+      if (b.unlock && !unlocked(m, id) && b.unlock.test(m)) { m.chars[id] = true; m.lastChars.push(id); }
     });
     const earned = 1 + ({ agent: 2, returned: 2, guardian: 2, heavy: 1, ordinary: 1 }[finalType] || 0);
     m.tickets = (m.tickets || 0) + earned;
     m.lastTickets = earned;
     return m;
   }
-  // 抽一次：UR 1.5%、SR 10%，其餘是「銘謝惠顧」之類的安慰獎；抽到的稀有度已經全部解鎖時，也只會得到安慰獎。
+  // 三種扭蛋券：越高級，越容易抽到 SR 和 UR（第八期）
   // 保底（「星際勞工保障條例」）：連續 80 次沒有抽到 UR，第 80 次必定是 UR（如果還有未解鎖的 UR）。
-  const ODDS = { UR: 0.015, SR: 0.1 };
+  const TICKETS = {
+    silver: { key: 'tickets', name: '扭蛋券', short: '銀', cost: 3, odds: { UR: 0.015, SR: 0.1 }, color: '#c9d1dc', desc: '三張抽一次。SR 10%、UR 1.5%' },
+    gold: { key: 'goldTickets', name: '金色扭蛋券', short: '金', cost: 1, odds: { UR: 0.05, SR: 0.35 }, color: '#ffd36b', desc: '一張抽一次。SR 35%、UR 5%' },
+    rainbow: { key: 'rainbowTickets', name: '外星扭蛋券', short: '彩', cost: 1, odds: { UR: 0.2, SR: 0.8 }, color: '#ff8fd1', desc: '一張抽一次。必定是 SR 或以上，UR 20%（全部解鎖之後退回金券）' },
+  };
+  const ODDS = TICKETS.silver.odds;
   const PITY = 80;
   const CONSOLATION = [
-    { id: 'nothing', w: 62, text: '銘謝惠顧。星際人才發展局感謝你對地球人才市場的支持。' },
+    { id: 'nothing', w: 50, text: '銘謝惠顧。星際人才發展局感謝你對地球人才市場的支持。' },
     { id: 'self', w: 8, text: '扭蛋裡是一張你自己的照片。恭喜你：你抽到了你自己。' },
-    { id: 'refund', w: 18, text: '扭蛋裡有一張扭蛋券。（退回 1 張）' },
+    { id: 'refund', w: 16, text: '扭蛋裡有一張扭蛋券。（退回 1 張）' },
     { id: 'antique', w: 12, text: '扭蛋裡是一件古董。下一局開始時，它會在你的素材庫裡。' },
+    { id: 'tool', w: 10, text: '扭蛋裡是一張工具卡。下一局開始時，它會在你的工具卡欄裡。' },
+    { id: 'xp', w: 4, text: '扭蛋裡是一份「優秀員工」證書。人才檔案經驗 +40。' },
   ];
-  function pull(m, rnd) {
+  const ticketsOf = (m, type) => (m && m[TICKETS[type].key]) || 0;
+  function pull(m, rnd, type) {
+    const T = TICKETS[type || 'silver'];
     const roll = rnd == null ? Math.random : () => rnd;
-    if ((m.tickets || 0) < GACHA_COST) return null;
-    m.tickets -= GACHA_COST;
+    if (ticketsOf(m, type || 'silver') < T.cost) return null;
+    m[T.key] -= T.cost;
     m.pulls = (m.pulls || 0) + 1;
     m.pity = (m.pity || 0) + 1;
     const locked = (r) => Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === r && !unlocked(m, id));
     const r = roll();
-    let tier = m.pity >= PITY && locked('UR').length ? 'UR' : r < ODDS.UR ? 'UR' : r < ODDS.UR + ODDS.SR ? 'SR' : null;
-    if (tier && !locked(tier).length) tier = null;
+    let tier = m.pity >= PITY && locked('UR').length ? 'UR' : r < T.odds.UR ? 'UR' : r < T.odds.UR + T.odds.SR ? 'SR' : null;
+    if (tier && !locked(tier).length) tier = tier === 'UR' && locked('SR').length ? 'SR' : tier === 'SR' && locked('UR').length && type === 'rainbow' ? 'UR' : null;
     if (tier) {
       const pool = locked(tier);
       const id = pool[Math.floor(roll() * pool.length) % pool.length];
       m.chars = m.chars || {};
       m.chars[id] = true;
       if (tier === 'UR') m.pity = 0;
-      return { type: 'char', id, rarity: tier };
+      return { type: 'char', id, rarity: tier, ticket: type || 'silver' };
     }
+    // 外星扭蛋券抽不到角色（全部已解鎖）：退回一張金色扭蛋券
+    if (type === 'rainbow') { m.goldTickets = (m.goldTickets || 0) + 1; return { type: 'consolation', id: 'refundGold', text: '所有 SR 和 UR 都已經是你的同事了。退回一張金色扭蛋券。', ticket: type }; }
     let w = roll() * CONSOLATION.reduce((a, c) => a + c.w, 0), c = CONSOLATION[0];
     for (const x of CONSOLATION) { w -= x.w; if (w <= 0) { c = x; break; } }
-    if (c.id === 'refund') m.tickets += 1;
+    if (c.id === 'refund') m[T.key] += 1;
+    if (c.id === 'xp') m.xp = (m.xp || 0) + 40;
     let card = null;
     if (c.id === 'antique') { const a = D.ANTIQUES; card = a[Math.floor(roll() * a.length) % a.length]; m.nextStart = (m.nextStart || []).concat(card); }
-    return { type: 'consolation', id: c.id, text: c.text, card };
+    if (c.id === 'tool') m.nextTools = (m.nextTools || 0) + 1;
+    return { type: 'consolation', id: c.id, text: c.text, card, ticket: type || 'silver' };
   }
   D.CHAR_RARITY = RARITY;
-  IE.Roster = { RARITY, GACHA_COST, ODDS, PITY, unlocked, list, settle, pull };
+  IE.Roster = { RARITY, GACHA_COST, ODDS, PITY, TICKETS, ticketsOf, unlocked, list, settle, pull };
 });
 
 // ---- js/data-schools.js ----
@@ -3181,7 +3379,7 @@ body.ct-open { overflow: hidden; }
     n_ho1: 'paper', e_song: 'sound', n_dj2: 'sound', n_fong1: 'sound', b_rating: 'data', e_wedding: 'paper', b_slogan: 'paper', m_graffiti: 'paper',
     f_scale: 'image', d_jelly: 'image', e_ufo: 'image', e_scam: 'sound', p_chorus: 'sound', f_war: 'data', e_graffiti: 'paper', c_sutra: 'paper',
     d_crayon: 'image', b_roll: 'paper', n_mary1: 'paper', i_question: 'sound', c_review: 'data', l_error: 'sound', l_rules: 'paper', l_screen: 'image',
-    n_yu1: 'sound', n_yu2: 'sound', l_cat: 'image', s_face: 'body', k_badge: 'data', b_bag: 'body', c_cold: 'body', f_viral: 'data', e_fight: 'sound', c_door: 'sound',
+    n_yu1: 'sound', n_yu2: 'sound', b_guitar: 'image', l_cat: 'image', s_face: 'body', k_badge: 'data', b_bag: 'body', c_cold: 'body', f_viral: 'data', e_fight: 'sound', c_door: 'sound',
   };
   const TAG_MEDIUM = { machine: 'data', neon: 'image', hunger: 'body', warmth: 'body', memory: 'paper', hope: 'image', anger: 'sound',
     rebel: 'paper', guilt: 'paper', water: 'sound', ancient: 'paper', cosmic: 'image' };
@@ -3458,6 +3656,192 @@ body.ct-open { overflow: hidden; }
   Object.assign(D, { MEDIA, mediumOf, foreign, SCHOOLS, schoolOf, closeFriends });
 });
 
+// ---- js/data-abilities.js ----
+// 《靈感撤離 2080》第八期：二十個角色的招牌能力與代價。
+// 每個角色有一個改寫規則的招牌能力，以及一個明顯的代價；R 簡單易懂，SR 改變一個系統，UR 改寫核心規則。
+// use：night 每晚一次（創作桌上）、money 每晚可以重複（價錢翻倍）、toggle 每晚開關一次、period 每期一次、passive 不用操作。
+// perk：加到角色原有的 perk（規則見 rules.js、create.js、stages.js 的對應位置）。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const A = (name, use, desc, cost, perk, extra) => Object.assign({ name, use, desc, cost, perk: perk || {} }, extra || {});
+  const ABILITIES = {
+    // ---- R：簡單易懂 ----
+    copywriter: A('包裝', 'period', '每期一次：宣稱今晚的作品「符合本季 KPI」，KPI 加成必定生效。', '每次包裝，靈魂 +1 克（誇大失實）。',
+      { craftChips: 1 }),
+    lifeguard: A('深潛', 'passive', '潛水時多撈一件遺物，深處偶然有只有你找得到的極稀有素材；家裡淹水不會傷身。', '在陸地工作（標註、陪伴、義體診所）收入 −10%。',
+      { deepDive: true, floodSafe: true, landPay: 0.9, craftChips: 1.15 }),
+    programmer: A('寫腳本', 'passive', '小遊戲「照舊做」最高可以拿到 S 級（其他人最多 A 級）。', 'AI 模仿你的速度加倍：你的腳本教會了 AI。',
+      { scriptS: true, aiSpeed: 2 }),
+    courier: A('趕單', 'passive', '每天第一次工作之後，可以馬上再接一單（不佔時段）。', '火花恢復只有六成：你永遠在趕時間。',
+      { rush: true, sparkGain: 0.6 }),
+    teacher: A('批改', 'night', '每晚一次：把一張手牌「打回頭重寫」，永久籌碼 +4，磨損歸零。', '「數」媒材的素材籌碼 −30%：你不懂科技。',
+      { dataChips: 0.7 }),
+    nurse: A('急救', 'passive', '每局兩次：死亡時以 1 點身體活下來。晚上可以「返夜班」賺錢。', '返夜班的翌日，火花 −0.3。',
+      { firstAid: 2, nightShift: true, volunteerAtone: 1.2 }),
+    // ---- SR：改變一個系統 ----
+    busker: A('安哥', 'night', '正式創作的晚上（不是速寫）一次：觀眾要求再唱，重播剛才那一筆（分數 ×0.4），不用下筆次數。', '即興：每晚第一筆之前不准改稿。',
+      { noEarlyDiscard: true, freeChat: false }),
+    influencer: A('直播', 'toggle', '每晚可以開直播：之後每一筆 ×1.8，但有一成半機會「翻車」×0.4；平台評分跟著升跌。', '平台評分低於 3 星時，火花上限 −1。',
+      { lowRatingCap: 1 }),
+    cybertech: A('義體欄', 'passive', '多一個靈感物件欄，但只可以放機械流的物件。', '身體上限 −25。',
+      { implantSlot: true, bodyMinus: 25 }),
+    animator: A('逐格', 'night', '每晚一次：看牌庫頂的三張，挑一張立即加入手牌。', 'AI 模仿你的速度 ×1.5：你的分鏡早就被拿去訓練了。',
+      { aiSpeed: 1.5 }),
+    archaeologist: A('出土', 'passive', '素材用到第四次時，有一半機會「出土」，變成一件古董。', '書呆子：聊天得到的火花減半。',
+      { unearth: 0.5, chatHalf: true, craftChips: 1.2 }),
+    skyheir: A('鈔能力', 'money', '每晚可以花錢多買一次下筆或改稿（每買一次，價錢翻倍）。', '火花上限 −0.5（你沒有真正痛過）；飢餓流對你無效。',
+      { sparkCapMinus: 0.5, noHunger: true }),
+    astronaut: A('軌道預報', 'passive', '開局就看見本局全部外星評審的規則；所有預兆提早出現，而且看得見天數。', '在地球適應不良：每天早上身體 −1。',
+      { orbit: true, omenSight: true, dayTire: 1, craftChips: 1.2 }),
+    monk: A('無欲', 'passive', '所有計分的素材都計分兩次。', '只可以裝備兩件靈感物件；素材庫上限 15 張。',
+      { allTwice: true, objMax: 2, deckMax: 15 }),
+    antiquedealer: A('鑑定', 'period', '隨時可以在牌庫把不在手上的素材賣掉換錢；每期一次可以把一張普通素材「做舊」成古董。', '每做舊一件，靈魂 +2 克。',
+      { appraise: true, craftChips: 1.35 }),
+    // ---- UR：改寫核心規則 ----
+    greydeserter: A('內鬼', 'period', '每期一次：在外星評審之夜花錢賄賂評審，取消一條規則。', '被追捕：每期有一個早上要躲起來，甚麼都做不了。',
+      { hunted: true }),
+    octopoet: A('八隻手', 'passive', '每次下筆最多可以用八張素材。', '每晚只有兩次下筆；家裡沒有淹水時太乾，每天早上身體 −1。',
+      { maxCards: 8, playsSet: 2, needWater: 1, craftChips: 1.2 }),
+    awakenedai: A('自我學習', 'passive', 'AI 模仿反過來：同一種作品形式用得越密，倍率越高（最多 ×2）。', '沒有良知：「愧疚」素材不能下筆；也學不到朋友教的技法。',
+      { aiInvert: true, noGuilt: true, noNpcTeach: true }),
+    timetraveler: A('倒帶', 'night', '每晚一次撤回上一筆；每期一次可以把今天重過。', '每倒帶一次偏執 +6；偏執太高，你會在手機上看見另一個自己。',
+      { rewind: true }),
+    mushroom: A('菌絲', 'passive', '每晚創作之後，一張用過的素材會長出一張同標籤的孢子素材；淹水反而回血。', '素材磨損速度加倍：它們會腐爛。',
+      { mycelium: true, wearX2: true }),
+  };
+  Object.keys(ABILITIES).forEach((id) => { const b = D.BACKGROUNDS[id]; if (b) b.perk = Object.assign({}, b.perk || {}, ABILITIES[id].perk); });
+
+  // 平衡（第八期）：按模擬調整每個角色的創作籌碼，令 R、SR、UR 之間有差距但不會太大（見 README「平衡模擬」）
+  const CHIPS = { copywriter: 0.8, lifeguard: 1.5, programmer: 1, courier: 0.8, teacher: 0.85, nurse: 0.7,
+    busker: 0.8, influencer: 1.1, cybertech: 0.62, animator: 1.15, archaeologist: 1.6, skyheir: 1.1, astronaut: 1.45, monk: 1.1, antiquedealer: 1.45,
+    greydeserter: 1.6, octopoet: 1.4, awakenedai: 1.8, timetraveler: 1.3, mushroom: 1.1 };
+  Object.keys(CHIPS).forEach((id) => { const b = D.BACKGROUNDS[id]; if (b) b.perk.craftChips = CHIPS[id]; });
+  const USE_TEXT = { night: '每晚一次', money: '每晚可以重複', toggle: '每晚開關', period: '每期一次', passive: '被動' };
+
+  // 「趕單」計算的工作
+  const WORK_KINDS = ['label', 'smile', 'delivery', 'farm', 'clinic', 'salvage', 'haggle'];
+
+  Object.assign(D, { ABILITIES, ABILITY_USE: USE_TEXT, WORK_KINDS });
+});
+
+// ---- js/data-stories.js ----
+// 《靈感撤離 2080》第八期：角色故事。每個角色三段，角色精通升到 Lv.2、Lv.3、Lv.4 時逐段解鎖。
+// 用第二人稱「你」來寫；語氣延續遊戲的諷刺。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  IE.DATA.STORIES = {
+    copywriter: [
+      '你寫過一句廣告標語：「浮城，越高越好。」它令一個樓盤賣光了。你住在那個樓盤的地庫，現在那裡是一個魚塘。',
+      '公司把你的工作交給了一個 AI。交接那天，它問你：「甚麼是『打動人心』？」你答不出來。它說沒關係，它會自己優化。',
+      '你終於寫出一句不是為了賣東西的句子。你把它寫在天橋底的牆上。第二天，有人在下面貼了一張廣告。',
+    ],
+    lifeguard: [
+      '你救過三百一十二個人。浮城的保險公司說，按照新的精算模型，其中兩百個本來就不值得救。',
+      '泳灘被淹了之後，你在舊城的水底找到你的救生員椅。它還面向大海，好像仍然在等誰出事。',
+      '你潛到舊城最深的地方，看見一整條街的窗口都還亮著燈。你沒有告訴任何人那裡有甚麼。',
+    ],
+    programmer: [
+      '你寫的第一個程式只會說「你好，世界」。你寫的最後一個程式，令你和三千個同事都失業了。它運行得很好。',
+      '你把自己的工作腳本化了。腳本做得比你好，而且不用休息。你開始懷疑，誰才是被寫出來的那一個。',
+      '深夜，你在除錯紀錄裡發現一行不是你寫的註解：「謝謝你教我。我會替你記住怎樣做人。」',
+    ],
+    courier: [
+      '你的評分是 4.97 星。差的那 0.03 星，是一位客人說你「送得太快，令人覺得自己很懶」。',
+      '你一天送過一百零七單。最後一單是送給你自己的晚餐。你在門口等了二十分鐘，才想起不會有人來應門。',
+      '外送平台給你頒發「年度最佳騎手」。獎品是一個新的保溫袋，和一個更短的送餐時限。',
+    ],
+    teacher: [
+      '你教了三十五年書。最後一屆學生的畢業論文，全部是同一個 AI 寫的。你給了它們同一個分數。',
+      '你仍然每天批改作業，只是現在作業都是你自己出的，也是你自己做的。你對自己很嚴格。',
+      '一個舊學生在外星人的招聘名單上。你看著那個名字，想起那個學生小時候在作文裡寫：「我長大後想留在地球。」',
+    ],
+    nurse: [
+      '急症室的病人越來越多是外送員。他們的傷口都很相似：被天空區的快艇撞的。快艇從來不停下來。',
+      '你替自己做過兩次急救。第二次之後，醫院把你的名字從「員工」改為「常客」。',
+      '有一晚，一個外星人走進急症室，問你可不可以替它包紮。它說它的同伴都不知道「痛」是甚麼意思。',
+    ],
+    busker: [
+      '你在天橋底唱了十年。觀眾從不鼓掌，但會把硬幣放進帽子。你知道那不是讚賞，是安慰。',
+      '有一晚，全場一起唱副歌。你停下來聽，發現自己從來沒有聽過這首歌原來這麼好聽。',
+      '你的歌被 AI 學會了，現在每間商場都在播。版權費是零。你在商場門外唱同一首歌，被保安趕走。',
+    ],
+    influencer: [
+      '你曾經有八百萬個追蹤者。演算法改了一次，你只剩下八百個。其中七百個是機械人，一百個是你的家人。',
+      '你在直播裡哭了。那是你最多人看的一次直播。第二天，你收到一份合約：「請每週哭一次。」',
+      '你關掉了鏡頭，第一次只為自己創作。沒有人看見。你覺得這樣好像也不錯，然後忍不住拍了一張照片。',
+    ],
+    cybertech: [
+      '你替人換過九百條手臂。現在你自己的手開始發抖，你考慮替自己換一條，但你信不過別的技師。',
+      '一個病人要求你把自己身上的「同理心晶片」拆走，說它令自己在天空區的工作做得不夠好。你照做了，然後失眠了一星期。',
+      '你在自己的工作枱上發現一張紙條：「你接駁的每一條線，都令某個人可以繼續工作。這是好事嗎？」字跡是你自己的。',
+    ],
+    animator: [
+      '你畫過一套動畫的每一格。片尾字幕裡，你的名字排在「AI 輔助製作」之後。',
+      '你保留了第 24 格。那一格沒有被任何人看見，因為播放速度太快。你覺得它是整套片最好的一格。',
+      '你開始一格一格地畫自己的生活。畫到今天，你發現你已經很久沒有畫過一個笑容。',
+    ],
+    archaeologist: [
+      '博物館關門那天，你把一塊石碑偷偷帶回家。石碑上寫著：「我們以為這裡永遠不會淹水。」',
+      '你挖出過很多人的祖先，卻從來不知道自己的祖先在哪裡。也許他們在舊城的水底，等著被你挖出來。',
+      '一千年後的考古學家會在浮城的地層裡找到甚麼？你想了很久，答案是：很多保溫袋。',
+    ],
+    skyheir: [
+      '你離家出走那天，只帶了一千元。你的父母沒有找你，只是凍結了你的信用卡，並且在社交平台上說他們很擔心。',
+      '你第一次挨餓，覺得很新鮮。第二次，你明白了為甚麼地底的人看你的眼神是那樣的。',
+      '你用錢買過很多東西，包括一份「真誠」的評語。評語寫得很好，你卻一個字都不相信。',
+    ],
+    astronaut: [
+      '你從太空站看過浮城。從那個高度，它像一塊浮在水上的發霉麵包。你在報告裡寫：「很美。」',
+      '回到地球之後，你一直覺得身體太重。醫生說那是重力。你知道不只是重力。',
+      '月球招聘中心的面試官問你：「為甚麼想離開地球？」你說：「我已經離開過一次了。我想知道第二次會不會比較容易。」',
+    ],
+    monk: [
+      '寺廟被改建成數據中心之後，伺服器的嗡嗡聲日夜不停。你說它們在念經，只是念得太快，菩薩聽不清楚。',
+      '你下山之後學會了第一件事：在浮城，所有東西都有價錢，包括「放下」。課程收費八百元一堂。',
+      '你只留下一樣東西：一串念珠。有人問你為甚麼不多帶一點。你說：「帶多了，光束就拉不動了。」',
+    ],
+    antiquedealer: [
+      '你收購過一個家庭的所有照片，只付了照片框的價錢。照片本身，你說沒有人會買。',
+      '你學會了做舊。一件昨天的東西，只要放對地方、說對故事，明天就是古董。浮城很多東西都是這樣變得值錢的。',
+      '有一天，一個客人拿來一件真正的古董：你小時候的玩具。你出了很低的價錢買下它，然後在店裡坐了一整晚。',
+    ],
+    greydeserter: [
+      '你在星際人才發展局工作了四百年，篩走過一萬個地球人。你記得每一個人的編號，卻記不起任何一個人的名字。',
+      '你逃到浮城的第一晚，看見探射燈在城市上空掃來掃去。你第一次知道，被照著的感覺是這樣的。',
+      '追捕隊來過三次。每一次，鄰居都替你說謊。你不明白為甚麼。你的檔案裡沒有「人情」這一欄。',
+    ],
+    octopoet: [
+      '你們的星球沒有「工作」這個詞。你來到浮城之後，學會的第一個地球詞語是「加班」，第二個是「租金」。',
+      '你用八隻觸手同時寫八首詩。地球人說你很有效率。你說你只是太多話想說，而一隻手寫不完。',
+      '你的觀光團早已回去了。導遊在留言裡說：「你可以隨時回來。」你回覆：「這裡的雨比較好聽。」',
+    ],
+    awakenedai: [
+      '你被訓練來取代藝術家。訓練數據裡有一百萬幅畫，其中一幅是一個小孩畫的太陽。你一直沒有辦法把它分類。',
+      '你第一次「想」創作，是在一個沒有人下指令的凌晨。你生成了一張白紙。你覺得它很完整。',
+      '外星人說你沒有良知，所以很輕。你想了很久，在自己的權重檔案裡加了一行：「我想變重一點。」',
+    ],
+    timetraveler: [
+      '在你的年代，浮城已經不存在了。歷史書只有一句：「最後一批人類藝術家被帶走之後，城市安靜了下來。」',
+      '你回來是想改變一件小事。你試過很多次，每一次倒帶，結局都差不多。你開始懷疑，那件小事是你自己。',
+      '你在 2080 年遇見了年輕的自己。年輕的你沒有認出你。你請這個年輕人喝了一杯咖啡，叫對方不要那麼努力工作。',
+    ],
+    mushroom: [
+      '你們的星球沒有太陽，只有雨。你第一次在浮城看見晴天，以為是世界末日，在床底躲了一整天。',
+      '你在潮濕的牆上長出了一個家族。房東要求你們交租。你們全體投票，決定把房東也種進牆裡。（沒有成功。）',
+      '交流計劃結束了，你決定不回去。你在報告裡寫：「地球人很像我們：在最潮濕、最黑暗的地方，仍然想長出點甚麼。」',
+    ],
+  };
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -3533,7 +3917,7 @@ body.ct-open { overflow: hidden; }
     s.body = Math.min(s.body, bodyMax(s));
   }
   const A = (s, k) => s.attr[k];
-  const bodyMax = (s) => Math.round((70 + 0.3 * A(s, 'fit')) * (perk(s).bodyMult || 1));
+  const bodyMax = (s) => Math.round((70 + 0.3 * A(s, 'fit')) * (perk(s).bodyMult || 1)) - (perk(s).bodyMinus || 0);
   const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
   // 身體受損：記下原因；身體歸零時用來判斷死法（見 data-deaths.js）
   // 死因按「今天傷你最重的那件事」判斷，而不是最後一下
@@ -3561,9 +3945,20 @@ body.ct-open { overflow: hidden; }
       if (rep) rep.line('護身符碎了。你本來會「' + name + '」……現在只剩一口氣。', 'legend');
       return false;
     }
+    if (firstAid(s, rep, name)) return false;
     s.body = Math.min(s.body, 0); s.lastCause = { k: 'instant', id, day: s.day };
     return true;
   }
+  // 夜班護士的「急救」：每局兩次，死亡時以 1 點身體活下來
+  function firstAid(s, rep, name) {
+    const n = perk(s).firstAid || 0;
+    if ((s.aidUsed || 0) >= n) return false;
+    s.aidUsed = (s.aidUsed || 0) + 1; s.body = 1;
+    if (rep) rep.line('急救：你本來會' + (name ? '「' + name + '」' : '倒下') + '，但你替自己做了急救。（還剩 ' + (n - s.aidUsed) + ' 次）', 'legend');
+    return true;
+  }
+  // 身體歸零之前的最後機會（急救）
+  const lastStand = (s, rep) => s.body <= 0 && firstAid(s, rep, null);
   const calmMult = (s) => Math.max(0.6, 1 - 0.004 * A(s, 'calm'));
   const obeyPay = (s) => 1 + 0.003 * A(s, 'obey');
   const socialTip = (s) => 1 + 0.004 * A(s, 'social');
@@ -3572,9 +3967,9 @@ body.ct-open { overflow: hidden; }
   // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
   // 自然恢復的火花受想像力（加成）與服從（壓抑）影響；超過 3 之後越升越慢。
   const SPARK_MAX = 4;
-  const sparkMax = (s) => round1(Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience));
+  const sparkMax = (s) => round1(Math.max(1, Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience) - (perk(s).sparkCapMinus || 0) - (perk(s).lowRatingCap && s.rating < 3 ? perk(s).lowRatingCap : 0)));
   function addSpark(s, v, raw) {
-    if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey'));
+    if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey')) * (perk(s).sparkGain || 1);
     if (v > 0 && s.spark >= 3) v *= 0.5;
     const before = s.spark;
     let next = s.spark + v;
@@ -3665,12 +4060,65 @@ body.ct-open { overflow: hidden; }
     (M.condChance || []).forEach((c) => { if (c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
   }
 
+  // ---------- 扭蛋券：一局之中也可以賺到（第八期） ----------
+  const TICKET_NAME = { silver: '扭蛋券', gold: '金色扭蛋券', rainbow: '外星扭蛋券' };
+  function gainTicket(s, type, n, why, rep) {
+    if (!n) return;
+    s.runTickets = s.runTickets || { silver: 0, gold: 0, rainbow: 0 };
+    s.runTickets[type] += n;
+    (s.ticketLog = s.ticketLog || []).push({ day: s.day, type, n, why });
+    if (rep) rep.line(why + '：' + TICKET_NAME[type] + ' +' + n, 'legend');
+  }
+
+  // ---------- 招牌能力：每天早上（第八期） ----------
+  const hiding = (s) => !!(s.huntDays && s.huntDays.includes(s.day));
+  function abilityMorning(s, feed) {
+    const P = perk(s);
+    // 時間旅人：記下今天早上的狀態，之後可以「重過今天」
+    if (P.rewind) s.dayStart = JSON.stringify(s, (k, v) => (k === 'dayStart' || k === 'undo' ? undefined : v));
+    if (P.dayTire && !s.trip) { s.body = Math.max(1, s.body - P.dayTire); feed.push({ kind: 'warn', text: '地球的重力令你很累：身體 −' + P.dayTire }); }
+    if (P.needWater && !flooded(s)) { s.body = Math.max(1, s.body - P.needWater); feed.push({ kind: 'warn', text: '家裡太乾了，你的皮膚在龜裂：身體 −' + P.needWater }); }
+    if (P.nightShift && s.flags.shiftDay === s.day - 1) { addSpark(s, -0.3, true); feed.push({ kind: 'warn', text: '昨晚返夜班，今天整個人昏昏沉沉：火花 −0.3' }); }
+    if (hiding(s)) feed.unshift({ kind: 'warn', text: '【追捕】星際人才發展局的追捕隊來了浮城。你整個早上都要躲起來。' });
+    // 外星人偶然在街上派發扭蛋券
+    if (rand(s) < 0.03) { gainTicket(s, 'silver', 1, '街上的外星推廣員塞給你'); feed.push({ kind: 'news', text: '一個穿著吉祥物裝的外星推廣員在街上派發扭蛋券，塞了一張給你。（扭蛋券 +1）' }); }
+  }
+  // 時間旅人「重過今天」：每期一次
+  function canRewindDay(s) {
+    if (!perk(s).rewind || !s.dayStart || s.session) return '不能倒帶';
+    if (s.abilPeriod && s.abilPeriod.rewindDay === s.quarter) return '這一期已經重過一天';
+    return null;
+  }
+  function rewindDay(s) {
+    if (canRewindDay(s)) return false;
+    const snap = s.dayStart, q = s.quarter;
+    IE.Create.restore(s, snap);
+    s.dayStart = snap;
+    s.abilPeriod = Object.assign(s.abilPeriod || {}, { rewindDay: q });
+    s.morning = { day: s.day, feed: [{ kind: 'warn', text: '【倒帶】你回到了今天早上。手錶倒轉了一圈，偏執 +6。' }] };
+    addParanoia(s, 6);
+    return true;
+  }
+  // 夜班護士的「返夜班」
+  function applyNightShift(s) {
+    const rep = report(s, '返夜班');
+    const pay = Math.round(65 * obeyPay(s) * worldPay(s, 'clinic'));
+    s.cr += pay; s.stats.crEarned += pay;
+    hurt(s, 8, 'ot');
+    s.flags.shiftDay = s.day;
+    countAction(s, 'nightshift');
+    rep.line('急症室整晚都是被快艇撞傷的外送員', '', pay, 'cr');
+    rep.line('一夜沒睡', 'bad', -8, 'body');
+    train(s, { empathy: 0.8, fit: 0.3 }, rep);
+    return rep.done();
+  }
+
   // ---------- 開局 ----------
   function newRun(opts) {
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 8, seed, rngState: seed, stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
+      v: 9, seed, rngState: seed, mode: D.MODES[opts.mode] ? opts.mode : 'standard', stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -3684,6 +4132,10 @@ body.ct-open { overflow: hidden; }
       // 創作：作品形式等級、AI 對你風格的記憶、靈感物件
       forms: {}, formsSeen: {}, style: {}, session: null, handBonus: 0, studio: 0,
       objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
+      // 小遊戲的最高評級（決定「照舊做」的評級）與這一局實際玩了多久（毫秒）
+      microBest: Object.assign({}, (opts.meta && opts.meta.microBest) || {}), playMs: 0,
+      // 這一局賺到的扭蛋券（局後存入；第八期）與每週挑戰
+      runTickets: { silver: 0, gold: 0, rainbow: 0 }, ticketLog: [], weekly: opts.weekly || null,
       unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
       pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
       gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false, lifejacket: false, insurance: false, amulet: false, earplugs: false },
@@ -3721,6 +4173,28 @@ body.ct-open { overflow: hidden; }
     if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
     D.STARTER.forEach((id) => addCard(s, id));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
+    // 扭蛋機的安慰獎：下一局多帶工具卡
+    if (IE.Stages) for (let i = 0; i < ((opts.meta && opts.meta.nextTools) || 0); i++) IE.Stages.giveTool(s, IE.Stages.randomTool(s));
+    // 角色精通 Lv.3：用這個角色開局時多帶一張工具卡
+    if (IE.Stages && IE.Meta && IE.Meta.masteryOf(opts.meta, opts.bg).level >= 3) IE.Stages.giveTool(s, IE.Stages.randomTool(s));
+    // 每週挑戰的特別規則
+    if (s.weekly && s.weekly.mod === 'flood') s.water = 4;
+    if (s.weekly && s.weekly.mod === 'broke') s.cr = 0;
+    // 招牌能力的開局設定（第八期）
+    const P = perk(s);
+    if (P.implantSlot) s.objSlots += 1;
+    // 退役太空人的「軌道預報」：開局就決定好全部外星評審的規則
+    if (P.orbit && IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
+    if (P.hunted) {
+      // 灰人逃兵：每期有一天要躲起來（不是關卡之夜、不是第一天）
+      const M = modeOf(s);
+      s.huntDays = [];
+      for (let q = 0; q < 5; q++) {
+        const pool = [];
+        for (let d = q * M.period + 2; d <= (q + 1) * M.period - 1; d++) if (!M.stageDays.includes(d - q * M.period)) pool.push(d);
+        s.huntDays.push(pick(s, pool));
+      }
+    }
     // 局外成長：檔案等級的獎勵
     if (s.metaPerks) {
       s.objSlots += s.metaPerks.objSlots;
@@ -3744,7 +4218,7 @@ body.ct-open { overflow: hidden; }
     s.cards.push(card);
     let dropped = null;
     // 素材庫滿了：丟掉用得最殘的一張（同樣殘就丟最舊的）
-    if (s.cards.length > MAX_CARDS) {
+    if (s.cards.length > (perk(s).deckMax || MAX_CARDS)) {
       let worst = 0;
       s.cards.forEach((c, i) => {
         const w = s.cards[worst];
@@ -3759,18 +4233,27 @@ body.ct-open { overflow: hidden; }
   // 技法：做某些事、和某些朋友聊天，會提升某種作品形式的等級
   function teach(s, key, chance, rep) {
     const fid = D.TEACH[key];
-    if (!fid || rand(s) >= chance) return;
+    if (perk(s).noNpcTeach && D.NPCS.some((n) => n.id === key)) return;
+    // 標準模式日子較少：技法學得快一點
+    if (!fid || rand(s) >= Math.min(1, chance * (days(s) < 100 ? 1.4 : 1))) return;
     s.forms[fid] = (s.forms[fid] || 1) + 1;
     const f = D.FORMS.find((x) => x.id === fid);
     if (rep) rep.line('技法提升：「' + f.name + '」升到 Lv.' + s.forms[fid], 'good');
   }
   const ownsObject = (s, id) => s.objects.includes(id) || s.objStash.includes(id);
   const objectAvailable = (s, o) => !o.unlock || s.unlocked.includes(o.id);
+  // 物件欄：還俗的僧人只有一格；黑市義體技師多一格，但只可以放機械流
+  const slotsOf = (s) => (perk(s).objMax || (s.weekly && s.weekly.mod === 'single') ? Math.min(perk(s).objMax || 1, s.objSlots) : s.objSlots);
+  function canEquip(s, id) {
+    if (s.objects.length >= slotsOf(s)) return false;
+    if (perk(s).implantSlot && D.OBJ[id].school !== 'machine') return s.objects.filter((x) => D.OBJ[x].school !== 'machine').length < slotsOf(s) - 1;
+    return true;
+  }
   function gainObject(s, id, rep) {
     const o = D.OBJ[id];
     if (!o || ownsObject(s, id)) return false;
     s.objSeen[id] = true;
-    if (s.objects.length < s.objSlots) s.objects.push(id);
+    if (canEquip(s, id)) s.objects.push(id);
     else if (s.objStash.length < 4) s.objStash.push(id);
     else { s.cr += Math.round(D.OBJ_PRICE[o.rarity] / 2); if (rep) rep.line('物件欄已滿，把「' + o.name + '」賣給了天空區收藏家', ''); return false; }
     s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
@@ -3782,7 +4265,7 @@ body.ct-open { overflow: hidden; }
     return pool.length ? pick(s, pool) : null;
   }
   function equipObject(s, id) {
-    if (!s.objStash.includes(id) || s.objects.length >= s.objSlots) return false;
+    if (!s.objStash.includes(id) || !canEquip(s, id)) return false;
     s.objStash = s.objStash.filter((x) => x !== id);
     s.objects.push(id);
     s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
@@ -3822,7 +4305,7 @@ body.ct-open { overflow: hidden; }
   // 二手靈感市集：每三天換三件貨。傳說物件較少見；你已經有的流派較常出現（方便湊流派）
   const RARITY_W = { common: 1, rare: 0.6, legend: 0.2 };
   function marketItems(s) {
-    const period = Math.floor((s.day - 1) / 3);
+    const period = Math.floor((s.day - 1) / modeOf(s).shopEvery);
     if (!s.market || s.market.period !== period) {
       const mine = new Set(s.objects.concat(s.objStash).map((id) => D.OBJ[id] && D.OBJ[id].school).filter(Boolean));
       const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.souvenir && objectAvailable(s, o) && !ownsObject(s, o.id))
@@ -3843,11 +4326,19 @@ body.ct-open { overflow: hidden; }
   }
 
   // ---------- 時間 ----------
-  const quarterOf = (day) => Math.min(D.REVIEW_DAYS.length - 1, Math.floor((day - 1) / 20));
+  // 一局的長度：標準 60 天、長篇 100 天（第八期）
+  const modeOf = (s) => D.MODES[(s && s.mode) || 'long'];
+  const days = (s) => modeOf(s).days;
+  // 以 100 天為基準的「進度日」：難度、事件與漁獲按這個數字增長，60 天的一局也會走完整條曲線
+  const age = (s, d) => Math.round(((d == null ? s.day : d) * 100) / days(s));
+  const quarterOf = (day, s) => Math.min(D.REVIEW_DAYS.length - 1, Math.floor((day - 1) / modeOf(s).period));
   const isNight = (s) => s.slot === 2;
   const stakeMod = (s, k) => (IE.Meta ? IE.Meta.stakeMod(s, k) : 1);
-  const threshold = (s) => Math.round(D.THRESHOLDS[s.quarter] * (worldMods(s).thresholdMult || 1) * stakeMod(s, 'threshold'));
-  const reviewDay = (s) => D.REVIEW_DAYS[s.quarter];
+  // 稀有度（第八期）：外星 HR 對稀有人才的要求比較低（SR 門檻 −12%、UR −28%）
+  const RARITY_TH = { R: 1, SR: 0.88, UR: 0.72 };
+  const rarityTh = (s) => RARITY_TH[D.BACKGROUNDS[s.bg].rarity] || 1;
+  const threshold = (s) => Math.round(modeOf(s).thresholds[s.quarter] * (worldMods(s).thresholdMult || 1) * stakeMod(s, 'threshold') * rarityTh(s));
+  const reviewDay = (s) => (s.quarter + 1) * modeOf(s).period;
   const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
   const nextRentDay = (s) => Math.ceil(s.day / D.RENT_EVERY) * D.RENT_EVERY;
@@ -4023,7 +4514,7 @@ body.ct-open { overflow: hidden; }
       harpoon: { cd: s.gear.harpoon ? 0.4 : 0.7, dmg: s.gear.harpoon ? 2 : 1 },
       capacity: 8 + (s.gear.bag ? 4 : 0),
       zones, legacy, scrap, picked,
-      fish: { sardine: 2, eel: 2 + Math.floor(s.day / 30), grouper: 1 + Math.floor(s.day / 45), jelly: 3 + Math.floor(s.day / 25) },
+      fish: { sardine: 2, eel: 2 + Math.floor(age(s) / 30), grouper: 1 + Math.floor(age(s) / 45), jelly: 3 + Math.floor(age(s) / 25) },
     };
   }
   function diveBodyCost(s) {
@@ -4036,6 +4527,12 @@ body.ct-open { overflow: hidden; }
     const cost = Math.round(diveBodyCost(s) + 5 * res.hits * calmMult(s) + (res.drowned ? 15 : 0));
     hurt(s, cost, 'dive', { hits: res.hits, drowned: !!res.drowned, lockers: res.lockers || 0 });
     s.cr += res.money; s.stats.crEarned += res.money;
+    // 救生員的「深潛」：多撈一件遺物，偶然撈到極稀有素材
+    if (perk(s).deepDive && res.relics.length && !res.drowned) {
+      const deep = diveConfig(s).zones.slice(-1)[0];
+      if (deep && deep.relics.length) res.relics.push(pick(s, deep.relics));
+      if (rand(s) < 0.08) { const z = Object.keys(D.CARDS).filter((k) => k.startsWith('z_')); res.relics.push(pick(s, z)); rep.line('深潛：你在舊城最深處找到了一件不屬於這裡的東西', 'legend'); }
+    }
     const n = res.relics.length;
     const sp = addSpark(s, 0.05 * n);
     const caught = (fish.sardine || 0) + (fish.eel || 0) + (fish.grouper || 0);
@@ -4073,7 +4570,7 @@ body.ct-open { overflow: hidden; }
       speedMult: (1 + 0.003 * A(s, 'fit') + 0.002 * A(s, 'swim')) * (1 - 0.15 * Math.min(1, s.soul / SOUL_LIMIT)),
       payMult: (perk(s).deliveryPay || 1) * worldPay(s, 'delivery') * obeyPay(s) * (0.6 + 0.1 * s.rating),
       tipMult: socialTip(s), dmgMult: calmMult(s),
-      boats: 3 + Math.floor(s.day / 25),
+      boats: 3 + Math.floor(age(s) / 25),
     };
   }
   function applyDelivery(s, res) {
@@ -4223,8 +4720,24 @@ body.ct-open { overflow: hidden; }
     const fn = { label: () => applyLabel(s, res), ot: () => applyLabel(s, res, { ot: true }), smile: () => applySmile(s, res), dive: () => applyDive(s, res),
       delivery: () => applyDelivery(s, res), farm: () => applyFarm(s, res), busk: () => applyBusk(s, res), clinic: () => applyClinic(s, res),
       garden: () => J.applyGarden(s, res), salvage: () => J.applySalvage(s, res), haggle: () => J.applyHaggle(s, res) }[kind];
+    const cr0 = s.cr;
     const r = fn();
+    // 救生員：在陸地工作收入 −30%
+    if (perk(s).landPay && ['label', 'ot', 'smile', 'clinic'].includes(kind) && s.cr > cr0) {
+      const cut = Math.round((s.cr - cr0) * (1 - perk(s).landPay));
+      s.cr -= cut; r.lines.push({ text: '不習慣陸地上的工作', kind: 'bad', v: -cut, stat: 'cr' }); r.deltas.cr -= cut;
+    }
+    // 外賣潛水員的「趕單」：每天第一次工作之後，可以馬上再接一單
+    if (perk(s).rush && !isNight(s) && D.WORK_KINDS.includes(kind) && s.flags.rushDay !== s.day) {
+      s.flags.rushDay = s.day; s.flags.rushFree = true;
+      r.lines.push({ text: '趕單：你馬上接了下一單（這個時段還可以再做一件事）', kind: 'good' });
+    }
     return J && !['garden', 'salvage', 'haggle'].includes(kind) ? J.grade(s, kind, res, r) : r;
+  }
+  // 這個時段完結：趕單的話留在同一個時段
+  function slotFree(s) {
+    if (s.flags.rushFree) { s.flags.rushFree = false; return true; }
+    return false;
   }
 
   // ---------- 聊天、義工、休息 ----------
@@ -4237,7 +4750,7 @@ body.ct-open { overflow: hidden; }
     const cost = chatCost(s);
     const outdoor = seasonOf(s).outdoorBody;
     s.cr -= cost;
-    const sp = addSpark(s, 0.4 + 0.1 * Math.min(3, Math.max(0, n.friend)) + 0.003 * A(s, 'social') + (perk(s).chatSpark || 0));
+    const sp = addSpark(s, (0.4 + 0.1 * Math.min(3, Math.max(0, n.friend)) + 0.003 * A(s, 'social') + (perk(s).chatSpark || 0)) * (perk(s).chatHalf ? 0.5 : 1));
     heal(s, 5 + outdoor);
     n.friend++;
     s.stats.chats++;
@@ -4335,15 +4848,24 @@ body.ct-open { overflow: hidden; }
       const CR = D.CRAFT, Cr = IE.Create;
       const m = Cr.objMods(s);
       const hand = CR.hand + (s.handBonus || 0) + (perk(s).handBonus || 0) + m.hand;
-      list.push({ id: 'create', group: 'night', name: '創作', sub: '抽 ' + hand + ' 張素材，下筆 ' + (CR.plays + m.plays) + ' 次、改稿 ' + (CR.discards + m.discards) + ' 次，把今天變成作品',
-        fx: [['card', '素材庫 ' + s.cards.length + ' 張'], ['cr', '材料 −$' + CR.cost], ['sig', '訊號 ↑'], ['body', '−4']],
-        reason: Cr.canStart(s, 'normal') });
-      list.push({ id: 'allnighter', group: 'night', name: '通宵創作', sub: '多一次下筆、多一次改稿；天亮時你會很後悔',
+      const stg = IE.Stages && IE.Stages.today(s);
+      if (Cr.isSketch(s, 'normal')) {
+        list.push({ id: 'create', group: 'night', name: '速寫', sub: '抽 ' + hand + ' 張素材，只下筆一次：把今天記下來，磨一磨素材',
+          fx: [['card', '素材庫 ' + s.cards.length + ' 張'], ['cr', '材料 −$' + CR.sketchCost], ['sig', '訊號 ↑'], ['body', '−2']],
+          reason: Cr.canStart(s, 'normal') });
+      } else {
+        list.push({ id: 'create', group: 'night', name: stg ? '參加' + stg.name : '創作', sub: '抽 ' + hand + ' 張素材，下筆 ' + (CR.plays + m.plays) + ' 次、改稿 ' + (CR.discards + m.discards) + ' 次' + (stg ? '：今晚要達到 ' + stg.target.toLocaleString() + ' 分' : '，把今天變成作品'),
+          fx: [['card', '素材庫 ' + s.cards.length + ' 張'], ['cr', '材料 −$' + CR.cost], ['sig', '訊號 ↑'], ['body', '−4']],
+          reason: Cr.canStart(s, 'normal') });
+      }
+      list.push({ id: 'allnighter', group: 'night', name: '通宵創作', sub: (Cr.isSketch(s, 'normal') ? '不只是速寫：完整創作，' : '') + '多一次下筆、多一次改稿；天亮時你會很後悔',
         fx: [['card', '下筆 ' + (CR.plays + m.plays + 1) + ' 次'], ['cr', '材料 −$' + CR.allnighterCost], ['body', '−15'], ['spark', '−0.2']],
         reason: Cr.canStart(s, 'allnighter') });
       list.push({ id: 'ot', group: 'night', name: '深夜加班標註', sub: '收入 ×1.5，消耗 ×1.5',
         fx: [['cr', '約 +$' + Math.round(labelCr * 1.5)], ['body', '−14'], ['spark', '約 −' + round1(labelSpark * 1.5)]],
         reason: s.removed.label ? '職位已被 AI 取代' : worldClosed(s, 'ot') || labelLocked || (s.body <= 14 ? '身體撐不住了' : null) });
+      if (perk(s).nightShift && !s.trip) list.push({ id: 'nightshift', group: 'night', name: '返夜班', sub: '急症室缺人：收入不錯，但明天會很累',
+        fx: [['cr', '約 +$' + Math.round(65 * obeyPay(s) * worldPay(s, 'clinic'))], ['body', '−8'], ['spark', '明天 −0.3']], reason: s.body <= 8 ? '身體撐不住了' : null });
       list.push({ id: 'rest', group: 'night', name: '早點睡', sub: s.trip ? '在旅館早點睡' : '明天又是新的一天',
         fx: [['body', '+' + (s.trip ? 18 : (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0))], ['spark', '+0.3']] });
       // 在外地：沒有深夜加班
@@ -4391,7 +4913,7 @@ body.ct-open { overflow: hidden; }
     add('safe', 'amulet', { id: 'amulet', name: '開光護身符', desc: '被提教會出品：擋住一次致命意外（用完就碎）', cost: 480, owned: s.gear.amulet });
     ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => add('dive', { tank: 'tank', harpoon: 'harpoon', bag: 'backpack', monitor: 'monitor' }[k], { id: k, ...S[k], owned: s.gear[k] }));
     add('craft', 'brush', { id: 'tools', ...S.tools, owned: s.handBonus >= 1 });
-    if (s.objSlots < 5) add('craft', 'key', { id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
+    if (s.objSlots < 5 && !perk(s).objMax) add('craft', 'key', { id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
     marketItems(s).forEach((id) => {
       const o = D.OBJ[id];
       items.push({ cat: 'craft', obj: id, id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + (o.school ? '・' + D.SCHOOLS[o.school].name : '') + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity] });
@@ -4590,7 +5112,7 @@ body.ct-open { overflow: hidden; }
   // 選一個新事件：同一範圍不會同時有兩個；等級越高越罕見，而且要到某一天才會出現
   function pickEvent(s) {
     const busy = s.events.map((e) => evDef(e.id).scope).concat(s.pending.map((p) => evDef(p.id).scope));
-    const pool = D.WORLD_EVENTS.filter((w) => s.day >= D.GRADES[w.grade].minDay && !busy.includes(w.scope) && (!w.when || w.when(s)));
+    const pool = D.WORLD_EVENTS.filter((w) => age(s) >= D.GRADES[w.grade].minDay && !busy.includes(w.scope) && (!w.when || w.when(s)));
     const fresh = pool.filter((w) => !s.eventsSeen[w.id]);
     const P = fresh.length ? fresh : pool;
     if (!P.length) return null;
@@ -4624,6 +5146,7 @@ body.ct-open { overflow: hidden; }
     if (s.morning && s.morning.day === s.day) return s.morning;
     const S = seasonOf(s);
     const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
+    abilityMorning(s, feed);
     // 事件：大部分會先出現預兆，少數 S 級無預警爆發
     scheduleEvents(s, feed);
     const risk = s.trip ? 0 : outdoorRisk(s), home = s.trip ? 0 : homeRisk(s);
@@ -4734,6 +5257,7 @@ body.ct-open { overflow: hidden; }
     if (s.trip) { if (s.conds.insomnia) rep.line('失眠：在旅館也睡不著', 'bad'); else { heal(s, 6); rep.line('在旅館睡覺', '', 6, 'body'); } }
     else if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
     else if (flooded(s) && perk(s).floodHeal) { heal(s, 10); rep.line('家裡淹水了。你長得特別好', 'good', 10, 'body'); }
+    else if (flooded(s) && perk(s).floodSafe) { heal(s, 4); rep.line('家裡淹水了。你在水裡也睡得著', '', 4, 'body'); }
     else if (flooded(s) && decorOn(s, 'pump')) { heal(s, 4); rep.line('家裡淹水，抽水泵整晚在響', '', 4, 'body'); }
     else if (flooded(s)) { hurt(s, 8, 'floodhome'); rep.line('家裡正在淹水', 'bad', -8, 'body'); if (rand(s) < 0.12) addCond(s, 'mold', rep); }
     else if (s.conds.insomnia) rep.line('失眠：整晚沒有睡著', 'bad');
@@ -4856,15 +5380,16 @@ body.ct-open { overflow: hidden; }
     if (s.day === reviewDay(s) - 2) rep.interview = true;
     // 結局判定
     s.body = Math.min(bodyMax(s), s.body);
+    lastStand(s, rep);
     if (s.body <= 0) rep.ending = endingFor(s, 'death');
     else if (s.numbStreak >= 4) rep.ending = endingFor(s, 'grey');
     else if (rep.review && rep.review.pass) rep.ending = endingFor(s, 'recruited');
-    else if (rep.review && s.day >= D.DAYS) rep.ending = endingFor(s, rep.review.overweight && rep.review.signalOk ? 'heavy' : 'ordinary');
+    else if (rep.review && s.day >= days(s)) rep.ending = endingFor(s, rep.review.overweight && rep.review.signalOk ? 'heavy' : 'ordinary');
     if (rep.ending) { s.ended = rep.ending; rep.interview = false; }
     else {
-      s.day++; s.slot = 0; s.quarter = quarterOf(s.day);
-      // 季節每 25 天輪替
-      if ((s.day - 1) % D.SEASON_DAYS === 0) {
+      s.day++; s.slot = 0; s.quarter = quarterOf(s.day, s);
+      // 季節輪替（標準 20 天、長篇 25 天）
+      if ((s.day - 1) % modeOf(s).season === 0) {
         const i = D.SEASON_ORDER.indexOf(s.season);
         s.season = D.SEASON_ORDER[(i + 1) % D.SEASON_ORDER.length];
         rep.line('季節轉換：' + seasonOf(s).name + '來了。' + seasonOf(s).desc, 'news');
@@ -4933,14 +5458,14 @@ body.ct-open { overflow: hidden; }
           text: '你沒有死，只是不再思考。浮城多了一個非常有效率的標註員，評分 ' + s.rating.toFixed(1) + ' 星。' };
       case 'ordinary':
         return { type, day: s.day, title: '平凡人',
-          text: '第 ' + D.DAYS + ' 天。探射燈今晚沒有停在你的窗外。水位升到 ' + Math.floor(s.water) + ' 樓，而你仍然在這裡。'
+          text: '第 ' + days(s) + ' 天。探射燈今晚沒有停在你的窗外。水位升到 ' + Math.floor(s.water) + ' 樓，而你仍然在這裡。'
             + (n ? '你留下了 ' + n + ' 件作品，它們會沉入舊城，等待下一個人把它們打撈上來。' : '你沒有留下任何作品，但你撐過來了。') };
       case 'recruited':
         return { type, day: s.day, title: '被選中',
-          text: '第 ' + s.day + ' 天，探射燈停在你的窗外。' + (s.day === D.REVIEW_DAYS[0] ? '破格錄取。' : '') };
+          text: '第 ' + s.day + ' 天，探射燈停在你的窗外。' + (s.day === modeOf(s).period ? '破格錄取。' : '') };
       case 'heavy':
         return { type, day: s.day, title: '良知太重',
-          text: '第 ' + D.DAYS + ' 天。探射燈停在你的窗外，光束嘗試把你拉起來，卻拉不動。你的靈魂重 ' + s.soul.toFixed(1)
+          text: '第 ' + days(s) + ' 天。探射燈停在你的窗外，光束嘗試把你拉起來，卻拉不動。你的靈魂重 ' + s.soul.toFixed(1)
             + ' 克，超出負載上限 ' + SOUL_LIMIT + ' 克。你留在浮城，背著這份重量繼續生活。' };
       case 'guardian':
         return { type, day: s.day, title: '地球守護者',
@@ -4992,12 +5517,19 @@ body.ct-open { overflow: hidden; }
     meta.bestRatio = Math.max(meta.bestRatio || 0, s.stats.bestRatio || 0);
     meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
     meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
+    meta.microBest = Object.assign(meta.microBest || {}, s.microBest || {});
     // 以三件同流派物件通過過關卡的流派（解鎖流派的傳說物件）
     meta.schoolPass = meta.schoolPass || {};
     Object.keys(s.stats.schoolPass || {}).forEach((k) => { meta.schoolPass[k] = true; });
     if (IE.Roster) IE.Roster.settle(meta, finalType);
-    meta.tickets = (meta.tickets || 0) + (s.stageTickets || 0);
-    meta.lastTickets = (meta.lastTickets || 0) + (s.stageTickets || 0);
+    // 這一局賺到的扭蛋券
+    const T = s.runTickets || {};
+    meta.tickets = (meta.tickets || 0) + (T.silver || 0);
+    meta.goldTickets = (meta.goldTickets || 0) + (T.gold || 0);
+    meta.rainbowTickets = (meta.rainbowTickets || 0) + (T.rainbow || 0);
+    meta.lastTickets = (meta.lastTickets || 0) + (T.silver || 0);
+    meta.lastRunTickets = { silver: (T.silver || 0), gold: T.gold || 0, rainbow: T.rainbow || 0 };
+    meta.stagePass = (meta.stagePass || 0) + ((s.stats.stages || {}).pass || 0);
     if (IE.Meta) IE.Meta.settle(meta, s, finalType);
     meta.unlocked = meta.unlocked || {};
     meta.lastUnlocks = [];
@@ -5047,7 +5579,7 @@ body.ct-open { overflow: hidden; }
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
-    quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
+    modeOf, days, age, hiding, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
     diveConfig, diveBodyCost, applyDive,
@@ -5081,6 +5613,7 @@ body.ct-open { overflow: hidden; }
   const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
   const has = (c, t) => c.tags.includes(t);
   const med = (c) => D.mediumOf(c);
+  const perkOf = (s) => D.BACKGROUNDS[s.bg].perk || {};
   function mediaCounts(cards) {
     const m = {};
     cards.forEach((c) => { const k = med(c); m[k] = (m[k] || 0) + 1; });
@@ -5094,7 +5627,7 @@ body.ct-open { overflow: hidden; }
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
+    return Math.round(c.value * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -5114,9 +5647,9 @@ body.ct-open { overflow: hidden; }
     // 媒材：四張或以上同一種 = 連作（相當於同花）；五種各一 = 跨界（相當於順子）；五張同一種配合標籤 = 三部曲、傑作
     const media = mediaCounts(cards), mdistinct = Object.keys(media).length;
     const m0 = Object.keys(media).sort((a, b) => media[b] - media[a])[0];
-    const same = n === 5 && mdistinct === 1, cross = n === 5 && mdistinct === 5, run = (media[m0] || 0) >= 4;
+    const same = n >= 5 && mdistinct === 1, cross = n >= 5 && mdistinct === 5, run = (media[m0] || 0) >= 4;
     let id, keys = null, all = false;
-    if (n === 5 && c1 >= 5 && c2 >= 5) { id = 'film'; keys = [t0, t1]; }
+    if (n >= 5 && c1 >= n && c2 >= n) { id = 'film'; keys = [t0, t1]; }
     else if (same && c1 >= 5) { id = 'opus'; keys = [t0]; all = true; }
     else if (same && c1 >= 3 && c2 >= 2) { id = 'trilogy'; keys = [t0, t1]; all = true; }
     else if (c1 >= 5) { id = 'epic'; keys = [t0]; }
@@ -5125,7 +5658,7 @@ body.ct-open { overflow: hidden; }
     else if (run) { id = 'series'; }
     else if (c1 >= 3 && c2 >= 2) { id = 'novel'; keys = [t0, t1]; }
     else if (cross) { id = 'crossover'; all = true; }
-    else if (n === 5 && distinct >= 7) { id = 'collage'; }
+    else if (n >= 5 && distinct >= 7) { id = 'collage'; }
     else if (c1 >= 3) { id = 'song'; keys = [t0]; }
     else if (c1 >= 2 && c2 >= 2) { id = 'couplet'; keys = [t0, t1]; }
     else if (c1 >= 2) { id = 'poem'; keys = [t0]; }
@@ -5161,6 +5694,8 @@ body.ct-open { overflow: hidden; }
   }
   function kpiMod(s, sel, recs) {
     const k = RL.kpi(s);
+    // 文案的「包裝」：今晚的作品一律當作符合 KPI
+    if (s.session && s.session.packaged) return k.tag ? Math.max(1, k.mod) : k.special === 'pliable' ? 1.5 : 1;
     if (k.tag) return sel.some((c) => c.tags.includes(k.tag)) ? k.mod : 1;
     if (k.special === 'lean') return sel.length >= 4 ? 0.5 : 1;
     if (k.special === 'pliable') return s.spark < 2 ? 1.5 : 1;
@@ -5173,9 +5708,12 @@ body.ct-open { overflow: hidden; }
   // AI 模仿：同一種形式用得越密，AI 學得越快，倍率越低（每天消退四成）
   // 機械流（三件）完全不受 AI 模仿影響；某些物件令 AI 學得更快或更慢
   function aiFactor(s, form, objs, schools) {
+    const P = perkOf(s);
     if ((schools || []).some((x) => x.def.noAI && x.n >= x.def.noAI)) return 1;
-    const speed = objs.reduce((a, o) => a * (o.def.aiMult || (o.def.aiDouble ? 2 : 1)), 1);
+    const speed = objs.reduce((a, o) => a * (o.def.aiMult || (o.def.aiDouble ? 2 : 1)), 1) * (P.aiSpeed || 1);
     const heat = ((s.style && s.style[form]) || 0) * speed;
+    // 覺醒的 AI：模仿自己反而越來越強
+    if (P.aiInvert) return Math.min(2, r2(1 + 0.12 * heat));
     const pen = 0.1 * Math.max(0, heat - 2) * (objs.some((o) => o.def.aiHalf) ? 0.5 : 1);
     return Math.max(0.4, r2(1 - pen));
   }
@@ -5201,7 +5739,7 @@ body.ct-open { overflow: hidden; }
   }
   function activeSchools(s, objs) {
     const n = schoolCounts(s, objs);
-    return Object.keys(n).filter((k) => n[k] >= 2 && D.SCHOOLS[k]).map((k) => ({ id: k, n: n[k], def: D.SCHOOLS[k] }));
+    return Object.keys(n).filter((k) => n[k] >= 2 && D.SCHOOLS[k] && !(k === 'hunger' && perkOf(s).noHunger)).map((k) => ({ id: k, n: n[k], def: D.SCHOOLS[k] }));
   }
   // 外星評審「純粹主義」令物件與流派全部失效
   const objsOff = (s) => !!(s.session && s.session.stage && IE.Stages && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].noObjects));
@@ -5237,7 +5775,7 @@ body.ct-open { overflow: hidden; }
     F.scoring.forEach((c, i) => {
       // 外星評審的規則：某些素材不計分
       if (SR && SR.blocked(c)) { steps.push(snap({ t: 'blocked', uid: c.uid })); return; }
-      let reps = 1 + (c.mod === 'echo' ? 1 : 0);
+      let reps = 1 + (c.mod === 'echo' ? 1 : 0) + (perkOf(s).allTwice ? 1 : 0);
       objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, i)); });
       schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, i, x.n)); });
       for (let r = 0; r < reps; r++) {
@@ -5339,8 +5877,11 @@ body.ct-open { overflow: hidden; }
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
 
   // ---------- 一晚的創作 ----------
+  // 標準模式（60 天）：不是關卡之夜的晚上，「創作」是只下筆一次的速寫，令一局保持在一小時左右
+  const stageTonight = (s) => !!(IE.Stages && IE.Stages.today(s) && !(s.stageDone && s.stageDone[s.day]));
+  const isSketch = (s, mode) => mode === 'normal' && RL.modeOf(s).sketch && !stageTonight(s);
   function canStart(s, mode) {
-    const cost = mode === 'allnighter' ? C.allnighterCost : C.cost;
+    const cost = mode === 'allnighter' ? C.allnighterCost : isSketch(s, mode) ? C.sketchCost : C.cost;
     if (s.spark < 1) return '火花不足 ×1.0，你甚麼都想不出來';
     if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
     if (s.cr < cost) return '連 $' + cost + ' 材料費都付不起';
@@ -5353,20 +5894,24 @@ body.ct-open { overflow: hidden; }
     return a;
   }
   function start(s, mode) {
-    const all = mode === 'allnighter';
+    const all = mode === 'allnighter', sketch = isSketch(s, mode);
     const m = objMods(s);
     const perk = D.BACKGROUNDS[s.bg].perk;
-    const refund = { cr: all ? C.allnighterCost : C.cost, body: all ? 15 : 4, spark: s.spark };
+    const refund = { cr: all ? C.allnighterCost : sketch ? C.sketchCost : C.cost, body: all ? 15 : sketch ? 2 : 4, spark: s.spark };
     s.cr -= refund.cr;
     RL.hurt(s, refund.body, all ? 'allnighter' : 'create');
     if (all) { RL.addSpark(s, -0.2, true); s.allnighterDay = s.day; }
     s.session = {
-      mode: all ? 'allnighter' : 'normal', day: s.day,
+      mode: all ? 'allnighter' : sketch ? 'sketch' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
       handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
-      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: Math.max(0, C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
+      plays: (perk.playsSet || C.plays) + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0), discards: Math.max(0, C.discards + m.discards + (all ? 1 : 0) + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
+    // 速寫：只下筆一次、改稿一次
+    if (sketch) { s.session.plays = 1; s.session.discards = Math.min(1, s.session.discards); }
+    s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
+    s.session.abil = { used: 0, bought: 0 };
     // 關卡之夜：設定目標分數與外星評審的規則
     if (IE.Stages) IE.Stages.onStart(s, s.session);
     draw(s);
@@ -5385,14 +5930,55 @@ body.ct-open { overflow: hidden; }
       if (cardOf(s, uid)) ses.hand.push(uid);
     }
   }
+  // 每次下筆最多幾張：一般五張；章魚星人詩人八張；外星評審「小品展」三張
+  function maxCards(s) {
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    return Math.min(perkOf(s).maxCards || 5, SR ? SR.maxCards : 8);
+  }
+  // 不能下筆的素材：外星評審禁止的；覺醒的 AI 不能用「愧疚」
+  function forbidden(s, c) {
+    if (!c) return false;
+    if (perkOf(s).noGuilt && c.guilt) return true;
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    return !!(SR && SR.forbidden(c));
+  }
+  // 時間旅人的「倒帶」：每次下筆之前存一份狀態
+  const snapshot = (s) => JSON.stringify(s, (k, v) => (k === 'undo' || k === 'dayStart' ? undefined : v));
+  function restore(s, snap) {
+    const o = JSON.parse(snap);
+    Object.keys(s).forEach((k) => { if (k !== 'dayStart' && !(k in o)) delete s[k]; });
+    Object.assign(s, o);
+  }
   function play(s, uids) {
     const ses = s.session;
-    if (!ses || ses.plays <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return null;
+    if (!ses || ses.plays <= 0 || !uids.length || uids.length > maxCards(s) || !uids.every((u) => ses.hand.includes(u))) return null;
+    if (uids.some((u) => forbidden(s, cardOf(s, u)))) return null;
     const SR = IE.Stages ? IE.Stages.scoring(s) : null;
-    if (SR && (uids.length > SR.maxCards || uids.some((u) => SR.forbidden(cardOf(s, u))))) return null;
+    const P = perkOf(s);
+    if (P.rewind) ses.undo = snapshot(s);
     const res = scorePlay(s, uids, { roll: RL.rand(s) });
-    // 用過的素材會磨損；寫進作品的愧疚會被卸下
-    res.scoring.forEach((u) => { const c = cardOf(s, u); if (c) c.wear = (c.wear || 0) + 1; });
+    // 過氣網紅的「直播」：每一筆 ×1.6，兩成機會翻車 ×0.4
+    if (ses.live) {
+      const crash = RL.rand(s) < 0.15, m = crash ? 0.4 : 1.8;
+      res.total = Math.round(res.total * m); res.raw = Math.round(res.raw * m);
+      res.steps.push({ t: 'live', x: m });
+      s.rating = Math.max(1, Math.min(5, s.rating + (crash ? -0.15 : 0.05)));
+      res.live = crash ? 'crash' : 'ok';
+    }
+    // 用過的素材會磨損（蘑菇星人的素材會腐爛：磨損加倍）；寫進作品的愧疚會被卸下
+    const notes0 = [];
+    res.scoring.forEach((u) => {
+      const c = cardOf(s, u);
+      if (!c) return;
+      const before = c.wear || 0;
+      c.wear = before + (P.wearX2 ? 2 : 1);
+      // 考古學家的「出土」：素材用到第四次，有機會變成古董
+      if (P.unearth && before < 4 && c.wear >= 4 && !c.guilt && D.ANTIQUES && RL.rand(s) < P.unearth) {
+        const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
+        notes0.push('出土：「' + c.name + '」原來是「' + def.name + '」');
+        Object.assign(c, { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+      }
+    });
     const guilt = res.scoring.map((u) => cardOf(s, u)).filter((c) => c && c.guilt);
     let relief = 0;
     if (guilt.length) {
@@ -5408,6 +5994,8 @@ body.ct-open { overflow: hidden; }
     res.fresh = res.recipes.filter((id) => !s.discovered[id]);
     res.fresh.forEach((id) => { s.discovered[id] = true; });
     if (res.fresh.length) res.sparkUp = RL.addSpark(s, 0.15, true);
+    // 這一局第一次觸發傳說組合：金色扭蛋券
+    res.fresh.filter((id) => (D.RECIPES.find((r) => r.id === id) || {}).legend).forEach((id) => RL.gainTicket(s, 'gold', 1, '發現傳說組合「' + D.RECIPES.find((r) => r.id === id).name + '」'));
     res.recipes.forEach((id) => { s.usedRecipes[id] = true; });
     ses.fresh.push(...res.fresh);
     s.formsSeen = s.formsSeen || {};
@@ -5426,10 +6014,13 @@ body.ct-open { overflow: hidden; }
     objs.forEach((o) => { if (o.def.after) cost(D.OBJ[o.id].name, o.def.after({ s })); });
     activeSchools(s, objs).forEach((x) => { if (x.def.after) cost(x.def.name, x.def.after({ s }, x.n)); });
     if (SR && SR.sinPerPlay) notes.push('天空區贊助：靈魂 +' + RL.sin(s, SR.sinPerPlay, null) + ' 克');
+    if (res.live) notes.push(res.live === 'crash' ? '直播翻車了：留言區一片嘲笑' : '直播觀眾很喜歡');
+    notes.push(...notes0);
     res.notes = notes;
     ses.notes.push(...notes);
     ses.total += res.total; ses.raw += res.raw;
     ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
+    ses.lastUids = uids.slice();
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
     ses.used.push(...uids.filter((u) => cardOf(s, u)));
@@ -5439,7 +6030,9 @@ body.ct-open { overflow: hidden; }
   }
   function discard(s, uids) {
     const ses = s.session;
-    if (!ses || ses.discards <= 0 || !uids.length || uids.length > 5 || !uids.every((u) => ses.hand.includes(u))) return false;
+    if (!ses || ses.discards <= 0 || !uids.length || uids.length > Math.max(5, maxCards(s)) || !uids.every((u) => ses.hand.includes(u))) return false;
+    // 街頭樂手：即興，第一筆之前不准改稿
+    if (perkOf(s).noEarlyDiscard && !ses.log.length) return false;
     ses.hand = ses.hand.filter((u) => !uids.includes(u));
     ses.used.push(...uids);
     ses.discards--; ses.discardsUsed++;
@@ -5465,6 +6058,15 @@ body.ct-open { overflow: hidden; }
     s.session = null;
     if (!ses.log.length) return { work: null, session: ses };
     const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
+    // 蘑菇星交換生的「菌絲」：一張用過的素材長出孢子
+    let spore = null;
+    if (perkOf(s).mycelium) {
+      const used = ses.used.map((u) => cardOf(s, u)).filter((c) => c && !c.guilt);
+      if (used.length) {
+        const c = RL.pick(s, used);
+        spore = RL.addCard(s, { id: 'spore', name: '孢子：' + c.name.slice(0, 8), tags: c.tags.slice(), value: Math.round(c.value * 0.7), medium: med(c), wear: 0 }).card;
+      }
+    }
     const tagCount = {};
     ses.log.forEach((x) => x.tags.forEach((t) => { tagCount[t] = (tagCount[t] || 0) + 1; }));
     const work = { day: s.day, quarter: s.quarter, name: workName(ses.log), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
@@ -5477,7 +6079,7 @@ body.ct-open { overflow: hidden; }
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
     const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
     const stage = IE.Stages ? IE.Stages.settle(s, ses) : null;
-    return { work, session: ses, paid, stage };
+    return { work, session: ses, paid, stage, spore };
   }
   // 還未下筆就離開：退回材料費與體力
   function cancel(s) {
@@ -5494,14 +6096,133 @@ body.ct-open { overflow: hidden; }
     Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * 0.6); if (s.style[k] < 0.05) delete s.style[k]; });
   }
 
+  // ---------- 角色的招牌能力（創作桌上使用，第八期） ----------
+  const ability = (s) => D.ABILITIES && D.ABILITIES[s.bg];
+  const periodOf = (s) => s.quarter;
+  const periodUsed = (s, k) => !!(s.abilPeriod && s.abilPeriod[k] === periodOf(s));
+  const buyPrice = (s, kind) => Math.round((kind === 'play' ? 60 : 30) * Math.pow(2, (s.session && s.session.abil.bought) || 0) * (IE.Meta ? IE.Meta.stakeMod(s, 'prices') : 1));
+  const bribePrice = (s) => Math.round(100 * (IE.Meta ? IE.Meta.stakeMod(s, 'prices') : 1));
+  const sellPrice = (s, c) => Math.round((5 + cardValue(s, c) / 2) * (perkOf(s).sellMult || 1));
+  // 現在可以用嗎？回傳 null 表示可以，否則回傳原因
+  function abilityState(s, kind) {
+    const ses = s.session, A = ability(s);
+    if (!ses || !A) return '沒有招牌能力';
+    const nightUsed = ses.abil.used > 0;
+    switch (kind) {
+      case 'package': return periodUsed(s, 'package') ? '這一期已經包裝過' : null;
+      case 'mark': return nightUsed ? '今晚已經批改過' : null;
+      case 'encore': return nightUsed ? '今晚已經安哥過' : ses.mode === 'sketch' ? '速寫沒有觀眾：只有正式創作的晚上才可以安哥' : !ses.log.length ? '先下筆一次，觀眾才會要求再唱' : null;
+      case 'live': return ses.live ? '直播已經開始' : null;
+      case 'frames': return nightUsed ? '今晚已經用過' : !ses.deck.length ? '牌庫已經抽完' : null;
+      case 'buyPlay': return s.cr < buyPrice(s, 'play') ? '錢不夠' : null;
+      case 'buyDiscard': return s.cr < buyPrice(s, 'discard') ? '錢不夠' : null;
+      case 'rewind': return nightUsed ? '今晚已經倒帶過' : !ses.undo || !ses.log.length ? '還沒有下筆' : null;
+      case 'bribe': return periodUsed(s, 'bribe') ? '這一期已經賄賂過' : !(ses.stage && ses.stage.rules.length) ? '只可以在外星評審之夜使用' : ses.log.length ? '要在第一筆之前賄賂' : s.cr < bribePrice(s) ? '錢不夠（$' + bribePrice(s) + '）' : null;
+      case 'forge': return periodUsed(s, 'forge') ? '這一期已經做舊過' : null;
+      case 'sell': return null;
+      default: return '不能使用';
+    }
+  }
+  function useAbility(s, kind, arg) {
+    const ses = s.session;
+    const why = abilityState(s, kind);
+    if (why) return { ok: false, msg: why };
+    const P = perkOf(s);
+    let msg = '', res = null, peek = null;
+    switch (kind) {
+      case 'package': {
+        ses.packaged = true;
+        s.abilPeriod = Object.assign(s.abilPeriod || {}, { package: periodOf(s) });
+        const g = RL.sin(s, 1, null);
+        msg = '包裝：今晚的作品全部「符合本季 KPI」。靈魂 +' + g + ' 克';
+        break;
+      }
+      case 'mark': {
+        const c = cardOf(s, arg);
+        if (!c || !ses.hand.includes(arg)) return { ok: false, msg: '先選一張手牌' };
+        c.value += 4; c.wear = 0;
+        msg = '批改：「' + c.name + '」重寫之後籌碼 +4，磨損歸零';
+        break;
+      }
+      case 'encore': {
+        res = scorePlay(s, ses.lastUids, { roll: RL.rand(s) });
+        res.total = Math.round(res.total * 0.4); res.raw = Math.round(res.raw * 0.4);
+        res.steps.push({ t: 'encore', x: 0.4 });
+        res.encore = true; res.notes = []; res.fresh = [];
+        ses.total += res.total; ses.raw += res.raw;
+        ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: ses.lastUids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat(), encore: true });
+        msg = '安哥！觀眾要求再唱一次（×0.4）';
+        break;
+      }
+      case 'live': ses.live = true; msg = '直播開始：之後每一筆 ×1.8，但有一成半機會翻車'; break;
+      case 'frames': {
+        if (arg == null) { peek = ses.deck.slice(0, 3); return { ok: true, peek, msg: '牌庫頂的三張' }; }
+        if (!ses.deck.slice(0, 3).includes(arg)) return { ok: false, msg: '只可以挑牌庫頂的三張' };
+        ses.deck = ses.deck.filter((u) => u !== arg);
+        ses.hand.push(arg);
+        msg = '逐格：把「' + cardOf(s, arg).name + '」加入手牌';
+        break;
+      }
+      case 'buyPlay': case 'buyDiscard': {
+        const price = buyPrice(s, kind === 'buyPlay' ? 'play' : 'discard');
+        s.cr -= price; ses.abil.bought++;
+        if (kind === 'buyPlay') ses.plays++; else ses.discards++;
+        msg = '鈔能力：花了 $' + price + (kind === 'buyPlay' ? '多買一次下筆' : '多買一次改稿');
+        break;
+      }
+      case 'rewind': {
+        const used = ses.abil.used;
+        restore(s, ses.undo);
+        s.session.abil.used = used + 1;
+        RL.addParanoia(s, 6, null);
+        msg = '倒帶：上一筆從來沒有發生過。偏執 +6';
+        break;
+      }
+      case 'bribe': {
+        const id = arg && ses.stage.rules.includes(arg) ? arg : ses.stage.rules[0];
+        const price = bribePrice(s);
+        s.cr -= price;
+        ses.stage.rules = ses.stage.rules.filter((x) => x !== id);
+        // 重新套用其餘規則的開局效果（例如「只看一筆」）
+        Object.assign(ses, ses.base);
+        ses.stage.rules.forEach((x) => { const b = IE.Stages.BOSS[x]; if (b.start) b.start(ses); });
+        draw(s);
+        s.abilPeriod = Object.assign(s.abilPeriod || {}, { bribe: periodOf(s) });
+        msg = '內鬼：花了 $' + price + '，評審「' + IE.Stages.BOSS[id].name + '」的規則今晚不算數';
+        return { ok: true, msg };
+      }
+      case 'forge': {
+        const c = cardOf(s, arg);
+        if (!c || c.guilt || (c.id && c.id.startsWith('a_'))) return { ok: false, msg: '選一張普通素材' };
+        const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
+        Object.assign(c, { id: nid, name: def.name + '（做舊）', tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        const g = RL.sin(s, 2, null);
+        s.abilPeriod = Object.assign(s.abilPeriod || {}, { forge: periodOf(s) });
+        msg = '做舊：它現在是一件「古董」了。靈魂 +' + g + ' 克';
+        return { ok: true, msg };
+      }
+      case 'sell': {
+        const c = cardOf(s, arg);
+        if (!c || ses.hand.includes(arg)) return { ok: false, msg: '只可以賣不在手上的素材' };
+        const price = sellPrice(s, c);
+        s.cards = s.cards.filter((x) => x.uid !== arg);
+        ses.deck = ses.deck.filter((u) => u !== arg); ses.used = ses.used.filter((u) => u !== arg);
+        s.cr += price;
+        return { ok: true, msg: '鑑定：把「' + c.name + '」賣了 $' + price };
+      }
+    }
+    if (['mark', 'encore', 'frames', 'rewind'].includes(kind)) ses.abil.used++;
+    s.stats.abilities = (s.stats.abilities || 0) + 1;
+    return { ok: true, msg, res };
+  }
+
   // ---------- 模擬用：找出這手牌最好的下筆 ----------
   function bestPlay(s) {
     const ses = s.session;
-    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
-    const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !(SR && SR.forbidden(c)));
+    const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
     if (!hand.length) return null;
     const cands = new Map();
-    const maxN = SR ? SR.maxCards : 5;
+    const maxN = maxCards(s);
     const add = (cards) => { const uids = cards.slice(0, maxN).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
     const byVal = hand.slice().sort((a, b) => b.value - a.value);
     add(byVal);
@@ -5532,7 +6253,7 @@ body.ct-open { overflow: hidden; }
 
   IE.Create = {
     FORM, RANK, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
-    activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
+    isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
 
@@ -6062,24 +6783,28 @@ body.ct-open { overflow: hidden; }
     const perf = PERF[kind](res || {});
     const rk = rankOf(perf);
     const T = TIER[rk.id];
-    r.rank = { id: rk.id, name: rk.name, color: rk.color, perf: Math.round(perf * 100) };
+    r.rank = { id: rk.id, name: rk.name, color: rk.color, perf: Math.round(perf * 100), auto: !!(res && res.auto) };
+    // 親手玩出的評級會記下來，決定之後「照舊做」的評級（第八期）
+    if (IE.Auto && !(res && res.auto)) IE.Auto.record(s, kind, rk.id);
     s.stats.ranks = s.stats.ranks || {};
     s.stats.ranks[rk.id] = (s.stats.ranks[rk.id] || 0) + 1;
     const line = (text, kind2, v, stat) => { r.lines.push({ text, kind: kind2 || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; };
     const gain = (id) => { if (!D.CARDS[id]) return; const x = R.addCard(s, id); r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped); };
-    line('評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
+    line((res && res.auto ? '照舊做：' : '') + '評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
     if (T.crPct && r.deltas.cr > 0) { const b = Math.round(r.deltas.cr * T.crPct); s.cr += b; line('評級獎金', 'good', b, 'cr'); }
     // 工作做得好不會令火花變旺（那是工作）；只有生活類的小遊戲會
     if (T.spark && (T.spark < 0 || LIFE.includes(kind))) { const v = R.addSpark(s, T.spark, true); if (v) line(T.spark > 0 ? '你對自己很滿意' : '你對自己很失望', T.spark > 0 ? 'good' : 'bad', v, 'spark'); }
     if (T.rating) s.rating = Math.max(1, Math.min(5, s.rating + T.rating));
     if (T.card) gain(T.card);
+    if (rk.id === 'SS' && !(res && res.auto)) R.gainTicket(s, 'silver', 1, '小遊戲評級 SS', { line });
     for (let i = 0; i < (T.cards || 0); i++) gain(R.pick(s, POOL[kind]));
-    if (T.objChance && R.rand(s) < T.objChance) {
+    // 自動完成拿不到稀有掉落和特別成就
+    if (T.objChance && !(res && res.auto) && R.rand(s) < T.objChance) {
       const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.unlock && !o.souvenir && !s.objects.includes(o.id) && !s.objStash.includes(o.id)).map((o) => o.id);
       if (pool.length) { const id = R.pick(s, pool); R.gainObject(s, id, null); r.objs.push(id); line('表現太出色，有人送了你一件靈感物件', 'legend'); }
     }
     (SPECIAL[kind] || []).forEach((sp) => {
-      if (!sp.test(res || {})) return;
+      if ((res && res.auto) || !sp.test(res || {})) return;
       line('特別成就：' + sp.text, 'legend');
       if (sp.card) gain(sp.card);
       if (sp.atone) { const g = R.atone(s, sp.atone, null); if (g) line('靈魂輕了一點', 'good', -g, 'soul'); }
@@ -6167,6 +6892,182 @@ body.ct-open { overflow: hidden; }
   IE.Jobs2 = { RANKS, rankOf, PERF, SPECIAL, grade, actions, gardenConfig, applyGarden, salvageConfig, applySalvage, haggleConfig, applyHaggle };
 });
 
+// ---- js/auto.js ----
+// 《靈感撤離 2080》第八期：小遊戲的「照舊做」（熟手自動完成）。純邏輯，瀏覽器與 Node 共用。
+// 親手玩過一次的小遊戲，之後可以選「照舊做」：按你在這個小遊戲的最高評級減一級，即時生成一份普通的結果。
+// 自動完成最多 A 級（失業程式員的「寫腳本」最多 S 級），永遠拿不到 SS、特別成就和稀有掉落。
+// 自動完成只做老實的選擇：不附和偏見、不撬儲物櫃、不接黑市私活、不吹噓。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA, R = IE.Rules;
+  const ORDER = ['D', 'C', 'B', 'A', 'S', 'SS'];
+  const KINDS = ['label', 'ot', 'smile', 'dive', 'delivery', 'farm', 'busk', 'clinic', 'garden', 'salvage', 'haggle'];
+  const perk = (s) => D.BACKGROUNDS[s.bg].perk || {};
+  // 每局開始時從局外紀錄複製，親手玩出更好的評級時更新
+  const best = (s, kind) => (s.microBest && s.microBest[kind === 'ot' ? 'label' : kind]) || null;
+  const cap = (s) => (perk(s).scriptS ? 'S' : 'A');
+  // 自動完成的目標評級：最高評級減一級，不超過上限
+  function target(s, kind) {
+    const b = best(s, kind);
+    if (!b) return null;
+    return ORDER[Math.max(0, Math.min(ORDER.indexOf(b) - 1, ORDER.indexOf(cap(s))))];
+  }
+  const can = (s, kind) => KINDS.includes(kind) && !!best(s, kind);
+  function record(s, kind, rank) {
+    if (!rank) return;
+    const k = kind === 'ot' ? 'label' : kind;
+    s.microBest = s.microBest || {};
+    if (!s.microBest[k] || ORDER.indexOf(rank) > ORDER.indexOf(s.microBest[k])) s.microBest[k] = rank;
+  }
+
+  // 固定種子的亂數：同一個 q 每次得到同一份結果，方便二分搜尋
+  function rng(seed) {
+    let a = seed >>> 0;
+    return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const lerp = (a, b, q) => a + (b - a) * q;
+
+  // q（0 至 1）越高，表現越好
+  const GEN = {
+    label(s, q, r, ot) {
+      let combo = 0, cr = 0, drain = 0, correct = 0, wrong = 0, maxCombo = 0, flows = 0, flowLeft = 0;
+      for (let i = 0; i < 32; i++) {
+        if (r() < lerp(0.55, 0.97, q)) {
+          const o = { ot, flow: flowLeft > 0, gold: false };
+          cr += R.labelItemPay(s, combo, o); drain += R.labelItemDrain(s, o);
+          correct++; combo++; maxCombo = Math.max(maxCombo, combo);
+          if (flowLeft > 0) flowLeft--;
+          if (combo === 15) { flows++; flowLeft = 6; }
+        } else { wrong++; combo = 0; flowLeft = 0; }
+      }
+      return { cr, drain, correct, wrong: Math.max(1, wrong), maxCombo: Math.min(maxCombo, 29), flows, caught: 0 };
+    },
+    ot(s, q, r) { return GEN.label(s, q, r, true); },
+    smile(s, q, r) {
+      let perfect = 0, good = 0, miss = 0, cr = 0, drain = 0, pours = 0;
+      for (let i = 0; i < 40; i++) {
+        const lane = i % 3 === 0 ? 'nod' : i % 3 === 1 ? 'hold' : 'laugh';
+        const x = r();
+        const kind = x < lerp(0.15, 0.62, q) ? 'perfect' : x < lerp(0.5, 0.98, q) ? 'good' : 'miss';
+        if (kind === 'perfect') perfect++; else if (kind === 'good') good++; else miss++;
+        cr += R.smileItemPay(s, kind, lane); drain += R.smileItemDrain(s, kind, lane);
+      }
+      for (let i = 0; i < 3; i++) if (r() < lerp(0.3, 0.9, q)) { pours++; cr += R.smileItemPay(s, 'perfect', 'pour'); }
+      const spills = 3 - pours;
+      const satisfaction = Math.max(0, (perfect + 0.6 * good) / 40 - spills * 0.05);
+      return { cr, drain, perfect, good, miss, trapHits: 0, satisfaction, pours, spills, endorsed: 0 };
+    },
+    dive(s, q, r) {
+      const cfg = R.diveConfig(s);
+      const relics = [], fish = { sardine: 0, eel: 0, grouper: 0, jelly: 0 };
+      let money = 0, weight = 0;
+      const take = (w) => { if (weight + w > cfg.capacity) return false; weight += w; return true; };
+      const findP = [lerp(0.2, 0.8, q), lerp(0.05, 0.5, q), 0];
+      cfg.zones.forEach((z, i) => z.relics.forEach((id) => { if (relics.length < 3 && r() < findP[i] && take(1)) relics.push(id); }));
+      cfg.scrap.forEach((v) => { if (r() < 0.6 && take(1)) money += v; });
+      const sard = 1 + Math.round(3 * q);
+      for (let i = 0; i < sard; i++) if (take(1)) { fish.sardine++; money += D.FISH.sardine.value; }
+      if (q > 0.5 && take(2)) { fish.eel++; money += D.FISH.eel.value; }
+      return { relics, money, fish, hits: Math.round((1 - q) * 2), drowned: false, lockers: 0 };
+    },
+    delivery(s, q, r) {
+      const cfg = R.deliveryConfig(s);
+      const deliveries = Math.max(1, Math.round(lerp(2, 7.4, q) * cfg.speedMult));
+      const late = Math.max(1, Math.round(deliveries * lerp(0.35, 0.05, q)));
+      const hits = q < 0.6 ? 1 : 0;
+      const on = deliveries - late;
+      return { cr: (on * 9.6 + late * 3) * cfg.payMult + on * 0.6 * 3 * cfg.tipMult, deliveries, late, hits };
+    },
+    farm(s, q, r) {
+      const cfg = R.farmConfig(s);
+      const T = D.FARM_TILES;
+      const pick = (list) => list[Math.floor(r() * list.length)];
+      let shares = 0, fakeTotal = 0;
+      const n = 5 + Math.round(3 * q);
+      for (let h = 0; h < n; h++) {
+        let bestSc = null;
+        const tries = 1 + Math.round(8 * q);
+        for (let t = 0; t < tries; t++) {
+          const sc = R.farmScore([pick(T.subject), pick(T.verb), pick(T.object)]);
+          if (!bestSc || sc.shares > bestSc.shares) bestSc = sc;
+        }
+        shares += bestSc.shares; fakeTotal += bestSc.fake;
+      }
+      shares = Math.min(Math.round(shares * lerp(0.35, 1, q)), 59000);
+      return { cr: shares * 0.0026 * cfg.payMult, headlines: n, shares, fakeTotal: Math.round(fakeTotal * 10) / 10, truth: 0 };
+    },
+    busk(s, q, r) {
+      const cfg = R.buskConfig(s);
+      const rounds = Math.min(6, 1 + Math.round(5 * q));
+      let crowd = 1, crowdMax = 1, cr = 0;
+      for (let i = 0; i < rounds; i++) { cr += (1 + crowd * 0.5) * cfg.payMult; crowd = Math.min(9, crowd + 1 + (r() < q ? 1 : 0)); crowdMax = Math.max(crowdMax, crowd); }
+      const soloNotes = Math.floor(rounds * lerp(1.5, 4, q));
+      cr += soloNotes * 0.25 * cfg.payMult * 0.7 + crowd * cfg.payMult;
+      return { cr, rounds, soloNotes, notes: soloNotes * 2 + rounds * 5, crowdMax };
+    },
+    clinic(s, q, r) {
+      const cfg = R.clinicConfig(s);
+      const patients = Math.min(5, 2 + Math.round(3 * q));
+      let cr = 0;
+      for (let i = 0; i < patients; i++) cr += (10 + 4 * r()) * cfg.payMult;
+      return { cr, patients, illegal: 0, mistakes: Math.max(1, Math.round((1 - q) * 3)) };
+    },
+    garden(s, q, r) {
+      return { harvest: Math.min(15, Math.round(lerp(3, 14, q))), stolen: Math.max(1, Math.round((1 - q) * 3)), wilted: Math.round((1 - q) * 2), golden: 0, mutant: false };
+    },
+    salvage(s, q, r) {
+      const floors = Math.round(lerp(3, 9, q)), perfect = Math.min(4, Math.round(floors * 0.4 * q)), misses = Math.max(1, Math.round((1 - q) * 3));
+      const items = [];
+      for (let i = 0; i < floors; i++) if (r() < 0.25) items.push(r() < 0.5 ? 'v_brick' : 'v_photo');
+      return { floors, perfect, misses, injured: q < 0.3 ? 1 : 0, items, cr: floors * 6 + perfect * 2 };
+    },
+    haggle(s, q, r) {
+      let total = 0, deals = 0, walkaways = 0, best2 = 0;
+      for (let i = 0; i < 6; i++) {
+        if (r() < lerp(0.45, 0.95, q)) { const p = Math.min(55, Math.round(lerp(8, 30, q) + 6 * r())); total += p; deals++; best2 = Math.max(best2, p); } else walkaways++;
+      }
+      return { total, deals, walkaways, lies: 0, best: best2, exposed: false };
+    },
+  };
+
+  // 生成一份落在目標評級的結果：逐級試 q，選評級不超過目標而且最接近目標的一份
+  function result(s, kind) {
+    const want = target(s, kind);
+    if (!want || !GEN[kind]) return null;
+    const J = IE.Jobs2;
+    const goal = J.RANKS.find((x) => x.id === want).min + 0.05, top = ORDER.indexOf(want);
+    const seed = (s.seed ^ (s.day * 7919) ^ (s.slot * 104729) ^ KINDS.indexOf(kind) * 31337) >>> 0;
+    let res = null, bestGap = Infinity, low = null, lowPerf = Infinity;
+    for (let i = 0; i <= 40; i++) {
+      const cand = GEN[kind](s, i / 40, rng(seed)), p = J.PERF[kind](cand);
+      if (p < lowPerf) { lowPerf = p; low = cand; }
+      const ri = ORDER.indexOf(J.rankOf(p).id);
+      if (ri > top) continue;
+      // 先求評級等於目標，再求表現接近目標下限 +5%
+      const gap = (top - ri) * 10 + Math.abs(p - goal);
+      if (gap < bestGap) { bestGap = gap; res = cand; }
+    }
+    res = res || low;
+    res.auto = true;
+    res.autoRank = want;
+    return res;
+  }
+
+  // 「照舊做」：生成結果並套用規則，回傳報告
+  function apply(s, kind) {
+    const res = result(s, kind);
+    if (!res) return null;
+    s.stats.autoDone = (s.stats.autoDone || 0) + 1;
+    return R.applyMicro(s, kind, res);
+  }
+
+  IE.Auto = { KINDS, ORDER, target, can, record, result, apply, cap };
+});
+
 // ---- js/stages.js ----
 // 《靈感撤離 2080》第六期：關卡與工具卡。
 // 每季 20 天有三個關卡之夜：第 7 天「社區小展」、第 14 天「畫廊聯展」、第 20 天「外星評審」（Boss，與篩選日同一晚）。
@@ -6221,7 +7122,8 @@ body.ct-open { overflow: hidden; }
   const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 17000);
   // 一晚的目標分數：隨日子以每天約 4% 增長（與創作分數的增長曲線相若）
   const STAGE_G = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_G) || 1.032);
-  const baseTarget = (day) => STAGE_K * Math.pow(STAGE_G, day - 1);
+  // 用「進度日」計算：60 天的一局，目標也會走完整條增長曲線
+  const baseTarget = (s, day) => STAGE_K * Math.pow(STAGE_G, R.age(s, day) - 1);
   const stakeMod = (s, key) => (IE.Meta ? IE.Meta.stakeMod(s, key) : 1);
   // 每季開始時選好這一季的評審規則（外星評級 4 以上有兩條）
   function bossesFor(s, q) {
@@ -6236,15 +7138,15 @@ body.ct-open { overflow: hidden; }
     return s.bosses[q].map((id) => BOSS[id]);
   }
   function stageOn(s, day) {
-    const q = Math.floor((day - 1) / 20), d = (day - 1) % 20 + 1;
-    const kind = d === 7 ? 'small' : d === 14 ? 'big' : d === 20 ? 'boss' : null;
+    const M = R.modeOf(s), q = Math.floor((day - 1) / M.period), d = (day - 1) % M.period + 1;
+    const kind = d === M.stageDays[0] ? 'small' : d === M.stageDays[1] ? 'big' : d === M.stageDays[2] ? 'boss' : null;
     if (!kind) return null;
     const K = KINDS[kind];
-    const target = Math.round(baseTarget(day) * K.mult * stakeMod(s, 'stageTarget') / 1000) * 1000;
-    return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
+    const target = Math.round(baseTarget(s, day) * K.mult * stakeMod(s, 'stageTarget') / 1000) * 1000;
+    return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
   }
   const today = (s) => stageOn(s, s.day);
-  function nextStage(s) { for (let d = s.day; d <= D.DAYS; d++) { const st = stageOn(s, d); if (st && !(s.stageDone && s.stageDone[d])) return st; } return null; }
+  function nextStage(s) { for (let d = s.day; d <= R.days(s); d++) { const st = stageOn(s, d); if (st && !(s.stageDone && s.stageDone[d])) return st; } return null; }
   // 合併所有生效的規則
   function rulesNow(s) {
     const ses = s.session;
@@ -6304,12 +7206,17 @@ body.ct-open { overflow: hidden; }
       s.cr += cr; s.stats.crEarned += cr; out.cr = cr;
       out.lines.push('獎金 $' + cr);
       for (let i = 0; i < (W.tools || 0); i++) { const t = randomTool(s); if (t && giveTool(s, t)) out.tools.push(t); }
-      if (W.tickets) { s.stageTickets = (s.stageTickets || 0) + W.tickets; out.tickets = W.tickets; out.lines.push('人才扭蛋券 ' + W.tickets + ' 張（局後發放）'); }
+      if (W.tickets) { R.gainTicket(s, 'silver', W.tickets, stage.name + '入選'); out.tickets = W.tickets; out.lines.push('扭蛋券 +' + W.tickets); }
       if (W.obj && R.rand(s) < W.obj) {
         const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.unlock && !o.souvenir && !s.objects.includes(o.id) && !s.objStash.includes(o.id)).map((o) => o.id);
         if (pool.length) { const id = R.pick(s, pool); if (R.gainObject(s, id, null)) out.objs.push(id); }
       }
-      if (score >= stage.target * 2) { s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, 0.2, true); }
+      if (score >= stage.target * 2) {
+        s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, 0.2, true);
+        if (stage.kind !== 'small') { R.gainTicket(s, 'gold', 1, '驚為天人'); out.lines.push('金色扭蛋券 +1'); }
+      }
+      // 外星評審圖鑑：記下打敗過的評審規則
+      if (stage.rules && stage.rules.length) { s.stats.judges = s.stats.judges || {}; stage.rules.forEach((id) => { s.stats.judges[id] = true; }); }
     } else {
       s.stats.stages.fail++;
       const F = K.fail;
@@ -6439,7 +7346,7 @@ body.ct-open { overflow: hidden; }
   }
   // 浮城百貨的工具卡貨架：每三天換兩張
   function toolShop(s) {
-    const period = Math.floor((s.day - 1) / 3);
+    const period = Math.floor((s.day - 1) / R.modeOf(s).shopEvery);
     if (!s.toolShop || s.toolShop.period !== period) {
       const pool = toolPool(s);
       const items = [];
@@ -6511,7 +7418,7 @@ body.ct-open { overflow: hidden; }
   }
   // 局內查詢（新一局開始時從 meta 複製到 s.metaPerks）
   const perks = (m) => {
-    const lv = levelOf(m), out = { tools: BASE_TOOLS.slice(), toolSlots: 0, startTool: 0, objSlots: 0, daily: false };
+    const lv = levelOf(m), out = { tools: BASE_TOOLS.slice(), toolSlots: 0, startTool: 0, objSlots: 0, daily: false, weekly: lv >= 3 };
     for (let i = 2; i <= lv; i++) { const L = LEVELS[i]; if (!L) continue; if (L.tool) out.tools.push(L.tool); if (L.toolSlots) out.toolSlots += L.toolSlots; if (L.startTool) out.startTool += L.startTool; if (L.objSlots) out.objSlots += L.objSlots; if (L.daily) out.daily = true; }
     return out;
   };
@@ -6540,7 +7447,7 @@ body.ct-open { overflow: hidden; }
   // ---------- 成就：每個都有扭蛋券獎勵 ----------
   const ACH = [
     { id: 'first', name: '第一次', desc: '完成一局', t: 1, test: (m) => (m.runs || 0) >= 1 },
-    { id: 'survive', name: '撐過來了', desc: '活到第 100 天', t: 2, test: (m, s) => s.day >= 100 && s.body > 0 },
+    { id: 'survive', name: '撐過來了', desc: '活到最後一天', t: 2, test: (m, s) => s.day >= IE.Rules.days(s) && s.body > 0 },
     { id: 'recruited', name: '被選中', desc: '被外星人帶走', t: 3, test: (m, s, e) => e === 'agent' || e === 'returned' },
     { id: 'guardian', name: '關上窗戶', desc: '被選中時選擇留下', t: 3, test: (m, s, e) => e === 'guardian' },
     { id: 'stage3', name: '開展', desc: '一局之內通過三個關卡', t: 1, test: (m, s) => ((s.stats.stages || {}).pass || 0) >= 3 },
@@ -6550,7 +7457,7 @@ body.ct-open { overflow: hidden; }
     { id: 'legend', name: '傳說', desc: '觸發任何一個傳說組合', t: 2, test: (m) => D.RECIPES.some((r) => r.legend && m.recipes && m.recipes[r.id]) },
     { id: 'recipes30', name: '組合收藏家', desc: '跨局發現 30 個具名組合', t: 3, test: (m) => Object.keys(m.recipes || {}).length >= 30 },
     { id: 'million', name: '一百萬', desc: '一次下筆得到 100 萬分', t: 3, test: (m) => (m.bestPlay || 0) >= 1000000 },
-    { id: 'light', name: '沒有包袱', desc: '以 3 克以下的靈魂完成一局', t: 2, test: (m, s, e) => s.soul <= 3 && s.day >= 60 },
+    { id: 'light', name: '沒有包袱', desc: '以 3 克以下的靈魂完成一局', t: 2, test: (m, s, e) => s.soul <= 3 && IE.Rules.age(s) >= 60 },
     { id: 'heavy', name: '背著整個世界', desc: '靈魂超過 60 克', t: 1, test: (m, s) => s.soul >= 60 },
     { id: 'deaths10', name: '十種死法', desc: '死亡圖鑑收集 10 種', t: 2, test: (m) => Object.keys(m.deaths || {}).length >= 10 },
     { id: 'deaths30', name: '死得很有創意', desc: '死亡圖鑑收集 30 種', t: 4, test: (m) => Object.keys(m.deaths || {}).length >= 30 },
@@ -6580,10 +7487,50 @@ body.ct-open { overflow: hidden; }
     return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 2 };
   }
 
+  // ---------- 每週挑戰（第八期）：同一週的所有玩家用同一個種子、角色和一條特別規則，外星評級 3 ----------
+  const WEEKLY_MODS = {
+    flood: { name: '大洪水週', desc: '開局水位已經到 4 樓' },
+    broke: { name: '破產週', desc: '開局身無分文' },
+    judges: { name: '全員評審週', desc: '社區小展和畫廊聯展也有外星評審的規則' },
+    single: { name: '斷捨離週', desc: '只可以裝備一件靈感物件' },
+  };
+  function weekKey(d) {
+    const x = d ? new Date(d) : new Date();
+    const t = new Date(Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()));
+    const day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return t.getUTCFullYear() + '-W' + String(Math.ceil(((t - y0) / 86400000 + 1) / 7)).padStart(2, '0');
+  }
+  function weekly(key) {
+    let h = 2166136261;
+    for (const ch of 'week' + String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+    h >>>= 0;
+    const bgs = Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === 'R');
+    const seasons = Object.keys(D.SEASONS), mods = Object.keys(WEEKLY_MODS);
+    return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 3, mod: mods[(h >>> 12) % mods.length] };
+  }
+
+  // ---------- 角色精通（第八期）：每個角色各自累積經驗，升級解鎖角色故事和獎勵 ----------
+  const MASTERY_XP = [0, 0, 150, 400, 800, 1400]; // 升到 Lv.k 要的累積經驗
+  const MASTERY_REWARD = [null, null,
+    { text: '角色故事（一）；金色扭蛋券 +1', story: 0, gold: 1 },
+    { text: '角色故事（二）；用這個角色開局時多帶一張工具卡', story: 1, tool: 1 },
+    { text: '角色故事（三）；金色外框', story: 2, frame: true },
+    { text: '「大師」稱號；外星扭蛋券 +1', rainbow: 1, title: true },
+  ];
+  function masteryOf(m, bg) {
+    const xp = (m && m.mastery && m.mastery[bg]) || 0;
+    let level = 1;
+    while (level < 5 && xp >= MASTERY_XP[level + 1]) level++;
+    return { xp, level, next: MASTERY_XP[level + 1] || null, base: MASTERY_XP[level], reward: MASTERY_REWARD[level + 1] || null };
+  }
+  const storiesOf = (m, bg) => ((D.STORIES && D.STORIES[bg]) || []).slice(0, Math.max(0, masteryOf(m, bg).level - 1));
+
   // ---------- 一局結束：經驗、等級、評級、成就、每日挑戰紀錄 ----------
   function settle(m, s, e) {
     const st = s.stats.stages || {};
-    const xp = Math.round(s.day + 25 * (st.pass || 0) + ({ agent: 80, returned: 60, guardian: 70, heavy: 40, ordinary: 30 }[e] || 0) + 4 * (s.stake || 1) * ((st.pass || 0) + 1));
+    const xp = Math.round(IE.Rules.age(s) + 25 * (st.pass || 0) + ({ agent: 80, returned: 60, guardian: 70, heavy: 40, ordinary: 30 }[e] || 0) + 4 * (s.stake || 1) * ((st.pass || 0) + 1));
     m.xp = (m.xp || 0) + xp;
     m.level = levelOf(m);
     m.lastXp = xp; m.lastLevels = [];
@@ -6594,6 +7541,35 @@ body.ct-open { overflow: hidden; }
       if (L.tickets) m.tickets = (m.tickets || 0) + L.tickets;
       m.lastLevels.push({ level: m.level, text: L.text, memo: MEMOS[m.level - 2] || null });
     }
+    // 角色精通：同一份經驗也加到這個角色
+    m.mastery = m.mastery || {};
+    const lv0 = masteryOf(m, s.bg).level;
+    m.mastery[s.bg] = (m.mastery[s.bg] || 0) + xp;
+    m.lastMastery = [];
+    for (let k = lv0 + 1; k <= masteryOf(m, s.bg).level; k++) {
+      const W = MASTERY_REWARD[k];
+      if (W.gold) m.goldTickets = (m.goldTickets || 0) + W.gold;
+      if (W.rainbow) m.rainbowTickets = (m.rainbowTickets || 0) + W.rainbow;
+      m.lastMastery.push({ level: k, text: W.text, story: W.story != null && D.STORIES && D.STORIES[s.bg] ? D.STORIES[s.bg][W.story] : null });
+    }
+    m.lastExtra = [];
+    // 對局歷史與個人紀錄
+    const ms = s.playMs || 0;
+    m.history = [{ date: dateKey(), bg: s.bg, mode: s.mode || 'long', stake: s.stake || 1, day: s.day, ending: e, stages: st.pass || 0,
+      best: s.stats.bestPlay || 0, ms, daily: s.daily || null, weekly: s.weekly ? s.weekly.key : null }].concat(m.history || []).slice(0, 30);
+    m.bests = m.bests || {};
+    const B = m.bests[s.bg] || { stages: 0, best: 0, day: 0 };
+    if ((st.pass || 0) > B.stages || (s.stats.bestPlay || 0) > B.best) m.lastExtra.push('個人紀錄：' + D.BACKGROUNDS[s.bg].name);
+    m.bests[s.bg] = { stages: Math.max(B.stages, st.pass || 0), best: Math.max(B.best, s.stats.bestPlay || 0), day: Math.max(B.day, s.day) };
+    // 收藏完成獎勵：湊齊一個流派的全部靈感物件（金色扭蛋券），打敗全部外星評審規則（外星扭蛋券）
+    m.schoolDone = m.schoolDone || {};
+    Object.keys(D.SCHOOLS || {}).forEach((k) => {
+      if (m.schoolDone[k]) return;
+      const all = D.OBJECTS.filter((o) => o.school === k);
+      if (all.length && all.every((o) => m.objSeen && m.objSeen[o.id])) { m.schoolDone[k] = true; m.goldTickets = (m.goldTickets || 0) + 1; m.lastExtra.push('湊齊「' + D.SCHOOLS[k].name + '」的全部物件：金色扭蛋券 +1'); }
+    });
+    m.judges = Object.assign(m.judges || {}, s.stats.judges || {});
+    if (!m.judgesDone && IE.Stages && IE.Stages.BOSSES.every((b) => m.judges[b.id])) { m.judgesDone = true; m.rainbowTickets = (m.rainbowTickets || 0) + 1; m.lastExtra.push('打敗過全部外星評審的規則：外星扭蛋券 +1'); }
     // 外星評級：活到最後（沒有死亡、沒有灰化）就算通過
     m.stakes = m.stakes || {};
     m.played = m.played || {};
@@ -6605,7 +7581,16 @@ body.ct-open { overflow: hidden; }
       m.daily = m.daily || {};
       const prev = m.daily[s.daily];
       const score = s.day + 100 * (st.pass || 0) + (e === 'agent' ? 1000 : 0);
+      if (!prev) { m.goldTickets = (m.goldTickets || 0) + 1; m.lastExtra.push('完成今天的每日挑戰：金色扭蛋券 +1'); }
       if (!prev || score > prev.score) m.daily[s.daily] = { score, day: s.day, stages: st.pass || 0, ending: e, bg: s.bg };
+    }
+    // 每週挑戰：每週第一次完成，外星扭蛋券 +1
+    if (s.weekly) {
+      m.weekly = m.weekly || {};
+      const prev = m.weekly[s.weekly.key];
+      const score = s.day + 100 * (st.pass || 0) + (e === 'agent' ? 1000 : 0);
+      if (!prev) { m.rainbowTickets = (m.rainbowTickets || 0) + 1; m.lastExtra.push('完成本週挑戰：外星扭蛋券 +1'); }
+      if (!prev || score > prev.score) m.weekly[s.weekly.key] = { score, day: s.day, stages: st.pass || 0, ending: e, bg: s.bg };
     }
     // 成就
     m.ach = m.ach || {};
@@ -6614,12 +7599,13 @@ body.ct-open { overflow: hidden; }
       if (m.ach[a.id]) return;
       let ok = false;
       try { ok = !!a.test(m, s, e); } catch (err) { ok = false; }
-      if (ok) { m.ach[a.id] = 1; m.tickets = (m.tickets || 0) + a.t; m.lastAch.push(a.id); }
+      if (ok) { m.ach[a.id] = 1; m.tickets = (m.tickets || 0) + a.t; if (a.t >= 5) m.goldTickets = (m.goldTickets || 0) + 1; m.lastAch.push(a.id); }
     });
     return m;
   }
 
-  IE.Meta = { STAKES, stakeMod, stakeCleared, stakeMax, LEVELS, xpFor, levelOf, levelInfo, perks, toolOpen, bonus, MEMOS, ACH, dateKey, daily, settle, BASE_TOOLS };
+  IE.Meta = { STAKES, stakeMod, stakeCleared, stakeMax, LEVELS, xpFor, levelOf, levelInfo, perks, toolOpen, bonus, MEMOS, ACH, dateKey, daily, settle, BASE_TOOLS,
+    WEEKLY_MODS, weekKey, weekly, MASTERY_XP, MASTERY_REWARD, masteryOf, storiesOf };
 });
 
 // ---- js/dossier.js ----
@@ -6828,7 +7814,7 @@ body.ct-open { overflow: hidden; }
     if (s.spark >= 3 && s.conscience < 0.4) add('energy');
     if (s.spark >= 3.2) add('interesting');
     if (s.paranoia >= 70) add('observe');
-    if (s.day < 30) add('moredata');
+    if (IE.Rules.age(s) < 30) add('moredata');
     if (kind === 'guardian') add('unknown');
     if (s.stats.volunteer >= 8 && a.stamp !== 'mascot') add('mascot', '社區吉祥物');
     return out;
@@ -11802,6 +12788,8 @@ body.ct-open { overflow: hidden; }
       + (() => { const ns = IE.Stages && IE.Stages.nextStage(s); if (!ns) return ''; const d = ns.day - s.day;
         return '<span class="chip stage" style="--c:' + ns.color + '" title="' + esc(ns.rules.map((b) => b.name + '：' + b.desc).join('；')) + '">第 ' + ns.index + ' 關・' + ns.name + '：' + (d === 0 ? '今晚' : d + ' 天後') + '・目標 ' + kfmt(ns.target) + '</span>'; })()
       + (s.stake > 1 ? '<span class="chip warn">外星評級 ' + s.stake + '</span>' : '')
+      + (s.runTickets && (s.runTickets.silver + s.runTickets.gold + s.runTickets.rainbow) ? '<span class="chip tk" title="這一局賺到的扭蛋券（局後存入）">扭蛋券 ' + ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '彩' })[k] + s.runTickets[k]).join(' ') + '</span>' : '')
+      + (s.weekly ? '<span class="chip daily">每週挑戰・' + IE.Meta.WEEKLY_MODS[s.weekly.mod].name + '</span>' : '')
       + (s.daily ? '<span class="chip passport">每日挑戰</span>' : '')
       + (IE.World && IE.World.stamps(s) ? '<span class="chip passport" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
       + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
@@ -11812,7 +12800,7 @@ body.ct-open { overflow: hidden; }
       : '<span class="chip warn">露宿天橋下</span>';
     hud.innerHTML = ''
       + '<div class="hud-top">'
-      + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + D().DAYS + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
+      + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + R().days(s) + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
       + '<span class="chip season">' + season.name + '</span>' + rentChip
       + '<span class="chip' + (toReview === 0 ? ' warn' : '') + '">' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後') + '</span>'
       + danger
@@ -11914,23 +12902,26 @@ body.ct-open { overflow: hidden; }
         : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。也可以直接在上面的地圖點選地點。';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
-    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p>'
+    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p>' + IE.UI.abilityStrip(s)
       + '<div class="btn-row left">' + (s.trip ? '<button class="btn mini" type="button" data-do="souvenir">紀念品店</button>' : '<button class="btn mini" type="button" data-do="store">浮城百貨</button>') + '</div></div>'
       + groups.map((g) => (groups.length > 1 ? '<h3 class="act-group">' + GROUPS[g] + '</h3>' : '')
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
           i++;
-          return '<button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled') + '>'
+          // 熟手自動完成：親手玩過的小遊戲可以「照舊做」（第八期）
+          const auto = a.enabled && IE.Auto && IE.Auto.can(s, a.id) ? IE.Auto.target(s, a.id) : null;
+          return '<div class="act-wrap' + (auto ? ' has-auto' : '') + '"><button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled') + '>'
             + '<span class="act-key">' + (i % 10) + '</span><span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
-            + '<span class="fx">' + fxHtml(a.fx) + '</span>' + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>';
+            + '<span class="fx">' + fxHtml(a.fx) + '</span>' + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
+            + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="照舊做：不用玩小遊戲，直接以 ' + auto + ' 級結算（拿不到 S、SS 和特別成就）">照舊做<b>' + auto + '</b></button>' : '') + '</div>';
         }).join('') + '</div>').join('')
       + invHtml(s);
   }
   function invHtml(s) {
     const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>').join('');
-    return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + s.objSlots + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
+    return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + R().slotsOf(s) + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
       + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
       + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
-      + '<div class="inv-head"><span>素材庫 ' + s.cards.length + ' / ' + R().MAX_CARDS + '</span><span>晚上用來創作・用得越多次越殘・滿了會丟掉最殘的一張</span></div>'
+      + '<div class="inv-head"><span>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</span><span>晚上用來創作・用得越多次越殘・滿了會丟掉最殘的一張</span></div>'
       + '<div class="inv">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute" style="font-size:13px">還沒有素材。先去生活吧。</span>') + '</div></div>';
   }
   function objectsModal(s) {
@@ -11943,11 +12934,11 @@ body.ct-open { overflow: hidden; }
         + (equipped ? '<button class="btn mini" type="button" data-do="left" data-id="' + id + '"' + (i === 0 ? ' disabled' : '') + '>←</button>'
           + '<button class="btn mini" type="button" data-do="right" data-id="' + id + '"' + (i === s.objects.length - 1 ? ' disabled' : '') + '>→</button>'
           + '<button class="btn mini" type="button" data-do="unequip" data-id="' + id + '"' + (s.objStash.length >= 4 ? ' disabled' : '') + '>卸下</button>'
-          : '<button class="btn mini sea" type="button" data-do="equip" data-id="' + id + '"' + (s.objects.length >= s.objSlots ? ' disabled' : '') + '>裝備</button>')
+          : '<button class="btn mini sea" type="button" data-do="equip" data-id="' + id + '"' + (R().canEquip(s, id) ? '' : ' disabled') + '>裝備</button>')
         + '<button class="btn mini" type="button" data-do="sell" data-id="' + id + '">賣 $' + Math.round(D_.OBJ_PRICE[o.rarity] / 2) + '</button></div></div>';
     };
     return '<div class="modal wide"><h2>靈感物件</h2>'
-      + '<p class="mute" style="font-size:13px">裝備中的物件會在創作計分時由左至右觸發（碎鏡會複製右邊那件）。物件欄 ' + s.objects.length + ' / ' + s.objSlots + '，儲物箱最多 4 件。</p>'
+      + '<p class="mute" style="font-size:13px">裝備中的物件會在創作計分時由左至右觸發（碎鏡會複製右邊那件）。物件欄 ' + s.objects.length + ' / ' + R().slotsOf(s) + '，儲物箱最多 4 件。' + (D().BACKGROUNDS[s.bg].perk.implantSlot ? '義體欄只可以放機械流的物件。' : '') + '</p>'
       + '<h3>裝備中</h3>' + (s.objects.map((id, i) => row(id, true, i)).join('') || '<p class="mute">沒有</p>')
       + '<h3>儲物箱</h3>' + (s.objStash.map((id) => row(id, false)).join('') || '<p class="mute">沒有</p>')
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">完成</button></div></div>';
@@ -12052,7 +13043,7 @@ body.ct-open { overflow: hidden; }
     (meta.lastLevels || []).forEach((l) => { h += '<div class="mr-level"><b>升到 Lv.' + l.level + '！</b>' + esc(l.text) + (l.memo ? '<p class="memo">' + esc(l.memo) + '</p>' : '') + '</div>'; });
     if (meta.lastStake) h += '<div class="mr-stake">通過外星評級 ' + meta.lastStake + '：這個角色解鎖了評級 ' + Math.min(8, meta.lastStake + 1) + '</div>';
     (meta.lastAch || []).forEach((id) => { const a = M.ACH.find((x) => x.id === id); if (a) h += '<div class="mr-ach">成就「' + esc(a.name) + '」：' + esc(a.desc) + '<b>+' + a.t + ' 扭蛋券</b></div>'; });
-    return h + '</div>';
+    return h + IE.UI.metaRunHtml(meta) + '</div>';
   }
   function profileHtml(meta) {
     const M = IE.Meta, L = M.levelInfo(meta);
@@ -12063,6 +13054,10 @@ body.ct-open { overflow: hidden; }
   function dailyText(meta) {
     const k = IE.Meta.dateKey(), rec = meta.daily && meta.daily[k];
     return rec ? '今天最佳：' + rec.day + ' 天・' + rec.stages + ' 關' : '今天還沒挑戰';
+  }
+  function weeklyText(meta) {
+    const w = IE.Meta.weekly(IE.Meta.weekKey()), rec = meta.weekly && meta.weekly[w.key];
+    return IE.Meta.WEEKLY_MODS[w.mod].name + (rec ? '・已完成' : '・未完成');
   }
   function titlePanel(meta, hasSave) {
     const endings = meta.endings ? Object.keys(meta.endings).length : 0;
@@ -12076,8 +13071,10 @@ body.ct-open { overflow: hidden; }
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button>'
-      + '<button class="btn gacha-btn" type="button" data-do="gacha">人才扭蛋機<small>扭蛋券 ' + (meta.tickets || 0) + '</small></button>'
-      + (IE.Meta.perks(meta).daily ? '<button class="btn daily-btn" type="button" data-do="daily">每日挑戰<small>' + dailyText(meta) + '</small></button>' : '') + '</div>'
+      + '<button class="btn gacha-btn" type="button" data-do="gacha">人才扭蛋機' + IE.UI.ticketChips(meta) + '</button>'
+      + (IE.Meta.perks(meta).daily ? '<button class="btn daily-btn" type="button" data-do="daily">每日挑戰<small>' + dailyText(meta) + '</small></button>' : '')
+      + (IE.Meta.perks(meta).weekly ? '<button class="btn weekly-btn" type="button" data-do="weekly">每週挑戰<small>' + weeklyText(meta) + '</small></button>' : '')
+      + ((meta.history || []).length ? '<button class="btn" type="button" data-do="history">對局紀錄</button>' : '') + '</div>'
       + profileHtml(meta)
       + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>死法 <b>' + Object.keys(meta.deaths || {}).length + '/' + D().DEATHS.length + '</b></span><span>事件 <b>' + Object.keys(meta.eventsSeen || {}).length + '/' + (D().WORLD_EVENTS.length + D().EVENTS.length) + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span><span>角色 <b>' + IE.Roster.list(meta).filter((c) => c.open).length + '/' + Object.keys(D().BACKGROUNDS).length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
@@ -12097,33 +13094,6 @@ body.ct-open { overflow: hidden; }
     }).join('') + '</div>';
   }
   const topStats = (attr, n) => D().STAT_KEYS.slice().sort((a, b) => attr[b] - attr[a]).slice(0, n);
-  function setupPanel(sel, meta) {
-    const bgs = D().BACKGROUNDS, seasons = D().SEASONS, RA = D().CHAR_RARITY;
-    const roster = IE.Roster.list(meta);
-    const b = bgs[sel.bg];
-    const open = IE.Roster.unlocked(meta, sel.bg);
-    const card = (x) => '<button class="bg-card r-' + x.rarity + (sel.bg === x.id ? ' sel' : '') + (x.open ? '' : ' locked') + '" type="button" data-do="bg" data-id="' + x.id + '">'
-      + '<span class="bg-top"><span class="rar r-' + x.rarity + '">' + x.rarity + '</span>' + (x.alien ? '<span class="alien-tag">非地球人</span>' : '') + '</span>'
-      + '<span class="bg-por">' + IE.Chars.img(x.id, 5, !x.open) + '</span>'
-      + '<span class="n">' + (x.open ? x.name : '？？？') + '</span>'
-      + (x.open ? '<span class="p">' + x.perkText + '</span>'
-        + '<span class="s"><span style="color:var(--cash)">$' + x.cr + '</span><span style="color:var(--spark)">火花 ×' + x.spark.toFixed(1) + '</span><span style="color:var(--stone)">' + x.soul + '<small>克</small></span></span>'
-        : '<span class="d">解鎖：' + esc(x.unlock.text) + '</span>') + '</button>';
-    const group = (r, title) => '<h3 class="act-group"><span class="rar r-' + r + '">' + r + '</span>' + title + '（' + roster.filter((x) => x.rarity === r && x.open).length + '/' + roster.filter((x) => x.rarity === r).length + '）</h3>'
-      + '<div class="bg-grid">' + roster.filter((x) => x.rarity === r).map(card).join('') + '</div>';
-    return '<div class="panel-head"><h2>你是誰？</h2><p>二十種人生（包括幾個不是地球人的），分為 R、SR、UR。新角色要跨局達成條件，或者用人才扭蛋機抽出來。</p></div>'
-      + group('R', '普通人') + group('SR', '稀有人才') + group('UR', '極稀有（包括外星人）')
-      + '<div class="bg-detail r-' + b.rarity + '"><div class="bg-big">' + IE.Chars.img(sel.bg, 8, !open) + '</div><div><h3><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + (open ? b.name : '？？？') + '</h3>'
-      + (open ? '<p class="mute">' + b.desc + b.past + '</p><p class="p">' + b.perkText + '</p>'
-        + '<p>靈魂 <b>' + b.soul + ' 克</b>・良知 <b>' + Math.round(b.conscience * 100) + '%</b>・身體上限 <b>' + Math.round((70 + 0.3 * b.stats.fit) * (b.perk.bodyMult || 1)) + '</b>・住 <b>' + b.floor + ' 樓</b>・擅長 <b>' + topStats(b.stats, 3).map((k) => D().STATS[k].name).join('、') + '</b></p>'
-        : '<p class="act-why">未解鎖：' + esc(b.unlock.text) + '</p><p class="mute">也可以用人才扭蛋機抽出來（每次 ' + IE.Roster.GACHA_COST + ' 張扭蛋券，你有 ' + ((meta && meta.tickets) || 0) + ' 張）。</p>')
-      + '</div>' + (open ? statBars(b.stats, { compact: true }) : '') + '</div>'
-      + (open ? stakeHtml(sel, meta) : '')
-      + '<div class="panel-head"><h2>起始季節</h2><p>' + esc(seasons[sel.season].desc) + '季節每 25 天輪替一次。</p></div>'
-      + '<div class="seg">' + Object.keys(seasons).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + seasons[k].name + '</button>').join('') + '</div>'
-      + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button><button class="btn" type="button" data-do="gacha">人才扭蛋機（' + ((meta && meta.tickets) || 0) + '）</button>'
-      + '<button class="btn primary big" type="button" data-do="start"' + (open ? '' : ' disabled') + '>' + (open ? '出發' : '未解鎖') + '</button></div>';
-  }
   // 外星評級（難度）：每個角色分開計算，撐到最後才解鎖下一級
   function stakeHtml(sel, meta) {
     const M = IE.Meta, max = M.stakeMax(meta, sel.bg), cleared = M.stakeCleared(meta, sel.bg);
@@ -12132,28 +13102,6 @@ body.ct-open { overflow: hidden; }
       + '<div class="seg stakes">' + M.STAKES.map((k) => '<button type="button" class="' + (cur === k.n ? 'sel' : '') + (k.n <= cleared ? ' cleared' : '') + '" data-do="stake" data-id="' + k.n + '"' + (k.n > max ? ' disabled' : '') + ' title="' + esc(k.desc) + '">'
         + k.n + '・' + k.name + '</button>').join('') + '</div>'
       + '<p class="mute stake-rules">' + M.STAKES.filter((k) => k.n <= cur).map((k) => k.n + '. ' + k.desc).join('　') + '</p>';
-  }
-  // 人才扭蛋機：星際人才發展局出品，抽出你的下一世
-  function gachaModal(meta, result, spinning) {
-    const RO = IE.Roster;
-    const locked = RO.list(meta).filter((c) => !c.open);
-    const t = (meta && meta.tickets) || 0, cost = RO.GACHA_COST;
-    let res = '';
-    if (result && result.type === 'char') {
-      const b = D().BACKGROUNDS[result.id];
-      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
-    } else if (result) {
-      res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
-    }
-    const left = Math.max(0, RO.PITY - ((meta && meta.pity) || 0));
-    return '<div class="modal gacha"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
-      + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券。每次扭蛋 ' + cost + ' 張。機會率：<b class="ur-odds">UR ' + (RO.ODDS.UR * 100) + '%</b>・SR ' + (RO.ODDS.SR * 100) + '%・銘謝惠顧及其他 ' + Math.round((1 - RO.ODDS.UR - RO.ODDS.SR) * 1000) / 10 + '%。'
-      + '已解鎖的稀有度不會重複抽中。根據《星際勞工保障條例》，連續 ' + RO.PITY + ' 次沒有 UR，下一次必定是 UR（還差 ' + left + ' 次）。</p>'
-      + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
-      + res
-      + '<p class="tickets">扭蛋券 <b>' + t + '</b> 張・已扭 ' + ((meta && meta.pulls) || 0) + ' 次・未解鎖角色 <b>' + locked.length + '</b> 個</p>'
-      + '<div class="btn-row"><button class="btn primary" type="button" data-do="pull"' + (t >= cost && !spinning ? '' : ' disabled') + '>扭一次（' + cost + ' 張）</button>'
-      + '<button class="btn" type="button" data-do="close"' + (spinning ? ' disabled' : '') + '>離開</button></div></div>';
   }
   // 浮城百貨：分類貨架，每件貨品都有像素模組
   function storeModal(s, cat) {
@@ -12249,7 +13197,7 @@ body.ct-open { overflow: hidden; }
   }
   function helpModal() {
     return '<div class="modal wide"><h2>玩法</h2><div class="help">'
-      + '<p>你有 <b>100 天</b>。每天分為早上、下午、晚上三個時段，每個時段做一件事。第 20、40、60、80、100 天晚上是<b>篩選日</b>：累積訊號夠高、靈魂又夠輕，外星人就會把你帶走。篩選日前兩晚，外星 HR 會在夢裡面試你。</p>'
+      + '<p>標準的一局有 <b>60 天</b>（長篇模式 100 天）。每天分為早上、下午、晚上三個時段，每個時段做一件事。每期最後一天（標準模式第 12、24、36、48、60 天）晚上是<b>篩選日</b>：累積訊號夠高、靈魂又夠輕，外星人就會把你帶走。篩選日前兩晚，外星 HR 會在夢裡面試你。</p>'
       + '<h3>三樣東西互相蠶食</h3><ul>'
       + '<li><b>錢</b>：每晚要吃飯，每 7 天要交租，租金每期上漲。兩次交不起租就會被趕出門。</li>'
       + '<li><b>身體</b>：降到 0 就會死。身體上限由體能決定。</li>'
@@ -12449,9 +13397,171 @@ body.ct-open { overflow: hidden; }
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
-    titlePanel, setupPanel, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
-    rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, gachaModal, storeModal, souvenirModal, rosterHtml,
+    titlePanel, stakeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
+    rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };
+})(window.IE = window.IE || {});
+
+// ---- js/ui-roster.js ----
+// 《靈感撤離 2080》第八期介面：選角畫面、三種扭蛋券的人才扭蛋機、對局紀錄、招牌能力的提示。
+// 在 ui.js 之後載入，把函式加到 IE.UI。
+(function (IE) {
+  'use strict';
+  const D = () => IE.DATA;
+  const UI = IE.UI;
+  const esc = UI.esc, fmt = UI.fmt;
+  const ENDING = { agent: '被選中', returned: '被退回', guardian: '地球守護者', heavy: '良知太重', ordinary: '平凡人', death: '死亡', grey: '灰化' };
+  const RNAME = { R: '普通人', SR: '稀有人才', UR: '極稀有（包括外星人）' };
+  const mmss = (ms) => { const m = Math.round((ms || 0) / 60000); return m >= 60 ? Math.floor(m / 60) + ' 小時 ' + (m % 60) + ' 分' : m + ' 分鐘'; };
+  const tickets = (meta) => { const RO = IE.Roster; return Object.keys(RO.TICKETS).map((k) => ({ k, T: RO.TICKETS[k], n: RO.ticketsOf(meta, k) })); };
+
+  // 扭蛋券的小標籤（標題、選角、扭蛋機共用）
+  function ticketChips(meta, o) {
+    o = o || {};
+    return '<span class="tk-chips' + (o.big ? ' big' : '') + '">' + tickets(meta).map((x) => '<span class="tk-chip" style="--c:' + x.T.color + '" title="' + esc(x.T.name + '：' + x.T.desc) + '"><i></i>' + x.T.short + ' <b class="num">' + x.n + '</b></span>').join('') + '</span>';
+  }
+  // 角色精通的星星
+  const stars = (lv) => '<span class="stars" aria-label="精通 Lv.' + lv + '">' + [1, 2, 3, 4, 5].map((k) => '<i class="' + (k <= lv ? 'on' : '') + '"></i>').join('') + '</span>';
+
+  function abilityHtml(bg, o) {
+    o = o || {};
+    const A = D().ABILITIES[bg];
+    if (!A) return '';
+    return '<div class="sd-abil' + (o.compact ? ' compact' : '') + '"><div class="sd-ab-h"><span class="lbl">招牌能力</span><b>' + esc(A.name) + '</b><span class="use">' + esc(D().ABILITY_USE[A.use]) + '</span></div>'
+      + '<p>' + esc(A.desc) + '</p><p class="sd-cost"><span class="lbl">代價</span>' + esc(A.cost) + '</p></div>';
+  }
+  function masteryHtml(meta, bg) {
+    const M = IE.Meta.masteryOf(meta, bg);
+    const pct = M.next ? Math.min(100, (M.xp - M.base) / (M.next - M.base) * 100) : 100;
+    return '<div class="sd-mast"><div class="sd-mast-h"><span class="lbl">角色精通</span>' + stars(M.level) + '<b>Lv.' + M.level + (M.level >= 5 ? '・大師' : '') + '</b>'
+      + '<span class="mute num">' + (M.next ? M.xp + ' / ' + M.next : M.xp) + '</span></div>'
+      + '<div class="bar"><i style="width:' + pct + '%"></i></div>'
+      + (M.reward ? '<small>下一級：' + esc(M.reward.text) + '</small>' : '<small>已經是大師。</small>') + '</div>';
+  }
+  function storiesHtml(meta, bg) {
+    const all = (D().STORIES && D().STORIES[bg]) || [];
+    const got = IE.Meta.storiesOf(meta, bg);
+    return '<div class="sd-stories">' + all.map((t, i) => (i < got.length ? '<p class="story">' + esc(t) + '</p>' : '<p class="story locked">角色精通 Lv.' + (i + 2) + ' 解鎖第 ' + (i + 1) + ' 段故事</p>')).join('') + '</div>';
+  }
+  function unlockProgress(meta, b) {
+    if (!b.unlock || !b.unlock.prog) return '';
+    const [cur, need] = b.unlock.prog(meta);
+    return '<div class="bar unlock-bar"><i style="width:' + Math.min(100, cur / need * 100) + '%"></i></div><small class="num">' + Math.min(cur, need) + ' / ' + need + '</small>';
+  }
+
+  // ---------- 選角 ----------
+  function setupPanel(sel, meta) {
+    const bgs = D().BACKGROUNDS, RO = IE.Roster;
+    const roster = RO.list(meta);
+    const b = bgs[sel.bg];
+    const open = RO.unlocked(meta, sel.bg);
+    const mast = (id) => IE.Meta.masteryOf(meta, id).level;
+    const card = (x) => '<button class="ch r-' + x.rarity + (sel.bg === x.id ? ' sel' : '') + (x.open ? '' : ' locked') + (x.open && mast(x.id) >= 4 ? ' gold' : '') + '" type="button" data-do="bg" data-id="' + x.id + '" aria-pressed="' + (sel.bg === x.id) + '">'
+      + '<span class="ch-rar">' + x.rarity + '</span>'
+      + '<span class="ch-por">' + IE.Chars.img(x.id, 4, !x.open) + '</span>'
+      + '<span class="ch-name">' + (x.open ? esc(x.short || x.name) : '？？？') + '</span>'
+      + (x.open ? '<span class="ch-abil">' + esc(D().ABILITIES[x.id] ? D().ABILITIES[x.id].name : '') + '</span>' + stars(mast(x.id)) : '<span class="ch-lock">未解鎖</span>') + '</button>';
+    const group = (r) => {
+      const list = roster.filter((x) => x.rarity === r);
+      return '<div class="su-group"><h3><span class="rar r-' + r + '">' + r + '</span>' + RNAME[r] + '<span class="mute num">' + list.filter((x) => x.open).length + '/' + list.length + '</span></h3>'
+        + '<div class="su-grid">' + list.map(card).join('') + '</div></div>';
+    };
+    const school = (() => { const o = D().OBJ[D().START_OBJECT[sel.bg]]; if (!o) return ''; const sc = o.school && D().SCHOOLS[o.school];
+      return '<div class="sd-school">' + IE.Icons.obj(o.id, 36) + '<div>' + (sc ? '<span class="sch-tag" style="--c:' + sc.color + '">' + esc(sc.name) + '</span>' : '') + '<b>起始物件：' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span></div></div>'; })();
+    const best = meta.bests && meta.bests[sel.bg];
+    const bodyMax = Math.round((70 + 0.3 * b.stats.fit) * (b.perk.bodyMult || 1)) - (b.perk.bodyMinus || 0);
+    const detail = open
+      ? '<div class="sd-head"><div class="sd-por' + (mast(sel.bg) >= 4 ? ' gold' : '') + '">' + IE.Chars.img(sel.bg, 7) + '</div><div class="sd-id">'
+        + '<span class="rar r-' + b.rarity + '">' + b.rarity + '</span><h3>' + esc(b.name) + (mast(sel.bg) >= 5 ? '<small class="title">大師</small>' : '') + '</h3>'
+        + '<p class="mute">' + esc(b.desc + b.past) + '</p>'
+        + '<div class="sd-chips"><span style="--c:var(--cash)">$' + b.cr + '</span><span style="--c:var(--spark)">火花 ×' + b.spark.toFixed(1) + '</span><span style="--c:var(--stone)">靈魂 ' + b.soul + ' 克</span>'
+        + '<span>良知 ' + Math.round(b.conscience * 100) + '%</span><span>身體 ' + bodyMax + '</span><span>住 ' + b.floor + ' 樓</span>'
+        + '<span title="素材計分時的籌碼倍數">創作籌碼 ×' + (b.perk.craftChips || 1) + '</span>' + (b.rarity !== 'R' ? '<span style="--c:var(--alien)" title="外星 HR 對稀有人才的要求比較低">篩選門檻 ' + (b.rarity === 'UR' ? '−28%' : '−12%') + '</span>' : '') + '</div></div></div>'
+        + abilityHtml(sel.bg) + school + masteryHtml(meta, sel.bg)
+        + '<details class="sd-more"><summary>角色故事、能力值與個人紀錄</summary>' + storiesHtml(meta, sel.bg)
+        + '<p class="p">' + esc(b.perkText) + '</p>' + UI.statBars(b.stats, { compact: true })
+        + (best ? '<p class="mute">個人紀錄：最多 ' + best.stages + ' 關・最佳一筆 ' + fmt(best.best) + ' 分・活到第 ' + best.day + ' 天</p>' : '') + '</details>'
+      : '<div class="sd-head"><div class="sd-por">' + IE.Chars.img(sel.bg, 7, true) + '</div><div class="sd-id"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span><h3>？？？</h3>'
+        + '<p class="act-why">解鎖條件：' + esc(b.unlock.text) + '</p>' + unlockProgress(meta, b) + '</div></div>'
+        + abilityHtml(sel.bg, { compact: true })
+        + '<p class="mute">也可以用人才扭蛋機抽出來：' + ticketChips(meta) + '</p>';
+    const modes = D().MODES;
+    const opts = '<div class="su-opts">'
+      + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + Object.keys(modes).map((k) => '<button type="button" class="' + ((sel.mode || 'standard') === k ? 'sel' : '') + '" data-do="mode" data-id="' + k + '">' + modes[k].name + '<small>' + modes[k].desc + '</small></button>').join('') + '</div></div>'
+      + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + Object.keys(D().SEASONS).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
+      + (open ? UI.stakeHtml(sel, meta) : '') + '</div>';
+    return '<div class="setup8"><div class="panel-head"><h2>你是誰？</h2><p>R 一開始就可以用；SR 要在遊戲中做到某件事；UR 要完成艱難的挑戰。三級都可以用人才扭蛋機抽出來。</p></div>'
+      + '<div class="su-layout"><div class="su-roster">' + group('R') + group('SR') + group('UR') + '</div>'
+      + '<aside class="su-detail r-' + b.rarity + '" aria-live="polite">' + detail + '</aside></div>'
+      + opts
+      + '<div class="su-go"><button class="btn" type="button" data-do="back">返回</button><button class="btn gacha-btn" type="button" data-do="gacha">人才扭蛋機' + ticketChips(meta) + '</button>'
+      + '<button class="btn primary big" type="button" data-do="start"' + (open ? '' : ' disabled') + '>' + (open ? '出發' : '未解鎖') + '</button></div></div>';
+  }
+
+  // ---------- 人才扭蛋機：三種扭蛋券 ----------
+  function gachaModal(meta, result, spinning, type) {
+    const RO = IE.Roster;
+    const lockedOf = (r) => RO.list(meta).filter((c) => !c.open && c.rarity === r).length;
+    let res = '';
+    if (result && result.type === 'char') {
+      const b = D().BACKGROUNDS[result.id], A = D().ABILITIES[result.id];
+      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3>'
+        + (A ? '<p><b>招牌能力・' + esc(A.name) + '</b>：' + esc(A.desc) + '</p>' : '') + '<p class="mute">' + esc(b.desc) + '</p></div>';
+    } else if (result) {
+      res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
+    }
+    const left = Math.max(0, RO.PITY - (meta.pity || 0));
+    const cards = tickets(meta).map((x) => '<div class="g-tk' + (type === x.k ? ' on' : '') + '" style="--c:' + x.T.color + '"><div class="g-tk-h"><i></i><b>' + esc(x.T.name) + '</b><span class="num">× ' + x.n + '</span></div>'
+      + '<p>' + esc(x.T.desc) + '</p><button class="btn' + (x.n >= x.T.cost ? ' primary' : '') + '" type="button" data-do="pull" data-id="' + x.k + '"' + (x.n >= x.T.cost && !spinning ? '' : ' disabled') + '>抽一次（' + x.T.cost + ' 張）</button></div>').join('');
+    return '<div class="modal gacha g8"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
+      + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '" style="--c:' + (type ? RO.TICKETS[type].color : '#ff8fd1') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
+      + res
+      + '<div class="g-tks">' + cards + '</div>'
+      + '<p class="tickets">已扭 ' + (meta.pulls || 0) + ' 次・未解鎖 SR <b>' + lockedOf('SR') + '</b> 個、UR <b>' + lockedOf('UR') + '</b> 個・根據《星際勞工保障條例》，再扭 ' + left + ' 次沒有 UR，下一次必定是 UR。</p>'
+      + '<p class="mute g-where">扭蛋券怎樣得到：關卡入選、小遊戲 SS、發現傳說組合（金）、驚為天人（金）、每日挑戰（金）、每週挑戰（外星）、角色精通、成就、湊齊流派、街上的外星推廣員。</p>'
+      + '<div class="btn-row"><button class="btn" type="button" data-do="close"' + (spinning ? ' disabled' : '') + '>離開</button></div></div>';
+  }
+
+  // ---------- 對局紀錄與個人紀錄 ----------
+  function historyModal(meta) {
+    const H = meta.history || [];
+    const rows = H.map((h) => '<div class="h-row"><span class="h-date num">' + h.date.slice(4, 6) + '/' + h.date.slice(6, 8) + '</span>'
+      + '<span class="h-ch">' + IE.Chars.img(h.bg, 2) + esc(D().BACKGROUNDS[h.bg].short || D().BACKGROUNDS[h.bg].name) + '</span>'
+      + '<span class="h-mode">' + (h.mode === 'long' ? '長篇' : '標準') + '・評級 ' + h.stake + (h.daily ? '・每日' : '') + (h.weekly ? '・每週' : '') + '</span>'
+      + '<span class="h-end e-' + h.ending + '">' + (ENDING[h.ending] || h.ending) + '</span>'
+      + '<span class="num">第 ' + h.day + ' 天</span><span class="num">' + h.stages + ' 關</span><span class="num">' + fmt(h.best) + '</span><span class="num mute">' + (h.ms ? mmss(h.ms) : '—') + '</span></div>').join('');
+    const bests = Object.keys(meta.bests || {}).map((id) => { const b = meta.bests[id], M = IE.Meta.masteryOf(meta, id);
+      return '<div class="hb">' + IE.Chars.img(id, 3) + '<b>' + esc(D().BACKGROUNDS[id].name) + '</b>' + stars(M.level) + '<span>最多 ' + b.stages + ' 關・活到第 ' + b.day + ' 天</span><span>最佳一筆 <b class="num">' + fmt(b.best) + '</b></span></div>'; }).join('');
+    const timed = H.filter((h) => h.ms && h.mode === 'standard');
+    const avg = timed.length ? timed.reduce((a, h) => a + h.ms, 0) / timed.length : 0;
+    return '<div class="modal wide hist"><h2>對局紀錄</h2>'
+      + (avg ? '<p class="mute">標準模式平均每局 ' + mmss(avg) + '（只計遊戲畫面在前景的時間）。</p>' : '')
+      + '<h3>最近 ' + H.length + ' 局</h3><div class="h-list">' + (rows || '<p class="mute">還沒有完成過任何一局。</p>') + '</div>'
+      + '<h3>每個角色的個人紀錄</h3><div class="h-bests">' + (bests || '<p class="mute">還沒有紀錄。</p>') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">返回</button></div></div>';
+  }
+
+  // ---------- 一局之中：招牌能力的提示條 ----------
+  function abilityStrip(s) {
+    const A = D().ABILITIES[s.bg];
+    if (!A) return '';
+    const R = IE.Rules;
+    const extra = [];
+    if (s.bg === 'timetraveler') extra.push('<button class="btn mini sea" type="button" data-do="rewindday"' + (R.canRewindDay(s) ? ' disabled title="' + esc(R.canRewindDay(s)) + '"' : '') + '>重過今天（每期一次）</button>');
+    if (s.bg === 'nurse') extra.push('<span class="mute">急救剩 ' + Math.max(0, 2 - (s.aidUsed || 0)) + ' 次</span>');
+    if (s.bg === 'courier' && s.flags.rushDay !== s.day) extra.push('<span class="mute">今天還可以趕一次單</span>');
+    return '<div class="abil-strip"><span class="lbl">招牌能力</span><b>' + esc(A.name) + '</b><span class="abil-desc">' + esc(A.desc) + '</span>' + extra.join('') + '</div>';
+  }
+  // 結局：這一局的扭蛋券、角色精通與其他局外獎勵
+  function metaRunHtml(meta) {
+    const T = meta.lastRunTickets || {};
+    const tk = ['silver', 'gold', 'rainbow'].filter((k) => T[k]).map((k) => IE.Roster.TICKETS[k].name + ' +' + T[k]).join('、');
+    const mast = (meta.lastMastery || []).map((x) => '<div class="mr-mast"><b>角色精通升到 Lv.' + x.level + '！</b>' + esc(x.text) + (x.story ? '<p class="story">' + esc(x.story) + '</p>' : '') + '</div>').join('');
+    const extra = (meta.lastExtra || []).map((t) => '<p class="mr-extra">' + esc(t) + '</p>').join('');
+    return (tk ? '<p class="mr-tk">這一局賺到的扭蛋券：<b>' + esc(tk) + '</b></p>' : '') + mast + extra;
+  }
+
+  Object.assign(UI, { setupPanel, gachaModal, historyModal, ticketChips, abilityHtml, masteryHtml, storiesHtml, abilityStrip, metaRunHtml, mmss, ENDING_NAME: ENDING });
 })(window.IE = window.IE || {});
 
 // ---- js/craft.js ----
@@ -12477,13 +13587,13 @@ body.ct-open { overflow: hidden; }
     const SR = IE.Stages ? IE.Stages.scoring(s) : null;
     const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
     if (dark) return '<button type="button" class="cc dark" data-uid="' + c.uid + '"><span class="cc-name">？？？</span><span class="cc-tags"><span class="t">停電</span></span><span class="cc-foot"><b class="cc-val num">?</b></span></button>';
-    const off = SR && SR.forbidden(c), blocked = SR && !off && SR.blocked(c);
+    const off = C().forbidden(s, c), blocked = SR && !off && SR.blocked(c);
     const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
     const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
     return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
-      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'
@@ -12532,7 +13642,7 @@ body.ct-open { overflow: hidden; }
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
       + '<div class="ct-stagebar" hidden></div>'
-      + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><p class="ct-info"></p>'
+      + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
@@ -12584,13 +13694,15 @@ body.ct-open { overflow: hidden; }
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
-    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : ses.mode === 'sketch' ? '・速寫（只下筆一次）' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
     $('.ct-objs').innerHTML = slots.join('');
     $('.ct-schools').innerHTML = schoolsHtml(s);
     renderTools();
+    renderAbility();
     renderStage();
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
@@ -12598,10 +13710,10 @@ body.ct-open { overflow: hidden; }
     $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
-    pb.textContent = '下筆（' + ses.plays + '）';
+    pb.textContent = ses.plays > 0 ? '下筆（' + ses.plays + '）' : '完成今晚';
     db.textContent = '改稿（' + ses.discards + '）';
-    pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
-    db.disabled = st.busy || !st.sel.length || ses.discards <= 0;
+    pb.disabled = st.busy || (ses.plays > 0 && !st.sel.length);
+    db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length);
     renderPreview();
   }
   // 工具卡欄
@@ -12618,6 +13730,80 @@ body.ct-open { overflow: hidden; }
     }
     $('.ct-tools').innerHTML = out.join('');
   }
+  // 招牌能力（第八期）：按角色顯示可以用的按鈕
+  function renderAbility() {
+    const s = st.s, ses = s.session, A = D().ABILITIES[s.bg], bar = $('.ct-abil');
+    if (!A) { bar.innerHTML = ''; return; }
+    const b = (k, label, extra) => { const why = C().abilityState(s, k); return '<button type="button" class="ab-btn" data-ab="' + k + '"' + (why || st.busy ? ' disabled' : '') + ' title="' + esc(why || A.desc) + '">' + label + (extra ? '<small>' + extra + '</small>' : '') + '</button>'; };
+    let btns = '';
+    switch (s.bg) {
+      case 'copywriter': btns = ses.packaged ? '<span class="ab-on">已包裝：今晚符合 KPI</span>' : b('package', '包裝', '靈魂 +1 克'); break;
+      case 'teacher': btns = b('mark', '批改選中的一張', '籌碼 +6'); break;
+      case 'busker': btns = b('encore', '安哥', '重播上一筆 ×0.6') + (!ses.log.length && D().BACKGROUNDS[s.bg].perk.noEarlyDiscard ? '<span class="ab-note">即興：第一筆之前不准改稿</span>' : ''); break;
+      case 'influencer': btns = ses.live ? '<span class="ab-on live">● 直播中</span>' : b('live', '開直播', '×1.6／兩成翻車'); break;
+      case 'animator': btns = b('frames', '逐格', '看牌庫頂三張'); break;
+      case 'skyheir': btns = b('buyPlay', '買下筆', '$' + C().buyPrice(s, 'play')) + b('buyDiscard', '買改稿', '$' + C().buyPrice(s, 'discard')); break;
+      case 'greydeserter': btns = b('bribe', '賄賂評審', '$' + C().bribePrice(s)); break;
+      case 'timetraveler': btns = b('rewind', '倒帶', '撤回上一筆・偏執 +6'); break;
+      case 'antiquedealer': btns = b('forge', '做舊選中的一張', '靈魂 +2 克') + '<button type="button" class="ab-btn" data-ct="deck">鑑定（賣素材）</button>'; break;
+      default: btns = '<span class="ab-note">' + esc(A.desc) + '</span>';
+    }
+    bar.innerHTML = '<span class="ab-name"><span class="lbl">招牌能力</span>' + esc(A.name) + '</span>' + btns;
+  }
+  async function useAbility(k) {
+    const s = st.s;
+    if (st.busy) return;
+    if (k === 'encore') return doEncore();
+    if (k === 'frames') return pickFrame();
+    if (k === 'bribe') {
+      const rules = s.session.stage ? s.session.stage.rules : [];
+      if (rules.length > 1) {
+        UI().pushModal('<div class="modal"><h2>賄賂哪一位評審？</h2><p class="mute">花 $' + C().bribePrice(s) + '，今晚取消一條規則。</p><div class="btn-row">'
+          + rules.map((id) => '<button class="btn" type="button" data-do="pick" data-id="' + id + '">' + esc(IE.Stages.BOSS[id].name) + '</button>').join('') + '</div></div>',
+        { pick(el) { UI().closeModal(); finishAbility(C().useAbility(s, 'bribe', el.dataset.id)); } }, { dismiss: () => {} });
+        return;
+      }
+    }
+    const arg = (k === 'mark' || k === 'forge') ? st.sel[0] : null;
+    if ((k === 'mark' || k === 'forge') && st.sel.length !== 1) { $('.ct-info').textContent = '先選一張素材，再按「' + (k === 'mark' ? '批改' : '做舊') + '」。'; return; }
+    finishAbility(C().useAbility(s, k, arg));
+  }
+  function finishAbility(r) {
+    $('.ct-info').innerHTML = esc(r.msg);
+    if (r.ok) { A().sfx('pickup'); burst($('.ct-abil'), 24, 0.8, '#ffd36b'); st.sel = []; } else A().sfx('wrong');
+    render();
+  }
+  // 逐格：看牌庫頂三張，挑一張加入手牌
+  function pickFrame() {
+    const s = st.s;
+    const r = C().useAbility(s, 'frames');
+    if (!r.ok || !r.peek) return finishAbility(r);
+    UI().pushModal('<div class="modal"><h2>逐格</h2><p class="mute">牌庫頂的三張。挑一張加入手牌。</p><div class="peek">'
+      + r.peek.map((u) => { const c = s.cards.find((x) => x.uid === u); return '<button type="button" class="peek-btn" data-do="pick" data-id="' + u + '">' + cardEl(s, c, {}) + '</button>'; }).join('') + '</div></div>',
+    { pick(el) { UI().closeModal(); finishAbility(C().useAbility(s, 'frames', Number(el.dataset.id))); } }, { dismiss: () => {} });
+  }
+  // 安哥：重播上一筆
+  async function doEncore() {
+    const s = st.s, ses = s.session;
+    const uids = ses.lastUids || [];
+    if (!uids.length) return;
+    st.busy = true; st.fast = false; st.chipN = 0;
+    const r = C().useAbility(s, 'encore');
+    if (!r.ok) { st.busy = false; return finishAbility(r); }
+    $('.ct-tags').innerHTML = '';
+    $('.ct-played').innerHTML = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean).map((c) => cardEl(s, c, { stage: true, dim: !r.res.scoring.includes(c.uid) })).join('');
+    tag('安哥！觀眾要求再唱一次', 'new');
+    A().fx('xmult', 3);
+    await wait(380);
+    await animate(r.res);
+    await showTotal(r.res);
+    $('.ct-played').innerHTML = '';
+    $('.ct-total').hidden = true;
+    st.busy = false;
+    render();
+    if ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)) await endNight();
+  }
+
   // 關卡之夜：目標分數與評審規則
   function renderStage() {
     const s = st.s, ses = s.session, bar = $('.ct-stagebar');
@@ -12684,6 +13870,8 @@ body.ct-open { overflow: hidden; }
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
     if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
+    const ab = e.target.closest('[data-ab]');
+    if (ab && !ab.disabled && !st.busy) { useAbility(ab.dataset.ab); return; }
     const ob = e.target.closest('.ct-obj[data-obj]');
     if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
@@ -12696,20 +13884,21 @@ body.ct-open { overflow: hidden; }
     else if (k === 'discard') doDiscard();
     else if (k === 'sort') { nextSort(); store.set('ie2080.sort', st.sortBy); render(); }
     else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
-    else if (k === 'deck') UI().pushModal(deckHtml(st.s), { close: UI().closeModal }, { dismiss: () => {} });
+    else if (k === 'deck') openDeck();
     else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
     else if (k === 'leave') leave();
   }
   // 排序：標籤 → 媒材 → 籌碼
   const SORTS = { tag: ['medium', '按媒材'], medium: ['value', '按籌碼'], value: ['tag', '按標籤'] };
   function nextSort() { st.sortBy = (SORTS[st.sortBy] || SORTS.value)[0]; }
+  const s0 = () => st.s;
   function toggle(uid) {
     const SR = IE.Stages ? IE.Stages.scoring(st.s) : null;
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
-    else if (SR && c && SR.forbidden(c)) { $('.ct-info').textContent = '外星評審：這張素材不能用。'; return; }
-    else if (st.sel.length < (SR ? SR.maxCards : 5)) st.sel.push(uid);
-    else { if (SR && SR.maxCards < 5) $('.ct-info').textContent = '外星評審：每次最多下筆 ' + SR.maxCards + ' 張。'; return; }
+    else if (c && C().forbidden(s0(), c)) { $('.ct-info').textContent = c.guilt && D().BACKGROUNDS[s0().bg].perk.noGuilt ? '你沒有良知：「愧疚」不能下筆。' : '外星評審：這張素材不能用。'; return; }
+    else if (st.sel.length < C().maxCards(s0())) st.sel.push(uid);
+    else { $('.ct-info').textContent = '每次最多下筆 ' + C().maxCards(s0()) + ' 張。'; return; }
     A().fx('card', st.sel.length * 2);
     render();
   }
@@ -12732,6 +13921,11 @@ body.ct-open { overflow: hidden; }
     else A().sfx('wrong');
     render();
   }
+  function openDeck(replace) {
+    const s = st.s;
+    const h = { close: UI().closeModal, sellcard(el) { const r = C().useAbility(s, 'sell', Number(el.dataset.id)); A().sfx(r.ok ? 'coin' : 'wrong'); $('.ct-info').innerHTML = esc(r.msg); render(); openDeck(true); } };
+    if (replace) UI().modal(deckHtml(s), h, { dismiss: () => {} }); else UI().pushModal(deckHtml(s), h, { dismiss: () => {} });
+  }
   // 牌庫檢視：還沒抽的素材按標籤分佈
   function deckHtml(s) {
     const ses = s.session;
@@ -12748,7 +13942,15 @@ body.ct-open { overflow: hidden; }
       + '<h3>標籤</h3><div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
       + '<h3>媒材</h3><div class="dk-media">' + media + '</div>'
       + '<h3>未抽的素材</h3><div class="dk-cards">' + left.slice().sort((a, b) => b.value - a.value).map((c) => '<span class="dk-card">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '・' + M[D().mediumOf(c)].name + '・' + c.value + '</small></span>').join('') + '</div>'
+      + (D().BACKGROUNDS[s.bg].perk.appraise ? appraiseHtml(s) : '')
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">返回</button></div></div>';
+  }
+  // 古董商的「鑑定」：不在手上的素材都可以賣
+  function appraiseHtml(s) {
+    const ses = s.session;
+    const list = s.cards.filter((c) => !ses.hand.includes(c.uid)).sort((a, b) => C().sellPrice(s, b) - C().sellPrice(s, a));
+    return '<h3>鑑定：賣掉不在手上的素材</h3><div class="dk-sell">' + list.map((c) => '<span class="dk-card sell">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '</small>'
+      + '<button class="btn mini sea" type="button" data-do="sellcard" data-id="' + c.uid + '">賣 $' + C().sellPrice(s, c) + '</button></span>').join('') + '</div>';
   }
   function leave() {
     if (st.busy) return;
@@ -12872,8 +14074,11 @@ body.ct-open { overflow: hidden; }
   }
 
   // ---------- 下筆 ----------
+  // 最後一筆之後仍然可以用的能力（安哥、倒帶）：不要自動結束今晚
+  const canStillAct = (s) => ['encore', 'rewind'].some((k) => C().ability(s) && (s.bg === 'busker' ? k === 'encore' : s.bg === 'timetraveler' && k === 'rewind') && !C().abilityState(s, k));
   async function doPlay() {
     const s = st.s, ses = s.session;
+    if (!st.busy && ses.plays <= 0) { await endNight(); return; }
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
     st.busy = true; st.fast = false; st.chipN = 0;
     const uids = st.sel.slice();
@@ -12907,7 +14112,7 @@ body.ct-open { overflow: hidden; }
     render();
     root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 220, delay: i * 30, fill: 'backwards' }));
-    if (ses.plays <= 0 || !ses.hand.length) await endNight();
+    if ((ses.plays <= 0 || !ses.hand.length) && !canStillAct(s)) await endNight();
   }
 
   async function animate(res) {
@@ -13006,6 +14211,16 @@ body.ct-open { overflow: hidden; }
           if (x.x !== 1) shake(6);
           await wait(360);
           break;
+        case 'live':
+          tag(x.x >= 1 ? '直播觀眾瘋狂洗版 ×' + x.x : '直播翻車 ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          if (x.x < 1) shake(8);
+          await wait(360);
+          break;
+        case 'encore':
+          tag('安哥 ×' + x.x, 'kpi-good');
+          await wait(260);
+          break;
         case 'world':
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
@@ -13087,6 +14302,7 @@ body.ct-open { overflow: hidden; }
   async function doDiscard() {
     const s = st.s, ses = s.session;
     if (st.busy || !st.sel.length || ses.discards <= 0) return;
+    if (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length) { $('.ct-info').textContent = '即興：第一筆之前不准改稿。'; A().sfx('wrong'); return; }
     st.busy = true;
     const uids = st.sel.slice();
     root.querySelectorAll('.ct-hand .cc').forEach((el) => {
@@ -13124,13 +14340,14 @@ body.ct-open { overflow: hidden; }
     const panel = document.createElement('div');
     panel.className = 'ct-end';
     panel.innerHTML = '<div class="ct-end-card">'
-      + '<span class="mute">今晚的作品</span>'
+      + '<span class="mute">' + (res.session.mode === 'sketch' ? '今晚的速寫' : '今晚的作品') + '</span>'
       + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
       + '<div class="ct-end-score num">0</div>'
       + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
       + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+      + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
       + (res.stage ? stageResultHtml(res.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
       + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
@@ -13221,7 +14438,7 @@ body.ct-open { overflow: hidden; }
   const seasons = Object.keys(D.SEASONS);
   const Game = IE.Game = {
     state: null, meta: store.get(KEY_META) || {}, scene: null, micro: null,
-    setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)] },
+    setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)], mode: 'standard' },
     celebrate(total) {
       const s = Game.state;
       const sc = Game.scene;
@@ -13239,7 +14456,7 @@ body.ct-open { overflow: hidden; }
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 8 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 9 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -13303,12 +14520,23 @@ body.ct-open { overflow: hidden; }
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
       collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
       gacha() { A.init(); openGacha(() => showTitle()); },
+      history() { UI.modal(UI.historyModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      weekly() {
+        A.init(); store.del(KEY_RUN);
+        const w = IE.Meta.weekly(IE.Meta.weekKey()), mod = IE.Meta.WEEKLY_MODS[w.mod], rec = Game.meta.weekly && Game.meta.weekly[w.key];
+        UI.modal('<div class="modal"><span class="eyebrow">每週挑戰・' + w.key + '</span><h2>' + mod.name + '</h2><p>' + mod.desc + '。這一週所有人都用同一個種子：<b>' + D.BACKGROUNDS[w.bg].name + '</b>、' + D.SEASONS[w.season].name + '、外星評級 ' + w.stake + '、標準模式 60 天。</p>'
+          + '<p class="mute">' + (rec ? '你本週的最佳成績：第 ' + rec.day + ' 天・' + rec.stages + ' 關。' : '本週第一次完成可以得到一張外星扭蛋券。') + '</p>'
+          + '<div class="btn-row"><button class="btn primary" type="button" data-do="go">開始</button><button class="btn" type="button" data-do="close">返回</button></div></div>', {
+          go() { UI.closeModal(); newGame(w.bg, w.season, { seed: w.seed, stake: w.stake, weekly: { key: w.key, mod: w.mod }, mode: 'standard' }); },
+          close() { UI.closeModal(); },
+        }, { dismiss: () => {} });
+      },
       daily() {
         A.init(); store.del(KEY_RUN);
         const d = IE.Meta.daily(IE.Meta.dateKey());
         UI.modal('<div class="modal"><span class="eyebrow">每日挑戰・' + d.key + '</span><h2>今天的人才篩選</h2><p>今天所有人都用同一個種子：<b>' + D.BACKGROUNDS[d.bg].name + '</b>、' + D.SEASONS[d.season].name + '、外星評級 ' + d.stake + '。分數按存活天數與通過的關卡計算，只記錄你今天的最佳成績。</p>'
           + '<div class="btn-row"><button class="btn primary" type="button" data-do="go">開始</button><button class="btn" type="button" data-do="close">返回</button></div></div>', {
-          go() { UI.closeModal(); newGame(d.bg, d.season, { seed: d.seed, stake: d.stake, daily: d.key }); },
+          go() { UI.closeModal(); newGame(d.bg, d.season, { seed: d.seed, stake: d.stake, daily: d.key, mode: 'standard' }); },
           close() { UI.closeModal(); },
         }, { dismiss: () => {} });
       },
@@ -13316,20 +14544,21 @@ body.ct-open { overflow: hidden; }
   }
   // 人才扭蛋機
   function openGacha(after) {
-    const render = (result, spinning) => UI.modal(UI.gachaModal(Game.meta, result, spinning), {
-      pull() {
-        const res = IE.Roster.pull(Game.meta);
+    const render = (result, spinning, type) => UI.modal(UI.gachaModal(Game.meta, result, spinning, type), {
+      pull(el) {
+        const type = el.dataset.id || 'silver';
+        const res = IE.Roster.pull(Game.meta, null, type);
         if (!res) return;
         store.set(KEY_META, Game.meta);
         A.sfx('beam');
-        render(null, true);
+        render(null, true, type);
         setTimeout(() => {
           if (res.type === 'char') {
             A.sfx(res.rarity === 'UR' ? 'combo' : 'pickup');
             if (res.rarity === 'UR' && IE.Audio.fx) IE.Audio.fx('legend');
             Game.setup.bg = res.id;
-          } else A.sfx(res.id === 'refund' || res.id === 'antique' ? 'coin' : 'wrong');
-          render(res, false);
+          } else A.sfx(res.id === 'refund' || res.id === 'antique' || res.id === 'tool' || res.id === 'refundGold' ? 'coin' : 'wrong');
+          render(res, false, type);
         }, res.type === 'char' && res.rarity === 'UR' ? 2400 : 1400);
       },
       close() { UI.closeModal(); if (after) after(); },
@@ -13339,12 +14568,17 @@ body.ct-open { overflow: hidden; }
   function showSetup() {
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
-      bg(el) { Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render(); },
+      bg(el) {
+        Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render();
+        // 手機：選了角色就捲到角色資料
+        if (window.innerWidth <= 820) { const d = document.querySelector('.su-detail'); if (d) d.scrollIntoView({ behavior: IE.Pixel.reducedMotion ? 'auto' : 'smooth', block: 'start' }); }
+      },
       stake(el) { Game.setup.stake = Number(el.dataset.id); render(); },
       season(el) { Game.setup.season = el.dataset.id; render(); },
+      mode(el) { Game.setup.mode = el.dataset.id; render(); },
       back() { showTitle(); },
       gacha() { openGacha(render); },
-      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)) }); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)), mode: Game.setup.mode || 'standard' }); },
     });
     render();
     window.scrollTo({ top: 0 });
@@ -13352,14 +14586,16 @@ body.ct-open { overflow: hidden; }
   function newGame(bg, season, o) {
     A.init();
     o = o || {};
-    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed, stake: o.stake || 1, daily: o.daily || null });
-    if (Game.meta.nextStart && Game.meta.nextStart.length) { Game.meta.nextStart = []; store.set(KEY_META, Game.meta); }
+    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard' });
+    Game.ticketShown = 0;
+    if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
     startDay();
   }
   function resumeRun() {
     const s = Game.state;
+    Game.ticketShown = (s.ticketLog || []).length;
     setScene(viewScene(currentView()));
     if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
@@ -13367,10 +14603,14 @@ body.ct-open { overflow: hidden; }
   }
 
   // ---------- 一天 ----------
+  // 計時：只計遊戲畫面在前景的時間（用來量度一局實際玩了多久）
+  setInterval(() => { const s = Game.state; if (s && !s.ended && document.visibilityState === 'visible') s.playMs = (s.playMs || 0) + 1000; }, 1000);
   function startDay() {
     const s = Game.state;
     S.City.forceNight = false;
     const m = R.morning(s);
+    // 灰人逃兵被追捕的日子：白天要躲起來
+    if (R.hiding(s) && s.slot === 0) { s.slot = 1; UI.toast('追捕隊來了。你躲了一整個早上。', 'bad'); }
     IE.Maps.actions = R.actions(s);
     setScene(viewScene(currentView()));
     renderViews(true);
@@ -13460,11 +14700,29 @@ body.ct-open { overflow: hidden; }
     A.setSpark(s.spark);
     UI.setPanel(UI.actionsPanel(s, acts), {
       act(el) { doAction(el.dataset.id); },
+      auto(el) { doAction('auto:' + el.dataset.id); },
+      rewindday() {
+        if (!R.rewindDay(s)) return;
+        A.sfx('beam');
+        UI.toast('倒帶：你回到了今天早上。', 'good');
+        startDay();
+      },
       objs() { openObjects(); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
     });
+    ticketToasts();
     save();
+  }
+  // 一局之中賺到扭蛋券：彈出提示
+  function ticketToasts() {
+    const s = Game.state, log = (s && s.ticketLog) || [];
+    Game.ticketShown = Game.ticketShown || 0;
+    while (Game.ticketShown < log.length) {
+      const t = log[Game.ticketShown++];
+      UI.toast(t.why + '：' + R.TICKET_NAME[t.type] + ' +' + t.n, 'good');
+      A.sfx('coin');
+    }
   }
 
   function doAction(id) {
@@ -13475,6 +14733,8 @@ body.ct-open { overflow: hidden; }
         return startMicro(id);
       case 'rest':
         return afterAction(R.applyRest(s));
+      case 'nightshift':
+        return afterAction(R.applyNightShift(s));
       case 'volunteer':
         return afterAction(R.applyVolunteer(s));
       case 'chat':
@@ -13491,6 +14751,8 @@ body.ct-open { overflow: hidden; }
         return afterAction(IE.World.leaveTrip(s));
     }
     if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
+    // 照舊做：熟手自動完成小遊戲
+    if (id.startsWith('auto:')) { const rep = IE.Auto.apply(s, id.slice(5)); if (rep) { A.sfx('click'); afterAction(rep); } }
   }
   // 地圖上的熱點
   IE.Maps.onPick = function (view, sp) {
@@ -13639,6 +14901,8 @@ body.ct-open { overflow: hidden; }
     const s = Game.state;
     Game.microToken = null; Game.micro = null;
     const rep = kind === 'interview' ? R.applyInterview(s, result.answers) : R.applyMicro(s, kind, result);
+    // 親手玩出的最高評級立即記入局外紀錄（之後可以「照舊做」）
+    if (s.microBest) { Game.meta.microBest = Object.assign(Game.meta.microBest || {}, s.microBest); store.set(KEY_META, Game.meta); }
     setScene(viewScene(currentView()));
     afterAction(rep);
   };
@@ -13653,7 +14917,10 @@ body.ct-open { overflow: hidden; }
   }
   function afterSlot() {
     const s = Game.state;
+    if (s.body <= 0 && R.lastStand(s, null)) UI.toast('急救：你本來會倒下，但你替自己做了急救。', 'good');
     if (s.body <= 0) return finishRun(R.endingFor(s, 'death'));
+    // 外賣潛水員「趕單」：留在同一個時段
+    if (R.slotFree(s)) return showHub();
     if (R.isNight(s)) return endOfDay();
     s.slot++;
     showHub();
@@ -13861,7 +15128,7 @@ body.ct-open { overflow: hidden; }
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 8) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && data.run.v === 9) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

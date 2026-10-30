@@ -203,7 +203,7 @@
     if (s.spark >= 3 && s.conscience < 0.4) add('energy');
     if (s.spark >= 3.2) add('interesting');
     if (s.paranoia >= 70) add('observe');
-    if (s.day < 30) add('moredata');
+    if (IE.Rules.age(s) < 30) add('moredata');
     if (kind === 'guardian') add('unknown');
     if (s.stats.volunteer >= 8 && a.stamp !== 'mascot') add('mascot', '社區吉祥物');
     return out;

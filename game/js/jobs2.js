@@ -101,24 +101,28 @@
     const perf = PERF[kind](res || {});
     const rk = rankOf(perf);
     const T = TIER[rk.id];
-    r.rank = { id: rk.id, name: rk.name, color: rk.color, perf: Math.round(perf * 100) };
+    r.rank = { id: rk.id, name: rk.name, color: rk.color, perf: Math.round(perf * 100), auto: !!(res && res.auto) };
+    // 親手玩出的評級會記下來，決定之後「照舊做」的評級（第八期）
+    if (IE.Auto && !(res && res.auto)) IE.Auto.record(s, kind, rk.id);
     s.stats.ranks = s.stats.ranks || {};
     s.stats.ranks[rk.id] = (s.stats.ranks[rk.id] || 0) + 1;
     const line = (text, kind2, v, stat) => { r.lines.push({ text, kind: kind2 || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; };
     const gain = (id) => { if (!D.CARDS[id]) return; const x = R.addCard(s, id); r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped); };
-    line('評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
+    line((res && res.auto ? '照舊做：' : '') + '評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
     if (T.crPct && r.deltas.cr > 0) { const b = Math.round(r.deltas.cr * T.crPct); s.cr += b; line('評級獎金', 'good', b, 'cr'); }
     // 工作做得好不會令火花變旺（那是工作）；只有生活類的小遊戲會
     if (T.spark && (T.spark < 0 || LIFE.includes(kind))) { const v = R.addSpark(s, T.spark, true); if (v) line(T.spark > 0 ? '你對自己很滿意' : '你對自己很失望', T.spark > 0 ? 'good' : 'bad', v, 'spark'); }
     if (T.rating) s.rating = Math.max(1, Math.min(5, s.rating + T.rating));
     if (T.card) gain(T.card);
+    if (rk.id === 'SS' && !(res && res.auto)) R.gainTicket(s, 'silver', 1, '小遊戲評級 SS', { line });
     for (let i = 0; i < (T.cards || 0); i++) gain(R.pick(s, POOL[kind]));
-    if (T.objChance && R.rand(s) < T.objChance) {
+    // 自動完成拿不到稀有掉落和特別成就
+    if (T.objChance && !(res && res.auto) && R.rand(s) < T.objChance) {
       const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.unlock && !o.souvenir && !s.objects.includes(o.id) && !s.objStash.includes(o.id)).map((o) => o.id);
       if (pool.length) { const id = R.pick(s, pool); R.gainObject(s, id, null); r.objs.push(id); line('表現太出色，有人送了你一件靈感物件', 'legend'); }
     }
     (SPECIAL[kind] || []).forEach((sp) => {
-      if (!sp.test(res || {})) return;
+      if ((res && res.auto) || !sp.test(res || {})) return;
       line('特別成就：' + sp.text, 'legend');
       if (sp.card) gain(sp.card);
       if (sp.atone) { const g = R.atone(s, sp.atone, null); if (g) line('靈魂輕了一點', 'good', -g, 'soul'); }

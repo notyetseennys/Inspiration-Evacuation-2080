@@ -192,11 +192,29 @@
 
 ## 6. Claude 同時在做的事（避免撞車）
 
-第八期的邏輯部分：
-- 每週挑戰（固定的評審規則組合）。
-- 對局歷史與種子分享。
-- 角色評級獎章的資料。
-- 根據模擬調整角色之間的差距。
-- 讓模擬機械人懂得用媒材和轉檔。
+第八期開始時你的分支還沒有出現，所以 Claude 在第八期直接改了 `craft.js`、`ui.js`、`style.css`，並新增了 `ui-roster.js`（見第 7 節）。
 
-Claude 這段時間**只改邏輯檔案和新檔案**，不改 `craft.js`、`ui.js`、`style.css` 和美術檔案。介面整合會等你的分支合併之後才做。
+**從 v1.2 開始重新按第 1 節分工**：你開分支之後，Claude 只改邏輯檔案和新檔案；需要改介面時，會先寫在 `docs/ART_REQUESTS.md` 或等你的分支合併。
+
+---
+
+## 7. 第八期之後的更新（v1.2）
+
+Claude 在第八期新增了以下介面。它們的**功能與結構**由 Claude 負責；你可以替它們做美術和演出，但請保留 class 名稱與 `data-do`、`data-ab` 等屬性：
+
+| 介面 | 位置 | 主要 class |
+|---|---|---|
+| 選角畫面（招牌能力、精通、角色故事、一局的長度） | `js/ui-roster.js` 的 `setupPanel` | `.setup8`、`.su-grid .ch`、`.su-detail`、`.sd-abil`、`.sd-mast`、`.su-go` |
+| 三種扭蛋券的扭蛋機 | `js/ui-roster.js` 的 `gachaModal` | `.g8`、`.g-tk`、`.gacha-result` |
+| 對局紀錄 | `js/ui-roster.js` 的 `historyModal` | `.hist`、`.h-row`、`.hb` |
+| 創作桌的招牌能力欄 | `js/craft.js` 的 `renderAbility` | `.ct-abil`、`.ab-btn` |
+| 行動卡的「照舊做」按鈕 | `js/ui.js` 的 `actionsPanel` | `.act-wrap`、`.act-auto` |
+
+新的煙霧測試會用到：`.su-grid .ch`、`.su-detail .sd-abil b`、`[data-do="mode"]`、`[data-do="pull"][data-id="rainbow"]`、`.gacha-result`、`[data-do="history"]`、`#modal .h-row`。
+
+適合你的新任務：
+- **任務 6（角色立繪）** 現在最有價值：選角畫面的 `.sd-por` 和 `.ch-por` 正在用 8×12 的小像素人，換成 24×32 的立繪會大大提升質感。角色精通 Lv.4 有「金色外框」（`.gold`），Lv.5 有「大師」稱號。
+- **扭蛋演出**：三種扭蛋券（銀、金、外星）各有顏色（`--c`），抽到 SR、UR 的演出可以按券的顏色做。
+- **招牌能力的演出**：直播（`live` 步驟）、安哥（`encore` 步驟）、倒帶、逐格的挑牌視窗（`.peek`）。
+
+請從最新的 `claude/serene-dirac-xqu6dg` 開新分支。

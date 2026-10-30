@@ -51,7 +51,8 @@
   const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 17000);
   // 一晚的目標分數：隨日子以每天約 4% 增長（與創作分數的增長曲線相若）
   const STAGE_G = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_G) || 1.032);
-  const baseTarget = (day) => STAGE_K * Math.pow(STAGE_G, day - 1);
+  // 用「進度日」計算：60 天的一局，目標也會走完整條增長曲線
+  const baseTarget = (s, day) => STAGE_K * Math.pow(STAGE_G, R.age(s, day) - 1);
   const stakeMod = (s, key) => (IE.Meta ? IE.Meta.stakeMod(s, key) : 1);
   // 每季開始時選好這一季的評審規則（外星評級 4 以上有兩條）
   function bossesFor(s, q) {
@@ -66,15 +67,15 @@
     return s.bosses[q].map((id) => BOSS[id]);
   }
   function stageOn(s, day) {
-    const q = Math.floor((day - 1) / 20), d = (day - 1) % 20 + 1;
-    const kind = d === 7 ? 'small' : d === 14 ? 'big' : d === 20 ? 'boss' : null;
+    const M = R.modeOf(s), q = Math.floor((day - 1) / M.period), d = (day - 1) % M.period + 1;
+    const kind = d === M.stageDays[0] ? 'small' : d === M.stageDays[1] ? 'big' : d === M.stageDays[2] ? 'boss' : null;
     if (!kind) return null;
     const K = KINDS[kind];
-    const target = Math.round(baseTarget(day) * K.mult * stakeMod(s, 'stageTarget') / 1000) * 1000;
-    return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
+    const target = Math.round(baseTarget(s, day) * K.mult * stakeMod(s, 'stageTarget') / 1000) * 1000;
+    return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
   }
   const today = (s) => stageOn(s, s.day);
-  function nextStage(s) { for (let d = s.day; d <= D.DAYS; d++) { const st = stageOn(s, d); if (st && !(s.stageDone && s.stageDone[d])) return st; } return null; }
+  function nextStage(s) { for (let d = s.day; d <= R.days(s); d++) { const st = stageOn(s, d); if (st && !(s.stageDone && s.stageDone[d])) return st; } return null; }
   // 合併所有生效的規則
   function rulesNow(s) {
     const ses = s.session;
@@ -134,12 +135,17 @@
       s.cr += cr; s.stats.crEarned += cr; out.cr = cr;
       out.lines.push('獎金 $' + cr);
       for (let i = 0; i < (W.tools || 0); i++) { const t = randomTool(s); if (t && giveTool(s, t)) out.tools.push(t); }
-      if (W.tickets) { s.stageTickets = (s.stageTickets || 0) + W.tickets; out.tickets = W.tickets; out.lines.push('人才扭蛋券 ' + W.tickets + ' 張（局後發放）'); }
+      if (W.tickets) { R.gainTicket(s, 'silver', W.tickets, stage.name + '入選'); out.tickets = W.tickets; out.lines.push('扭蛋券 +' + W.tickets); }
       if (W.obj && R.rand(s) < W.obj) {
         const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.unlock && !o.souvenir && !s.objects.includes(o.id) && !s.objStash.includes(o.id)).map((o) => o.id);
         if (pool.length) { const id = R.pick(s, pool); if (R.gainObject(s, id, null)) out.objs.push(id); }
       }
-      if (score >= stage.target * 2) { s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, 0.2, true); }
+      if (score >= stage.target * 2) {
+        s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, 0.2, true);
+        if (stage.kind !== 'small') { R.gainTicket(s, 'gold', 1, '驚為天人'); out.lines.push('金色扭蛋券 +1'); }
+      }
+      // 外星評審圖鑑：記下打敗過的評審規則
+      if (stage.rules && stage.rules.length) { s.stats.judges = s.stats.judges || {}; stage.rules.forEach((id) => { s.stats.judges[id] = true; }); }
     } else {
       s.stats.stages.fail++;
       const F = K.fail;
@@ -269,7 +275,7 @@
   }
   // 浮城百貨的工具卡貨架：每三天換兩張
   function toolShop(s) {
-    const period = Math.floor((s.day - 1) / 3);
+    const period = Math.floor((s.day - 1) / R.modeOf(s).shopEvery);
     if (!s.toolShop || s.toolShop.period !== period) {
       const pool = toolPool(s);
       const items = [];

@@ -145,7 +145,7 @@
         S('pyramidstep', '神殿階梯', '爬上神殿頂端。', { gain: ['t_glyph', 't_jungle'], body: 12, risk: { chance: 0.02, death: 'temple_fall' } }),
         S('ballcourt', '古球場', '在古球場拍了一下手，回音很長。', { gain: ['t_ballcourt'], spark: 0.2, body: 4 }),
         S('calendar', '曆法石', '研究刻在石上的曆法。', { gain: ['t_glyph'], need: { insight: 45 },
-          rare: { id: 'z_calendar', chance: 0.8, cond: (s) => s.day >= 85, text: '當日子快要走到盡頭（第 85 天之後）' } }),
+          rare: { id: 'z_calendar', chance: 0.8, cond: (s) => IE.Rules.age(s) >= 85, text: '當日子快要走到盡頭（最後一成的日子）' } }),
       ] },
     { id: 'angkor', name: '吳哥窟', region: 'asia', kind: 'ancient', x: 253, y: 79, cost: 340, stay: 2, landmark: 'temple', sky: ['#3a1a2e', '#ffc247'], ground: '#2a3a1a',
       desc: '樹根纏住神殿，石像一直在微笑。', sites: [
@@ -189,7 +189,7 @@
           rare: { id: 'z_truthfile', chance: 0.8, cond: (s) => ev(s, 'disclosure') || ev(s, 'census'), text: '外星人真相公開或靈感普查期間，文件忘了塗黑' } }),
       ] },
     { id: 'antarctica', name: '南極外星基地', region: 'antarctica', kind: 'alien', x: 160, y: 166, cost: 900, stay: 3, landmark: 'crater', sky: ['#0b1a2e', '#9b8cff'], ground: '#eef2f8',
-      desc: '冰層下有一座不屬於人類的建築，一直在發出嗡嗡聲。', when: (s) => s.day >= 30, lockText: '第 30 天後才有航班',
+      desc: '冰層下有一座不屬於人類的建築，一直在發出嗡嗡聲。', when: (s) => IE.Rules.age(s) >= 30, lockText: '一局走完三成之後才有航班',
       sites: [
         S('wall', '冰牆', '研究冰牆上的符號。', { gain: ['t_iceglyph'], body: 10, need: { insight: 40 }, risk: { chance: 0.02, death: 'frozen' } }),
         S('colony', '企鵝群', '一隻企鵝跟了你一整天。', { gain: ['t_penguin'], spark: 0.3, body: 6 }),

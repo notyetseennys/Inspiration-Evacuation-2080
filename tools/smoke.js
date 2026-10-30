@@ -177,9 +177,15 @@ const URL = 'http://localhost:' + PORT + '/';
     const rank = await page.textContent('#modal .rank-stamp b');
     await page.click('#modal [data-do="ok"]');
     ok('天台菜園：評級 ' + rank);
+    // 第八期：親手玩過之後可以「照舊做」（最多 A 級）
+    const autoT = await page.evaluate(() => window.__IE.Auto.target(window.__IE.Game.state, 'garden'));
+    if (autoT !== 'A') await fail('照舊做的評級不對：' + autoT);
+    const autoRep = await page.evaluate(() => { const s = window.__IE.Game.state; const r = window.__IE.Auto.result(s, 'garden'); return window.__IE.Jobs2.rankOf(window.__IE.Jobs2.PERF.garden(r)).id; });
+    if (autoRep !== 'A') await fail('照舊做生成的結果不是 A 級：' + autoRep);
+    ok('第八期：天台菜園可以「照舊做」（自動 ' + autoT + ' 級）');
 
     // 第六期：關卡之夜（第 7 天社區小展）、工具卡、預計得分、牌庫；第七期：媒材、流派加成、轉檔
-    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 7; s.slot = 2; s.body = 80; s.cr = 500; s.tools = ['lamp', 'convert']; s.morning = { day: 7, feed: [] }; s.trip = null;
+    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 4; s.slot = 2; s.body = 80; s.cr = 500; s.tools = ['lamp', 'convert']; s.morning = { day: 4, feed: [] }; s.trip = null; s.stageDone = {};
       s.objects = ['tidegauge', 'sandbag']; s.water = 3; });
     await page.click('#views [data-view="room"]');
     await page.click('.act[data-id="create"]');
@@ -210,15 +216,15 @@ const URL = 'http://localhost:' + PORT + '/';
     if (conv[0] !== conv[1]) await fail('轉檔沒有生效');
     ok('第七期：手牌 ' + handN + ' 張都有媒材（' + meds.join('') + '）；' + sch.slice(0, 7) + ' 流派加成；轉檔後兩張都是「' + conv[0] + '」');
     await createNight();
-    const stage = await page.evaluate(() => window.__IE.Game.state.stageDone && window.__IE.Game.state.stageDone[7]);
+    const stage = await page.evaluate(() => window.__IE.Game.state.stageDone && window.__IE.Game.state.stageDone[4]);
     if (!stage) await fail('關卡沒有結算');
     ok('第 1 關社區小展：' + (stage === 'pass' ? '入選' : '落選') + '（' + est.trim().slice(0, 24) + '…）');
     await page.waitForSelector('#modal [data-do="ok"]', { timeout: 10000 });
     await page.click('#modal [data-do="ok"]');
     await closePhone();
 
-    // 夢境面試：跳到第 18 天晚上
-    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 18; s.slot = 2; s.body = 80; s.morning = { day: 18, feed: [] }; });
+    // 夢境面試：跳到篩選日前兩晚（標準模式第 10 天）
+    await page.evaluate(() => { const s = window.__IE.Game.state; s.quarter = 0; s.day = window.__IE.Rules.reviewDay(s) - 2; s.slot = 2; s.body = 80; s.morning = { day: s.day, feed: [] }; });
     if (!(await page.$('.phone'))) await page.click('[data-hud="phone"]');
     await closePhone();
     await page.click('.act[data-id="rest"]');
@@ -260,18 +266,32 @@ const URL = 'http://localhost:' + PORT + '/';
     const md = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('ie2080.meta')).deaths || {}; } catch (e) { return {}; } });
     if (!Object.keys(md).length) await fail('死亡圖鑑沒有記錄');
     // 人才扭蛋機
-    await page.evaluate(() => { const m = JSON.parse(localStorage.getItem('ie2080.meta')); m.tickets = 6; localStorage.setItem('ie2080.meta', JSON.stringify(m)); });
+    await page.evaluate(() => { const m = JSON.parse(localStorage.getItem('ie2080.meta')); m.tickets = 6; m.goldTickets = 1; m.rainbowTickets = 1; localStorage.setItem('ie2080.meta', JSON.stringify(m)); });
     await page.reload();
+    // 第八期：對局紀錄
+    await page.click('[data-do="history"]');
+    await page.waitForSelector('#modal .h-row');
+    const hrow = (await page.textContent('#modal .h-row')).replace(/\s+/g, ' ').trim();
+    await page.click('#modal [data-do="close"]');
+    ok('對局紀錄：' + hrow);
+    // 第八期：外星扭蛋券必定抽到 SR 或以上
     await page.click('[data-do="gacha"]');
-    await page.click('#modal [data-do="pull"]');
+    await page.click('#modal [data-do="pull"][data-id="rainbow"]');
     await page.waitForSelector('#modal .gacha-result', { timeout: 6000 });
-    const got = (await page.textContent('#modal .gacha-result')).trim().slice(0, 30);
+    const got = (await page.textContent('#modal .gacha-result h3')).trim();
+    const rar = await page.$eval('#modal .gacha-result', (el) => el.className);
+    if (!/r-(SR|UR)/.test(rar)) await fail('外星扭蛋券沒有抽到 SR 或以上');
     const pulls = await page.evaluate(() => JSON.parse(localStorage.getItem('ie2080.meta')).pulls);
     if (pulls !== 1) await fail('扭蛋次數沒有記錄');
     await page.click('#modal [data-do="close"]');
     await page.click('[data-do="new"]');
-    const open = await page.$$eval('.bg-card:not(.locked)', (els) => els.length);
-    ok('人才扭蛋機：' + got + '（可用角色 ' + open + '/20）');
+    const open = await page.$$eval('.su-grid .ch:not(.locked)', (els) => els.length);
+    if (open !== 7) await fail('新存檔應該有六個 R 角色加一個抽到的角色，現在有 ' + open + ' 個');
+    const abil = (await page.textContent('.su-detail .sd-abil b')).trim();
+    await page.click('[data-do="mode"][data-id="long"]');
+    const longSel = await page.$eval('[data-do="mode"][data-id="long"]', (el) => el.classList.contains('sel'));
+    if (!longSel) await fail('選不到長篇模式');
+    ok('人才扭蛋機（外星扭蛋券）：' + rar.match(/r-(SR|UR)/)[1] + '「' + got + '」，招牌能力「' + abil + '」（可用角色 ' + open + '/20）');
     ok('死亡圖鑑記錄：' + Object.keys(md).map((k) => window_name(k)).join('、'));
 
     if (errors.length) await fail('有錯誤：\n' + errors.join('\n'));

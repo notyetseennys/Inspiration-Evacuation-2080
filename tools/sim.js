@@ -11,11 +11,15 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js', 'data-abilities.js', 'data-stories.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR, World: W } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
-if (process.env.THRESH_MULT) D.THRESHOLDS = D.THRESHOLDS.map((x) => Math.round(x * Number(process.env.THRESH_MULT)));
+// MODE=long 跑 100 天的長篇模式（預設是 60 天的標準模式）
+const MODE = process.env.MODE === 'long' ? 'long' : 'standard';
+const MD = D.MODES[MODE];
+const REVIEWS = MD.thresholds.map((x, q) => (q + 1) * MD.period);
+if (process.env.THRESH_MULT) MD.thresholds = MD.thresholds.map((x) => Math.round(x * Number(process.env.THRESH_MULT)));
 
 // ---------- 小遊戲表現模型（大約是一個普通玩家） ----------
 function simLabel(s, ot, rng) {
@@ -162,6 +166,14 @@ function runCreate(s, mode) {
   const ses = s.session;
   // 機械人只會用「加班燈」和「濃縮咖啡」
   for (let i = (s.tools || []).length - 1; i >= 0; i--) if (s.tools[i] === 'lamp' || s.tools[i] === 'coffee') IE.Stages.useTool(s, i, []);
+  // 招牌能力：簡單的用法（第八期）
+  const bg = s.bg, stageNight = !!ses.stage, use = (k, a) => CR.useAbility(s, k, a);
+  if (bg === 'copywriter' && stageNight) use('package');
+  if (bg === 'influencer' && stageNight) use('live');
+  if (bg === 'greydeserter' && ses.stage && ses.stage.rules.length) use('bribe');
+  if (bg === 'skyheir' && stageNight && s.cr > 400) use('buyPlay');
+  if (bg === 'animator') { const p = use('frames'); if (p.ok && p.peek && p.peek.length) use('frames', p.peek.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean).sort((a, b) => b.value - a.value)[0].uid); }
+  if (bg === 'teacher') { const top = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean).sort((a, b) => b.value - a.value)[0]; if (top) use('mark', top.uid); }
   while (ses.plays > 0 && ses.hand.length) {
     let best = CR.bestPlay(s);
     if (best && ses.discards > 0 && (best.form === 'sketch' || best.form === 'poem')) {
@@ -171,6 +183,7 @@ function runCreate(s, mode) {
     }
     if (!best) break;
     CR.play(s, best.uids);
+    if (bg === 'busker') use('encore');
   }
   return CR.finish(s);
 }
@@ -411,7 +424,7 @@ function mulberry(seed) {
 function runOne(strat, bg, season, seed) {
   const rng = mulberry(seed * 7 + 13);
   const S = STRATEGIES[strat];
-  const s = R.newRun({ bg, season, seed });
+  const s = R.newRun({ bg, season, seed, mode: MODE });
   const signals = [], crAt = {};
   let overweightFails = 0;
   while (!s.ended) {
@@ -419,7 +432,7 @@ function runOne(strat, bg, season, seed) {
     if (process.env.GIFT && s.day % 10 === 1) s.cr += Number(process.env.GIFT);
     shopping(s, S.moral);
     if (R.drawDilemma(s)) chooseDilemma(s, S.moral, rng);
-    for (let slot = 0; slot < 3 && !s.ended; slot++) {
+    for (let slot = R.hiding(s) ? 1 : 0; slot < 3 && !s.ended; slot++) {
       s.slot = slot;
       // 普通玩家都懂得：身體太差就休息、連續工作太多天要休息、外出太危險就留在室內（隨機策略除外）
       const careful = S.moral !== 'random' && strat !== 'workaholic';
@@ -433,6 +446,8 @@ function runOne(strat, bg, season, seed) {
       if (careful && D.OUTDOOR.includes(choice) && R.outdoorRisk(s) >= 0.03) choice = R.isNight(s) ? 'rest' : (['label', 'smile', 'farm', 'clinic', 'chat', 'rest'].find((id) => enabled(s, id)) || 'rest');
       if (process.env.TRACE) console.log('D' + s.day + '/' + slot, choice, '$' + s.cr, 'need', moneyNeed(s), 'body', s.body, 'spark', s.spark.toFixed(1));
       act(s, choice, rng, S.moral);
+      R.lastStand(s, null);
+      if (R.slotFree(s)) slot--;
       if (process.env.CHECK) { const bad = s.cards.find((c) => !c.tags); if (bad) { console.log('BAD CARD after', choice, JSON.stringify(bad)); process.exit(1); } }
       if (s.body <= 0) break;
     }
@@ -458,12 +473,12 @@ const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length :
 
 // DIST=1：不設門檻，查看各策略在第 10、20、30 天的累積訊號分佈，用來設定門檻
 if (process.env.DIST) {
-  D.THRESHOLDS = D.REVIEW_DAYS.map(() => 1e12);
+  MD.thresholds = MD.thresholds.map(() => 1e12);
   const pctl = (arr, p) => { if (!arr.length) return '-'; const a = arr.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.floor(p * a.length))]; };
   for (const strat of Object.keys(STRATEGIES)) {
     const res = [];
     for (let i = 0; i < RUNS; i++) res.push(runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % 3], 1000 + i));
-    const line = D.REVIEW_DAYS.map((day, q) => {
+    const line = REVIEWS.map((day, q) => {
       const arr = res.filter((r) => r.signals[q] != null).map((r) => r.signals[q]);
       return 'D' + day + ' 存活' + String(Math.round(100 * arr.length / RUNS)).padStart(3) + '% p50/75/90 '
         + [0.5, 0.75, 0.9].map((p) => pctl(arr, p)).join('/');
@@ -493,7 +508,7 @@ if (process.env.STAGES) {
     for (let i = 0; i < RUNS; i++) res.push(runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % seasons.length], 1000 + i));
     const all = res.flatMap((r) => r.stageLog);
     const rate = (f) => { const a = all.filter(f); return a.length ? Math.round(100 * a.filter((x) => x.pass).length / a.length) + '%（' + a.length + '）' : '-'; };
-    console.log(strat.padEnd(11) + ['small', 'big', 'boss'].map((k) => k + ' ' + rate((x) => x.kind === k)).join('　') + '　｜' + [0, 1, 2, 3, 4].map((q) => '季' + (q + 1) + ' ' + rate((x) => Math.floor((x.day - 1) / 20) === q)).join(' ')
+    console.log(strat.padEnd(11) + ['small', 'big', 'boss'].map((k) => k + ' ' + rate((x) => x.kind === k)).join('　') + '　｜' + [0, 1, 2, 3, 4].map((q) => '季' + (q + 1) + ' ' + rate((x) => Math.floor((x.day - 1) / MD.period) === q)).join(' ')
       + '｜被選中 ' + Math.round(100 * res.filter((r) => r.ending === 'recruited').length / RUNS) + '%');
   }
   process.exit(0);
@@ -501,7 +516,7 @@ if (process.env.STAGES) {
 
 // STRAT=名稱：只跑一個策略
 const only = process.env.STRAT ? process.env.STRAT.split(',') : Object.keys(STRATEGIES);
-console.log('訊號門檻：' + D.THRESHOLDS.join(' / ') + '　靈魂上限：' + R.SOUL_LIMIT + ' 克　每個策略 ' + RUNS + ' 局\n');
+console.log((MODE === 'long' ? '長篇 100 天' : '標準 60 天') + '　訊號門檻：' + MD.thresholds.join(' / ') + '　靈魂上限：' + R.SOUL_LIMIT + ' 克　每個策略 ' + RUNS + ' 局\n');
 for (const strat of (process.env.BGS ? [] : only)) {
   const res = [];
   for (let i = 0; i < RUNS; i++) res.push(runOne(strat, bgs[i % bgs.length], seasons[Math.floor(i / bgs.length) % seasons.length], 1000 + i));
@@ -509,7 +524,7 @@ for (const strat of (process.env.BGS ? [] : only)) {
   const rec = res.filter((r) => r.ending === 'recruited');
   console.log(strat.padEnd(11) + '（' + STRATEGIES[strat].moral.padEnd(10) + '）'
     + ' 被選中' + pct(rec.length, RUNS)
-    + '（' + D.REVIEW_DAYS.map((d) => 'D' + d + pct(count((r) => r.ending === 'recruited' && r.day === d), RUNS)).join(' ') + '）'
+    + '（' + REVIEWS.map((d) => 'D' + d + pct(count((r) => r.ending === 'recruited' && r.day === d), RUNS)).join(' ') + '）'
     + ' 良知太重' + pct(count((r) => r.ending === 'heavy'), RUNS)
     + ' 平凡人' + pct(count((r) => r.ending === 'ordinary'), RUNS)
     + ' 死亡' + pct(count((r) => r.ending === 'death'), RUNS)
@@ -539,10 +554,16 @@ if (process.env.TYPES) {
 }
 if (process.env.STRAT) process.exit(0);
 console.log('\n按開局背景（balanced）：');
+const byRar = {};
 for (const bg of bgs) {
   const res = [];
   for (let i = 0; i < RUNS / 2; i++) res.push(runOne('balanced', bg, seasons[i % seasons.length], 5000 + i));
   const n = res.length;
   const c = (t) => pct(res.filter((r) => r.ending === t).length, n);
-  console.log('  ' + D.BACKGROUNDS[bg].name.padEnd(8, '　') + ' 被選中' + c('recruited') + ' 良知太重' + c('heavy') + ' 平凡人' + c('ordinary') + ' 死亡' + c('death'));
+  const rr = D.BACKGROUNDS[bg].rarity || 'R';
+  byRar[rr] = byRar[rr] || { rec: 0, n: 0 };
+  byRar[rr].rec += res.filter((r) => r.ending === 'recruited').length; byRar[rr].n += n;
+  console.log('  ' + (rr + ' ').padEnd(3) + D.BACKGROUNDS[bg].name.padEnd(8, '　') + ' 被選中' + c('recruited') + ' 良知太重' + c('heavy') + ' 平凡人' + c('ordinary') + ' 死亡' + c('death'));
 }
+// 稀有度之間的差距（第八期：R < SR < UR，但不能太大）
+console.log('  按稀有度：' + ['R', 'SR', 'UR'].filter((r) => byRar[r]).map((r) => r + pct(byRar[r].rec, byRar[r].n)).join('　'));

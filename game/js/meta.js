@@ -54,7 +54,7 @@
   }
   // 局內查詢（新一局開始時從 meta 複製到 s.metaPerks）
   const perks = (m) => {
-    const lv = levelOf(m), out = { tools: BASE_TOOLS.slice(), toolSlots: 0, startTool: 0, objSlots: 0, daily: false };
+    const lv = levelOf(m), out = { tools: BASE_TOOLS.slice(), toolSlots: 0, startTool: 0, objSlots: 0, daily: false, weekly: lv >= 3 };
     for (let i = 2; i <= lv; i++) { const L = LEVELS[i]; if (!L) continue; if (L.tool) out.tools.push(L.tool); if (L.toolSlots) out.toolSlots += L.toolSlots; if (L.startTool) out.startTool += L.startTool; if (L.objSlots) out.objSlots += L.objSlots; if (L.daily) out.daily = true; }
     return out;
   };
@@ -83,7 +83,7 @@
   // ---------- 成就：每個都有扭蛋券獎勵 ----------
   const ACH = [
     { id: 'first', name: '第一次', desc: '完成一局', t: 1, test: (m) => (m.runs || 0) >= 1 },
-    { id: 'survive', name: '撐過來了', desc: '活到第 100 天', t: 2, test: (m, s) => s.day >= 100 && s.body > 0 },
+    { id: 'survive', name: '撐過來了', desc: '活到最後一天', t: 2, test: (m, s) => s.day >= IE.Rules.days(s) && s.body > 0 },
     { id: 'recruited', name: '被選中', desc: '被外星人帶走', t: 3, test: (m, s, e) => e === 'agent' || e === 'returned' },
     { id: 'guardian', name: '關上窗戶', desc: '被選中時選擇留下', t: 3, test: (m, s, e) => e === 'guardian' },
     { id: 'stage3', name: '開展', desc: '一局之內通過三個關卡', t: 1, test: (m, s) => ((s.stats.stages || {}).pass || 0) >= 3 },
@@ -93,7 +93,7 @@
     { id: 'legend', name: '傳說', desc: '觸發任何一個傳說組合', t: 2, test: (m) => D.RECIPES.some((r) => r.legend && m.recipes && m.recipes[r.id]) },
     { id: 'recipes30', name: '組合收藏家', desc: '跨局發現 30 個具名組合', t: 3, test: (m) => Object.keys(m.recipes || {}).length >= 30 },
     { id: 'million', name: '一百萬', desc: '一次下筆得到 100 萬分', t: 3, test: (m) => (m.bestPlay || 0) >= 1000000 },
-    { id: 'light', name: '沒有包袱', desc: '以 3 克以下的靈魂完成一局', t: 2, test: (m, s, e) => s.soul <= 3 && s.day >= 60 },
+    { id: 'light', name: '沒有包袱', desc: '以 3 克以下的靈魂完成一局', t: 2, test: (m, s, e) => s.soul <= 3 && IE.Rules.age(s) >= 60 },
     { id: 'heavy', name: '背著整個世界', desc: '靈魂超過 60 克', t: 1, test: (m, s) => s.soul >= 60 },
     { id: 'deaths10', name: '十種死法', desc: '死亡圖鑑收集 10 種', t: 2, test: (m) => Object.keys(m.deaths || {}).length >= 10 },
     { id: 'deaths30', name: '死得很有創意', desc: '死亡圖鑑收集 30 種', t: 4, test: (m) => Object.keys(m.deaths || {}).length >= 30 },
@@ -123,10 +123,50 @@
     return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 2 };
   }
 
+  // ---------- 每週挑戰（第八期）：同一週的所有玩家用同一個種子、角色和一條特別規則，外星評級 3 ----------
+  const WEEKLY_MODS = {
+    flood: { name: '大洪水週', desc: '開局水位已經到 4 樓' },
+    broke: { name: '破產週', desc: '開局身無分文' },
+    judges: { name: '全員評審週', desc: '社區小展和畫廊聯展也有外星評審的規則' },
+    single: { name: '斷捨離週', desc: '只可以裝備一件靈感物件' },
+  };
+  function weekKey(d) {
+    const x = d ? new Date(d) : new Date();
+    const t = new Date(Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()));
+    const day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return t.getUTCFullYear() + '-W' + String(Math.ceil(((t - y0) / 86400000 + 1) / 7)).padStart(2, '0');
+  }
+  function weekly(key) {
+    let h = 2166136261;
+    for (const ch of 'week' + String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+    h >>>= 0;
+    const bgs = Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === 'R');
+    const seasons = Object.keys(D.SEASONS), mods = Object.keys(WEEKLY_MODS);
+    return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 3, mod: mods[(h >>> 12) % mods.length] };
+  }
+
+  // ---------- 角色精通（第八期）：每個角色各自累積經驗，升級解鎖角色故事和獎勵 ----------
+  const MASTERY_XP = [0, 0, 150, 400, 800, 1400]; // 升到 Lv.k 要的累積經驗
+  const MASTERY_REWARD = [null, null,
+    { text: '角色故事（一）；金色扭蛋券 +1', story: 0, gold: 1 },
+    { text: '角色故事（二）；用這個角色開局時多帶一張工具卡', story: 1, tool: 1 },
+    { text: '角色故事（三）；金色外框', story: 2, frame: true },
+    { text: '「大師」稱號；外星扭蛋券 +1', rainbow: 1, title: true },
+  ];
+  function masteryOf(m, bg) {
+    const xp = (m && m.mastery && m.mastery[bg]) || 0;
+    let level = 1;
+    while (level < 5 && xp >= MASTERY_XP[level + 1]) level++;
+    return { xp, level, next: MASTERY_XP[level + 1] || null, base: MASTERY_XP[level], reward: MASTERY_REWARD[level + 1] || null };
+  }
+  const storiesOf = (m, bg) => ((D.STORIES && D.STORIES[bg]) || []).slice(0, Math.max(0, masteryOf(m, bg).level - 1));
+
   // ---------- 一局結束：經驗、等級、評級、成就、每日挑戰紀錄 ----------
   function settle(m, s, e) {
     const st = s.stats.stages || {};
-    const xp = Math.round(s.day + 25 * (st.pass || 0) + ({ agent: 80, returned: 60, guardian: 70, heavy: 40, ordinary: 30 }[e] || 0) + 4 * (s.stake || 1) * ((st.pass || 0) + 1));
+    const xp = Math.round(IE.Rules.age(s) + 25 * (st.pass || 0) + ({ agent: 80, returned: 60, guardian: 70, heavy: 40, ordinary: 30 }[e] || 0) + 4 * (s.stake || 1) * ((st.pass || 0) + 1));
     m.xp = (m.xp || 0) + xp;
     m.level = levelOf(m);
     m.lastXp = xp; m.lastLevels = [];
@@ -137,6 +177,35 @@
       if (L.tickets) m.tickets = (m.tickets || 0) + L.tickets;
       m.lastLevels.push({ level: m.level, text: L.text, memo: MEMOS[m.level - 2] || null });
     }
+    // 角色精通：同一份經驗也加到這個角色
+    m.mastery = m.mastery || {};
+    const lv0 = masteryOf(m, s.bg).level;
+    m.mastery[s.bg] = (m.mastery[s.bg] || 0) + xp;
+    m.lastMastery = [];
+    for (let k = lv0 + 1; k <= masteryOf(m, s.bg).level; k++) {
+      const W = MASTERY_REWARD[k];
+      if (W.gold) m.goldTickets = (m.goldTickets || 0) + W.gold;
+      if (W.rainbow) m.rainbowTickets = (m.rainbowTickets || 0) + W.rainbow;
+      m.lastMastery.push({ level: k, text: W.text, story: W.story != null && D.STORIES && D.STORIES[s.bg] ? D.STORIES[s.bg][W.story] : null });
+    }
+    m.lastExtra = [];
+    // 對局歷史與個人紀錄
+    const ms = s.playMs || 0;
+    m.history = [{ date: dateKey(), bg: s.bg, mode: s.mode || 'long', stake: s.stake || 1, day: s.day, ending: e, stages: st.pass || 0,
+      best: s.stats.bestPlay || 0, ms, daily: s.daily || null, weekly: s.weekly ? s.weekly.key : null }].concat(m.history || []).slice(0, 30);
+    m.bests = m.bests || {};
+    const B = m.bests[s.bg] || { stages: 0, best: 0, day: 0 };
+    if ((st.pass || 0) > B.stages || (s.stats.bestPlay || 0) > B.best) m.lastExtra.push('個人紀錄：' + D.BACKGROUNDS[s.bg].name);
+    m.bests[s.bg] = { stages: Math.max(B.stages, st.pass || 0), best: Math.max(B.best, s.stats.bestPlay || 0), day: Math.max(B.day, s.day) };
+    // 收藏完成獎勵：湊齊一個流派的全部靈感物件（金色扭蛋券），打敗全部外星評審規則（外星扭蛋券）
+    m.schoolDone = m.schoolDone || {};
+    Object.keys(D.SCHOOLS || {}).forEach((k) => {
+      if (m.schoolDone[k]) return;
+      const all = D.OBJECTS.filter((o) => o.school === k);
+      if (all.length && all.every((o) => m.objSeen && m.objSeen[o.id])) { m.schoolDone[k] = true; m.goldTickets = (m.goldTickets || 0) + 1; m.lastExtra.push('湊齊「' + D.SCHOOLS[k].name + '」的全部物件：金色扭蛋券 +1'); }
+    });
+    m.judges = Object.assign(m.judges || {}, s.stats.judges || {});
+    if (!m.judgesDone && IE.Stages && IE.Stages.BOSSES.every((b) => m.judges[b.id])) { m.judgesDone = true; m.rainbowTickets = (m.rainbowTickets || 0) + 1; m.lastExtra.push('打敗過全部外星評審的規則：外星扭蛋券 +1'); }
     // 外星評級：活到最後（沒有死亡、沒有灰化）就算通過
     m.stakes = m.stakes || {};
     m.played = m.played || {};
@@ -148,7 +217,16 @@
       m.daily = m.daily || {};
       const prev = m.daily[s.daily];
       const score = s.day + 100 * (st.pass || 0) + (e === 'agent' ? 1000 : 0);
+      if (!prev) { m.goldTickets = (m.goldTickets || 0) + 1; m.lastExtra.push('完成今天的每日挑戰：金色扭蛋券 +1'); }
       if (!prev || score > prev.score) m.daily[s.daily] = { score, day: s.day, stages: st.pass || 0, ending: e, bg: s.bg };
+    }
+    // 每週挑戰：每週第一次完成，外星扭蛋券 +1
+    if (s.weekly) {
+      m.weekly = m.weekly || {};
+      const prev = m.weekly[s.weekly.key];
+      const score = s.day + 100 * (st.pass || 0) + (e === 'agent' ? 1000 : 0);
+      if (!prev) { m.rainbowTickets = (m.rainbowTickets || 0) + 1; m.lastExtra.push('完成本週挑戰：外星扭蛋券 +1'); }
+      if (!prev || score > prev.score) m.weekly[s.weekly.key] = { score, day: s.day, stages: st.pass || 0, ending: e, bg: s.bg };
     }
     // 成就
     m.ach = m.ach || {};
@@ -157,10 +235,11 @@
       if (m.ach[a.id]) return;
       let ok = false;
       try { ok = !!a.test(m, s, e); } catch (err) { ok = false; }
-      if (ok) { m.ach[a.id] = 1; m.tickets = (m.tickets || 0) + a.t; m.lastAch.push(a.id); }
+      if (ok) { m.ach[a.id] = 1; m.tickets = (m.tickets || 0) + a.t; if (a.t >= 5) m.goldTickets = (m.goldTickets || 0) + 1; m.lastAch.push(a.id); }
     });
     return m;
   }
 
-  IE.Meta = { STAKES, stakeMod, stakeCleared, stakeMax, LEVELS, xpFor, levelOf, levelInfo, perks, toolOpen, bonus, MEMOS, ACH, dateKey, daily, settle, BASE_TOOLS };
+  IE.Meta = { STAKES, stakeMod, stakeCleared, stakeMax, LEVELS, xpFor, levelOf, levelInfo, perks, toolOpen, bonus, MEMOS, ACH, dateKey, daily, settle, BASE_TOOLS,
+    WEEKLY_MODS, weekKey, weekly, MASTERY_XP, MASTERY_REWARD, masteryOf, storiesOf };
 });
