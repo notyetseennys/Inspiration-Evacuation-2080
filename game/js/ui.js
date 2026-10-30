@@ -270,7 +270,14 @@
       + '<div class="btn-row"><button class="btn" type="button" data-do="back">返回</button></div>';
   }
   function controlsPanel(game) {
-    return '<div class="controls"><p class="hint">' + esc(game.hint) + '</p><div class="ctrl-row">'
+    const meta = (game && game.meta) || (IE.Micro && IE.Micro.META && IE.Micro.META[game.kind]) || null;
+    const head = meta
+      ? '<div class="micro-hud-head" style="--mc:' + meta.color + '">'
+        + '<div class="mh-top"><span class="mh-code">' + esc(meta.code) + '</span><strong class="mh-title">' + esc(meta.title) + '</strong><span class="mh-badge">操作台 HUD</span></div>'
+        + '<div class="micro-steps">' + meta.steps.map((st, i) => '<span class="micro-step"><i>' + (i + 1) + '</i>' + esc(st) + '</span>').join('') + '</div>'
+        + '</div>'
+      : '';
+    return '<div class="controls" style="--mc:' + (meta ? meta.color : '#37c3d6') + '">' + head + '<p class="hint">' + esc(game.hint) + '</p><div class="ctrl-row">'
       + game.controls.map((c) => '<button class="btn ' + c.id + '" type="button" data-ctrl="' + c.id + '">' + c.label + ' <small>' + esc(c.key) + '</small></button>').join('')
       + '</div></div>';
   }
@@ -303,7 +310,15 @@
     return h;
   }
   function rankHtml(rk) {
-    return rk ? '<div class="rank-stamp r-' + rk.id + '" style="--c:' + rk.color + '"><b>' + rk.id + '</b><span>' + esc(rk.name) + '</span><small>表現 ' + rk.perf + '%</small></div>' : '';
+    if (!rk) return '';
+    if (IE.Audio && IE.Audio.sfx) setTimeout(() => IE.Audio.sfx('stamp'), 90);
+    return '<div class="rank-stamp r-' + rk.id + '" style="--c:' + rk.color + '" data-rank="' + rk.id + '">'
+      + '<i class="rs-ring" aria-hidden="true"></i>'
+      + '<em class="rs-tag">SHIFT EVAL</em>'
+      + '<b>' + rk.id + '</b>'
+      + '<span>' + esc(rk.name) + '</span>'
+      + '<small>表現 ' + rk.perf + '%</small>'
+      + '</div>';
   }
   function reportModal(rep, btnLabel) {
     return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)

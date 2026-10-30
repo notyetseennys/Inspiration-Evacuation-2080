@@ -350,6 +350,29 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 13：小遊戲的統一外框（P2）
+
+### 改動摘要
+1. **`game/js/micro.js`（統一開場字卡、操作示意圖與畫布 HUD 外框）**：
+   - 新增 `IE.Micro.META`，為全部 **11 個小遊戲**（`label` AI 數據標註／`ot` 加班數據標註／`alien` 篩選地球人、`smile` 企業情緒陪伴、`dive` 舊城潛水、`delivery` 外送潛水、`farm` 陰謀論內容農場、`busk` 天橋底賣唱、`clinic` 黑市義體診所、`interview` 外星 HR 夢境面試、`garden` 天台菜園、`salvage` 拆樓打撈、`haggle` 夜市擺地攤）整理編號（`SHIFT-01` 至 `SHIFT-10`、`HR-EXAM`）、標題、主題色與三步操作說明。
+   - **統一進場說明字卡與操作示意圖（`drawBanner`、`drawDiagram`）**：進場階段（`b.intro`）於畫布中央繪製統一的終端機字卡外框（`WORK TERMINAL // SHIFT-XX`），內嵌針對各小遊戲量身繪製的像素操作示意圖（如標註左右分類、陪伴三軌按鍵、潛水氧氣與魚叉、外送水道與快艇警示、內容農場三行字卡、天橋底四色琴鍵、診所彩色插頭接線圖、夢境面試三選一、天台菜園澆水／收成／趕白鴿、拆樓鐵球對準紅點、夜市價錢條指針與底價區）及 `READY` 進度條。
+   - **統一畫布頂部 HUD 與取景器角標（`topBar`、`drawHudCorners`）**：升級頂部時間槽為深色裝甲橫樑配分段刻度與高亮游標，並於 `IE.Micro.create` 自動為所有小遊戲加上四角 L 型取景器標記。
+2. **`game/js/ui.js` 與 `game/css/art.css`（操作台 HUD 面板與評級印章蓋章演出）**：
+   - 升級 `controlsPanel(game)`，在按鈕列上方加入統一的 `.micro-hud-head` 標題列（顯示班次編號、小遊戲名稱與「操作台 HUD」徽章）及 `.micro-steps` 三步操作提示膠囊。
+   - 升級 `rankHtml(rk)` 與 `.rank-stamp`（`SS`、`S`、`A`、`B`、`C`、`D`）：加入重擊蓋章動畫（`@keyframes rank-slam-in`）、向外擴散的蓋章震波環（`.rs-ring`、`@keyframes rank-ring-burst`）、`SHIFT EVAL` 字樣與蓋章音效（`IE.Audio.sfx('stamp')`），並為 `SS` 與 `S` 級加上耀金光暈。
+   - 嚴格保持小遊戲規則與傳給 `applyMicro` 的結算數據完全不變。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t13-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t13-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t13-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t13-after-mobile.png`
+
+### 已知問題
+- 無。
+
 
 
 

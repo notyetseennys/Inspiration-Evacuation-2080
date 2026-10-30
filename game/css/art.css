@@ -2418,6 +2418,191 @@ p.sch-manifesto .mf-tag {
   vertical-align: 1px;
 }
 
+/* =========================================================
+   任務 13：小遊戲的統一外框與評級印章蓋章演出
+   ========================================================= */
+.controls {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(13, 19, 34, 0.96), rgba(8, 12, 22, 0.98));
+  border: 1px solid color-mix(in srgb, var(--mc, #37c3d6) 45%, #24324f);
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 18px color-mix(in srgb, var(--mc, #37c3d6) 8%, transparent);
+  position: relative;
+}
+.micro-hud-head {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+.micro-hud-head .mh-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.micro-hud-head .mh-code {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--mc, #37c3d6) 22%, #0a101d);
+  border: 1px solid color-mix(in srgb, var(--mc, #37c3d6) 65%, transparent);
+  color: var(--mc, #37c3d6);
+  letter-spacing: 0.08em;
+}
+.micro-hud-head .mh-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: #f0f5ff;
+}
+.micro-hud-head .mh-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9fb0cc;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.micro-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+}
+.micro-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(18, 27, 46, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  color: #d6e2f8;
+}
+.micro-step i {
+  font-style: normal;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--mc, #37c3d6) 25%, #0b1220);
+  color: var(--mc, #37c3d6);
+  border: 1px solid color-mix(in srgb, var(--mc, #37c3d6) 55%, transparent);
+  flex-shrink: 0;
+}
+.controls .ctrl-row .btn {
+  border-width: 1px;
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
+}
+.controls .ctrl-row .btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* 結算評級印章（SS 至 D）蓋章動畫 */
+.rank-stamp {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 12px 7px;
+  border: 3px double var(--c);
+  border-radius: 8px;
+  color: var(--c);
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--c) 18%, rgba(10, 14, 23, 0.92)), rgba(8, 12, 20, 0.94));
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.55),
+    inset 0 0 10px color-mix(in srgb, var(--c) 24%, transparent);
+  transform: rotate(8deg);
+  transform-origin: center center;
+  animation: rank-slam-in 0.52s cubic-bezier(0.18, 1.65, 0.36, 1) both;
+  overflow: visible;
+  z-index: 3;
+}
+.rank-stamp .rs-tag {
+  font-style: normal;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  opacity: 0.82;
+  margin-bottom: 1px;
+}
+.rank-stamp .rs-ring {
+  position: absolute;
+  inset: -6px;
+  border: 2px solid var(--c);
+  border-radius: 12px;
+  pointer-events: none;
+  opacity: 0;
+  animation: rank-ring-burst 0.65s ease-out 0.16s forwards;
+}
+.rank-stamp.r-SS {
+  border-width: 4px;
+  box-shadow:
+    0 0 28px rgba(255, 211, 107, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    inset 0 0 16px rgba(255, 211, 107, 0.35);
+}
+.rank-stamp.r-S {
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--c) 55%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--c) 28%, transparent);
+}
+.rank-stamp.r-C,
+.rank-stamp.r-D {
+  border-style: dashed;
+  opacity: 0.92;
+}
+@keyframes rank-slam-in {
+  0% {
+    transform: translate(-18px, -28px) rotate(-26deg) scale(2.85);
+    opacity: 0;
+    filter: blur(2px);
+  }
+  55% {
+    transform: translate(0, 2px) rotate(10deg) scale(0.92);
+    opacity: 1;
+    filter: none;
+  }
+  75% {
+    transform: translate(0, -1px) rotate(7deg) scale(1.04);
+  }
+  100% {
+    transform: rotate(8deg) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes rank-ring-burst {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.42);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rank-stamp,
+  .rank-stamp .rs-ring {
+    animation-duration: 0.01s !important;
+  }
+}
 
 
 
