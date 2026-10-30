@@ -599,12 +599,20 @@
     const stampsSeen = meta.stamps || {};
     const stamps = Object.keys(DS.STAMPS).map((k) => '<span class="dstamp mini tone-' + DS.STAMPS[k].tone + (stampsSeen[k] ? '' : ' unknown') + '">' + (stampsSeen[k] ? esc(DS.STAMPS[k].text) : '？？？') + '</span>').join('');
     const unlocked = meta.unlocked || {}, seenO = meta.objSeen || {};
-    const objs = D().OBJECTS.map((o) => {
+    const objCard = (o) => {
       const open = !o.unlock || unlocked[o.id];
       const seen = seenO[o.id];
       return '<div class="recipe obj-card r-' + o.rarity + (seen ? '' : ' unknown') + '">' + (seen || open ? IE.Icons.obj(o.id, 32) : '')
         + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
         + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
+    };
+    // 按流派分組（第七期）
+    const SC = D().SCHOOLS;
+    const objs = Object.keys(SC).concat(['']).map((k) => {
+      const list = D().OBJECTS.filter((o) => (o.school || '') === k);
+      const n = list.filter((o) => seenO[o.id]).length;
+      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
+        + '<span class="num">' + n + '/' + list.length + '</span></h4><div class="recipes">' + list.map(objCard).join('') + '</div>';
     }).join('');
     const evSeen = meta.eventsSeen || {};
     const allEv = D().WORLD_EVENTS.map((w) => ({ id: w.id, name: w.name, scope: w.scope, grade: w.grade, text: w.news, long: true }))
@@ -624,7 +632,7 @@
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
       + worldCodexHtml(meta)
       + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
-      + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
+      + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3>' + objs
       + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
       + '<h3>人類模組（' + Object.keys(at).length + '/' + DS.ARCHETYPES.length + '）</h3><div class="recipes">' + types + '</div>'
       + '<h3>外星印章（' + Object.keys(stampsSeen).length + '/' + Object.keys(DS.STAMPS).length + '）</h3><div class="stamp-wall">' + stamps + '</div>'

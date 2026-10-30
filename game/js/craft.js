@@ -28,6 +28,7 @@
     return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
       + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
+      + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'
       + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
       + '<span class="cc-tags">' + tags + '</span>'
@@ -37,10 +38,27 @@
       + (c.guilt ? '<span class="cc-grams">愧疚 ' + c.grams + ' 克</span>' : '')
       + '</button>';
   }
+  // 媒材標記（第七期）：素材卡右上角的一個字
+  function medBadge(c) {
+    const m = D().MEDIA[D().mediumOf(c)];
+    return '<span class="cc-med" style="--c:' + m.color + '" title="媒材：' + m.full + '">' + m.name + '</span>';
+  }
   function objTile(id, slot) {
-    const o = D().OBJ[id];
-    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc) + '">'
-      + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span></button>';
+    const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
+    return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '')) + '">'
+      + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
+      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
+  }
+  // 流派加成：裝備中每個流派的件數，兩件觸發、三件更強
+  function schoolsHtml(s) {
+    const n = C().schoolCounts(s);
+    const ids = Object.keys(n).sort((a, b) => n[b] - n[a]);
+    if (!ids.length) return '';
+    return ids.map((id) => {
+      const sc = D().SCHOOLS[id], k = n[id];
+      const txt = k >= 3 ? sc.b2 + '；' + sc.b3 : k >= 2 ? sc.b2 + '（三件：' + sc.b3 + '）' : '再多一件：' + sc.b2;
+      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '"><b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
+    }).join('');
   }
 
   // ---------- 開啟 ----------
@@ -57,7 +75,7 @@
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
       + '<div class="ct-stagebar" hidden></div>'
-      + '<section class="ct-objs"></section><section class="ct-tools"></section><p class="ct-info"></p>'
+      + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
@@ -100,7 +118,9 @@
     const s = st.s, ses = s.session;
     const cards = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
     const order = D().TAGS ? Object.keys(D().TAGS) : [];
+    const morder = Object.keys(D().MEDIA);
     if (st.sortBy === 'tag') cards.sort((a, b) => order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]) || b.value - a.value);
+    else if (st.sortBy === 'medium') cards.sort((a, b) => morder.indexOf(D().mediumOf(a)) - morder.indexOf(D().mediumOf(b)) || order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]));
     else cards.sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a));
     return cards;
   }
@@ -112,6 +132,7 @@
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
     $('.ct-objs').innerHTML = slots.join('');
+    $('.ct-schools').innerHTML = schoolsHtml(s);
     renderTools();
     renderStage();
     renderGoal();
@@ -119,6 +140,7 @@
     $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
     $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
+    $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
     pb.textContent = '下筆（' + ses.plays + '）';
     db.textContent = '改稿（' + ses.discards + '）';
     pb.disabled = st.busy || !st.sel.length || ses.plays <= 0;
@@ -175,7 +197,7 @@
       $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
       $('.ct-form .fl').textContent = '';
       setBoxes(0, 0, 'preview');
-      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；具名組合要「純」：每一張都要有組合要求的標籤。';
+      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；四張同一媒材是「連作」，五種媒材各一是「跨界」。具名組合要「純」：每一張都要有組合要求的標籤。';
       $('.ct-est').innerHTML = '';
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring'));
       return;
@@ -188,7 +210,7 @@
     if (pv.ai < 1) bits.push('<span class="rc ai">AI 正在模仿你的「' + esc(pv.name) + '」：×' + pv.ai + '</span>');
     if (pv.blocked) bits.push('<span class="rc ai">' + pv.blocked + ' 張素材被評審判為不計分</span>');
     // 「差一張」提示
-    pv.hints.forEach((h) => bits.push('<span class="rc near">加入「' + esc(h.card) + '」→《' + esc(h.name) + '》</span>'));
+    pv.hints.forEach((h) => bits.push('<span class="rc near">加入「' + esc(h.card) + '」→' + (h.form ? '形式「' + esc(h.name) + '」' : '《' + esc(h.name) + '》') + '</span>'));
     $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">沒有具名組合</span>';
     // 預計得分
     const g = st.s.session.stage;
@@ -206,19 +228,24 @@
     const tb = e.target.closest('.ct-tool[data-tool]');
     if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
     const ob = e.target.closest('.ct-obj[data-obj]');
-    if (ob) { const o = D().OBJ[ob.dataset.obj]; $('.ct-info').innerHTML = '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + '）：' + esc(o.desc); wiggle(ob); return; }
+    if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
+    const sb = e.target.closest('.sch[data-school]');
+    if (sb) { const sc = D().SCHOOLS[sb.dataset.school]; $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3); return; }
     const b = e.target.closest('[data-ct]');
     if (!b || b.disabled) return;
     A().sfx('click');
     const k = b.dataset.ct;
     if (k === 'play') doPlay();
     else if (k === 'discard') doDiscard();
-    else if (k === 'sort') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; store.set('ie2080.sort', st.sortBy); render(); }
+    else if (k === 'sort') { nextSort(); store.set('ie2080.sort', st.sortBy); render(); }
     else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
     else if (k === 'deck') UI().pushModal(deckHtml(st.s), { close: UI().closeModal }, { dismiss: () => {} });
     else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
     else if (k === 'leave') leave();
   }
+  // 排序：標籤 → 媒材 → 籌碼
+  const SORTS = { tag: ['medium', '按媒材'], medium: ['value', '按籌碼'], value: ['tag', '按標籤'] };
+  function nextSort() { st.sortBy = (SORTS[st.sortBy] || SORTS.value)[0]; }
   function toggle(uid) {
     const SR = IE.Stages ? IE.Stages.scoring(st.s) : null;
     const c = st.s.cards.find((x) => x.uid === uid);
@@ -234,7 +261,11 @@
     if (/^[1-9]$/.test(k)) { const c = sortedHand()[Number(k) - 1]; if (c) toggle(c.uid); }
     else if (k === 'Enter') doPlay();
     else if (k === 'd' || k === 'D' || k === 'Backspace') doDiscard();
-    else if (k === 's' || k === 'S') { st.sortBy = st.sortBy === 'tag' ? 'value' : 'tag'; render(); }
+    else if (k === 's' || k === 'S') { nextSort(); render(); }
+  }
+  function objInfo(s, id) {
+    const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
+    return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc) + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '');
   }
   // 使用工具卡：先選素材，再按工具卡
   function useTool(idx) {
@@ -253,9 +284,13 @@
     const max = Math.max(1, ...Object.values(counts));
     const rows = Object.keys(D().TAGS).filter((g) => counts[g]).sort((a, b) => counts[b] - counts[a]).map((g) => '<div class="dk-row"><span class="tag" style="--c:' + D().TAGS[g].color + '">' + D().TAGS[g].name + '</span>'
       + '<div class="dk-bar"><i style="width:' + counts[g] / max * 100 + '%;background:' + D().TAGS[g].color + '"></i></div><b class="num">' + counts[g] + '</b></div>').join('');
+    const M = D().MEDIA, mc = {};
+    left.forEach((c) => { const m = D().mediumOf(c); mc[m] = (mc[m] || 0) + 1; });
+    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '"><b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
     return '<div class="modal wide"><h2>牌庫</h2><p class="mute" style="font-size:13px">還沒抽到的素材有 ' + left.length + ' 張（用過的 ' + ses.used.length + ' 張會在牌庫抽完後洗回去）。改稿前看看接下來最可能抽到甚麼。</p>'
-      + '<div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
-      + '<h3>未抽的素材</h3><div class="dk-cards">' + left.slice().sort((a, b) => b.value - a.value).map((c) => '<span class="dk-card">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '・' + c.value + '</small></span>').join('') + '</div>'
+      + '<h3>標籤</h3><div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
+      + '<h3>媒材</h3><div class="dk-media">' + media + '</div>'
+      + '<h3>未抽的素材</h3><div class="dk-cards">' + left.slice().sort((a, b) => b.value - a.value).map((c) => '<span class="dk-card">' + esc(c.name) + ' <small>' + c.tags.map((g) => D().TAGS[g].name).join('・') + '・' + M[D().mediumOf(c)].name + '・' + c.value + '</small></span>').join('') + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">返回</button></div></div>';
   }
   function leave() {
@@ -457,13 +492,25 @@
         case 'obj': {
           const el = objEl(x.slot);
           wiggle(el);
-          if (x.uid != null) bump(stageCard(x.uid), 1.06);
+          if (x.uid != null) bump(x.held ? root.querySelector('.ct-hand .cc[data-uid="' + x.uid + '"]') : stageCard(x.uid), 1.06);
           floatText(el, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
           setBoxes(x.C, x.M);
           pulse(x.chips && !x.mult ? chipsEl : multEl);
           A().fx(x.xmult ? 'xmult' : 'mult', ++n);
           if (x.xmult) shake(4);
           await wait(x.xmult ? 420 : 300);
+          break;
+        }
+        case 'school': {
+          const el = root.querySelector('.ct-schools .sch[data-school="' + x.school + '"]');
+          wiggle(el);
+          if (x.uid != null) bump(stageCard(x.uid), 1.06);
+          floatText(el || multEl, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips, x.xmult ? 'xmult' : x.mult ? 'mult' : 'chips');
+          setBoxes(x.C, x.M);
+          pulse(x.chips && !x.mult ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(5);
+          await wait(x.xmult ? 440 : 320);
           break;
         }
         case 'recipe':
@@ -662,7 +709,8 @@
       + '<li>特定標籤組合會觸發<b>具名組合</b>（例如「水＋記憶＋飢餓」＝水淹童年）。組合要<b>純</b>：下筆的每一張都要有組合要求的標籤。還有隱藏的<b>傳說組合</b>等你發現。</li>'
       + '<li>選牌時會顯示<b>預計得分</b>，以及「加入某張就成為某個組合」的提示；「牌庫」可以看接下來會抽到甚麼。</li>'
       + '<li>每季第 7、14、20 天晚上是<b>關卡之夜</b>：一晚之內要達到目標分數。第 20 天的外星評審還會改寫規則。<b>工具卡</b>可以在這裡改造素材。</li>'
-      + '<li><b>靈感物件</b>會在計分時觸發；朋友、潛水、事件和二手市集都可以找到。</li>'
+      + '<li>每張素材還有一種<b>媒材</b>（右上角的字）：紙、聲、影、身、數。四張同一媒材是「連作」，五種各一是「跨界」；五張同一媒材的小說和史詩，會變成「三部曲」和「傑作」。</li>'
+      + '<li><b>靈感物件</b>會在計分時觸發；朋友、潛水、事件和二手市集都可以找到。物件分屬十個<b>流派</b>：裝備兩件同流派觸發流派加成，三件更強。</li>'
       + '<li>分數 = 籌碼 × 倍率 × 火花。素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格。</li>'
       + '<li>白天做不同的事，會練成不同的技法，令相應的作品形式升級。</li></ul>'
       + '<p class="mute">演出時點一下畫面可以快轉；右上角可以調整速度。</p></div>'

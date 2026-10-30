@@ -36,7 +36,7 @@
 
   // ---------- 人才檔案等級 ----------
   // 每局按存活天數、通過的關卡和結局得到經驗；每升一級有一個獎勵和一份外星 HR 內部備忘錄
-  const BASE_TOOLS = ['rewrite', 'renew', 'coffee', 'lamp'];
+  const BASE_TOOLS = ['rewrite', 'renew', 'coffee', 'lamp', 'convert'];
   const LEVELS = [
     null, null,
     { text: '工具卡「碎紙」加入卡池', tool: 'shred' }, { text: '人才扭蛋券 +2', tickets: 2 }, { text: '工具卡「複印」加入卡池', tool: 'copy' },
@@ -106,6 +106,10 @@
     { id: 'chars5', name: '多重人格', desc: '用五個不同的角色完成一局', t: 3, test: (m) => Object.keys(m.played || {}).length >= 5 },
     { id: 'daily', name: '每日一篩', desc: '完成一次每日挑戰', t: 2, test: (m, s) => !!s.daily },
     { id: 'memos', name: '真相', desc: '讀到最後一份外星 HR 備忘錄', t: 5, test: (m) => levelOf(m) >= MEMOS.length + 1 },
+    { id: 'school', name: '自成一派', desc: '以三件同流派的靈感物件通過一個關卡', t: 2, test: (m, s) => Object.keys(s.stats.schoolPass || {}).length >= 1 },
+    { id: 'schools5', name: '百家爭鳴', desc: '跨局以五個不同的流派通過關卡', t: 4, test: (m) => Object.keys(m.schoolPass || {}).length >= 5 },
+    { id: 'opus', name: '傑作', desc: '寫出作品形式「傑作」（同一媒材的史詩）', t: 3, test: (m, s) => !!(s.formsSeen && s.formsSeen.opus) },
+    { id: 'objects60', name: '靈感收藏家', desc: '跨局見過 60 件靈感物件', t: 3, test: (m) => Object.keys(m.objSeen || {}).length >= 60 },
   ];
 
   // ---------- 每日挑戰：同一天的所有玩家用同一個種子、角色、季節，外星評級 2 ----------

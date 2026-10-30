@@ -178,8 +178,9 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('#modal [data-do="ok"]');
     ok('天台菜園：評級 ' + rank);
 
-    // 第六期：關卡之夜（第 7 天社區小展）、工具卡、預計得分、牌庫
-    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 7; s.slot = 2; s.body = 80; s.cr = 500; s.tools = ['lamp', 'renew']; s.morning = { day: 7, feed: [] }; s.trip = null; });
+    // 第六期：關卡之夜（第 7 天社區小展）、工具卡、預計得分、牌庫；第七期：媒材、流派加成、轉檔
+    await page.evaluate(() => { const s = window.__IE.Game.state; s.day = 7; s.slot = 2; s.body = 80; s.cr = 500; s.tools = ['lamp', 'convert']; s.morning = { day: 7, feed: [] }; s.trip = null;
+      s.objects = ['tidegauge', 'sandbag']; s.water = 3; });
     await page.click('#views [data-view="room"]');
     await page.click('.act[data-id="create"]');
     if (await page.$('#modal [data-do="close"]')) await page.click('#modal [data-do="close"]');
@@ -196,6 +197,18 @@ const URL = 'http://localhost:' + PORT + '/';
     const est = await page.textContent('#ctable .ct-est');
     if (!/預計/.test(est)) await fail('沒有預計得分');
     await page.click('#ctable .ct-hand .cc[data-uid="' + u0 + '"]');
+    // 第七期：每張手牌都有媒材標記；兩件水淹流物件觸發流派加成；轉檔令選中的素材變成同一媒材
+    const meds = await page.$$eval('#ctable .ct-hand .cc-med', (els) => els.map((e) => e.textContent));
+    const handN = await page.evaluate(() => window.__IE.Game.state.session.hand.length);
+    if (meds.length !== handN) await fail('媒材標記數目不對：' + meds.length + '/' + handN);
+    const sch = await page.textContent('#ctable .ct-schools .sch.on');
+    if (!/水淹流 2\/3/.test(sch)) await fail('流派加成沒有顯示：' + sch);
+    const two = await page.evaluate(() => window.__IE.Game.state.session.hand.slice(0, 2));
+    for (const u of two) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
+    await page.click('#ctable .ct-tool[data-tool="0"]');
+    const conv = await page.evaluate((us) => { const s = window.__IE.Game.state; return us.map((u) => window.__IE.DATA.mediumOf(s.cards.find((c) => c.uid === u))); }, two);
+    if (conv[0] !== conv[1]) await fail('轉檔沒有生效');
+    ok('第七期：手牌 ' + handN + ' 張都有媒材（' + meds.join('') + '）；' + sch.slice(0, 7) + ' 流派加成；轉檔後兩張都是「' + conv[0] + '」');
     await createNight();
     const stage = await page.evaluate(() => window.__IE.Game.state.stageDone && window.__IE.Game.state.stageDone[7]);
     if (!stage) await fail('關卡沒有結算');

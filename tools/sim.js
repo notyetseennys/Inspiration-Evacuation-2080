@@ -11,7 +11,7 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR, World: W } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
@@ -377,8 +377,18 @@ function shopping(s, moral) {
   if (s.floor === 0) R.buy(s, 'rehouse');
   if (!s.handBonus && s.cr > 450) R.buy(s, 'tools');
   if (s.objSlots < 5 && s.cr > 650) R.buy(s, 'studio');
-  // 二手市集：有空位又有餘錢就買靈感物件
-  R.shop(s).filter((it) => it.obj && it.enabled).forEach((it) => { if (s.objects.length < s.objSlots && s.cr > moneyNeed(s) + it.cost + 80) R.buy(s, it.id); });
+  // 二手市集：有空位又有餘錢就買靈感物件；優先買能湊成流派的（第七期）
+  const schoolN = () => CR.schoolCounts(s);
+  const syn = (id) => { const sc = D.OBJ[id].school; return sc ? (schoolN()[sc] || 0) : -1; };
+  R.shop(s).filter((it) => it.obj && it.enabled).sort((a, b) => syn(b.obj) - syn(a.obj)).forEach((it) => {
+    if (s.cr <= moneyNeed(s) + it.cost + 80) return;
+    if (s.objects.length < s.objSlots) { R.buy(s, it.id); return; }
+    // 物件欄滿了：如果這件能湊成流派，就賣掉一件落單的（不賣起始物件）
+    const sc = D.OBJ[it.obj].school, n = schoolN();
+    if (!sc || !n[sc]) return;
+    const lone = s.objects.find((id) => !D.OBJ[id].start && (!D.OBJ[id].school || (n[D.OBJ[id].school] === 1 && D.OBJ[id].school !== sc)));
+    if (lone) { R.sellObject(s, lone); R.buy(s, it.id); }
+  });
   if (s.premiumUntil < s.day && s.cr > 300) R.buy(s, 'premium');
   sellIfBroke(s);
   decorShopping(s);

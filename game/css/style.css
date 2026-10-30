@@ -886,3 +886,36 @@ body.ct-open { overflow: hidden; }
 .memo { font-size: 13px; line-height: 1.6; padding: 8px 10px; border-left: 3px solid var(--alien); background: rgba(155, 227, 107, 0.06); margin: 6px 0; font-family: var(--font-num), var(--font-body); }
 .memo.unknown { color: var(--mute); border-color: var(--line); background: none; }
 .memos { max-height: 280px; overflow: auto; }
+
+/* ---------- 第七期：媒材、流派 ---------- */
+.cc .cc-med {
+  position: absolute; top: 9px; right: 4px; width: 18px; height: 18px; display: grid; place-items: center;
+  border-radius: 4px; font-size: 11px; font-weight: 900; line-height: 1; color: #120a1c;
+  background: var(--c); box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
+}
+.cc .cc-name { padding-right: 16px; }
+.cc.dark .cc-med { display: none; }
+.ct-obj { position: relative; }
+.ct-obj .osc {
+  position: absolute; top: 3px; left: 3px; padding: 0 4px; border-radius: 3px; font-size: 9px; font-weight: 900; line-height: 14px;
+  color: #120a1c; background: var(--c);
+}
+.ct-schools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -2px; }
+.ct-schools:empty { display: none; }
+.ct-schools .sch {
+  display: inline-flex; gap: 6px; align-items: baseline; max-width: 100%; padding: 3px 8px; border-radius: 6px; cursor: pointer;
+  font-size: 11px; line-height: 1.35; color: var(--mute); background: #1a1028; border: 1px dashed color-mix(in srgb, var(--c) 55%, transparent);
+}
+.ct-schools .sch b { color: var(--c); white-space: nowrap; }
+.ct-schools .sch.on { color: var(--fg); border-style: solid; border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, #1a1028); }
+.ct-schools .sch.max { box-shadow: 0 0 12px color-mix(in srgb, var(--c) 45%, transparent); }
+.dk-media { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.dk-med { display: inline-flex; gap: 6px; align-items: center; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); font-size: 13px; }
+.dk-med b { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: var(--c); color: #120a1c; font-size: 11px; }
+.sch-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; color: var(--c, var(--fg)); }
+.sch-head small { flex: 1 1 260px; color: var(--mute); font-weight: 400; font-size: 12px; }
+.sch-head .num { color: var(--mute); font-size: 12px; }
+@media (max-width: 640px) {
+  .cc .cc-med { width: 15px; height: 15px; font-size: 10px; top: 8px; right: 3px; }
+  .ct-schools .sch { font-size: 10px; }
+}

@@ -10,6 +10,7 @@
   'use strict';
   const D = IE.DATA, R = IE.Rules;
   const has = (c, t) => c.tags.includes(t);
+  const med = (c) => D.mediumOf(c);
 
   // ---------- 外星評審的規則（Boss） ----------
   const BOSSES = [
@@ -29,6 +30,10 @@
     { id: 'noobj', name: '純粹主義', desc: '靈感物件全部失效', noObjects: true },
     { id: 'finale', name: '壓軸', desc: '只計最後一筆，但 ×2', lastOnly: true },
     { id: 'thinhand', name: '預算削減', desc: '手牌 −2', start: (ses) => { ses.handSize = Math.max(3, ses.handSize - 2); } },
+    // 第七期：媒材的規則
+    { id: 'silent', name: '默片展', desc: '「聲」媒材的素材不計分', block: (c) => med(c) === 'sound' },
+    { id: 'analog', name: '拒收數據', desc: '「數」媒材的素材不計分', block: (c) => med(c) === 'data' },
+    { id: 'monomedia', name: '單一媒材展', desc: '素材不是同一種媒材的下筆 ×0.4', playMult: (sel) => (new Set(sel.map(med)).size === 1 ? 1 : 0.4) },
   ];
   const BOSS = {};
   BOSSES.forEach((b) => { BOSS[b.id] = b; });
@@ -43,7 +48,7 @@
     big: { name: '畫廊聯展', short: '聯展', mult: 1.1, color: '#c38bff', reward: { cr: 120, tools: 1, tickets: 1 }, fail: { rating: -0.3, spark: -0.3 } },
     boss: { name: '外星評審', short: '評審', mult: 1.45, color: '#ff4d5e', reward: { cr: 200, tools: 2, tickets: 2, obj: 0.5 }, fail: { signalPct: -0.08, spark: -0.4 } },
   };
-  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 16000);
+  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 17000);
   // 一晚的目標分數：隨日子以每天約 4% 增長（與創作分數的增長曲線相若）
   const STAGE_G = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_G) || 1.032);
   const baseTarget = (day) => STAGE_K * Math.pow(STAGE_G, day - 1);
@@ -86,14 +91,16 @@
     const ids = rulesNow(s);
     if (!ids.length) return null;
     const rules = ids.map((id) => BOSS[id]);
+    // 反叛流（三件）或斷線鉗：「反叛」素材無視規則
+    const free = (c) => IE.Create.freeOfRules(s, c);
     return {
-      blocked: (c) => rules.some((b) => (b.block && b.block(c)) || (b.forbid && b.forbid(c))),
-      forbidden: (c) => rules.some((b) => b.forbid && b.forbid(c)),
+      blocked: (c) => !free(c) && rules.some((b) => (b.block && b.block(c)) || (b.forbid && b.forbid(c))),
+      forbidden: (c) => !free(c) && rules.some((b) => b.forbid && b.forbid(c)),
       maxCards: Math.min(...rules.map((b) => b.maxCards || 5)),
       noObjects: rules.some((b) => b.noObjects),
       extraWear: rules.reduce((a, b) => a + (b.extraWear || 0), 0),
       sparkMult: rules.reduce((a, b) => a * (b.sparkMult || 1), 1),
-      mult: (form, kpiMod) => rules.reduce((a, b) => a * (b.mult || 1) * (b.formMult ? b.formMult(s, form) : 1) * (b.kpiOnly && kpiMod <= 1 ? 0 : 1), 1),
+      mult: (form, kpiMod, sel) => rules.reduce((a, b) => a * (b.mult || 1) * (b.formMult ? b.formMult(s, form) : 1) * (b.kpiOnly && kpiMod <= 1 ? 0 : 1) * (b.playMult && sel ? b.playMult(sel) : 1), 1),
       sinPerPlay: rules.reduce((a, b) => a + (b.sinPerPlay || 0), 0),
       names: rules.map((b) => b.name),
     };
@@ -119,6 +126,9 @@
     s.stats.stages = s.stats.stages || { pass: 0, fail: 0 };
     if (pass) {
       s.stats.stages.pass++;
+      // 以三件同流派的物件通過關卡：跨局解鎖該流派的傳說物件
+      const sc = IE.Create.schoolCounts(s);
+      Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
       const W = K.reward;
       const cr = Math.round(W.cr * (1 + 0.15 * stage.index / 3));
       s.cr += cr; s.stats.crEarned += cr; out.cr = cr;
@@ -160,6 +170,7 @@
     { id: 'lamp', name: '加班燈', icon: 'lamp', price: 50, need: 0, desc: '今晚下筆 +1' },
     { id: 'portfolio', name: '作品集', icon: 'book', price: 55, need: [1, 5], desc: '選中素材組成的作品形式升一級（永久）' },
     { id: 'dream', name: '夢境', icon: 'mirror', price: 70, need: 1, desc: '選中的一張素材變成一件隨機的古董或旅行素材' },
+    { id: 'convert', name: '轉檔', icon: 'monitor', price: 40, need: [1, 3], desc: '選中的一至三張素材，變成手牌裡最常見的媒材' },
   ];
   const TOOL = {};
   TOOLS.forEach((t) => { TOOL[t.id] = t; });
@@ -201,7 +212,7 @@
         break;
       case 'copy': {
         const c = cards[0];
-        const copy = Object.assign({}, c, { wear: 0, name: c.name + '（副本）' });
+        const copy = Object.assign({}, c, { wear: 0, name: c.name + '（副本）', medium: med(c) });
         delete copy.uid;
         const res = R.addCard(s, copy);
         ses.hand.push(res.card.uid);
@@ -220,7 +231,7 @@
         const counts = {};
         a.tags.concat(b.tags).forEach((g) => { counts[g] = (counts[g] || 0) + 1; });
         const tags = Object.keys(counts).sort((x, y) => counts[y] - counts[x]).slice(0, 2);
-        const merged = { id: 'collage', name: a.name.slice(0, 6) + '＋' + b.name.slice(0, 6), tags, value: Math.round((a.value + b.value) * 0.8), wear: 0 };
+        const merged = { id: 'collage', name: a.name.slice(0, 6) + '＋' + b.name.slice(0, 6), tags, value: Math.round((a.value + b.value) * 0.8), wear: 0, medium: med(a) };
         s.cards = s.cards.filter((c) => c.uid !== a.uid && c.uid !== b.uid);
         ses.hand = ses.hand.filter((u) => u !== a.uid && u !== b.uid);
         const res = R.addCard(s, merged);
@@ -239,8 +250,16 @@
       case 'dream': {
         const pool = D.ANTIQUES.concat(Object.keys(D.CARDS).filter((k) => k.startsWith('t_')));
         const nid = R.pick(s, pool), def = D.CARDS[nid];
-        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0 });
+        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
         msg = '「' + def.name + '」從夢裡出現了';
+        break;
+      }
+      case 'convert': {
+        const counts = {};
+        ses.hand.map((u) => cardOf(s, u)).filter(Boolean).forEach((c) => { const m = med(c); counts[m] = (counts[m] || 0) + 1; });
+        const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+        cards.forEach((c) => { c.medium = top; });
+        msg = cards.length + ' 張素材變成了「' + D.MEDIA[top].full + '」';
         break;
       }
     }

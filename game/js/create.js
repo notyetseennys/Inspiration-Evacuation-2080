@@ -1,6 +1,7 @@
 // 《靈感撤離 2080》創作規則：純邏輯，瀏覽器與 Node（tools/sim.js）共用。
 // 每晚創作 = 從素材庫抽一手牌 → 下筆（打出 1 至 5 張）／改稿（換牌）→ 全部下筆的分數加起來就是今晚的作品。
 // 每次下筆的分數 = (形式籌碼 + 素材籌碼 + 組合籌碼) × (形式倍率 + 加成) × 乘數 × 火花 × KPI × AI 模仿
+// 第七期：素材有第二條軸「媒材」（決定連作、跨界等形式）；靈感物件分為十個流派，兩件同流派觸發流派加成。
 // scorePlay 會回傳逐步的計分紀錄（steps），讓 craft.js 逐張演出。
 (function (factory) {
   const root = typeof window !== 'undefined' ? window : globalThis;
@@ -15,13 +16,22 @@
   const r1 = (v) => Math.round(v * 10) / 10;
   const r2 = (v) => Math.round(v * 100) / 100;
   const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
+  const has = (c, t) => c.tags.includes(t);
+  const med = (c) => D.mediumOf(c);
+  function mediaCounts(cards) {
+    const m = {};
+    cards.forEach((c) => { const k = med(c); m[k] = (m[k] || 0) + 1; });
+    return m;
+  }
+  // 作品形式由低至高（決定「差一張」提示是否算升級）
+  const RANK = ['sketch', 'poem', 'couplet', 'song', 'collage', 'crossover', 'novel', 'series', 'mural', 'symphony', 'epic', 'trilogy', 'opus', 'film'];
 
   // ---------- 素材 ----------
   const cardOf = (s, uid) => s.cards.find((c) => c.uid === uid);
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * wearMult(c) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
+    return Math.round(c.value * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -38,22 +48,31 @@
     const t0 = tags[0], t1 = tags[1];
     const c1 = counts[t0] || 0, c2 = counts[t1] || 0;
     const n = cards.length, distinct = tags.length;
-    let id, keys = null;
+    // 媒材：四張或以上同一種 = 連作（相當於同花）；五種各一 = 跨界（相當於順子）；五張同一種配合標籤 = 三部曲、傑作
+    const media = mediaCounts(cards), mdistinct = Object.keys(media).length;
+    const m0 = Object.keys(media).sort((a, b) => media[b] - media[a])[0];
+    const same = n === 5 && mdistinct === 1, cross = n === 5 && mdistinct === 5, run = (media[m0] || 0) >= 4;
+    let id, keys = null, all = false;
     if (n === 5 && c1 >= 5 && c2 >= 5) { id = 'film'; keys = [t0, t1]; }
+    else if (same && c1 >= 5) { id = 'opus'; keys = [t0]; all = true; }
+    else if (same && c1 >= 3 && c2 >= 2) { id = 'trilogy'; keys = [t0, t1]; all = true; }
     else if (c1 >= 5) { id = 'epic'; keys = [t0]; }
     else if (c1 >= 4 && c2 >= 3) { id = 'symphony'; keys = [t0, t1]; }
     else if (c1 >= 4) { id = 'mural'; keys = [t0]; }
+    else if (run) { id = 'series'; }
     else if (c1 >= 3 && c2 >= 2) { id = 'novel'; keys = [t0, t1]; }
+    else if (cross) { id = 'crossover'; all = true; }
     else if (n === 5 && distinct >= 7) { id = 'collage'; }
     else if (c1 >= 3) { id = 'song'; keys = [t0]; }
     else if (c1 >= 2 && c2 >= 2) { id = 'couplet'; keys = [t0, t1]; }
     else if (c1 >= 2) { id = 'poem'; keys = [t0]; }
     else id = 'sketch';
     let scoring;
-    if (keys) scoring = cards.filter((c) => c.tags.some((t) => keys.includes(t)));
-    else if (id === 'collage') scoring = cards.slice();
+    if (all || id === 'collage') scoring = cards.slice();
+    else if (id === 'series') scoring = cards.filter((c) => med(c) === m0);
+    else if (keys) scoring = cards.filter((c) => c.tags.some((t) => keys.includes(t)));
     else scoring = cards.length ? [cards.reduce((a, c) => (c.value > a.value ? c : a), cards[0])] : [];
-    return { id, keys, scoring, counts, distinct };
+    return { id, keys, scoring, counts, distinct, media, mdistinct, same };
   }
   const level = (s, id) => (s.forms && s.forms[id]) || 1;
   function formStats(s, id) {
@@ -89,9 +108,13 @@
     return 1;
   }
   // AI 模仿：同一種形式用得越密，AI 學得越快，倍率越低（每天消退四成）
-  function aiFactor(s, form, objs) {
-    const heat = ((s.style && s.style[form]) || 0) * (objs.some((o) => o.def.aiDouble) ? 2 : 1);
-    return Math.max(0.4, r2(1 - 0.1 * Math.max(0, heat - 2)));
+  // 機械流（三件）完全不受 AI 模仿影響；某些物件令 AI 學得更快或更慢
+  function aiFactor(s, form, objs, schools) {
+    if ((schools || []).some((x) => x.def.noAI && x.n >= x.def.noAI)) return 1;
+    const speed = objs.reduce((a, o) => a * (o.def.aiMult || (o.def.aiDouble ? 2 : 1)), 1);
+    const heat = ((s.style && s.style[form]) || 0) * speed;
+    const pen = 0.1 * Math.max(0, heat - 2) * (objs.some((o) => o.def.aiHalf) ? 0.5 : 1);
+    return Math.max(0.4, r2(1 - pen));
   }
 
   // ---------- 靈感物件 ----------
@@ -107,6 +130,21 @@
       return def ? { id, slot: i, def } : null;
     }).filter(Boolean);
   }
+  // 流派：數一數裝備中每個流派的物件，兩件或以上觸發流派加成
+  function schoolCounts(s, objs) {
+    const n = {};
+    (objs || activeObjects(s)).forEach((o) => { const sc = D.OBJ[o.id] && D.OBJ[o.id].school; if (sc) n[sc] = (n[sc] || 0) + 1; });
+    return n;
+  }
+  function activeSchools(s, objs) {
+    const n = schoolCounts(s, objs);
+    return Object.keys(n).filter((k) => n[k] >= 2 && D.SCHOOLS[k]).map((k) => ({ id: k, n: n[k], def: D.SCHOOLS[k] }));
+  }
+  // 外星評審「純粹主義」令物件與流派全部失效
+  const objsOff = (s) => !!(s.session && s.session.stage && IE.Stages && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].noObjects));
+  const schoolOn = (s, id, k) => !objsOff(s) && (schoolCounts(s)[id] || 0) >= (k || 2);
+  // 「反叛」素材無視外星評審的規則（斷線鉗，或者三件反叛流）
+  const freeOfRules = (s, c) => has(c, 'rebel') && !objsOff(s) && (activeObjects(s).some((o) => o.def.freeRebel) || schoolOn(s, 'rebel', D.SCHOOLS.rebel.freeRebel));
   function objMods(s) {
     const m = { hand: 0, plays: 0, discards: 0 };
     activeObjects(s).forEach((o) => { const x = o.def.mods; if (x) Object.keys(x).forEach((k) => { m[k] += x[k]; }); });
@@ -122,20 +160,25 @@
     const steps = [{ t: 'form', form: F.id, level: fs.level, chips, mult, C: chips, M: mult }];
     const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
     const objs = SR && SR.noObjects ? [] : activeObjects(s);
+    const schools = activeSchools(s, objs);
     const ses = s.session || {};
     const recs = matchRecipes(s, sel);
-    const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct,
-      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs),
+    const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
+    const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct, media: F.media, mdistinct: F.mdistinct,
+      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held,
       roll: opt && opt.roll != null ? opt.roll : 0.5 };
+    const times = (r) => (r === true ? 1 : r || 0);
+    const noWear = schools.some((x) => x.def.noWear);
     const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
     const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
     F.scoring.forEach((c, i) => {
       // 外星評審的規則：某些素材不計分
       if (SR && SR.blocked(c)) { steps.push(snap({ t: 'blocked', uid: c.uid })); return; }
       let reps = 1 + (c.mod === 'echo' ? 1 : 0);
-      objs.forEach((o) => { if (o.def.retrig && o.def.retrig(c, ctx, i)) reps++; });
+      objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, i)); });
+      schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, i, x.n)); });
       for (let r = 0; r < reps; r++) {
-        const v = SR && SR.extraWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
+        const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
         chips += v;
         steps.push(snap({ t: 'card', uid: c.uid, chips: v, again: r > 0 }));
         const mf = MOD_FX[c.mod];
@@ -145,8 +188,19 @@
           const e = o.def.card(c, ctx);
           if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
         });
+        schools.forEach((x) => {
+          if (!x.def.card) return;
+          const e = x.def.card(c, ctx, x.n);
+          if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
+        });
       }
     });
+    // 留在手牌、沒有打出的素材（例如魚缸）
+    held.forEach((c) => objs.forEach((o) => {
+      if (!o.def.held) return;
+      const e = o.def.held(c, ctx);
+      if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
+    }));
     // 組合：只有最強的一個一般組合計足，第二個計一半，其餘被埋沒；傳說組合全部計算並另外乘
     const sorted = topRecipes(recs);
     let primary = false;
@@ -162,11 +216,16 @@
       const e = o.def.play(ctx);
       if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot }, e))); }
     });
+    schools.forEach((x) => {
+      if (!x.def.play) return;
+      const e = x.def.play(ctx, x.n);
+      if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id }, e))); }
+    });
     mult = Math.max(0, mult);
-    const ai = aiFactor(s, F.id, objs);
+    const ai = aiFactor(s, F.id, objs, schools);
     const wm = (RL.worldMods(s).signalMult) || 1;
     const tm = IE.World ? IE.World.tripMult(s) : 1;
-    const sm = SR ? SR.mult(F.id, ctx.kpiMod) : 1;
+    const sm = SR ? SR.mult(F.id, ctx.kpiMod, sel) : 1;
     const sp = s.spark * (SR ? SR.sparkMult : 1);
     if (ai !== 1) steps.push({ t: 'ai', x: ai });
     if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
@@ -178,7 +237,7 @@
     const total = Math.round(raw * ctx.kpiMod);
     const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
     return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
-      ai, kpi: ctx.kpiMod, world: wm, spark: s.spark, raw, total, steps, recipes: sorted.map((r) => r.id), relief };
+      ai, kpi: ctx.kpiMod, world: wm, spark: s.spark, raw, total, steps, recipes: sorted.map((r) => r.id), relief, schools: schools.map((x) => x.id) };
   }
 
   // 下筆前的預覽：只顯示形式與可能觸發的組合（不計物件，留一點懸念）
@@ -201,11 +260,17 @@
         matchRecipes(s, sel.concat(c)).filter((r) => !have.has(r.id) && !r.legend).forEach((r) => {
           if (!hints.some((h) => h.recipe === r.id)) hints.push({ uid: u, card: c.name, recipe: r.id, name: (s.discovered[r.id] || known(r.id)) ? r.name : '？？？', power: power(r) });
         });
+        // 再加一張就升級成更高的作品形式（例如連作、跨界）
+        const F2 = detectForm(sel.concat(c));
+        if (RANK.indexOf(F2.id) > RANK.indexOf(F.id) && RANK.indexOf(F2.id) >= RANK.indexOf('crossover') && !hints.some((h) => h.form === F2.id)) {
+          const f2 = FORM[F2.id];
+          hints.push({ uid: u, card: c.name, form: F2.id, name: f2.name, power: f2.chips / 10 + f2.mult * 10 });
+        }
       });
     }
     hints.sort((a, b) => b.power - a.power);
     return { form: F.id, name: FORM[F.id].name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: F.scoring.map((c) => c.uid),
-      recipes: recs, ai: aiFactor(s, F.id, activeObjects(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
+      recipes: recs, ai: aiFactor(s, F.id, activeObjects(s), activeSchools(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
       blocked: est.steps.filter((x) => x.t === 'blocked').length };
   }
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
@@ -268,7 +333,8 @@
     const guilt = res.scoring.map((u) => cardOf(s, u)).filter((c) => c && c.guilt);
     let relief = 0;
     if (guilt.length) {
-      relief = RL.atone(s, guilt.reduce((a, c) => a + (c.grams || 0), 0), null);
+      const rm = activeObjects(s).reduce((a, o) => a * (o.def.reliefMult || 1), 1);
+      relief = RL.atone(s, guilt.reduce((a, c) => a + (c.grams || 0), 0) * rm, null);
       s.stats.confessions = (s.stats.confessions || 0) + guilt.length;
       const gone = new Set(guilt.map((c) => c.uid));
       s.cards = s.cards.filter((c) => !gone.has(c.uid));
@@ -288,13 +354,14 @@
     s.style[res.form] = (s.style[res.form] || 0) + 1;
     // 物件的代價
     const notes = [];
-    objs.forEach((o) => {
-      if (!o.def.after) return;
-      const e = o.def.after({ s });
-      if (e.sin) notes.push(D.OBJ[o.id].name + '：靈魂 +' + RL.sin(s, e.sin, null) + ' 克');
-      if (e.spark) { RL.addSpark(s, e.spark, true); notes.push(D.OBJ[o.id].name + '：火花 ' + e.spark); }
-      if (e.cr) { s.cr += e.cr; notes.push(D.OBJ[o.id].name + '：+$' + e.cr); }
-    });
+    const cost = (name, e) => {
+      if (e.sin) notes.push(name + '：靈魂 +' + RL.sin(s, e.sin, null) + ' 克');
+      if (e.spark) { RL.addSpark(s, e.spark, true); notes.push(name + '：火花 ' + e.spark); }
+      if (e.cr) { s.cr += e.cr; notes.push(name + '：+$' + e.cr); }
+      if (e.body) { s.body = Math.max(1, s.body + e.body); notes.push(name + '：身體 ' + e.body); }
+    };
+    objs.forEach((o) => { if (o.def.after) cost(D.OBJ[o.id].name, o.def.after({ s })); });
+    activeSchools(s, objs).forEach((x) => { if (x.def.after) cost(x.def.name, x.def.after({ s }, x.n)); });
     if (SR && SR.sinPerPlay) notes.push('天空區贊助：靈魂 +' + RL.sin(s, SR.sinPerPlay, null) + ' 克');
     res.notes = notes;
     ses.notes.push(...notes);
@@ -313,6 +380,9 @@
     ses.hand = ses.hand.filter((u) => !uids.includes(u));
     ses.used.push(...uids);
     ses.discards--; ses.discardsUsed++;
+    // 反叛流與會成長的物件（祖父悖論、推倒的銅像）記住每一次改稿
+    s.stats.discards = (s.stats.discards || 0) + 1;
+    activeObjects(s).forEach((o) => { if (o.def.grow) { s.objVal = s.objVal || {}; s.objVal[o.id] = (s.objVal[o.id] || 0) + o.def.grow; } });
     draw(s);
     return true;
   }
@@ -375,6 +445,12 @@
     const tags = [...new Set(hand.flatMap((c) => c.tags))];
     tags.forEach((t) => add(byVal.filter((c) => c.tags.includes(t))));
     tags.forEach((a, i) => tags.slice(i + 1).forEach((b) => add(byVal.filter((c) => c.tags.includes(a) || c.tags.includes(b)))));
+    // 媒材：同一媒材（連作）與五種媒材各一（跨界）
+    const meds = [...new Set(hand.map(med))];
+    meds.forEach((m) => add(byVal.filter((c) => med(c) === m)));
+    if (meds.length === 5) add(meds.map((m) => byVal.find((c) => med(c) === m)));
+    // 少張數（極簡流）
+    add(byVal.slice(0, 1)); add(byVal.slice(0, 2));
     // 湊組合：每個已知組合各試一次
     D.RECIPES.forEach((r) => {
       const need = Object.keys(r.need);
@@ -392,7 +468,7 @@
   }
 
   IE.Create = {
-    FORM, cardValue, wearMult, tagCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
-    activeObjects, objMods, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
+    FORM, RANK, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });

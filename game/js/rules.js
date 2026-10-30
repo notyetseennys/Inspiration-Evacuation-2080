@@ -346,6 +346,7 @@
     s.objStash = s.objStash.filter((x) => x !== id);
     const price = Math.round(D.OBJ_PRICE[o.rarity] / 2);
     s.cr += price;
+    s.stats.objSold = (s.stats.objSold || 0) + 1;
     return price;
   }
   // 朋友幫你打磨素材：隨機一張沒有變化的素材得到「閃亮／燃燒／淚痕／回音」
@@ -357,13 +358,20 @@
     c.mod = r < 0.4 ? 'shine' : r < 0.7 ? 'burn' : r < 0.9 ? 'tear' : 'echo';
     if (rep) rep.line((who || '你') + '幫你打磨了「' + c.name + '」：' + D.CARD_MODS[c.mod].name + '（' + D.CARD_MODS[c.mod].desc + '）', 'good');
   }
-  // 二手靈感市集：每三天換一批貨
+  // 二手靈感市集：每三天換三件貨。傳說物件較少見；你已經有的流派較常出現（方便湊流派）
+  const RARITY_W = { common: 1, rare: 0.6, legend: 0.2 };
   function marketItems(s) {
     const period = Math.floor((s.day - 1) / 3);
     if (!s.market || s.market.period !== period) {
-      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.souvenir && objectAvailable(s, o)).map((o) => o.id);
+      const mine = new Set(s.objects.concat(s.objStash).map((id) => D.OBJ[id] && D.OBJ[id].school).filter(Boolean));
+      const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.souvenir && objectAvailable(s, o) && !ownsObject(s, o.id))
+        .map((o) => ({ id: o.id, w: (RARITY_W[o.rarity] || 1) * (o.school && mine.has(o.school) ? 3 : 1) }));
       const items = [];
-      while (items.length < 2 && pool.length) items.push(pool.splice(Math.floor(rand(s) * pool.length), 1)[0]);
+      while (items.length < 3 && pool.length) {
+        let r = rand(s) * pool.reduce((a, x) => a + x.w, 0), i = 0;
+        while (i < pool.length - 1 && (r -= pool[i].w) > 0) i++;
+        items.push(pool.splice(i, 1)[0].id);
+      }
       s.market = { period, items };
     }
     return s.market.items.filter((id) => !ownsObject(s, id));
@@ -925,7 +933,7 @@
     if (s.objSlots < 5) add('craft', 'key', { id: 'studio', name: '租用工作室一角', desc: '靈感物件欄 +1（最多 5 格）', cost: s.objSlots === 3 ? 220 : 360 });
     marketItems(s).forEach((id) => {
       const o = D.OBJ[id];
-      items.push({ cat: 'craft', obj: id, id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity] });
+      items.push({ cat: 'craft', obj: id, id: 'obj:' + id, name: '【二手靈感市集】' + o.name, desc: D.RARITY[o.rarity] + (o.school ? '・' + D.SCHOOLS[o.school].name : '') + '・' + o.desc, cost: D.OBJ_PRICE[o.rarity] });
     });
     if (s.floor === 0) {
       const f = Math.floor(s.water) + 1;
@@ -1523,6 +1531,9 @@
     meta.bestRatio = Math.max(meta.bestRatio || 0, s.stats.bestRatio || 0);
     meta.antiqueTrades = (meta.antiqueTrades || 0) + (s.stats.antiqueTrades || 0);
     meta.floodNights = (meta.floodNights || 0) + (s.stats.floodNights || 0);
+    // 以三件同流派物件通過過關卡的流派（解鎖流派的傳說物件）
+    meta.schoolPass = meta.schoolPass || {};
+    Object.keys(s.stats.schoolPass || {}).forEach((k) => { meta.schoolPass[k] = true; });
     if (IE.Roster) IE.Roster.settle(meta, finalType);
     meta.tickets = (meta.tickets || 0) + (s.stageTickets || 0);
     meta.lastTickets = (meta.lastTickets || 0) + (s.stageTickets || 0);

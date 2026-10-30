@@ -10,7 +10,7 @@
   const has = (c, t) => c.tags.includes(t);
 
   // ---------- 作品形式（相當於撲克牌型） ----------
-  // 按標籤出現次數判斷；一張素材有兩個標籤時，兩個都會計算。
+  // 按標籤出現次數判斷；一張素材有兩個標籤時，兩個都會計算。media：由媒材決定的形式（第七期，相當於同花和順子）。
   // up：每升一級增加的籌碼與倍率。teach：在哪裡可以練習這種技法。
   const FORMS = [
     { id: 'sketch',   name: '隨筆',   desc: '任何素材，只計最高分的一張',           chips: 5,   mult: 1,  up: [10, 1], teach: 'AI 數據標註' },
@@ -18,10 +18,14 @@
     { id: 'couplet',  name: '對聯',   desc: '兩種標籤各出現兩次',                   chips: 20,  mult: 2,  up: [20, 1], teach: '陰謀論內容農場' },
     { id: 'song',     name: '歌',     desc: '同一標籤出現三次',                     chips: 30,  mult: 3,  up: [20, 2], teach: '街頭表演、與小雨聊天' },
     { id: 'collage',  name: '拼貼',   desc: '五張素材，合共七種或以上標籤',         chips: 35,  mult: 4,  up: [30, 2], teach: '舊城潛水、與 Miu 聊天' },
+    { id: 'crossover', name: '跨界',  desc: '五張素材，五種媒材各一張',             chips: 40,  mult: 5,  up: [25, 2], teach: '夜市擺地攤', media: true },
     { id: 'novel',    name: '小說',   desc: '一種標籤三次，另一種兩次',             chips: 40,  mult: 4,  up: [25, 2], teach: '做義工、與 Mary 姐聊天' },
+    { id: 'series',   name: '連作',   desc: '四張或以上同一種媒材',                 chips: 55,  mult: 6,  up: [30, 3], teach: '天台菜園', media: true },
     { id: 'mural',    name: '壁畫',   desc: '同一標籤出現四次',                     chips: 60,  mult: 7,  up: [30, 3], teach: '外送潛水、與阿 Ken 聊天' },
     { id: 'symphony', name: '交響曲', desc: '一種標籤四次，另一種三次',             chips: 80,  mult: 8,  up: [35, 3], teach: '與 DJ 小妹聊天' },
     { id: 'epic',     name: '史詩',   desc: '同一標籤出現五次',                     chips: 100, mult: 12, up: [40, 3], teach: '與芳姐聊天' },
+    { id: 'trilogy',  name: '三部曲', desc: '「小說」或「交響曲」，而且五張是同一種媒材', chips: 130, mult: 13, up: [45, 4], teach: '只可以用「作品集」升級', media: true },
+    { id: 'opus',     name: '傑作',   desc: '「史詩」，而且五張是同一種媒材',       chips: 180, mult: 18, up: [50, 4], teach: '只可以用「作品集」升級', media: true },
     { id: 'film',     name: '電影',   desc: '五張素材全部擁有同樣的兩種標籤',       chips: 150, mult: 16, up: [50, 4], teach: '與老陳聊天', secret: true },
   ];
   // 行動與朋友教你的技法

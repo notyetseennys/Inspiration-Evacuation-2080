@@ -32,7 +32,7 @@
     q_clinic: C('完美的接駁', ['machine', 'hope'], 30), q_clinic2: C('病人的新手', ['machine', 'warmth'], 28),
     q_fail: C('今天搞砸了', ['anger', 'memory'], 16),
   });
-  Object.assign(D.TEACH, { garden: 'poem', salvage: 'mural', haggle: 'novel' });
+  Object.assign(D.TEACH, { garden: 'series', salvage: 'mural', haggle: 'crossover' });
   // 浮城地圖上的新地點
   if (D.PLACES) D.PLACES.push({ id: 'rooftop', name: '天台菜園', x: 128, y: 80, act: 'garden', icon: 'garden' },
     { id: 'demolition', name: '拆樓工地', x: 30, y: 110, act: 'salvage', icon: 'crane' },
