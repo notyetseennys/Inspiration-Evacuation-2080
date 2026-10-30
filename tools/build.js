@@ -13,7 +13,8 @@ const html = fs.readFileSync(path.join(game, 'index.html'), 'utf8');
 const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
 const body = html.match(/<!-- BUILD:BODY -->([\s\S]*?)<!-- \/BUILD:BODY -->/)[1].trim();
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
-const css = fs.readFileSync(path.join(game, 'css/style.css'), 'utf8');
+// 依 index.html 的次序內嵌所有本機樣式表（style.css、art.css……）
+const css = [...head.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)">/g)].map((m) => fs.readFileSync(path.join(game, m[1]), 'utf8')).join('\n');
 const js = scripts.map((src) => '// ---- ' + src + ' ----\n' + fs.readFileSync(path.join(game, src), 'utf8')).join('\n');
 if (/<\/script/i.test(js)) throw new Error('JS 內含 </script>，不能直接內嵌');
 
