@@ -291,12 +291,12 @@
     },
     influencer: {
       name: '過氣網紅', short: '過氣網紅',
-      desc: '懂得甚麼會紅，但已經沒人在看。', perkText: '內容農場收入 +30%',
+      desc: '懂得甚麼會紅，但已經沒人在看。', perkText: '內容農場收入 +30%；懂得包裝，創作籌碼 +10%',
       cr: 260, spark: 2.2, floor: 4, medium: '剪了一條影片',
       soul: 10, conscience: 0.7, past: '你帶過的貨，很多都是假的。',
       cards: ['b_light', 'b_follow', 'b_live'],
-      perk: { farmPay: 1.3 },
-      stats: st(40, 45, 45, 25, 30, 70, 42, 42, 25, 30, 25, 45),
+      perk: { farmPay: 1.3, craftChips: 1.1 },
+      stats: st(40, 45, 45, 25, 30, 70, 45, 42, 25, 30, 25, 45),
     },
     cybertech: {
       name: '黑市義體技師', short: '義體技師',
