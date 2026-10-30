@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// 將 game/ 打包成單一 HTML 檔，方便直接打開或者分享。
-// 用法：node tools/build.js            → dist/inspiration-evacuation-2080.html（完整 HTML，可以直接雙擊開）
-//       node tools/build.js --artifact → 另外輸出冇 <html>/<head>/<body> 外殼嘅版本（俾 claude.ai Artifact 用）
+// 把 game/ 打包成單一 HTML 檔，方便直接開啟或分享。
+// 用法：node tools/build.js            → dist/inspiration-evacuation-2080.html（完整 HTML，可以直接雙擊開啟）
+//       node tools/build.js --artifact → 另外輸出沒有 <html>/<head>/<body> 外殼的版本（供 claude.ai Artifact 使用）
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -15,7 +15,7 @@ const body = html.match(/<!-- BUILD:BODY -->([\s\S]*?)<!-- \/BUILD:BODY -->/)[1]
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
 const css = fs.readFileSync(path.join(game, 'css/style.css'), 'utf8');
 const js = scripts.map((src) => '// ---- ' + src + ' ----\n' + fs.readFileSync(path.join(game, src), 'utf8')).join('\n');
-if (/<\/script/i.test(js)) throw new Error('JS 入面有 </script>，唔可以直接 inline');
+if (/<\/script/i.test(js)) throw new Error('JS 內含 </script>，不能直接內嵌');
 
 const title = head.match(/<title>[\s\S]*?<\/title>/)[0];
 const metaSides = head.match(/<meta name="claude:viewport-fit-sides"[^>]*>/)[0];

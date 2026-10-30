@@ -1,4 +1,4 @@
-// 創作：揀素材 → 即時睇到組合同分數 → 爆分演出。
+// 創作：選擇素材 → 即時看到組合與分數 → 爆分演出。
 (function (IE) {
   'use strict';
   const D = () => IE.DATA;
@@ -38,18 +38,18 @@
           + '<span class="term t-spark"><small>火花</small>' + ev.spark.toFixed(1) + '</span>'
           + (ev.kpiMod !== 1 ? '<span class="op">×</span><span class="term t-kpi"><small>KPI</small>' + ev.kpiMod + '</span>' : '')
           + '<span class="op">=</span><span class="term t-total"><small>作品分</small>' + UI().fmt(ev.total) + '</span></div>'
-          + '<div class="combos">' + (ev.combos.length ? ev.combos.map((c) => comboHtml(s, c)).join('') : '<span class="mute" style="font-size:13px">冇組合。試下揀同一標籤，或者唔同標籤配搭。</span>') + '</div>'
-        : '<p class="mute" style="font-size:14px">揀 2 至 ' + s.craftSlots + ' 張素材。同一標籤出現 3 張或以上會「同調」，特定標籤組合會觸發具名組合。</p>';
+          + '<div class="combos">' + (ev.combos.length ? ev.combos.map((c) => comboHtml(s, c)).join('') : '<span class="mute" style="font-size:13px">沒有組合。試試選擇同一標籤，或者搭配不同標籤。</span>') + '</div>'
+        : '<p class="mute" style="font-size:14px">選擇 2 至 ' + s.craftSlots + ' 張素材。同一標籤出現 3 張或以上會「同調」，特定標籤組合會觸發具名組合。</p>';
       UI().modal('<div class="modal wide craft">'
-        + '<div class="panel-head"><h2>創作</h2><p>火花 ×' + s.spark.toFixed(1) + '・今季 KPI：' + UI().esc(k.name) + '（' + UI().esc(k.desc) + '）</p></div>'
+        + '<div class="panel-head"><h2>創作</h2><p>火花 ×' + s.spark.toFixed(1) + '・本季 KPI：' + UI().esc(k.name) + '（' + UI().esc(k.desc) + '）</p></div>'
         + '<div class="craft-tray">' + slots.join('') + '</div>'
         + formula
-        + '<h3>你嘅素材（材料費 $' + cost + '，你有 $' + UI().fmt(s.cr) + '）</h3>'
+        + '<h3>你的素材（材料費 $' + cost + '，你有 $' + UI().fmt(s.cr) + '）</h3>'
         + '<div class="craft-grid">' + s.cards.map((c) => UI().cardHtml(c, {
           button: true, sel: sel.includes(c.uid),
           disabled: !sel.includes(c.uid) && sel.length >= s.craftSlots,
         })).join('') + '</div>'
-        + '<div class="btn-row"><button class="btn" type="button" data-do="cancel">唔做住</button>'
+        + '<div class="btn-row"><button class="btn" type="button" data-do="cancel">暫時不做</button>'
         + '<button class="btn primary big" type="button" data-do="make"' + (can ? '' : ' disabled') + '>創作' + (sel.length >= 2 ? '（$' + R().craftCost(sel.length) + '）' : '') + '</button></div>'
         + '</div>', {
         card(el) {
@@ -145,7 +145,7 @@
       const after = R().signal(s);
       const extra = [];
       if (res.fresh.length) extra.push('<p class="new">靈光一閃！發現新組合：' + res.fresh.map((c) => c.name).join('、') + (res.sparkUp ? '（火花 +' + res.sparkUp + '）' : '') + '</p>');
-      if (ev.kpiMod === 0) extra.push('<p style="color:#ff9aa6">外星人唔計呢件作品：' + UI().esc(ev.kpi.desc) + '</p>');
+      if (ev.kpiMod === 0) extra.push('<p style="color:#ff9aa6">外星人不計算這件作品：' + UI().esc(ev.kpi.desc) + '</p>');
       extra.push('<p class="mute">訊號 ' + UI().fmt(before) + ' → <b style="color:#ffd6ef">' + UI().fmt(after) + '</b> / ' + UI().fmt(R().threshold(s)) + '</p>');
       $('rv-extra').innerHTML = extra.join('');
       $('rv-extra').hidden = false;

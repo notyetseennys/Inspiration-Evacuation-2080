@@ -1,4 +1,4 @@
-// 像素畫引擎：320×180 原生解像度畫面，放大顯示；文字另外喺高解像度畫，保持清晰。
+// 像素畫引擎：以 320×180 原生解像度繪畫再放大顯示；文字另外以高解像度繪畫，保持清晰。
 (function (IE) {
   'use strict';
   const W = 320, H = 180;
@@ -68,6 +68,17 @@
       '...bbbbbb...', '...bwbwbb...', '..bbbbbbbb..', '..bwbwbwbb..', '..bbbbbbbb..', 'aaaaaaaaaaaa'] },
     diver: { pal: { d: '#37c3d6', k: '#1b2a3a', g: '#ffd36b', t: '#8e9bb0', f: '#ff4fb4' }, rows: [
       '...tttt.....', '.ddddddddgg.', 'fddddddddgk.', 'fdddddddddd.', '.ddd..ddd...', 'ff....ff....'] },
+    sardine: { pal: { s: '#c3d3e6', k: '#1b1b28', d: '#7d8aa8' }, rows: [
+      '.ssss.d', 'kssssdd', '.ssss.d'] },
+    grouper: { pal: { g: '#6b8f4e', p: '#4a6b36', k: '#111111', m: '#8a3b3b', d: '#56753f' }, rows: [
+      '....gggggg......', '..gggggggggg..dd', '.gkggggggggggddd', 'gggggppgggggggdd', 'ggggggggppgggddd',
+      '.gggmmggggggg.dd', '..gggggggggg...d', '....gggggg......'] },
+    locker: { pal: { m: '#5a6478', l: '#8e9bb0', k: '#2a3142', y: '#ffd36b' }, rows: [
+      'kkkkkkkkkk', 'kmmmmmmmmk', 'kmllllllmk', 'kmmmmmmmmk', 'kmllllllmk', 'kmmmmmmmmk', 'kmmmmmmymk',
+      'kmmmmmmmmk', 'kmllllllmk', 'kmmmmmmmmk', 'kmllllllmk', 'kmmmmmmmmk', 'kkkkkkkkkk'] },
+    lockerOpen: { pal: { m: '#5a6478', k: '#2a3142', d: '#11151f' }, rows: [
+      'kkkkkkkkkk', 'kddddddddk', 'kddddddddk', 'kddddddddk', 'kddddddddk', 'kddddddddk', 'kddddddddk',
+      'kddddddddk', 'kddddddddk', 'kddddddddk', 'kddddddddk', 'kddddddddk', 'kkkkkkkkkk'] },
     jelly: { pal: { p: '#ff8fd1', w: '#ffffff' }, rows: [
       '..pppp..', '.pppppp.', 'pppwpppp', 'pppppppp', 'p.p.p.p.', 'p.p.p.p.', '.p.p.p.p', '........'] },
     alien: { pal: { a: '#9be36b', k: '#14201a', w: '#ffffff', s: '#2b3a5c', r: '#ff4d5e', b: '#111827' }, rows: [
@@ -80,7 +91,8 @@
   function spriteCanvas(name, opts) {
     const d = (opts && opts.desat) ? Math.round(opts.desat * 4) / 4 : 0;
     const palKey = opts && opts.pal ? JSON.stringify(opts.pal) : '';
-    const key = name + '|' + d + '|' + palKey;
+    const tint = (opts && opts.tint) || '';
+    const key = name + '|' + d + '|' + palKey + '|' + tint;
     if (cache.has(key)) return cache.get(key);
     const spr = SPR[name];
     const pal = Object.assign({}, spr.pal, opts && opts.pal);
@@ -95,6 +107,13 @@
         x.fillStyle = d ? desat(pal[ch], d) : pal[ch];
         x.fillRect(i, j, 1, 1);
       }
+    }
+    // 染色（例如金色）：只覆蓋已有像素
+    if (tint) {
+      x.globalCompositeOperation = 'source-atop';
+      x.fillStyle = tint;
+      x.fillRect(0, 0, w, h);
+      x.globalCompositeOperation = 'source-over';
     }
     cache.set(key, c);
     return c;
@@ -153,7 +172,7 @@
     ctx.drawImage(low, ox, oy, canvas.width, canvas.height);
     view.shake *= 0.85;
   }
-  // 喺高解像度層畫清晰文字（座標用 320×180 單位）
+  // 在高解像度層繪畫清晰文字（座標以 320×180 為單位）
   function text(str, x, y, o) {
     o = o || {};
     const ctx = view.ctx, s = view.scale;
@@ -232,7 +251,7 @@
     };
   }
 
-  // 細細粒嘅像素數字（3×5），畫喺低解像度層
+  // 細小的像素數字（3×5），畫在低解像度層
   const DIGITS = {
     0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001',
     5: '111100111001111', 6: '111100111101111', 7: '111001010010010', 8: '111101111101111', 9: '111101111001111',
@@ -251,8 +270,17 @@
     }
   }
 
+  // 按字數換行（中文每字約等寬）
+  function wrap(str, n) {
+    const out = [];
+    String(str).split('\n').forEach((line) => {
+      for (let i = 0; i < line.length; i += n) out.push(line.slice(i, i + n));
+    });
+    return out.join('\n');
+  }
+
   IE.Pixel = {
-    W, H, view, setup, resize, present, text, measure, sprite, spriteSize, particles, digits,
+    W, H, view, setup, resize, present, text, measure, sprite, spriteSize, particles, digits, wrap,
     mix, desat, rgba, hexToRgb,
     reducedMotion: typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   };

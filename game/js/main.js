@@ -1,14 +1,14 @@
-// 遊戲流程：朝早手機 → 三個時段 → 夜晚結算 → 探射燈 → 篩選日 → 結局。
+// 遊戲流程：早上看手機 → 三個時段 → 晚上結算 → 探射燈 → 篩選日 → 結局。
 (function (IE) {
   'use strict';
   const D = IE.DATA, R = IE.Rules, P = IE.Pixel, UI = IE.UI, A = IE.Audio, S = IE.Scenes;
   const KEY_META = 'ie2080.meta', KEY_RUN = 'ie2080.run';
 
-  // localStorage 可能用唔到（私密模式、預覽），全部包住
+  // localStorage 可能無法使用（私密模式、預覽），全部包在 try 裡
   const store = {
     get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 存唔到都照玩 */ } },
-    del(k) { try { localStorage.removeItem(k); } catch (e) { /* 冇所謂 */ } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 存不了也照樣可以玩 */ } },
+    del(k) { try { localStorage.removeItem(k); } catch (e) { /* 忽略 */ } },
   };
 
   const seasons = Object.keys(D.SEASONS);
@@ -31,7 +31,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 1 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 2 ? r : null; };
   const stage = () => document.getElementById('stage');
 
   function setCityFilter() {
@@ -94,18 +94,18 @@
     else showHub();
   }
 
-  // ---------- 一日 ----------
+  // ---------- 一天 ----------
   function startDay() {
     const s = Game.state;
     S.City.forceNight = false;
     setScene(S.City);
     UI.renderHud(s);
-    UI.setPanel('<p class="mute">朝早。你部電話震咗幾下。</p>');
+    UI.setPanel('<p class="mute">早上。你的手機震了幾下。</p>');
     const m = R.morning(s);
     save();
     openPhone(true);
-    if (s.day === R.reviewDay(s)) UI.toast('今晚係篩選日。累積訊號要過 ' + UI.fmt(R.threshold(s)) + '。', 'bad');
-    else if (m.astar) UI.toast('阿星傳咗訊息嚟。');
+    if (s.day === R.reviewDay(s)) UI.toast('今晚是篩選日。累積訊號必須超過 ' + UI.fmt(R.threshold(s)) + '。', 'bad');
+    else if (m.astar) UI.toast('阿星傳來了訊息。');
   }
   function openPhone(morning) {
     const s = Game.state;
@@ -117,7 +117,7 @@
           if (r.ok) A.sfx('coin');
           UI.renderHud(s); A.setSpark(s.spark); save(); render();
         },
-        close() { UI.closeModal(); if (morning) showHub(); else showHub(); },
+        close() { UI.closeModal(); showHub(); },
       }, morning ? null : { dismiss: () => showHub() });
     };
     render();
@@ -170,13 +170,25 @@
     Game.micro = m;
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
+    // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
     document.querySelectorAll('[data-ctrl]').forEach((b) => {
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (Game.micro === m) m.control(b.dataset.ctrl); });
-      b.addEventListener('click', (e) => { if (e.detail === 0 && Game.micro === m) m.control(b.dataset.ctrl); });
+      const id = b.dataset.ctrl;
+      let held = false;
+      const up = () => { if (held && Game.micro === m) { held = false; m.control(id, false); } };
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        try { b.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+        if (Game.micro === m) { held = true; m.control(id, true); }
+      });
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointercancel', up);
+      b.addEventListener('lostpointercapture', up);
+      b.addEventListener('click', (e) => { if (e.detail === 0 && Game.micro === m) { m.control(id, true); m.control(id, false); } });
+      b.addEventListener('contextmenu', (e) => e.preventDefault());
     });
     window.scrollTo({ top: Math.max(0, stage().offsetTop - 8), behavior: 'smooth' });
   }
-  // 測試同小遊戲共用：將小遊戲結果套落規則
+  // 小遊戲與測試共用：把小遊戲結果套用到規則
   Game.applyMicroResult = function (kind, result) {
     const s = Game.state;
     Game.microToken = null; Game.micro = null;
@@ -204,15 +216,15 @@
     showHub();
   }
 
-  // ---------- 夜晚 ----------
+  // ---------- 晚上 ----------
   function endOfDay() {
     const s = Game.state;
-    // HUD 停喺今晚，等結算完先轉去聽朝
+    // 狀態列停留在今晚，結算完才切換到明天
     UI.renderHud(s);
     const rep = R.endDay(s);
     S.City.forceNight = true;
     setScene(S.City);
-    UI.setPanel('<p class="mute">夜晚。外星人嘅探射燈又出嚟掃。</p>');
+    UI.setPanel('<p class="mute">晚上。外星人的探射燈又出來掃視城市。</p>');
     save();
     const lock = !!(rep.review && rep.review.pass);
     S.City.searchlight(rep.searchlight || 0, lock, () => {
@@ -239,7 +251,7 @@
   // ---------- 被選中 ----------
   function recruit() {
     const s = Game.state;
-    UI.setPanel('<p class="mute">光。好多光。</p>');
+    UI.setPanel('<p class="mute">光。很多很多光。</p>');
     S.City.forceNight = true;
     s.saturation = 1.3;
     setCityFilter();
@@ -248,28 +260,28 @@
       S.City.flash = 1;
       S.Office.enter([
         '歡迎加入星際人才發展局。',
-        '我哋唔係一個組織，我哋係一個宇宙大家庭。',
-        '你嘅朋友阿星都喺度。佢今季表現符合預期。',
-        '你嘅第一份工作好簡單：',
-        '幫我哋篩選下一批地球候選人。',
+        '我們不是一個組織，我們是一個宇宙大家庭。',
+        '你的朋友阿星也在這裡。阿星本季的表現符合預期。',
+        '你的第一份工作很簡單：',
+        '替我們篩選下一批地球候選人。',
       ], () => startMicro('alien', (res) => {
         const pct = Math.round(res.accuracy * 100);
         const stars = Math.max(1, Math.min(5, Math.round(res.accuracy * 5 * 10) / 10)).toFixed(1);
         let e;
         if (res.accuracy < 0.45) {
           e = { kind: 'returned', title: '被遣返',
-            text: '你嘅員工評分得 ★' + stars + '。星際人才發展局以「文化唔契合」為由將你遣返地球。你帶住一身火花返到浮城，水位又升咗。' };
+            text: '你的員工評分只有 ★' + stars + '。星際人才發展局以「文化不契合」為由把你遣返地球。你帶著一身火花回到浮城，水位又上升了。' };
         } else {
-          const self = res.selfJudged === false ? '你亦唔錄取咗「樣本 #2080」，一個好似你嘅人。指引就係指引。'
-            : res.selfJudged === true ? '你錄取咗「樣本 #2080」。違反指引，已記錄。' : '';
+          const self = res.selfJudged === false ? '你也沒有錄取「樣本 #2080」，一個很像你的人。指引就是指引。'
+            : res.selfJudged === true ? '你錄取了「樣本 #2080」。違反指引，已記錄在案。' : '';
           e = { kind: 'agent', title: '星際特工',
-            text: '你被選中咗。第一份工係篩選地球人，準確度 ' + pct + '%，員工評分 ★' + stars + '。' + self + '阿星喺隔籬枱，冇抬頭望你。' };
+            text: '你被選中了。第一份工作是篩選地球人，準確度 ' + pct + '%，員工評分 ★' + stars + '。' + self + '阿星就坐在隔壁，沒有抬頭看你。' };
         }
         S.City.enter('hub');
         finishRun(e);
       }));
       setScene(S.Office);
-      UI.setPanel('<div class="controls"><p class="hint">撳畫面或者空白鍵繼續。</p></div>');
+      UI.setPanel('<div class="controls"><p class="hint">按畫面或空白鍵繼續。</p></div>');
     });
   }
 
@@ -286,7 +298,7 @@
     A.setMode(kind === 'agent' ? 'alien' : 'city');
     A.setSpark(kind === 'grey' ? 0 : s.spark);
     UI.renderHud(s);
-    UI.setPanel('<div class="btn-row"><button class="btn primary" type="button" data-do="again">再嚟一局</button><button class="btn" type="button" data-do="title">返標題</button></div>',
+    UI.setPanel('<div class="btn-row"><button class="btn primary" type="button" data-do="again">再玩一局</button><button class="btn" type="button" data-do="title">返回標題</button></div>',
       { again: () => { UI.closeModal(); showSetup(); }, title: () => showTitle() });
     UI.modal(UI.endingModal(ending, s, Game.meta), {
       copy() {
@@ -311,9 +323,9 @@
       cv.addEventListener(type, (e) => {
         const sc = Game.scene;
         if (!sc || !sc.pointer) return;
-        if (type === 'pointerdown') { try { cv.setPointerCapture(e.pointerId); } catch (err) { /* 冇所謂 */ } e.preventDefault(); }
+        if (type === 'pointerdown') { try { cv.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ } e.preventDefault(); }
         const p = toLow(e);
-        sc.pointer(type === 'pointerdown' ? 'down' : type === 'pointermove' ? 'move' : 'up', p.x, p.y);
+        sc.pointer(type === 'pointerdown' ? 'down' : type === 'pointermove' ? 'move' : 'up', p.x, p.y, e.pointerType);
       });
     });
     const KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '];
@@ -358,7 +370,7 @@
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;
-  try { if (hot && hot.snapshot) hot.snapshot(() => ({ run: Game.state && !Game.state.ended && !Game.micro ? Game.state : null })); } catch (e) { /* 唔支援就算 */ }
+  try { if (hot && hot.snapshot) hot.snapshot(() => ({ run: Game.state && !Game.state.ended && !Game.micro ? Game.state : null })); } catch (e) { /* 不支援就略過 */ }
   if (hot && hot.ready) hot.ready(boot); else boot((hot && hot.data) || {});
 
   window.__IE = IE; // 方便測試

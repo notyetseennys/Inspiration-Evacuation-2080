@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// 瀏覽器煙霧測試：用 Playwright 開遊戲，快速玩幾日（小遊戲結果直接注入），
-// 檢查冇 JS 錯誤、存檔可以繼續、結局畫面出到。
+// 瀏覽器煙霧測試：用 Playwright 開啟遊戲，快速玩幾天（小遊戲結果直接注入），
+// 檢查沒有 JS 錯誤、存檔可以繼續、結局畫面能正常顯示。
 // 用法：node tools/smoke.js
 'use strict';
 const path = require('path');
@@ -29,13 +29,13 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('.phone [data-do="close"]');
     ok('開局');
 
-    // 玩三日：朝早標註、晏晝潛水、夜晚創作或者瞓覺
+    // 玩三天：早上標註、下午潛水、晚上創作或睡覺
     for (let d = 0; d < 3; d++) {
       await page.click('.act[data-id="label"]');
-      await page.evaluate(() => window.__IE.Game.applyMicroResult('label', { cr: 95, drain: 0.35, correct: 30, wrong: 2, maxCombo: 16 }));
+      await page.evaluate(() => window.__IE.Game.applyMicroResult('label', { cr: 95, drain: 0.35, correct: 30, wrong: 2, maxCombo: 16, flows: 1, caught: 0 }));
       await page.click('#modal [data-do="ok"]');
       await page.click('.act[data-id="dive"]');
-      await page.evaluate(() => window.__IE.Game.applyMicroResult('dive', { relics: ['d_album', 'd_crayon'], sold: 20, hits: 0, drowned: false }));
+      await page.evaluate(() => window.__IE.Game.applyMicroResult('dive', { relics: ['d_album', 'd_crayon'], money: 20, fish: { sardine: 2, eel: 1, grouper: 0, jelly: 0 }, hits: 0, drowned: false }));
       await page.click('#modal [data-do="ok"]');
       const canCreate = await page.$('.act[data-id="create"]:not([disabled])');
       if (canCreate) {
@@ -54,16 +54,16 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.click('.phone [data-do="close"]');
     }
     const day = await page.evaluate(() => window.__IE.Game.state.day);
-    if (day !== 4) await fail('應該係第 4 日，而家係第 ' + day + ' 日');
-    ok('玩完三日，而家第 ' + day + ' 日');
+    if (day !== 4) await fail('應該是第 4 天，現在是第 ' + day + ' 天');
+    ok('玩完三天，現在是第 ' + day + ' 天');
 
     // 存檔 → 重新載入 → 繼續
     await page.reload();
     await page.waitForSelector('[data-do="continue"]');
     await page.click('[data-do="continue"]');
     const resumed = await page.evaluate(() => window.__IE.Game.state.day);
-    if (resumed !== 4) await fail('繼續之後日數唔啱：' + resumed);
-    ok('自動存檔同繼續');
+    if (resumed !== 4) await fail('繼續後的天數不正確：' + resumed);
+    ok('自動存檔與繼續');
 
     // 強制死亡 → 結局
     await page.evaluate(() => { window.__IE.Game.state.body = 3; });
@@ -75,7 +75,7 @@ const URL = 'http://localhost:' + PORT + '/';
     ok('死亡結局：' + (await page.textContent('.ending .epitaph')));
 
     if (errors.length) await fail('有錯誤：\n' + errors.join('\n'));
-    ok('冇 JS 錯誤');
+    ok('沒有 JS 錯誤');
   } catch (e) {
     await fail(e.message + '\n' + errors.join('\n'));
   }

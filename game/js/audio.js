@@ -1,5 +1,5 @@
-// 音樂同音效：全部用 Web Audio 即場合成，冇外部音檔。
-// 音樂分 4 層，用火花控制：火花高 = 旋律豐富；火花低 = 剩低機械節拍。
+// 音樂與音效：全部以 Web Audio 即時合成，沒有外部音檔。
+// 音樂分為 4 層，由火花控制：火花高時旋律豐富；火花低時只剩機械節拍。
 (function (IE) {
   'use strict';
   let ctx = null, master = null, musicBus = null, sfxBus = null, noiseBuf = null;
@@ -134,7 +134,7 @@
     get ready() { return !!ctx; },
     setSpark(v) { spark = v; applyLayers(); },
     setMode(m, bpm) { mode = m; tempo = bpm || (m === 'work' ? 120 : m === 'alien' ? 84 : 92); applyLayers(); },
-    sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗唔影響遊戲 */ } } },
+    sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗不影響遊戲 */ } } },
     toggleMute() {
       muted = !muted;
       if (master) master.gain.setTargetAtTime(muted ? 0 : 0.7, ctx.currentTime, 0.05);

@@ -1,20 +1,20 @@
-/* 版面概念：一個望落浸水浮城嘅像素窗口，下面裝咗部 2080 年平價手機嘅介面 */
+/* 版面概念：一個俯瞰水淹浮城的像素窗口，下方裝著一部 2080 年廉價手機的介面 */
 :root {
   color-scheme: dark;
-  --ink: #0a0e17;        /* 夜晚嘅浮城 */
+  --ink: #0a0e17;        /* 夜晚的浮城 */
   --deck: #111827;       /* 手機介面底色 */
   --deck-2: #172036;
   --line: #26334d;
   --fg: #e8edf6;
   --mute: #8d99b4;
-  --sea: #37c3d6;        /* 水浸藍綠 */
+  --sea: #37c3d6;        /* 水淹藍綠 */
   --neon: #ff4fb4;       /* 霓虹粉紫 */
   --spark: #ffc247;      /* 火花 */
   --cash: #8be28f;
   --body: #ff6b6b;
   --danger: #ff4d5e;
   --alien: #9be36b;
-  --paper: #eef1f7;      /* 外星 HR 嘅企業表格 */
+  --paper: #eef1f7;      /* 外星 HR 的企業表格 */
   --paper-ink: #1b2233;
   --paper-line: #c9d1e2;
   --font-display: "Noto Sans HK", "PingFang HK", "Microsoft JhengHei", sans-serif;
@@ -188,6 +188,13 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .ctrl-row .btn small { font-family: var(--font-num); font-size: 16px; color: inherit; opacity: 0.6; font-weight: 400; }
 .ctrl-row .btn.no { background: #3a1620; border-color: #6b2433; color: #ffc2cb; }
 .ctrl-row .btn.yes { background: #14321c; border-color: #2a6b3a; color: #c9f7cf; }
+.ctrl-row .btn { -webkit-touch-callout: none; }
+.ctrl-row .btn:active { transform: translateY(1px); filter: brightness(1.2); }
+.ctrl-row .btn.laugh { background: #3a2a0a; border-color: #8a6a1f; color: #ffe2a0; }
+.ctrl-row .btn.nod { background: #0b2f36; border-color: #1f6b7a; color: #bff3fb; }
+.ctrl-row .btn.pour { background: #2a1430; border-color: #6b2a5a; color: #ffd6ef; }
+.ctrl-row .btn.fire { background: #0b2f36; border-color: var(--sea); color: #e8fdff; }
+.ctrl-row .btn.up { background: #172036; border-color: var(--line); }
 
 /* ---------- 對話框 ---------- */
 .modal-wrap {
@@ -228,7 +235,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 .delta.spark .num { color: var(--spark); }
 .gained { display: flex; flex-wrap: wrap; gap: 6px; }
 
-/* 手機：朝早 */
+/* 手機：早上 */
 .phone {
   width: min(400px, 100%); max-height: 100%; overflow: auto; margin: 0 auto;
   background: #0d1220; border: 2px solid #2d3a59; border-radius: 22px;
@@ -309,7 +316,7 @@ button.card:disabled { opacity: 0.35; cursor: not-allowed; }
 @keyframes boom { 0% { transform: scale(0.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
 .reveal .new { color: var(--spark); font-weight: 900; }
 
-/* 標題同結局 */
+/* 標題與結局 */
 .title-menu { display: grid; gap: 14px; }
 .tagline { margin: 0; font-size: clamp(18px, 3.6vw, 26px); font-weight: 900; text-wrap: balance; }
 .tagline em { font-style: normal; color: var(--neon); }

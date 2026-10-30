@@ -1,13 +1,13 @@
-// 浮城橫切面：水位、你間屋、火花、外星探射燈、牽引光束、外星 HR 辦公室。
+// 浮城橫切面：水位、你的家、火花、外星探射燈、牽引光束、外星 HR 辦公室。
 (function (IE) {
   'use strict';
   const P = IE.Pixel;
-  // GROUND = 1 樓地面；水位 w 代表水浸到第幾樓嘅地面（w ≥ 你層樓 = 浸緊）
+  // GROUND 為 1 樓地面；水位 w 代表水淹到第幾樓的地面（w ≥ 你住的樓層即代表正在淹水）
   const GROUND = 164, FLOOR_H = 16, BX = 124, BW = 72;
   const floorTop = (f) => GROUND - f * FLOOR_H;
   const waterY = (w) => GROUND - (w - 1) * FLOOR_H;
 
-  // 固定嘅背景樓宇（每次開遊戲一樣）
+  // 固定的背景樓宇（每次開遊戲都一樣）
   function seeded(seed) {
     let a = seed;
     return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; };
@@ -36,7 +36,7 @@
       if (!this.demo) this.demo = { floor: 4, water: 2.6, spark: 3.2, season: 'storm', saturation: 1, slot: 2, day: 1, greyed: 0 };
       return this.demo;
     },
-    // 探射燈：ratio = 訊號 / 門檻，越近 1 越貼近你窗口
+    // 探射燈：ratio = 訊號 / 門檻，越接近 1 越貼近你的窗口
     searchlight(ratio, lock, done) {
       this.sl = { t: 0, ratio: Math.max(0, Math.min(1.2, ratio)), lock: !!lock, done, fired: false };
     },
@@ -50,7 +50,7 @@
       const s = this.state();
       if (!s) return;
       const p = this.playerPos(s);
-      // 火花由你窗口飄出嚟：火花越高越多
+      // 火花從你的窗口飄出來：火花越高越多
       const rate = Math.max(0, s.spark - 0.5) * 3;
       if (Math.random() < rate * dt) {
         this.fx.add({ x: p.x + 4 + (Math.random() - 0.5) * 8, y: p.y + 2, vx: (Math.random() - 0.5) * 6, vy: -10 - Math.random() * 12,
@@ -90,7 +90,7 @@
           c.fillRect(x, y, 1, 1);
         }
       }
-      // 天空區：浮喺上面嘅有錢人平台
+      // 天空區：浮在上空的富人平台
       c.fillStyle = P.mix(top, '#c9d6ff', 0.25);
       [[30, 16, 46], [214, 10, 60]].forEach(([x, y, w]) => {
         const yy = y + Math.sin(t * 0.5 + x) * 1.5;
@@ -116,7 +116,7 @@
           c.fillRect(b.x + b.w - 3, GROUND - b.h + b.sign.y, 2, b.sign.w * 2);
         }
       });
-      // 地面以下係浸咗嘅舊城
+      // 地面以下是被淹沒的舊城
       c.fillStyle = '#071820'; c.fillRect(0, GROUND, 320, 180 - GROUND);
       this.drawBuilding(c, s, night);
       this.drawWater(c, s, night, bot);
@@ -154,7 +154,7 @@
             if (beamLift < 12) P.sprite(c, 'player', wx + 4, wy + 1 + bob - beamLift, { desat: Math.max(0, 1 - s.spark / 2.5) });
             c.restore();
           }
-          // 灰化咗嘅前世：喺另一個窗口做標註
+          // 灰化了的前世：在另一個窗口做標註
           if (s.greyed && f === Math.max(1, Math.min(8, s.floor === 3 ? 5 : 3)) && i === 2 && !wet) {
             c.fillStyle = '#6b7280'; c.fillRect(wx + 6, wy + 4, 4, 7);
             c.fillStyle = '#9ca3af'; c.fillRect(wx + 6, wy + 2, 4, 3);
@@ -162,7 +162,7 @@
           }
         }
       }
-      // 天橋底
+      // 天橋下
       if (s.floor === 0) {
         const p = this.playerPos(s);
         c.fillStyle = '#2a3350'; c.fillRect(84, p.y + 12, 44, 3); c.fillRect(90, p.y + 15, 3, 10); c.fillRect(118, p.y + 15, 3, 10);
@@ -212,11 +212,11 @@
       if (this.sl) {
         const k = Math.min(1, this.sl.t / 4);
         if (this.sl.lock) {
-          // 鎖定：由左邊慢慢移埋你窗口，停低
+          // 鎖定：從左邊慢慢移到你的窗口，然後停下
           const ease = 1 - Math.pow(1 - k, 3);
           spotX = 10 + (p.x + 4 - 10) * ease; spotY = p.y + 5;
         } else {
-          // 掃過：訊號越接近門檻，光束越貼近你嗰層
+          // 掃過：訊號越接近門檻，光束越貼近你住的樓層
           const miss = (1 - Math.min(1, this.sl.ratio)) * 70 + 6;
           spotX = -30 + 380 * k; spotY = p.y + 5 - miss;
         }
@@ -258,16 +258,16 @@
       if (!s) return;
       if (this.sl && this.sl.t > 1 && this.sl.t < 4.6) {
         const near = this.sl.ratio;
-        const msg = this.sl.lock ? '探射燈停咗喺你窗外。' : near > 0.85 ? '探射燈差少少就照到你。' : near > 0.5 ? '探射燈喺你頭頂幾層掃過。' : '探射燈喺好遠嘅地方掃過。';
+        const msg = this.sl.lock ? '探射燈停在你的窗外。' : near > 0.85 ? '探射燈差一點就照到你。' : near > 0.5 ? '探射燈在你頭頂幾層掃過。' : '探射燈在很遠的地方掃過。';
         P.text(msg, 160, 150, { size: 8, align: 'center', color: '#e8fdff', stroke: '#05222a' });
       }
       if (this.beam && this.beam.t > 3.2) {
-        P.text('你被選中咗。', 160, 70, { size: 16, align: 'center', weight: 900, color: '#ffffff', glow: '#9be36b', stroke: '#0b1a10', alpha: Math.min(1, (this.beam.t - 3.2) / 0.8) });
+        P.text('你被選中了。', 160, 70, { size: 16, align: 'center', weight: 900, color: '#ffffff', glow: '#9be36b', stroke: '#0b1a10', alpha: Math.min(1, (this.beam.t - 3.2) / 0.8) });
       }
     },
   };
 
-  // 外星人才發展局辦公室：用對白帶入最後一份工
+  // 星際人才發展局辦公室：以對白帶出最後一份工作
   const Office = {
     t: 0, lines: [], i: 0, done: null, charT: 0,
     enter(lines, done) { this.t = 0; this.lines = lines; this.i = 0; this.done = done; this.charT = 0; },
@@ -285,7 +285,7 @@
       c.fillStyle = '#e9eef7'; c.fillRect(0, 0, 320, 180);
       c.fillStyle = '#d3dbea'; for (let x = 0; x < 320; x += 32) c.fillRect(x, 0, 1, 130);
       c.fillStyle = '#c4cfe3'; c.fillRect(0, 130, 320, 50);
-      // 窗外：浸水嘅地球
+      // 窗外：被水淹沒的地球
       c.fillStyle = '#0a0e1f'; c.fillRect(200, 20, 96, 70);
       c.save(); c.beginPath(); c.rect(200, 20, 96, 70); c.clip();
       c.fillStyle = '#1e7f99'; c.beginPath(); c.arc(248, 78, 30, 0, Math.PI * 2); c.fill();
@@ -294,7 +294,7 @@
       c.fillStyle = '#ffffff';
       for (let i = 0; i < 12; i++) c.fillRect(204 + (i * 29) % 90, 24 + (i * 17) % 30, 1, 1);
       c.strokeStyle = '#9aa7c7'; c.lineWidth = 2; c.strokeRect(200, 20, 96, 70);
-      // 枱同 HR
+      // 辦公桌與 HR
       c.fillStyle = '#9aa7c7'; c.fillRect(30, 112, 120, 6);
       c.fillStyle = '#7d8899'; c.fillRect(36, 118, 4, 14); c.fillRect(140, 118, 4, 14);
       P.sprite(c, 'alien', 70, 64 + Math.round(Math.sin(this.t * 2)), { scale: 3 });

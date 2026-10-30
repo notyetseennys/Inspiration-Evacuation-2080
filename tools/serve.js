@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 簡單靜態伺服器：node tools/serve.js [port]，然後開 http://localhost:8080/
+// 簡單的靜態伺服器：node tools/serve.js [port]，然後開啟 http://localhost:8080/
 'use strict';
 const http = require('http');
 const fs = require('fs');
