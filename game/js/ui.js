@@ -434,14 +434,20 @@
     const locked = RO.list(meta).filter((c) => !c.open);
     const t = (meta && meta.tickets) || 0, cost = RO.GACHA_COST;
     let res = '';
+    let isUR = false;
     if (result && result.type === 'char') {
       const b = D().BACKGROUNDS[result.id];
-      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+      isUR = b.rarity === 'UR';
+      res = '<div class="gacha-result r-' + b.rarity + (isUR ? ' ur-reveal' : '') + '">'
+        + (isUR ? '<div class="ur-fanfare"><div class="ur-rays"></div><span class="ur-banner">★ 特級非地球樣本・UR 降臨 ★</span></div>' : '')
+        + '<span class="rar r-' + b.rarity + '">' + b.rarity + '</span>'
+        + '<div class="gacha-por">' + IE.Chars.img(result.id, 8) + '</div>'
+        + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
     } else if (result) {
       res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
     }
     const left = Math.max(0, RO.PITY - ((meta && meta.pity) || 0));
-    return '<div class="modal gacha"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
+    return '<div class="modal gacha' + (isUR ? ' ur-hit' : '') + '"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
       + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券。每次扭蛋 ' + cost + ' 張。機會率：<b class="ur-odds">UR ' + (RO.ODDS.UR * 100) + '%</b>・SR ' + (RO.ODDS.SR * 100) + '%・銘謝惠顧及其他 ' + Math.round((1 - RO.ODDS.UR - RO.ODDS.SR) * 1000) / 10 + '%。'
       + '已解鎖的稀有度不會重複抽中。根據《星際勞工保障條例》，連續 ' + RO.PITY + ' 次沒有 UR，下一次必定是 UR（還差 ' + left + ' 次）。</p>'
       + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
@@ -515,8 +521,9 @@
       + '<div class="dossier">'
       + '<div class="d-head"><span>星際人才發展局・人類樣本檔案</span><span class="num">' + esc(dos.sampleId) + '</span></div>'
       + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status) + '</span></div>'
-      + '<div class="d-class"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
-      + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div>'
+      + '<div class="d-class d-with-por"><div class="d-por">' + IE.Chars.img(s.bg, 5) + '<small>' + esc(D().BACKGROUNDS[s.bg].name) + '</small></div>'
+      + '<div class="d-ctxt"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
+      + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
       + '<div class="d-cols"><div><span class="d-k">觀察筆記</span><ol class="d-notes">' + dos.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ol></div>'
       + '<div><span class="d-k">能力讀數</span>' + statBars(dos.attr, { compact: true }) + '</div></div>'
       + '<div class="d-stamps">' + stamps + '</div>'

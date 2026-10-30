@@ -180,4 +180,30 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 6：角色立繪（P1）
+
+### 改動摘要
+1. **`game/js/chars.js`**：
+   - 在保留原有 8×12 場景全身像（`IE.Chars.spr`）的同時，為 `IE.DATA.BACKGROUNDS` 全部 **20 個角色**繪製獨立的 **24×32 半身立繪（`IE.Chars.BUST`）**，涵蓋表情、衣領、飾物與招牌道具：
+     - **R 級普通人（6 位）**：`copywriter`（黑框眼鏡、鬆紅領帶與咖啡杯）、`lifeguard`（額頭蛙鏡、紅救生衣與哨子）、`programmer`（發光青色耳機與連帽衫）、`courier`（黃色防撞頭盔、護目鏡與保溫背帶）、`teacher`（銀白髮髻、銅框眼鏡與粉筆）、`nurse`（紅十字護士帽與聽診器）。
+     - **SR 級稀有人才（9 位）**：`busker`（粉紅冷帽、絡腮鬍與木結他柄）、`influencer`（粉紅長捲髮、大墨鏡與環形燈高光）、`cybertech`（青色莫霍克頭、紅色義眼與金屬機械肩）、`animator`（紫色貝雷帽與沾滿粉藍顏料的工作服）、`archaeologist`（寬邊探險帽、皮帶與放大鏡）、`skyheir`（金髮、白禮服、金胸針與香檳杯）、`astronaut`（圓形太空頭盔、反光面罩與維生儀）、`monk`（光頭戒疤、橘色袈裟與木念珠）、`antiquedealer`（銀灰背頭、八字鬍、金框單片眼鏡與紫絨馬甲）。
+     - **UR 級極稀有／非地球人（5 位）**：`greydeserter`（灰人頭顱、杏仁巨眼與外星 HR 制服）、`octopoet`（紫章魚圓頂頭、捲曲觸手握金羽毛筆）、`awakenedai`（雙天線復古螢幕頭、心電波形與綠核心）、`timetraveler`（白髮、黃銅時空護目鏡與發光時空懷錶）、`mushroom`（紅底白點大菌傘、米白菌絲臉龐與發光孢子斗篷）。
+   - 更新 `IE.Chars.img(id, scale, locked)` 輸出 `24×32` 半身立繪，並附上稀有度類別 `r-R`、`r-SR`、`r-UR`。
+2. **`game/js/ui.js` 與 `game/css/art.css`**：
+   - 在結局「人類樣本檔案」（`dossierModal`）加入角色 24×32 半身立繪與角色名牌（`.d-por`）。
+   - 為三個稀有度設計專屬立繪與卡片外框：**R 級銀框**（金屬銀邊與冷白內光）、**SR 級金框**（耀金邊框與暖金光暈）、**UR 級彩虹框**（五彩漸層邊框與霓虹雙色外發光）。
+   - 為「人才扭蛋機」抽中 UR 角色時（`.modal.gacha.ur-hit`、`.gacha-result.ur-reveal`）加入專屬降臨演出：旋轉彩虹星芒光束（`.ur-rays`）、「★ 特級非地球樣本・UR 降臨 ★」橫幅與彈出特寫動畫。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t6-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t6-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t6-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t6-after-mobile.png`
+
+### 已知問題
+- 無。
+
+
 

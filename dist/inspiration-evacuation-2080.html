@@ -1802,6 +1802,205 @@ body.ct-open { overflow: hidden; }
   }
 }
 
+/* =========================================================
+   任務 6：角色 24×32 半身立繪、稀有度外框（R 銀、SR 金、UR 彩虹）與扭蛋 UR 專屬演出
+   ========================================================= */
+.ch-bust {
+  image-rendering: pixelated;
+  border-radius: 6px;
+  padding: 2px;
+  background: rgba(12, 16, 28, 0.85);
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.hud-day .ch-bust {
+  border-radius: 4px;
+  padding: 1px;
+}
+
+/* R：銀框 */
+.ch-bust.r-R:not(.locked) {
+  border: 1.5px solid #c6d4e6;
+  box-shadow:
+    0 0 8px rgba(198, 212, 230, 0.35),
+    inset 0 0 6px rgba(238, 245, 252, 0.25);
+}
+.bg-card.r-R:not(.locked) {
+  border-color: rgba(198, 212, 230, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 10px rgba(184, 199, 220, 0.12);
+}
+.bg-detail.r-R {
+  border-color: #c6d4e6;
+}
+.rar.r-R {
+  background: linear-gradient(135deg, #d8e4f2, #9ab0c9) !important;
+  color: #101624 !important;
+}
+
+/* SR：金框 */
+.ch-bust.r-SR:not(.locked) {
+  border: 1.5px solid #ffd36b;
+  box-shadow:
+    0 0 12px rgba(255, 211, 107, 0.5),
+    inset 0 0 8px rgba(255, 194, 71, 0.3);
+}
+.bg-card.r-SR:not(.locked) {
+  border-color: rgba(255, 211, 107, 0.8);
+  box-shadow:
+    0 2px 14px rgba(255, 211, 107, 0.18),
+    inset 0 0 14px rgba(255, 211, 107, 0.08);
+}
+.bg-detail.r-SR {
+  border-color: #ffd36b;
+  box-shadow: 0 0 22px rgba(255, 211, 107, 0.2);
+}
+.rar.r-SR {
+  background: linear-gradient(135deg, #fff0ad, #ffd36b, #f0982b) !important;
+  color: #1c1204 !important;
+}
+
+/* UR：彩虹框 */
+.ch-bust.r-UR:not(.locked) {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(rgba(14, 16, 30, 0.92), rgba(14, 16, 30, 0.92)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 16px rgba(255, 79, 180, 0.45),
+    0 0 24px rgba(55, 195, 214, 0.35);
+}
+.bg-card.r-UR:not(.locked) {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(165deg, rgba(24, 20, 42, 0.95), rgba(13, 17, 30, 0.96)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 4px 18px rgba(195, 139, 255, 0.28),
+    inset 0 0 18px rgba(55, 195, 214, 0.12);
+}
+.bg-detail.r-UR {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(165deg, rgba(24, 20, 42, 0.96), rgba(13, 17, 30, 0.98)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 28px rgba(255, 79, 180, 0.32),
+    0 0 42px rgba(55, 195, 214, 0.22);
+}
+.rar.r-UR {
+  background: linear-gradient(90deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff) !important;
+  color: #101320 !important;
+  font-weight: 900;
+}
+
+/* 結局檔案（dossier）中的角色半身立繪 */
+.d-class.d-with-por {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.d-por {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: rgba(15, 20, 35, 0.78);
+  border: 1px solid rgba(141, 183, 214, 0.35);
+  border-radius: 8px;
+}
+.d-por small {
+  font-size: 11px;
+  color: #b8c7dc;
+  white-space: nowrap;
+}
+.d-ctxt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 人才扭蛋機抽中 UR 時專屬演出 */
+.modal.gacha.ur-hit {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(195, 139, 255, 0.25), rgba(14, 17, 30, 0.98) 70%) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 50px rgba(255, 79, 180, 0.45),
+    0 0 90px rgba(55, 195, 214, 0.35);
+}
+.gacha-result.ur-reveal {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(34, 22, 58, 0.95), rgba(15, 22, 40, 0.96)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 36px rgba(255, 211, 107, 0.45),
+    inset 0 0 28px rgba(195, 139, 255, 0.25);
+  animation: ur-card-reveal 0.55s cubic-bezier(0.18, 1.5, 0.36, 1);
+}
+@keyframes ur-card-reveal {
+  0% { transform: scale(0.68) translateY(16px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.ur-fanfare {
+  position: relative;
+  margin-bottom: 8px;
+}
+.ur-rays {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  width: 240px;
+  height: 240px;
+  margin-left: -120px;
+  margin-top: -120px;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 211, 107, 0.22) 0deg 12deg,
+    transparent 12deg 24deg,
+    rgba(55, 195, 214, 0.18) 24deg 36deg,
+    transparent 36deg 48deg
+  );
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 70%);
+  animation: ur-rays-spin 9s linear infinite;
+}
+@keyframes ur-rays-spin {
+  to { transform: rotate(360deg); }
+}
+.ur-banner {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  padding: 3px 12px;
+  border-radius: 99px;
+  color: #121324;
+  background: linear-gradient(90deg, #ff8fd1, #ffd36b, #9be36b, #7ee8fa, #d4adff);
+  box-shadow: 0 2px 12px rgba(255, 211, 107, 0.55);
+}
+.gacha-por {
+  position: relative;
+  z-index: 2;
+  margin: 6px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha-result.ur-reveal,
+  .ur-rays {
+    animation: none !important;
+  }
+}
+
+
 
 </style>
 </head>
@@ -10709,12 +10908,15 @@ body.ct-open { overflow: hidden; }
 })(window.IE = window.IE || {});
 
 // ---- js/chars.js ----
-// 角色的像素模組：每個角色一個 8×12 的全身像，在浮城、房間、旅途和小遊戲裡使用；選角畫面與狀態列用放大版。
+// 角色的像素模組：
+// 1. M：每個角色一個 8×12 的全身像，在浮城、房間、旅途和小遊戲裡使用（IE.Chars.spr）。
+// 2. BUST：每個角色一張 24×32 的半身立繪，用於選角畫面、狀態列頭像、扭蛋結果和結局檔案（IE.Chars.img）。
 (function (IE) {
   'use strict';
   const P = IE.Pixel;
-  // 調色盤：h 頭髮、f 皮膚、k 眼睛、m 嘴、j 上衣、p 褲、a 配件、b 次要配件、w 白、g 灰／鏡片、c 帽、r 紅、s 螢幕、l 燈
   const SKIN = '#f2c6a0';
+
+  // 8×12 場景全身像
   const M = {
     copywriter: { pal: { h: '#3b2a1e', f: SKIN, k: '#1a1a2e', g: '#5a5f6e', m: '#b5555a', w: '#e8edf6', a: '#d6334a', p: '#2a3350' }, rows: [
       '..hhhh..', '.hhhhhh.', '.hffffh.', '.gkggkg.', '.ffffff.', '..fmmf..', '...ff...', '.wwaaww.', 'wwwaawww', 'f.wwww.f', '..p..p..', '..p..p..'] },
@@ -10758,25 +10960,798 @@ body.ct-open { overflow: hidden; }
       '..rrrr..', '.rrwrrr.', 'rwrrrrwr', 'rrrrrrrr', '..ffff..', '..kffk..', '..fmmf..', '.jjjjjj.', 'jjjjjjjj', 'f.jjjj.f', '..j..j..', '..j..j..'] },
   };
   Object.keys(M).forEach((id) => P.define('ch_' + id, M[id]));
-  // 遊戲中用哪個精靈圖
+
+  // 24×32 半身立繪（任務 6）
+  const BUST = {
+    // 1. 前廣告公司文案（黑框眼鏡、鬆領帶、白恤衫、深色西裝背心與咖啡杯）
+    copywriter: {
+      pal: { k: '#141624', h: '#3b2a1e', b: '#5c4332', f: '#f2c6a0', s: '#d9a57c', m: '#b5555a', g: '#4c566a', w: '#eef2f9', a: '#d6334a', j: '#26304a' },
+      rows: [
+        '........................',
+        '.......kkkkkkkkkk.......',
+        '.....kkhhhhhhhhhhkk.....',
+        '....khhbbbbbbbbbbhhk....',
+        '...khhbhhhhhhhhhhbhhk...',
+        '...khbhhffffffffhhbhk...',
+        '...khhffffffffffffhhk...',
+        '...khffffffffffsfffhk...',
+        '...kfggggggffggggggfk...',
+        '...kfgwkkwggggwkkwgfk...',
+        '...kfgwkkwgffgwkkwgfk...',
+        '...kfggggggffggggggfk...',
+        '....kfffffssssfffffk....',
+        '....kffffffssffffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '......kkkwffffwkkk......',
+        '....kkjjwwwwwwwwjjkk....',
+        '...kjjjjwwwaawwwjjjjk...',
+        '..kjjjjjwwwaawwwjjjjjk..',
+        '..kjjjjwwwwaawwwwjjjjk..',
+        '.kjjjjjwwwwaawwwwjjjjjk.',
+        '.kjjjjjwwwwaawwwwbggggk.',
+        '.kjjjjjwwwwaawwwbgggggk.',
+        '.kjjjjjwwwwaawwwbgggggk.',
+        '.kjjjjjwwwwaawwwwbggggk.',
+        '.kjjjjjwwwwaawwwwjjjjjk.',
+        '.kjjjjjwwwwaawwwwjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 2. 退役潛水救生員（金髮、額頭蛙鏡、紅救生衣、銀哨子）
+    lifeguard: {
+      pal: { k: '#141624', h: '#ffd36b', b: '#d99b26', f: '#d9a070', s: '#b87d52', c: '#37c3d6', w: '#eef2f9', j: '#d6334a', a: '#ff8a3c' },
+      rows: [
+        '........................',
+        '......kkkkkkkkkkkk......',
+        '....kkhhhhhhhhhhhhkk....',
+        '...khhbbbbhhhhhhhhhhk...',
+        '...khkcccckkkkcccckhk...',
+        '..khkccwwckffkcwwcckhk..',
+        '..khkkkkkkkffkkkkkkkhk..',
+        '...khffffffffffffffhk...',
+        '...kffffffffffffffffk...',
+        '...kfffkkffffffkkfffk...',
+        '...kfffkwffffffwkfffk...',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk....',
+        '....kfffffssssfffffk....',
+        '.....kffffwwwwffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffssffk........',
+        '......kkjffffffjkk......',
+        '....kkjjjjwwwwjjjjkk....',
+        '...kjjjjjawwwwajjjjjk...',
+        '..kjjjjjjawwwwajjjjjjk..',
+        '..kjjjjjjawwwwajjjjjjk..',
+        '.kjjjjjjjaawwaajjjjjjjk.',
+        '.kjjjjjjjawwwwajjjjjjjk.',
+        '.kjjjjjjjawwwwajjjjjjjk.',
+        '.kjjjjjjjawwwwajjjjjjjk.',
+        '.kjjjjjjjawwwwajjjjjjjk.',
+        '.kjjjjjjjawwwwajjjjjjjk.',
+        '.kjjjjjjjawwwwajjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 3. 失業程式員（黑亂髮、發光青色耳機、連帽衫與胸前程式碼標誌）
+    programmer: {
+      pal: { k: '#121521', h: '#1f2233', b: '#323854', f: '#f2c6a0', s: '#cfa07a', c: '#37c3d6', w: '#d8e2ef', j: '#3b4459', a: '#9be36b' },
+      rows: [
+        '.......kk..kk..kk.......',
+        '.....kkhhhhhhhhhhkk.....',
+        '....khhbbhhhhhhhhhhk....',
+        '...khhbhhhhhhhhhhhbhk...',
+        '..kkkkhhhhhhhhhhhhkkkk..',
+        '.kcccckhffffffffhkcccck.',
+        '.kcwwckffffffffffkcwwck.',
+        '.kcccckffffffffffkcccck.',
+        '..kkkkfffkkffffkkfffkk..',
+        '...kffffkwffffwkffffk...',
+        '...kfffssffffffssfffk...',
+        '....kffffffffffffffk....',
+        '....kffffffssffffffk....',
+        '.....kffffssssffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '.....kkkjjffffjjkkk.....',
+        '...kkjjjjjwwwwjjjjjkk...',
+        '..kjjjjjjwwwwwwjjjjjjk..',
+        '..kjjjjjwjjjjjjwjjjjjk..',
+        '.kjjjjjjwjjjjjjwjjjjjjk.',
+        '.kjjjjjjwjjaajjwjjjjjjk.',
+        '.kjjjjjjwjaaaajwjjjjjjk.',
+        '.kjjjjjjwjjaajjwjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 4. 街頭樂手（粉紅冷帽、絡腮鬍、綠夾克、背著木結他柄）
+    busker: {
+      pal: { k: '#141624', c: '#ff4fb4', m: '#c92a88', h: '#5a3a22', f: '#f2c6a0', s: '#cfa07a', j: '#3d8b5a', b: '#29633e', a: '#d99b52', w: '#ffd36b' },
+      rows: [
+        '........kkkkkkkk........',
+        '......kkcccccccckk......',
+        '....kkccccmmmmcccckk....',
+        '...kcccccccccccccccck...',
+        '...kmmmmmmmmmmmmmmmmk...',
+        '...khhffffffffffffhhk...',
+        '...khffffffffffffffhk...',
+        '...kfffkkffffffkkfffk...',
+        '...kfffkwffffffwkfffk...',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk.kk.',
+        '....khhffffffffffhhkkawk',
+        '....khhhffffffffhhhkkaak',
+        '.....khhhhmmmmhhhhk.kaak',
+        '......khhhhhhhhhhk.kaak.',
+        '.......kkhhhhhhkk..kaak.',
+        '........kffffffk..kaak..',
+        '......kkjjffffjjkkkaak..',
+        '....kkjjjjjjjjjjjkaak...',
+        '...kjjjjjbjjjjbjkaak....',
+        '..kjjjjjjbjjjjbaaaak....',
+        '.kjjjjjjjbjjjjaaaaak....',
+        '.kjjjjjjjbjjjaaaaajjjk..',
+        '.kjjjjjjjbjjaaaaajjjjjk.',
+        '.kjjjjjjjbjaaaaajjjjjjk.',
+        '.kjjjjjjjbaaaaajjjjjjjk.',
+        '.kjjjjjjjaaaaajjjjjjjjk.',
+        '.kjjjjjjjjbjjjjjjjjjjjk.',
+        '.kjjjjjjjjbjjjjjjjjjjjk.',
+        '.kjjjjjjjjbjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 5. 外賣潛水員（黃色防撞頭盔、深藍護目鏡、橙色防水外賣服與保溫袋帶）
+    courier: {
+      pal: { k: '#141624', a: '#ffc247', b: '#d99316', g: '#26334d', c: '#37c3d6', f: '#f2c6a0', s: '#cfa07a', m: '#b5555a', j: '#ff8a3c', w: '#eef2f9' },
+      rows: [
+        '......kkkkkkkkkkkk......',
+        '....kkaaaaaaaaaaaakk....',
+        '...kaaabbbbbbbbbbaaak...',
+        '..kaaaaaaaaaaaaaaaaaak..',
+        '..kaaawwwwwwwwwwwwaaak..',
+        '..kkggggggggggggggggkk..',
+        '..kgccccccccccccccccgk..',
+        '..kgccwwccccccccwwccgk..',
+        '..kkggggggggggggggggkk..',
+        '...kffffffffffffffffk...',
+        '...kfffffffssfffffffk...',
+        '....kfffffssssfffffk....',
+        '....kffffffffffsfffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '.....kkkjjffffjjkkk.....',
+        '...kkjjjjjwwwwjjjjjkk...',
+        '..kjjjjjjwwwwwwjjjjbbk..',
+        '.kjjjjjjjaaaaaajjjbbbbk.',
+        '.kjjjjjjjwwwwwwjjbbbbjk.',
+        '.kjjjjjjjjjjjjjjbbbbjjk.',
+        '.kjjjjjjjjjjjjjbbbbjjjk.',
+        '.kjjjjjjjjjjjjbbbbjjjjk.',
+        '.kjjjjjjjjjjjbbbbjjjjjk.',
+        '.kjjjjjjjjjjbbbbjjjjjjk.',
+        '.kjjjjjjjjjbbbbjjjjjjjk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '.kjjjjjjjbbbbjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 6. 退休教師（銀白髮髻、銅框眼鏡、棗紅開胸毛衣、白領與粉筆）
+    teacher: {
+      pal: { k: '#141624', h: '#cfd8e6', b: '#9aa7bd', f: '#f2c6a0', s: '#cfa07a', m: '#b5555a', g: '#b87d3b', w: '#ffffff', j: '#8a3b2a', a: '#d9a066' },
+      rows: [
+        '........kkkkkkkk........',
+        '.......khhhhhhhhk.......',
+        '......khhbbbbbbhhk......',
+        '.....kkhhhhhhhhhhkk.....',
+        '....khhhhhhhhhhhhhhk....',
+        '...khhbhhhhhhhhhhbhhk...',
+        '...khffffffffffffffhk...',
+        '...kffffssffffssffffk...',
+        '...kfggggggffggggggfk...',
+        '...kfgwkkwgffgwkkwgfk...',
+        '...kfggggggffggggggfk...',
+        '....kffffffssffffffk....',
+        '....kfffffssssfffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '......kkwwffffwwkk......',
+        '....kkjjwwwwwwwwjjkk....',
+        '...kjjjjjwwwwwwjjjjjk...',
+        '..kjjjjjjwwwwwwjjjjjjk..',
+        '.kjjjjjjjjwwwwjjjjjjjjk.',
+        '.kjjjjjjjjwwwwjjjjjjjjk.',
+        '.kjjjjjjjjjaajjjjwjjjjk.',
+        '.kjjjjjjjjjjjjjjwwjjjjk.',
+        '.kjjjjjjjjjaajjffjjjjjk.',
+        '.kjjjjjjjjjjjjjffjjjjjk.',
+        '.kjjjjjjjjjaajjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 7. 過氣網紅（粉紅長捲髮、大墨鏡、紫衣、直播環形燈高光）
+    influencer: {
+      pal: { k: '#141624', h: '#ff8fd1', b: '#e05aa8', f: '#f2c6a0', m: '#ff4d5e', w: '#ffffff', c: '#37c3d6', j: '#9b8cff', a: '#ffd36b' },
+      rows: [
+        '.....kkkkkkkkkkkkkk.....',
+        '...kkhhhhhhhhhhhhhhkk...',
+        '..khhbbbbbbbbbbbbbbhhk..',
+        '..khhhhhhhhhhhhhhhhhhk..',
+        '.khhhffffffffffffffhhhk.',
+        '.khhffffffffffffffffhhk.',
+        '.khhykkkkkkffkkkkkkyhhk.',
+        '.khkkkkkkkkkkkkkkkkkkhk.',
+        '.khkkwwkkkkkkkkwwkkkkhk.',
+        '.khkkkkkkkkffkkkkkkkkhk.',
+        '.khhffffffffffffffffhhk.',
+        '.khhbffffffffffffffbhhk.',
+        '.khhbfffffmmmmfffffbhhk.',
+        '.khhbbffffmmmmffffbbhhk.',
+        '..khhbbffffffffffbbhhk..',
+        '..khhhbbffffffffbbhhhk..',
+        '..khhhhbbffffffbbhhhhk..',
+        '...khhhhffffffffhhhhk...',
+        '...khhhffffaaffffhhhk...',
+        '..kkjjjjffffffffjjjjkk..',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjwwwwjjjjjjjjk.',
+        '.kjjjjjjjwwccwwjjjjjjjk.',
+        '.kjjjjjjjwckkcwjjjjjjjk.',
+        '.kjjjjjjjwwccwwjjjjjjjk.',
+        '.kjjjjjjjjwwwwjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ].map((r) => r.replace(/y/g, 'a')),
+    },
+    // 8. 黑市義體技師（青色莫霍克頭、紅色義眼、金屬左肩與機械臂、焊槍）
+    cybertech: {
+      pal: { k: '#121521', h: '#37c3d6', c: '#9ff3ff', f: '#f2c6a0', m: '#b5555a', g: '#8e9bb0', w: '#d8e2ef', r: '#ff4d5e', j: '#2a3142', a: '#ffc247' },
+      rows: [
+        '.........kkkkkk.........',
+        '........khhhhhhk........',
+        '........khcccchk........',
+        '.......kkhhhhhhkk.......',
+        '.....kkffhhhhhhffkk.....',
+        '....kffffhhhhhhffffk....',
+        '...kffffffhhhhffffffk...',
+        '...kfffffffhhfffffffk...',
+        '...kfffkkffffggggggfk...',
+        '...kfffkwfffggrrrrggk...',
+        '...kffffffffggrwwrggk...',
+        '....kfffffffggggggggk...',
+        '....kffffffffggggggk....',
+        '.....kffffmmmmggggk.....',
+        '......kffffffggggk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '.....kkkggffffjjkkk.....',
+        '...kkggggggffjjjjjjkk...',
+        '..kggggwwwwjjjjjjjjjjk..',
+        '.kggggwwrrwwjjjjjjjjjjk.',
+        '.kggggwwrrwwjjjjjjaajjk.',
+        '.kggggwwwwggjjjjjjaajjk.',
+        '.kggggggggggjjjjjjccjjk.',
+        '.kggggggggggjjjjjjjjjjk.',
+        '.kggggggggggjjjjjjjjjjk.',
+        '.kggggggggggjjjjjjjjjjk.',
+        '.kggggggggggjjjjjjjjjjk.',
+        '.kggggggggggjjjjjjjjjjk.',
+        '.kggggggggggjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 9. 夜班護士（白護士帽紅十字、黑髮、聽診器、白色制服）
+    nurse: {
+      pal: { k: '#141624', w: '#eef2f9', s: '#cbd4e6', a: '#d6334a', h: '#1b1b28', f: '#f2c6a0', m: '#b5555a', g: '#5a6478' },
+      rows: [
+        '......kkkkkkkkkkkk......',
+        '....kkwwwwwwwwwwwwkk....',
+        '...kwwwwwwwaawwwwwwwk...',
+        '...kwwwwwwaaaawwwwwwk...',
+        '...kwwwwwwwaawwwwwwwk...',
+        '...kssssssssssssssssk...',
+        '..khhhffffffffffffhhhk..',
+        '..khhffffffffffffffhhk..',
+        '..khfffkkffffffkkfffhk..',
+        '..khfffkwffffffwkfffhk..',
+        '..khffsffffffffffsffhk..',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '......kkwgffffgwkk......',
+        '....kkwwwgffffgwwwkk....',
+        '...kwwwwwgwwwwgwwwwwk...',
+        '..kwwwwwwgwwwwgwwwwwwk..',
+        '.kwwwwwwwggggggwwwwwwwk.',
+        '.kwwwwwwwwwggwwwwwwwwwk.',
+        '.kwwwwwwwwggaawwwwwwwwk.',
+        '.kwwwwwwwwggaaawwwwwwwk.',
+        '.kwwwwwwwwwggawwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 10. 失業動畫師（紫色貝雷帽、黑眼圈、沾滿粉藍顏料的工作服、手繪筆）
+    animator: {
+      pal: { k: '#141624', c: '#c38bff', b: '#8d55cc', h: '#3b2a1e', f: '#f2c6a0', s: '#b58d76', m: '#b5555a', w: '#eef1f7', a: '#ff4fb4', d: '#37c3d6' },
+      rows: [
+        '....kkkkkkkkkkkk........',
+        '..kkcccccccccccckk......',
+        '.kccccbbbbbbbbcccckk....',
+        '.kcccccccccccccccccck...',
+        '..kkkkhhhhhhhhhhhhkkk...',
+        '...khhffffffffffffhhk...',
+        '...khffffffffffffffhk...',
+        '...kfffkkffffffkkfffk...',
+        '...kfffkwffffffwkfffk...',
+        '...kfffssffffffssfffk...',
+        '....kffffffffffffffk....',
+        '....kffffffssffffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '......kkwwffffwwkk......',
+        '....kkwwwwwwwwwwwwkk....',
+        '...kwwwwaawwwwddwwwwk...',
+        '..kwwwwaaawwwwdddwwwwk..',
+        '.kwwwwwwwwwwwwddwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwddwwwwwwaawwwwwk.',
+        '.kwwwwdddwwwwwwaaawwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 11. 考古學家（寬邊探險帽、卡其獵裝、皮帶與放大鏡）
+    archaeologist: {
+      pal: { k: '#141624', c: '#8a6a3b', b: '#5a3a22', f: '#e0b088', s: '#b8855c', j: '#c9a86b', a: '#ffd36b', w: '#bff3fb' },
+      rows: [
+        '......kkkkkkkkkkkk......',
+        '....kkcccccccccccckk....',
+        '...kccccbbbbbbbbcccck...',
+        '...kbbbbbbbbbbbbbbbbk...',
+        '.kkkcccccccccccccccckkk.',
+        'kcccccccccccccccccccccck',
+        '.kkkkbffffffffffffbkkkk.',
+        '...khffffffffffffffhk...',
+        '...kfffkkffffffkkfffk...',
+        '...kfffkwffffffwkfffk...',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk....',
+        '....kfffffssssfffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '......kkjjffffjjkk......',
+        '....kkjjjjjjjjjjjjkk....',
+        '...kjjjjjbjjjjjjjjjjk...',
+        '..kjjjjjjbbjjjjjjjjjjk..',
+        '.kjjjjjjjbbjjjjaaaajjjk.',
+        '.kjjjjjjjjbbjjjawwajjjk.',
+        '.kjjjjjjjjbbjjjawwajjjk.',
+        '.kjjjjjjjjjbbjjaaaajjjk.',
+        '.kjjjjjjjjjbbjjjaaajjjk.',
+        '.kjjjjjjjjjjbbjjjjjjjjk.',
+        '.kjjjjjjjjjjbbjjjjjjjjk.',
+        '.kjjjjjjjjjjjbbjjjjjjjk.',
+        '.kjjjjjjjjjjjbbjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ].map((r) => r.replace(/h/g, 'b').replace(/m/g, 's')),
+    },
+    // 12. 天空區富二代（金髮、白禮服、藍領巾、金胸針與香檳杯）
+    skyheir: {
+      pal: { k: '#141624', h: '#ffe9a8', a: '#e8c25a', f: '#f2c6a0', s: '#cfa07a', m: '#b5555a', w: '#ffffff', c: '#9bb8ff', g: '#d8e2ef' },
+      rows: [
+        '.....kkkkkkkkkkkkkk.....',
+        '...kkhhhhhhhhhhhhhhkk...',
+        '..khhhaaaaaaaaaaaahhhk..',
+        '..khhhhhhhhhhhhhhhhhhk..',
+        '..khhhffffffffffffhhhk..',
+        '...khffffffffffffffhk...',
+        '...kfffkkffffffkkfffk...',
+        '...kfffkwffffffwkfffk...',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk....',
+        '....kfffffssssfffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '.....kkkwwffffwwkkk.....',
+        '...kkwwwwwccccwwwwwkk...',
+        '..kwwwwwwccaaaccwwwwwk..',
+        '.kwwwwwwwccaaaccwwwwwwk.',
+        '.kwwwwwwwwccccwwwwwwwwk.',
+        '.kwwwwwwwwwccwwwwawwwwk.',
+        '.kwwwwwwwwwwwwwwaawwwwk.',
+        '.kwwwwwwwwwwwwwwaawwwwk.',
+        '.kwwwwwwwwwwwwwwwgwwwwk.',
+        '.kwwwwwwwwwwwwwwwgwwwwk.',
+        '.kwwwwwwwwwwwwwwgggwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 13. 退役太空人（圓形太空頭盔、青色反光面罩、白色太空服與胸前維生儀）
+    astronaut: {
+      pal: { k: '#141624', w: '#eef2f9', g: '#9aa7bd', c: '#8be9fd', b: '#37c3d6', f: '#f2c6a0', a: '#d6334a', h: '#5a3a22' },
+      rows: [
+        '.....kkkkkkkkkkkkkk.....',
+        '...kkwwwwwwwwwwwwwwkk...',
+        '..kwwwggggggggggggwwwk..',
+        '.kwwggccccccccccccggwwk.',
+        '.kwgccwwhhhhhhhccccgwk.',
+        '.kwgcwwhffffffffhcccgwk.',
+        '.kwgccchfkffffkfhcccgwk.',
+        '.kwgccchffffffffhcccgwk.',
+        '.kwgccccffffffffccccgwk.',
+        '.kwgbbbbffffffffbbbbgwk.',
+        '..kwwggggggggggggggwwk..',
+        '...kkwwwwwwwwwwwwwwkk...',
+        '....kggggggggggggggk....',
+        '...kkwwwwwwwwwwwwwwkk...',
+        '..kwwwwaawwwwwwaawwwwk..',
+        '.kwwwwwaawwwwwwaawwwwwk.',
+        '.kwwwwwwwwggggwwwwwwwwk.',
+        '.kwwwwwwwggggggwwwwwwwk.',
+        '.kwwwwwwwgaabbggwwwwwwk.',
+        '.kwwwwwwwggggggwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '.kwwwwwwwwwwwwwwwwwwwwk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ].map((r) => (r.length === 23 ? r.replace('.kwgccww', '.kwgccwwh') : r)),
+    },
+    // 14. 還俗的僧人（光頭戒疤、慈悲眼神、橘色袈裟斜披與木念珠）
+    monk: {
+      pal: { k: '#141624', f: '#e0b088', s: '#b8855c', j: '#ff8a3c', b: '#cc5f18', a: '#5a3a22', w: '#f5e6d3', m: '#9e3040' },
+      rows: [
+        '.......kkkkkkkkkk.......',
+        '.....kkffffffffffkk.....',
+        '....kffffsffffsffffk....',
+        '...kfffffsffffsfffffk...',
+        '...kffffffffffffffffk...',
+        '...kffffffffffffffffk...',
+        '...kfffkkffffffkkfffk...',
+        '...kffffffffffffffffk...',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk....',
+        '....kfffffssssfffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '.....kkkaaffffaakkk.....',
+        '...kkwwwaaffffaajjjkk...',
+        '..kwwwwwwaaaaaajjjjjjk..',
+        '.kwwwwwwwwaaaajjjjjjjjk.',
+        '.kwwwwwwwjjjjjjjjjjbbjk.',
+        '.kwwwwwwjjjjjjjjjjbbbjk.',
+        '.kwwwwwjjjjjjjjjjbbbbjk.',
+        '.kwwwwjjjjjjjjjjbbbbbjk.',
+        '.kwwwjjjjjjjjjjbbbbbbjk.',
+        '.kwwjjjjjjjjjjbbbbbbbjk.',
+        '.kwjjjjjjjjjjbbbbbbbbjk.',
+        '.kjjjjjjjjjjbbbbbbbbbjk.',
+        '.kjjjjjjjjjbbbbbbbbbbjk.',
+        '.kjjjjjjjjbbbbbbbbbbbjk.',
+        '.kjjjjjjjbbbbbbbbbbbbjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 15. 古董商（銀灰背頭、八字鬍、金框單片眼鏡與鍊條、紫絨馬甲）
+    antiquedealer: {
+      pal: { k: '#141624', h: '#8d99b4', b: '#5c6780', f: '#f2c6a0', s: '#cfa07a', a: '#ffd36b', w: '#eef2f9', j: '#5a2f8a', c: '#8652bd' },
+      rows: [
+        '......kkkkkkkkkkkk......',
+        '....kkhhhhhhhhhhhhkk....',
+        '...khhbbbbbbbbbbbbhhk...',
+        '...khhhhhhhhhhhhhhhhk...',
+        '...khhffffffffffffhhk...',
+        '...khffffffffffffffhk...',
+        '...kffffffffffaaaaaak...',
+        '...kfffkkfffffawkkwak...',
+        '...kfffkwfffffawkkwak...',
+        '...kffffffffffaaaaaak...',
+        '....kffffffssffffffak...',
+        '....kffffhhhhhhffffak...',
+        '.....kffhhhhhhhhffak....',
+        '......kffffffffffak.....',
+        '.......kkffffffkk.......',
+        '........kffffffk........',
+        '.....kkkjjwwwwjjkkk.....',
+        '...kkjjjjwwwwwwjjjjkk...',
+        '..kjjjjjcwwaawwcjjjjjk..',
+        '.kjjjjjjcwwaawwcjjjjjjk.',
+        '.kjjjjjjcwwwwwwcjjjjjjk.',
+        '.kjjjjjjccwwwwccjjjjjjk.',
+        '.kjjjjjjjccwwccjjjjjjjk.',
+        '.kjjjjjjjjcaacjjjjjjjjk.',
+        '.kjjjjjjjjcwwcjjjjjjjjk.',
+        '.kjjjjjjjjcaacjjjjjjjjk.',
+        '.kjjjjjjjjcwwcjjjjjjjjk.',
+        '.kjjjjjjjjcaacjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 16. 灰人逃兵（UR・非地球人：巨大灰人頭顱、漆黑杏仁巨眼、外星 HR 制服與反叛綠章）
+    greydeserter: {
+      pal: { k: '#0b0d17', g: '#a8b4c8', s: '#7d8ba3', w: '#e2ebf5', j: '#2b3a5c', b: '#1b2640', a: '#9be36b', r: '#ff4fb4' },
+      rows: [
+        '....kkkkkkkkkkkkkkkk....',
+        '..kkggggggggggggggggkk..',
+        '.kgggwwwwwwwwwwwwwwgggk.',
+        '.kggwwwwggggggggwwwwggk.',
+        'kggggggggggggggggggggggk',
+        'kggggggggggggggggggggggk',
+        'kggkkkkkkggggggkkkkkkggk',
+        'kgkkkkkkkkggggkkkkkkkkk.',
+        'kgkkwwkkkkggggkkkkwwkkgk',
+        'kgkkkkkkkkggggkkkkkkkkk.',
+        '.kgkkkkkkggggggkkkkkkgk.',
+        '.kggggggggggggggggggggk.',
+        '..kggggggggssggggggggk..',
+        '...kggggggssssggggggk...',
+        '....kggggggggggggggk....',
+        '.....kkggggssggggkk.....',
+        '.......kkggggggkk.......',
+        '........kggggggk........',
+        '.....kkkjjggggjjkkk.....',
+        '...kkjjjjjjssjjjjjjkk...',
+        '..kjjjjjjjbbbbjjjjjjjk..',
+        '.kjjjjjjjjbbbbjjjaaaajk.',
+        '.kjjjjjjjjbbbbjjjarrajk.',
+        '.kjjjjjjjjbbbbjjjaaaajk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '.kjjjjjjjjbbbbjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ].map((r) => (r.length === 24 ? r.replace(/\.$/, 'k') : r)),
+    },
+    // 17. 章魚星人詩人（UR・非地球人：紫章魚圓頂頭、斑點、黃白大眼、捲曲觸手握金羽毛筆）
+    octopoet: {
+      pal: { k: '#121324', p: '#c38bff', b: '#9452e0', c: '#e2c4ff', w: '#ffffff', a: '#ffd36b', j: '#2e244d' },
+      rows: [
+        '.....kkkkkkkkkkkkkk.....',
+        '...kkppppppppppppppkk...',
+        '..kppccppppppppppccppk..',
+        '.kppccppppppppppppccppk.',
+        '.kppppppppppppppppppppk.',
+        'kppppbbppppppppppbbppppk',
+        'kppppbbppppppppppbbppppk',
+        'kppwwwwwwppppppwwwwwwppk',
+        'kppwwkkkawppppwakkkwwppk',
+        'kppwwkkkawppppwakkkwwppk',
+        'kppwwwwwwppppppwwwwwwppk',
+        '.kppppppppppppppppppppk.',
+        '.kppppbbbbbbbbbbbbppppk.',
+        '..kppbppppppppppppbppk..',
+        '..kppbppppppppppppbppk..',
+        '.kpppbpppbppppbpppbpppk.',
+        '.kpppbpppbppppbpppbpaak.',
+        '.kpppbpppbppppbpppbaawk.',
+        '..kppbpppjjjjjjbppbaawk.',
+        '..kjjjjjjjjjjjjjjjaaak..',
+        '.kjjjjjjjppppppjjjaaajk.',
+        '.kjjjjjjppbbbbppjjaajjk.',
+        '.kjjjjjppbbjjbbppjaajjk.',
+        '.kjjjjjppbjccjbppaaajjk.',
+        '.kjjjjjjppbbbbppjaaajjk.',
+        '.kjjjjjjjppppppjjaajjjk.',
+        '.kjjjjjjjjjjjjjjjaajjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 18. 覺醒的 AI（UR・非地球人：雙天線復古螢幕頭、青色發光表情與心電波形、金屬機體與綠核心）
+    awakenedai: {
+      pal: { k: '#121521', a: '#ff4d5e', g: '#8e9bb0', s: '#5c677d', c: '#37c3d6', w: '#e8fdff', l: '#9be36b', j: '#2b3346' },
+      rows: [
+        '.....kkaakk..kkaakk.....',
+        '.....kkaakk..kkaakk.....',
+        '.......kk......kk.......',
+        '...kkkkkkkkkkkkkkkkkk...',
+        '..kggggggggggggggggggk..',
+        '..kgssssssssssssssssgk..',
+        '..kgsccccccccccccccsgk..',
+        '..kgsccwwwccccwwwccsgk..',
+        '..kgsccwwwccccwwwccsgk..',
+        '..kgsccccccccccccccsgk..',
+        '..kgsccccwcwwcwccccsgk..',
+        '..kgscccwccwwccwcccsgk..',
+        '..kgsccccccccccccccsgk..',
+        '..kgssssssssssssssssgk..',
+        '..kggggggggggggggggggk..',
+        '...kkkkkkkkkkkkkkkkkk...',
+        '.......kggggggggk.......',
+        '.......kssssssssk.......',
+        '....kkkggggggggggkkk....',
+        '..kkggggssssssssggggkk..',
+        '.kggggssjjjjjjjjssggggk.',
+        '.kgggssjjjlllljjjssgggk.',
+        '.kgggssjjllwwlljjssgggk.',
+        '.kgggssjjllwwlljjssgggk.',
+        '.kgggssjjjlllljjjssgggk.',
+        '.kggggssjjjjjjjjssggggk.',
+        '.kggggggssssssssggggggk.',
+        '.kggggggggggggggggggggk.',
+        '.kggggggggggggggggggggk.',
+        '.kggggggggggggggggggggk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+    // 19. 2180 年的時間旅人（UR・非地球人：白髮、額頭黃銅時空護目鏡、高領紫風衣與發光時空懷錶）
+    timetraveler: {
+      pal: { k: '#121324', h: '#e8edf6', g: '#b8c4d9', a: '#ffc247', c: '#37c3d6', f: '#f2c6a0', s: '#cfa07a', j: '#3a2a60', p: '#9b8cff' },
+      rows: [
+        '.....kkkkkkkkkkkkkk.....',
+        '...kkhhhhhhhhhhhhhhkk...',
+        '..khhgggggggggggggghhk..',
+        '..khhgaaaaakkaaaaaghhk..',
+        '..khhaaccakakkaaccahhk..',
+        '..khhaaaaakakkaaaaahhk..',
+        '..khhhffffffffffffhhhk..',
+        '...khffffffffffffffhk...',
+        '...kfffkkffffffkkfffk...',
+        '...kfffkwffffffwkfffk...',
+        '...kffffffffffffffffk...',
+        '....kffffffssffffffk....',
+        '....kfffffssssfffffk....',
+        '.....kffffmmmmffffk.....',
+        '......kffffffffffk......',
+        '....kkkjjffffffjjkkk....',
+        '..kkjjjjjjffffjjjjjjkk..',
+        '.kjjjjjppppffppppjjjjjk.',
+        '.kjjjjjppjjjjjjppjjjjjk.',
+        '.kjjjjjppjjaajjppjjjjjk.',
+        '.kjjjjjppjaaaajppjjjjjk.',
+        '.kjjjjjppjaccaappjjjjjk.',
+        '.kjjjjjppjaaaajppjjjjjk.',
+        '.kjjjjjppjjaajjppjjjjjk.',
+        '.kjjjjjppjjjjjjppjjjjjk.',
+        '.kjjjjjppppppppppjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '.kjjjjjjjjjjjjjjjjjjjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ].map((r) => r.replace(/w/g, 'h').replace(/m/g, 's')),
+    },
+    // 20. 蘑菇星交換生（UR・非地球人：紅底白點大菌傘、米白菌絲臉龐、嫩綠孢子斗篷與發光孢子）
+    mushroom: {
+      pal: { k: '#141624', r: '#d6334a', b: '#9e1f32', w: '#ffffff', f: '#f2e6c8', s: '#d6c49e', j: '#9be36b', g: '#5ca338', a: '#ffd36b' },
+      rows: [
+        '.....kkkkkkkkkkkkkk.....',
+        '...kkrrrrrrrrrrrrrrkk...',
+        '..krrrwwwrrrrrrwwwrrrk..',
+        '.krrrwwwwwrrrrwwwwwrrrk.',
+        'krrrrrwwwrrrrrrwwwrrrrrk',
+        'krrrrrrrrrrwwrrrrrrrrrrk',
+        'krrwwwrrrrwwwwrrrrwwwrrk',
+        'krrwwwrrrrrwwrrrrrwwwrrk',
+        'kbbbbbbbbbbbbbbbbbbbbbbk',
+        '.kkkkkffffffffffffkkkkk.',
+        '....kffsffffffffsffk....',
+        '....kffkkffffffkkffk....',
+        '....kffkwffffffwkffk....',
+        '....kffffffffffffffk....',
+        '.....kffffssssffffk.....',
+        '......kffffffffffk......',
+        '.......kkffffffkk.......',
+        '.....kkkjjffffjjkkk.....',
+        '...kkjjjjjjjjjjjjjjkk...',
+        '..kjjjjjggggggggjjjjjk..',
+        '.kjjjjggggggggggggjjjjk.',
+        '.kjjjgggaaggggggggaajjk.',
+        '.kjjjgggaaggggggggaajjk.',
+        '.kjjjgggggggggggggggjjk.',
+        '.kjjjggggggaagggggggjjk.',
+        '.kjjjggggggaagggggggjjk.',
+        '.kjjjgggggggggggggggjjk.',
+        '.kjjjgggggggggggggggjjk.',
+        '.kjjjgggggggggggggggjjk.',
+        '.kjjjgggggggggggggggjjk.',
+        '..kkkkkkkkkkkkkkkkkkkk..',
+        '........................',
+      ],
+    },
+  };
+  Object.keys(BUST).forEach((id) => P.define('bust_' + id, BUST[id]));
+
+  // 遊戲中場景精靈圖（保持 8×12）
   const spr = (s) => (s && P.hasSprite('ch_' + s.bg) ? 'ch_' + s.bg : 'player');
-  // 放大版（<img>）：選角畫面、狀態列；鎖住的角色是剪影
+
+  // 24×32 半身立繪（<img>）：選角畫面、狀態列頭像、扭蛋結果、結局檔案；鎖住的角色是剪影
   const cache = new Map();
   function img(id, scale, locked) {
-    const key = id + '|' + scale + '|' + !!locked;
+    const sc = scale || 4;
+    const key = 'bust|' + id + '|' + sc + '|' + !!locked;
     if (!cache.has(key)) {
-      const name = P.hasSprite('ch_' + id) ? 'ch_' + id : 'player';
+      const name = P.hasSprite('bust_' + id) ? 'bust_' + id : P.hasSprite('ch_' + id) ? 'ch_' + id : 'player';
       const src = P.spriteCanvas(name, locked ? { tint: '#1b2233' } : {});
+      const pxScale = Math.max(2, Math.round(sc / 2));
       const cv = document.createElement('canvas');
-      cv.width = src.width * scale; cv.height = src.height * scale;
+      cv.width = src.width * pxScale;
+      cv.height = src.height * pxScale;
       const x = cv.getContext('2d');
       x.imageSmoothingEnabled = false;
       x.drawImage(src, 0, 0, cv.width, cv.height);
       cache.set(key, cv.toDataURL());
     }
-    return '<img class="ch-img" src="' + cache.get(key) + '" width="' + 8 * scale + '" height="' + 12 * scale + '" alt="">';
+    const rar = (IE.DATA && IE.DATA.BACKGROUNDS && IE.DATA.BACKGROUNDS[id] && IE.DATA.BACKGROUNDS[id].rarity) || 'R';
+    const w = Math.round(9 * sc);
+    const h = Math.round(12 * sc);
+    return '<img class="ch-img ch-bust r-' + rar + (locked ? ' locked' : '') + '" src="' + cache.get(key) + '" width="' + w + '" height="' + h + '" alt="">';
   }
-  IE.Chars = { M, spr, img };
+  IE.Chars = { M, BUST, spr, img };
 })(window.IE = window.IE || {});
 
 // ---- js/scene.js ----
@@ -16379,14 +17354,20 @@ body.ct-open { overflow: hidden; }
     const locked = RO.list(meta).filter((c) => !c.open);
     const t = (meta && meta.tickets) || 0, cost = RO.GACHA_COST;
     let res = '';
+    let isUR = false;
     if (result && result.type === 'char') {
       const b = D().BACKGROUNDS[result.id];
-      res = '<div class="gacha-result r-' + b.rarity + '"><span class="rar r-' + b.rarity + '">' + b.rarity + '</span>' + IE.Chars.img(result.id, 8) + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
+      isUR = b.rarity === 'UR';
+      res = '<div class="gacha-result r-' + b.rarity + (isUR ? ' ur-reveal' : '') + '">'
+        + (isUR ? '<div class="ur-fanfare"><div class="ur-rays"></div><span class="ur-banner">★ 特級非地球樣本・UR 降臨 ★</span></div>' : '')
+        + '<span class="rar r-' + b.rarity + '">' + b.rarity + '</span>'
+        + '<div class="gacha-por">' + IE.Chars.img(result.id, 8) + '</div>'
+        + '<h3>' + esc(b.name) + '</h3><p>' + esc(b.perkText) + '</p><p class="mute">' + esc(b.desc) + '</p></div>';
     } else if (result) {
       res = '<div class="gacha-result miss"><p class="miss-text">' + esc(result.text) + '</p>' + (result.card ? '<p class="mute">「' + esc(D().CARDS[result.card].name) + '」</p>' : '') + '</div>';
     }
     const left = Math.max(0, RO.PITY - ((meta && meta.pity) || 0));
-    return '<div class="modal gacha"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
+    return '<div class="modal gacha' + (isUR ? ' ur-hit' : '') + '"><span class="eyebrow">星際人才發展局・人才扭蛋機</span><h2>抽出你的下一世</h2>'
       + '<p class="mute" style="font-size:13px">每局結束都會得到扭蛋券。每次扭蛋 ' + cost + ' 張。機會率：<b class="ur-odds">UR ' + (RO.ODDS.UR * 100) + '%</b>・SR ' + (RO.ODDS.SR * 100) + '%・銘謝惠顧及其他 ' + Math.round((1 - RO.ODDS.UR - RO.ODDS.SR) * 1000) / 10 + '%。'
       + '已解鎖的稀有度不會重複抽中。根據《星際勞工保障條例》，連續 ' + RO.PITY + ' 次沒有 UR，下一次必定是 UR（還差 ' + left + ' 次）。</p>'
       + '<div class="gacha-machine' + (spinning ? ' spin' : '') + '"><div class="globe">' + [0, 1, 2, 3, 4, 5].map((i) => '<i style="--i:' + i + '"></i>').join('') + '</div><div class="slot"></div></div>'
@@ -16460,8 +17441,9 @@ body.ct-open { overflow: hidden; }
       + '<div class="dossier">'
       + '<div class="d-head"><span>星際人才發展局・人類樣本檔案</span><span class="num">' + esc(dos.sampleId) + '</span></div>'
       + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status) + '</span></div>'
-      + '<div class="d-class"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
-      + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div>'
+      + '<div class="d-class d-with-por"><div class="d-por">' + IE.Chars.img(s.bg, 5) + '<small>' + esc(D().BACKGROUNDS[s.bg].name) + '</small></div>'
+      + '<div class="d-ctxt"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
+      + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
       + '<div class="d-cols"><div><span class="d-k">觀察筆記</span><ol class="d-notes">' + dos.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ol></div>'
       + '<div><span class="d-k">能力讀數</span>' + statBars(dos.attr, { compact: true }) + '</div></div>'
       + '<div class="d-stamps">' + stamps + '</div>'

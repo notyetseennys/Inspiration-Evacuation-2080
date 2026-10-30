@@ -868,4 +868,203 @@
   }
 }
 
+/* =========================================================
+   任務 6：角色 24×32 半身立繪、稀有度外框（R 銀、SR 金、UR 彩虹）與扭蛋 UR 專屬演出
+   ========================================================= */
+.ch-bust {
+  image-rendering: pixelated;
+  border-radius: 6px;
+  padding: 2px;
+  background: rgba(12, 16, 28, 0.85);
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.hud-day .ch-bust {
+  border-radius: 4px;
+  padding: 1px;
+}
+
+/* R：銀框 */
+.ch-bust.r-R:not(.locked) {
+  border: 1.5px solid #c6d4e6;
+  box-shadow:
+    0 0 8px rgba(198, 212, 230, 0.35),
+    inset 0 0 6px rgba(238, 245, 252, 0.25);
+}
+.bg-card.r-R:not(.locked) {
+  border-color: rgba(198, 212, 230, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 10px rgba(184, 199, 220, 0.12);
+}
+.bg-detail.r-R {
+  border-color: #c6d4e6;
+}
+.rar.r-R {
+  background: linear-gradient(135deg, #d8e4f2, #9ab0c9) !important;
+  color: #101624 !important;
+}
+
+/* SR：金框 */
+.ch-bust.r-SR:not(.locked) {
+  border: 1.5px solid #ffd36b;
+  box-shadow:
+    0 0 12px rgba(255, 211, 107, 0.5),
+    inset 0 0 8px rgba(255, 194, 71, 0.3);
+}
+.bg-card.r-SR:not(.locked) {
+  border-color: rgba(255, 211, 107, 0.8);
+  box-shadow:
+    0 2px 14px rgba(255, 211, 107, 0.18),
+    inset 0 0 14px rgba(255, 211, 107, 0.08);
+}
+.bg-detail.r-SR {
+  border-color: #ffd36b;
+  box-shadow: 0 0 22px rgba(255, 211, 107, 0.2);
+}
+.rar.r-SR {
+  background: linear-gradient(135deg, #fff0ad, #ffd36b, #f0982b) !important;
+  color: #1c1204 !important;
+}
+
+/* UR：彩虹框 */
+.ch-bust.r-UR:not(.locked) {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(rgba(14, 16, 30, 0.92), rgba(14, 16, 30, 0.92)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 16px rgba(255, 79, 180, 0.45),
+    0 0 24px rgba(55, 195, 214, 0.35);
+}
+.bg-card.r-UR:not(.locked) {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(165deg, rgba(24, 20, 42, 0.95), rgba(13, 17, 30, 0.96)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 4px 18px rgba(195, 139, 255, 0.28),
+    inset 0 0 18px rgba(55, 195, 214, 0.12);
+}
+.bg-detail.r-UR {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(165deg, rgba(24, 20, 42, 0.96), rgba(13, 17, 30, 0.98)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 28px rgba(255, 79, 180, 0.32),
+    0 0 42px rgba(55, 195, 214, 0.22);
+}
+.rar.r-UR {
+  background: linear-gradient(90deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff) !important;
+  color: #101320 !important;
+  font-weight: 900;
+}
+
+/* 結局檔案（dossier）中的角色半身立繪 */
+.d-class.d-with-por {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.d-por {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: rgba(15, 20, 35, 0.78);
+  border: 1px solid rgba(141, 183, 214, 0.35);
+  border-radius: 8px;
+}
+.d-por small {
+  font-size: 11px;
+  color: #b8c7dc;
+  white-space: nowrap;
+}
+.d-ctxt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 人才扭蛋機抽中 UR 時專屬演出 */
+.modal.gacha.ur-hit {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(195, 139, 255, 0.25), rgba(14, 17, 30, 0.98) 70%) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 50px rgba(255, 79, 180, 0.45),
+    0 0 90px rgba(55, 195, 214, 0.35);
+}
+.gacha-result.ur-reveal {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(34, 22, 58, 0.95), rgba(15, 22, 40, 0.96)) padding-box,
+    linear-gradient(135deg, #ff4fb4, #ffd36b, #9be36b, #37c3d6, #c38bff, #ff4fb4) border-box;
+  box-shadow:
+    0 0 36px rgba(255, 211, 107, 0.45),
+    inset 0 0 28px rgba(195, 139, 255, 0.25);
+  animation: ur-card-reveal 0.55s cubic-bezier(0.18, 1.5, 0.36, 1);
+}
+@keyframes ur-card-reveal {
+  0% { transform: scale(0.68) translateY(16px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.ur-fanfare {
+  position: relative;
+  margin-bottom: 8px;
+}
+.ur-rays {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  width: 240px;
+  height: 240px;
+  margin-left: -120px;
+  margin-top: -120px;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 211, 107, 0.22) 0deg 12deg,
+    transparent 12deg 24deg,
+    rgba(55, 195, 214, 0.18) 24deg 36deg,
+    transparent 36deg 48deg
+  );
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 70%);
+  animation: ur-rays-spin 9s linear infinite;
+}
+@keyframes ur-rays-spin {
+  to { transform: rotate(360deg); }
+}
+.ur-banner {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  padding: 3px 12px;
+  border-radius: 99px;
+  color: #121324;
+  background: linear-gradient(90deg, #ff8fd1, #ffd36b, #9be36b, #7ee8fa, #d4adff);
+  box-shadow: 0 2px 12px rgba(255, 211, 107, 0.55);
+}
+.gacha-por {
+  position: relative;
+  z-index: 2;
+  margin: 6px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha-result.ur-reveal,
+  .ur-rays {
+    animation: none !important;
+  }
+}
+
+
 
