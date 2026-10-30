@@ -996,6 +996,247 @@ body.ct-open { overflow: hidden; }
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   任務 2：素材卡按媒材有不同卡面、特殊卡面效果與色盲友善標籤花紋
+   ========================================================================== */
+
+/* 修正改造標籤與右上角媒材標記重疊問題 */
+.cc .cc-med {
+  z-index: 2;
+}
+.cc .cc-mod {
+  top: 29px;
+  right: 4px;
+  z-index: 2;
+}
+
+/* 1. 五種媒材卡面底紋（創作桌 .cc） */
+/* 紙（paper）：橫線信紙 + 左側紅線欄 */
+.cc.med-paper:not(.dark) {
+  background-color: #f8f2e2;
+  background-image:
+    linear-gradient(90deg, transparent 11px, rgba(214, 51, 74, 0.28) 11px 12.5px, transparent 12.5px),
+    repeating-linear-gradient(180deg, transparent 0 15px, rgba(145, 110, 60, 0.22) 15px 16px);
+}
+
+/* 聲（sound）：聲波與黑膠音軌弧線 */
+.cc.med-sound:not(.dark) {
+  background-color: #eaf5ee;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='48' viewBox='0 0 64 48'%3E%3Cpath d='M2 24h4l3-10 4 20 4-28 4 36 4-24 4 16 3-10h4l3-6 4 12 4-18 4 24 3-12h6' fill='none' stroke='%232e8b57' stroke-width='1.5' stroke-opacity='0.22'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 85% 82%, transparent 14px, rgba(46, 139, 87, 0.1) 15px 16px, transparent 17px 22px, rgba(46, 139, 87, 0.1) 23px 24px, transparent 25px);
+  background-size: 64px 48px, 100% 100%;
+}
+
+/* 影（image）：菲林齒孔邊與取景相框 */
+.cc.med-image:not(.dark) {
+  background-color: #e6f1f8;
+  background-image:
+    repeating-linear-gradient(180deg, rgba(20, 45, 76, 0.18) 0 4px, transparent 4px 9px),
+    repeating-linear-gradient(180deg, rgba(20, 45, 76, 0.18) 0 4px, transparent 4px 9px),
+    linear-gradient(135deg, rgba(55, 195, 214, 0.16) 0%, transparent 55%);
+  background-size: 5px 100%, 5px 100%, 100% 100%;
+  background-position: 2px 0, calc(100% - 2px) 0, 0 0;
+  background-repeat: repeat-y, repeat-y, no-repeat;
+  box-shadow: 0 4px 0 #2a1f3a, inset 0 0 0 1px rgba(25, 90, 125, 0.25);
+}
+
+/* 身（body）：交織布紋與指紋漩渦水印 */
+.cc.med-body:not(.dark) {
+  background-color: #f6e9e4;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23a8384b' stroke-width='1.2' stroke-opacity='0.16'%3E%3Cellipse cx='24' cy='26' rx='6' ry='9'/%3E%3Cellipse cx='24' cy='26' rx='10' ry='14'/%3E%3Cellipse cx='24' cy='26' rx='14' ry='19' stroke-dasharray='8 3'/%3E%3Cellipse cx='24' cy='26' rx='18' ry='23' stroke-dasharray='12 4'/%3E%3C/g%3E%3C/svg%3E"),
+    repeating-linear-gradient(45deg, rgba(168, 56, 75, 0.06) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(168, 56, 75, 0.06) 0 2px, transparent 2px 6px);
+  background-repeat: no-repeat, repeat, repeat;
+  background-position: right -6px bottom -6px, 0 0, 0 0;
+}
+
+/* 數（data）：座標格線與 CRT 掃描線 */
+.cc.med-data:not(.dark) {
+  background-color: #ebe8f8;
+  background-image:
+    repeating-linear-gradient(180deg, rgba(90, 60, 160, 0.09) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, rgba(110, 75, 190, 0.14) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(110, 75, 190, 0.14) 1px, transparent 1px);
+  background-size: 100% 3px, 12px 12px, 12px 12px;
+}
+
+/* 面板素材庫 .card 的五種媒材底紋（深色版） */
+.card.med-paper {
+  background-image:
+    linear-gradient(90deg, transparent 8px, rgba(232, 194, 90, 0.22) 8px 9px, transparent 9px),
+    repeating-linear-gradient(180deg, transparent 0 13px, rgba(232, 194, 90, 0.12) 13px 14px);
+}
+.card.med-sound {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='36' viewBox='0 0 64 36'%3E%3Cpath d='M0 18h6l3-8 4 16 4-22 4 28 4-18 4 12 3-8h6l3-6 4 12 4-14 4 18 3-10h8' fill='none' stroke='%239be36b' stroke-width='1.3' stroke-opacity='0.22'/%3E%3C/svg%3E");
+  background-size: 64px 36px;
+}
+.card.med-image {
+  background-image:
+    repeating-linear-gradient(180deg, rgba(55, 195, 214, 0.2) 0 3px, transparent 3px 7px),
+    repeating-linear-gradient(180deg, rgba(55, 195, 214, 0.2) 0 3px, transparent 3px 7px);
+  background-size: 4px 100%, 4px 100%;
+  background-position: 2px 0, calc(100% - 2px) 0;
+  background-repeat: repeat-y;
+}
+.card.med-body {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 107, 94, 0.09) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(255, 107, 94, 0.09) 0 2px, transparent 2px 6px);
+}
+.card.med-data {
+  background-image:
+    linear-gradient(90deg, rgba(195, 139, 255, 0.14) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(195, 139, 255, 0.14) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* 2. 極稀有卡（r-legend）：全息箔光效果 + 清晰深金字體 */
+@keyframes ie-card-foil {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.cc.r-legend:not(.dark) {
+  border-color: #f5b82e;
+  box-shadow: 0 0 0 2px rgba(255, 211, 107, 0.75), 0 4px 0 #5a3c0b, 0 0 16px rgba(255, 194, 71, 0.45);
+}
+.cc.r-legend:not(.dark) .cc-name {
+  color: #5c3600;
+  text-shadow: 0 1px 0 rgba(255, 245, 200, 0.9);
+}
+.cc.r-legend:not(.dark) .cc-rar {
+  color: #9e5800;
+  background: rgba(255, 211, 107, 0.45);
+  padding: 0 4px;
+  border-radius: 3px;
+  justify-self: start;
+}
+.cc.r-legend:not(.dark)::before,
+.card.r-legend::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    125deg,
+    transparent 15%,
+    rgba(255, 215, 100, 0.28) 38%,
+    rgba(255, 140, 210, 0.24) 48%,
+    rgba(120, 235, 255, 0.26) 58%,
+    transparent 80%
+  );
+  background-size: 250% 250%;
+  animation: ie-card-foil 4s ease-in-out infinite;
+  z-index: 0;
+}
+.card {
+  position: relative;
+  overflow: hidden;
+}
+.cc > :not(.cc-med):not(.cc-mod),
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 3. 異地素材（foreign）：復古航空郵戳印記 */
+.cc.foreign:not(.dark)::after,
+.card.foreign::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 24px;
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg fill='none' stroke='%231b6ca8' stroke-opacity='0.36' stroke-width='1.5'%3E%3Ccircle cx='22' cy='22' r='16'/%3E%3Ccircle cx='22' cy='22' r='12.5' stroke-dasharray='3 2'/%3E%3Cpath d='M2 18q5-3 10 0t10 0 10 0 10 0M2 23q5-3 10 0t10 0 10 0 10 0M2 28q5-3 10 0t10 0 10 0 10 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  transform: rotate(-14deg);
+  z-index: 0;
+}
+
+/* 4. 愧疚素材（guilt）：沉重暗角內陰影與壓抑邊框 */
+.cc.guilt:not(.dark) {
+  background-color: #d9ccb8;
+  border-color: #3b2f26;
+  box-shadow:
+    0 4px 0 #261d16,
+    inset 0 0 18px rgba(32, 22, 14, 0.48),
+    inset 0 -12px 18px rgba(40, 26, 16, 0.36);
+}
+.card.guilt {
+  box-shadow:
+    inset 0 0 16px rgba(0, 0, 0, 0.65),
+    inset 0 -8px 14px rgba(30, 18, 10, 0.55);
+}
+
+/* 5. 色盲友善標籤色條與標籤花紋（10 種標籤各有獨特幾何紋理） */
+.cc-stripes i {
+  position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+}
+/* 水 water：波浪橫紋 */
+.cc-stripes i.tag-water, .cc-tags .t.tag-water, .tag.tag-water {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0 3q3-3 6 0t6 0' fill='none' stroke='%23ffffff' stroke-width='1.3' stroke-opacity='0.45'/%3E%3C/svg%3E");
+  background-size: 12px 6px;
+}
+/* 霓虹 neon：雙斜高光紋 */
+.cc-stripes i.tag-neon, .cc-tags .t.tag-neon, .tag.tag-neon {
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.38) 0 2px, transparent 2px 6px);
+}
+/* 飢餓 hunger：鋸齒折線紋 */
+.cc-stripes i.tag-hunger, .cc-tags .t.tag-hunger, .tag.tag-hunger {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 5L5 1l5 4' fill='none' stroke='%23000000' stroke-width='1.2' stroke-opacity='0.3'/%3E%3C/svg%3E");
+  background-size: 10px 6px;
+}
+/* 記憶 memory：圓點花紋 */
+.cc-stripes i.tag-memory, .cc-tags .t.tag-memory, .tag.tag-memory {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1.3px, transparent 1.4px);
+  background-size: 6px 6px;
+}
+/* 機械 machine：精密方格網紋 */
+.cc-stripes i.tag-machine, .cc-tags .t.tag-machine, .tag.tag-machine {
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.25) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+/* 人情 warmth：暖色十字編織紋 */
+.cc-stripes i.tag-warmth, .cc-tags .t.tag-warmth, .tag.tag-warmth {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.32) 0 1.5px, transparent 1.5px 5px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.32) 0 1.5px, transparent 1.5px 5px);
+}
+/* 希望 hope：向上雙箭頭紋 */
+.cc-stripes i.tag-hope, .cc-tags .t.tag-hope, .tag.tag-hope {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M4 1l3 3-3 3-3-3z' fill='none' stroke='%23ffffff' stroke-width='1.1' stroke-opacity='0.48'/%3E%3C/svg%3E");
+  background-size: 8px 8px;
+}
+/* 憤怒 anger：銳利交叉裂紋 */
+.cc-stripes i.tag-anger, .cc-tags .t.tag-anger, .tag.tag-anger {
+  background-image: repeating-linear-gradient(-60deg, rgba(0, 0, 0, 0.32) 0 2px, transparent 2px 5px);
+}
+/* 反叛 rebel：粗黑警示斜紋 */
+.cc-stripes i.tag-rebel, .cc-tags .t.tag-rebel, .tag.tag-rebel {
+  background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.28) 0 3px, rgba(255, 255, 255, 0.25) 3px 6px);
+}
+/* 愧疚 guilt：垂直柵欄直紋 */
+.cc-stripes i.tag-guilt, .cc-tags .t.tag-guilt, .tag.tag-guilt {
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 5px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc.r-legend:not(.dark)::before,
+  .card.r-legend::before {
+    animation: none !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -14002,13 +14243,15 @@ body.ct-open { overflow: hidden; }
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
 
   function tagsHtml(tags) {
-    return tags.map((t) => '<span class="tag" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
+    return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
   }
   function cardHtml(c, o) {
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    const medKey = D().mediumOf ? D().mediumOf(c) : 'paper';
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
       + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
@@ -14749,12 +14992,14 @@ body.ct-open { overflow: hidden; }
     const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
     if (dark) return '<button type="button" class="cc dark" data-uid="' + c.uid + '"><span class="cc-name">？？？</span><span class="cc-tags"><span class="t">停電</span></span><span class="cc-foot"><b class="cc-val num">?</b></span></button>';
     const off = SR && SR.forbidden(c), blocked = SR && !off && SR.blocked(c);
-    const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
-    const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
+    const medKey = D_.mediumOf(c);
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    const stripes = c.tags.map((t) => '<i class="tag-' + t + '" style="--c:' + D_.TAGS[t].color + '"></i>').join('');
+    const tags = c.tags.map((t) => '<span class="t tag-' + t + '" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
-    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
-      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+    return '<button type="button" class="cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
+      + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'

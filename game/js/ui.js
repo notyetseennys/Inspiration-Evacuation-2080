@@ -13,13 +13,15 @@
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
 
   function tagsHtml(tags) {
-    return tags.map((t) => '<span class="tag" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
+    return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
   }
   function cardHtml(c, o) {
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
-    return '<' + tag + ' class="card' + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    const medKey = D().mediumOf ? D().mediumOf(c) : 'paper';
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
       + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')

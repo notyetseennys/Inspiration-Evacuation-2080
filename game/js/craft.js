@@ -21,12 +21,14 @@
     const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
     if (dark) return '<button type="button" class="cc dark" data-uid="' + c.uid + '"><span class="cc-name">？？？</span><span class="cc-tags"><span class="t">停電</span></span><span class="cc-foot"><b class="cc-val num">?</b></span></button>';
     const off = SR && SR.forbidden(c), blocked = SR && !off && SR.blocked(c);
-    const stripes = c.tags.map((t) => '<i style="--c:' + D_.TAGS[t].color + '"></i>').join('');
-    const tags = c.tags.map((t) => '<span class="t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
+    const medKey = D_.mediumOf(c);
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    const stripes = c.tags.map((t) => '<i class="tag-' + t + '" style="--c:' + D_.TAGS[t].color + '"></i>').join('');
+    const tags = c.tags.map((t) => '<span class="t tag-' + t + '" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
-    return '<button type="button" class="cc' + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
-      + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+    return '<button type="button" class="cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
+      + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="外星評審：這張素材不能用"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'

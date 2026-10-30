@@ -33,3 +33,34 @@
 
 ### 已知問題
 - 無。
+
+---
+
+## 任務 2：素材卡按媒材有不同卡面（P0）
+
+### 改動摘要
+1. **`game/js/craft.js` 與 `game/js/ui.js`**：
+   - 在 `craft.js` 的 `cardEl` 與 `ui.js` 的 `cardHtml` 為卡片加上 `med-paper`、`med-sound`、`med-image`、`med-body`、`med-data` 媒材類別，以及異地素材 `foreign` 類別。
+   - 在卡片頂部色條（`.cc-stripes i`）與標籤（`.cc-tags .t`、`.tag`）加上 `tag-<id>` 類別，供 CSS 套用色盲友善花紋。
+2. **`game/css/art.css`**：
+   - **五種媒材底紋**（同時支援創作桌淺色卡 `.cc` 與面板素材庫深色卡 `.card`，並確保停電規則 `.cc.dark` 不洩漏底紋）：
+     - `paper`（紙）：橫線信紙與左側紅色邊界線。
+     - `sound`（聲）：內嵌 SVG 聲波折線與黑膠音軌同心弧線。
+     - `image`（影）：左右兩側菲林齒孔邊框與相框內邊線。
+     - `body`（身）：交織布紋與右下角指紋漩渦水印。
+     - `data`（數）：座標方格線與 CRT 水平掃描線。
+   - **特殊素材效果**：
+     - 極稀有卡（`.r-legend`）：彩色全息箔光流動效果，並修正淺色卡面上極稀有卡名的深金對比度。
+     - 異地素材（`.foreign`）：右下角復古圓形郵戳與波浪銷票線。
+     - 愧疚素材（`.guilt`）：深色壓抑內陰影與暗角效果。
+   - **色盲友善標籤花紋**：為 10 種標籤（水、霓虹、飢餓、記憶、機械、人情、希望、憤怒、反叛、愧疚）各自設計不同的幾何底紋（波浪、雙斜線、鋸齒、圓點、方格網、十字編織、菱形、裂紋、警示斜紋、垂直柵紋）。
+   - 修正卡片改造標籤（`.cc-mod`）與右上角媒材標記（`.cc-med`）重疊的位置問題。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t2-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t2-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t2-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t2-after-mobile.png`
+
+### 已知問題
+- 無。
