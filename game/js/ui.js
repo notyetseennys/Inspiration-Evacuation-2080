@@ -28,7 +28,7 @@
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
-    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '' };
+    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
       return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
@@ -47,7 +47,16 @@
     const toRent = R().nextRentDay(s) - s.day;
     const toReview = R().reviewDay(s) - s.day;
     const flooded = R().flooded(s);
-    const world = R().worldInfo(s);
+    const evs = R().eventsInfo(s);
+    const gb = (g) => '<b class="gbadge g-' + g + '">' + g + '</b>';
+    const conds = R().condsInfo(s);
+    const orisk = R().outdoorRisk(s), hrisk = R().homeRisk(s);
+    const danger = evs.map((w) => '<span class="chip world" title="' + esc(D().SCOPES[w.scope].name + '：' + w.news) + '">' + gb(w.grade) + esc(w.name) + '・剩 ' + w.left + ' 天</span>').join('')
+      + (s.pending && s.pending.length ? '<span class="chip omen" title="手機動態裡有預兆">預兆 ×' + s.pending.length + '</span>' : '')
+      + conds.map((c) => '<span class="chip ' + (c.lethal ? 'warn' : 'cond') + '" title="' + esc(c.desc) + '">' + esc(c.name) + (c.lethal ? '・' + c.left + ' 天後致命' : '・第 ' + c.days + ' 天') + '</span>').join('')
+      + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
+      + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
+      + (hrisk > 0 ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '');
     const bmax = R().bodyMax(s);
     const rentChip = s.floor > 0
       ? '<span class="chip' + (toRent <= 1 && s.cr < rent ? ' warn' : '') + '">交租 ' + (toRent === 0 ? '今晚' : toRent + ' 天後') + ' · $' + fmt(rent) + '</span>'
@@ -57,7 +66,7 @@
       + '<div class="hud-day"><span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + D().DAYS + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
       + '<span class="chip season">' + season.name + '</span>' + rentChip
       + '<span class="chip' + (toReview === 0 ? ' warn' : '') + '">' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後') + '</span>'
-      + (world ? '<span class="chip world" title="' + esc(world.news) + '">' + esc(world.name) + '・剩 ' + world.left + ' 天</span>' : '')
+      + danger
       + '<div class="hud-btns">'
       + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
@@ -245,8 +254,8 @@
 
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
-    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '系統提示', world: '突發新聞' };
-    const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
+    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆' };
+    const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
     const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item' + (it.obj ? ' has-icon' : '') + '">' + (it.obj ? IE.Icons.obj(it.obj, 36) : '') + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
@@ -286,7 +295,7 @@
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button></div>'
-      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
+      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>死法 <b>' + Object.keys(meta.deaths || {}).length + '/' + D().DEATHS.length + '</b></span><span>事件 <b>' + Object.keys(meta.eventsSeen || {}).length + '/' + (D().WORLD_EVENTS.length + D().EVENTS.length) + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
       + '<p class="mute" style="font-size:12px;margin:0">自動存檔，無法讀檔重來。建議開啟聲音。</p>'
       + '</div>';
@@ -394,7 +403,12 @@
       + '<li><b>舊城潛水</b>：捕魚、打撈遺物、撬儲物櫃。</li>'
       + '<li><b>街頭表演</b>：唯一會令火花變旺的工作，但收入很少。</li>'
       + '<li><b>聊天、義工、休息</b>：恢復火花、讓靈魂變輕、恢復身體。</li></ul>'
-      + '<h3>世界事件</h3><p>浮城隨時會出事：大廈水浸、外星人干預、世界大戰、AI 失控、全城停電、疫症、股災、選舉……每個事件都會改變工作收入、物價、靈魂的重量，甚至令某些工作停擺。</p>'
+      + '<h3>事件（100 種，S 至 E 級）</h3><p>事件分為宇宙級、世界級、國家級（浮城）、地區級、街坊級，按影響力分為 S 至 E 級。長期事件會持續數天，改變收入、物價、靈魂重量，甚至令某些工作停擺；最多同時有兩個。大部分事件會先在手機出現<b>預兆</b>（洞察越高，看得越清楚），少數 S 級事件沒有任何預兆。</p>'
+      + '<h3>死亡（100 種以上）</h3><ul>'
+      + '<li>死因會按當天傷你最重的那件事，以及當時的處境判斷，並收錄在跨局的<b>死亡圖鑑</b>。</li>'
+      + '<li><b>致命危險</b>：有些事件令外出工作（潛水、外送、表演、義工）有致命機會，有些令住在某些樓層的人晚上有致命機會（海嘯淹低層，火災燒高層）。狀態列會顯示機會率；商店的頭盔、防毒面罩可以減低機會，搬樓可以避開。</li>'
+      + '<li><b>病痛</b>：霉菌肺、新型病毒、鼠疫熱拖太久會致命，要買藥箱；中暑、失眠要休息；骨折令外出更辛苦。</li>'
+      + '<li><b>過勞</b>：連續 5 天沒有休息，每晚都有猝死的機會。連續通宵創作三晚以上也一樣。</li></ul>'
       + '<h3>靈魂重量與良知</h3><ul>'
       + '<li>外星人的牽引光束最多只能拉起 <b>21 克</b>的靈魂。太重的人會污染他們的神經網絡，訊號再高也不會被帶走。</li>'
       + '<li><b>良知是負重</b>：同一件虧心事，良知越強、同理心越高就越重。可是每做一次，良知都會被磨損，下一件事就越來越輕。</li>'
@@ -441,7 +455,19 @@
         + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
         + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
     }).join('');
+    const evSeen = meta.eventsSeen || {};
+    const allEv = D().WORLD_EVENTS.map((w) => ({ id: w.id, name: w.name, scope: w.scope, grade: w.grade, text: w.news, long: true }))
+      .concat(D().EVENTS.map((e) => ({ id: e.id, name: e.text.split(/[，。]/)[0], scope: e.scope, grade: e.grade, text: e.text })));
+    const events = Object.keys(D().SCOPES).map((sc) => '<h4>' + D().SCOPES[sc].name + '</h4><div class="recipes">' + allEv.filter((e) => e.scope === sc)
+      .sort((a, b) => 'SABCDE'.indexOf(a.grade) - 'SABCDE'.indexOf(b.grade)).map((e) => '<div class="recipe' + (evSeen[e.id] ? '' : ' unknown') + '"><b><b class="gbadge g-' + e.grade + '">' + e.grade + '</b>'
+        + (evSeen[e.id] ? esc(e.name) : '？？？') + '</b>' + (evSeen[e.id] ? '<span class="mute">' + esc(e.text) + '</span>' : '<span class="mute">' + (e.long ? '持續數天的事件' : '一晚的事件') + '</span>') + '</div>').join('') + '</div>').join('');
+    const dSeen = meta.deaths || {};
+    const deaths = Object.keys(D().DEATH_CATS).map((cat) => '<h4>' + D().DEATH_CATS[cat] + '</h4><div class="recipes">' + D().DEATHS.filter((d) => d.cat === cat)
+      .map((d) => '<div class="recipe death' + (dSeen[d.id] ? '' : ' unknown') + '"><b>' + (dSeen[d.id] ? esc(d.name) : '？？？') + '</b>'
+        + '<span class="mute">' + (dSeen[d.id] ? '死過 ' + dSeen[d.id] + ' 次・' : '提示：') + esc(d.hint) + '</span></div>').join('') + '</div>').join('');
     return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
+      + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
+      + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
       + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
       + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
       + '<h3>人類模組（' + Object.keys(at).length + '/' + DS.ARCHETYPES.length + '）</h3><div class="recipes">' + types + '</div>'

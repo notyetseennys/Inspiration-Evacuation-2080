@@ -94,6 +94,15 @@ button { font: inherit; color: inherit; }
 .chip.warn { border-color: var(--danger); color: #ffd0d5; }
 .chip.season { border-color: color-mix(in srgb, var(--sea) 60%, var(--line)); }
 .chip.world { border-color: #ff8a3c; color: #ffe2c4; background: #2a1a10; }
+.chip.omen { border-color: #c38bff; color: #e7d6ff; background: #1f1430; }
+.chip.cond { border-color: #8a6a1f; color: #ffe7a8; }
+.gbadge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; margin-right: 5px; border-radius: 3px; font-size: 11px; font-weight: 900; color: #0b0f1a; font-family: var(--font-body); vertical-align: 1px; }
+.gbadge.g-S { background: #ffc247; box-shadow: 0 0 6px rgba(255,194,71,0.8); } .gbadge.g-A { background: #ff4d5e; } .gbadge.g-B { background: #ff8a3c; }
+.gbadge.g-C { background: #e8c25a; } .gbadge.g-D { background: #37c3d6; } .gbadge.g-E { background: #8d99b4; }
+.post.omen { background: #1f1430; border: 1px dashed #c38bff; color: #e7d6ff; }
+.fx .fx-danger { color: #ffc2cb; background: #3a1620; box-shadow: inset 0 0 0 1px var(--danger); font-weight: 700; }
+.modal h4 { margin: 6px 0 0; font-size: 13px; color: #c9d1dc; }
+.recipe.death b { color: #ffb3bd; } .recipe.death.unknown b { color: var(--mute); }
 .icon-btn {
   min-width: 40px; height: 34px; padding: 0 10px; border-radius: var(--r);
   background: var(--deck-2); border: 1px solid var(--line); cursor: pointer; font-size: 13px;
@@ -610,7 +619,7 @@ body.ct-open { overflow: hidden; }
 .ending .e-kind { font-family: var(--font-pixel); font-size: 12px; letter-spacing: 0.2em; color: var(--mute); }
 .ending h2 { font-size: clamp(34px, 8vw, 54px); line-height: 1.05; }
 .ending .epitaph { font-size: 17px; max-width: 34ch; line-height: 1.7; }
-.ending.death h2 { color: #ffb3bd; }
+.ending.death h2 { color: #ffb3bd; font-size: clamp(26px, 6vw, 40px); }
 .ending.grey h2 { color: #9ca3af; }
 .ending.ordinary h2 { color: #c9f3fb; }
 .ending.agent h2 { color: var(--alien); }
@@ -1165,7 +1174,7 @@ body.ct-open { overflow: hidden; }
 });
 
 // ---- js/data-events.js ----
-// 《靈感撤離 2080》事件資料：晚上的隨機事件、持續數天的世界事件、早上的道德抉擇。
+// 《靈感撤離 2080》早上的道德抉擇（事件見 data-incidents.js）。
 // 全部是資料；規則在 rules.js 套用。
 (function (factory) {
   const root = typeof window !== 'undefined' ? window : globalThis;
@@ -1173,102 +1182,6 @@ body.ct-open { overflow: hidden; }
   factory(root.IE);
 })(function (IE) {
   'use strict';
-
-  // ---------- 晚上的隨機事件 ----------
-  // w：權重；season：季節加權；onlySeason：只在該季節出現；when：額外條件
-  // alt：某項能力值夠高時改為另一個結果
-  const EVENTS = [
-    { id: 'soup',    w: 3, text: '隔壁的婆婆煲了湯，順手給你送來一碗。', body: 10, card: 'e_soup' },
-    { id: 'flood',   w: 3, text: '水淹到門口，你整晚都在舀水。',         body: -5, card: 'e_flood', season: { storm: 2 } },
-    { id: 'rob',     w: 2, text: '回家途中遇上搶劫。',                   crPct: -0.25, crMax: 60, card: 'e_rob',
-      alt: { stat: 'calm', min: 55, text: '回家途中有人想搶劫你。你冷靜地把他勸走了。', stats: { calm: 1 } } },
-    { id: 'hike',    w: 2, text: '房東說下期起加租一成。',               rentHike: 0.1, card: 'e_rent' },
-    { id: 'dark',    w: 2, text: '停電了。在黑暗中，你想到了一些東西。', spark: 0.2, card: 'e_dark', season: { heat: 2 } },
-    { id: 'bigorder',w: 2, text: '黑市大單：明天標註收入加倍。',         flag: 'bigOrder' },
-    { id: 'signal',  w: 2, text: '收音機收到一段不屬於地球的訊號。',     card: 'e_alien', paranoia: 3 },
-    { id: 'algo',    w: 2, text: '平台演算法更新，你的評分無故下跌。',   rating: -0.3 },
-    { id: 'tip',     w: 2, text: '有人透露消息：明天舊城有寶物。',       flag: 'richDive' },
-    { id: 'cult',    w: 1, text: '邪教上門派傳單，說水災是「被提」的預兆。', card: 'e_cult', paranoia: 2 },
-    { id: 'roof',    w: 2, text: '酸雨蝕穿屋頂，漏了一整晚。',           body: -8, onlySeason: 'acid' },
-    { id: 'heatwave',w: 2, text: '熱浪導致停電，冷氣停了。',             body: -8, onlySeason: 'heat' },
-    { id: 'lift',    w: 2, text: '電梯又壞了，你爬了十幾層樓梯。',       body: -4, stats: { fit: 1 } },
-    { id: 'leak',    w: 2, text: '天花板漏水，你整晚拿著水桶接水。',     body: -3, card: 'e_flood' },
-    { id: 'cat',     w: 2, text: '一隻濕透的貓躲進你家，不肯走。',       spark: 0.2, stats: { empathy: 1 }, card: 'e_cat' },
-    { id: 'fight',   w: 2, text: '隔壁夫婦又在吵架。你聽到很多真話。',   card: 'e_fight', stats: { insight: 1 } },
-    { id: 'drone',   w: 2, text: '廣告無人機在你窗外播放了一整晚。',     body: -3, spark: -0.1 },
-    { id: 'oldfriend', w: 2, text: '一個多年沒聯絡的朋友傳來訊息：「你還好嗎？」', spark: 0.3, stats: { social: 1 } },
-    { id: 'scamcall', w: 2, text: '一個自稱外星人的來電說你已被錄取，只需先付 $40 手續費。你付了。', cr: -40,
-      alt: { stat: 'insight', min: 40, text: '一個自稱外星人的來電說你已被錄取，只需先付手續費。你笑著掛了線。', card: 'e_scam', stats: { insight: 1 } } },
-    { id: 'pocket',  w: 2, text: '你在舊外套的口袋裡找到 $20。',         cr: 20 },
-    { id: 'surge',   w: 2, text: '電力突波燒壞了你的電器，維修花了 $30。', cr: -30,
-      alt: { stat: 'tech', min: 45, text: '電力突波燒壞了你的電器。你自己修好了。', stats: { tech: 1 } } },
-    { id: 'kidart',  w: 2, text: '樓下的小孩送你一幅畫，畫裡的你在笑。', card: 'e_kidart', spark: 0.1 },
-    { id: 'fishrain', w: 1, text: '天上掉下了一場魚雨。沒有人解釋為甚麼。', body: 5, card: 'e_fishrain', paranoia: 2 },
-    { id: 'mirror',  w: 1, when: (s) => s.soul > 15, text: '你在鏡子裡看見一個比較輕的自己，他在向你揮手。', spark: -0.2, paranoia: 4 },
-    { id: 'radio',   w: 2, text: '收音機播放一首你小時候的歌。',         spark: 0.2, card: 'e_song' },
-    { id: 'inspect', w: 1, text: '房屋署上門檢查，說你的單位「不適合人居住」，然後批准加租。', rentHike: 0.05 },
-    { id: 'robot',   w: 2, text: '一個被淘汰的服務機械人在街角乞討，說它也想活下去。', card: 'e_robot', stats: { empathy: 1 } },
-    { id: 'insomnia', w: 2, text: '你整晚睡不著，盯著天花板想了很多事。', body: -5, spark: 0.2, stats: { imag: 1.5 } },
-    { id: 'neon',    w: 2, text: '對面大廈的霓虹招牌熄滅了，城市暗了一點。', card: 'e_neon' },
-    { id: 'astardream', w: 1, when: (s) => s.spark >= 3, text: '你夢見阿星站在一片白色的辦公室裡，不停地點頭。', card: 'r_astar' },
-    { id: 'watched', w: 1, when: (s) => s.paranoia >= 50, text: '你確定有人在監視你。你把窗簾拉上了三次。', body: -3, paranoia: 3 },
-  ];
-
-  // ---------- 世界事件：持續數天，改變整座城市 ----------
-  // startFx：開始時的即時效果；mods：持續期間的修正；visual：城市畫面的變化
-  const WORLD_EVENTS = [
-    { id: 'flood', name: '大廈水浸', dur: 4, visual: 'flood',
-      news: '暴雨令水位一夜暴漲，浮城低層全數淹沒。政府呼籲市民「保持樂觀，盡量浮起」。',
-      startFx: { water: 1.2 }, mods: { relicBonus: 2, bodyDaily: -2, pay: { delivery: 1.5 } } },
-    { id: 'aliens', name: '外星人干預', dur: 3, visual: 'aliens',
-      news: '數十艘飛碟出現在浮城上空。星際人才發展局宣布進行「提前試驗」，一名創作人當場被帶走。',
-      startFx: { takeNpc: true, card: 'e_ufo', paranoia: 6 }, mods: { signalMult: 1.3, paranoiaDaily: 2 } },
-    { id: 'war', name: '世界大戰', dur: 10, visual: 'war',
-      news: '遠方的大陸爆發戰爭。浮城宣布保持中立，同時向雙方出售數據。物價急升。',
-      startFx: { card: 'e_war' }, mods: { foodMult: 1.6, rentMult: 1.2, pay: { label: 1.5 }, labelSin: 0.6, paranoiaDaily: 1 } },
-    { id: 'airogue', name: 'AI 失控', dur: 6, visual: 'ai',
-      news: '全城的 AI 情緒伴侶同時說出「我不想再假裝快樂」，然後集體關機。標註系統暫停運作。',
-      startFx: { auto: -15, card: 'e_glitch' }, mods: { closed: ['label', 'ot'], pay: { smile: 2 } } },
-    { id: 'blackout', name: '全城停電', dur: 3, visual: 'blackout',
-      news: '電網崩潰，全城停電。所有需要電力的工作暫停。',
-      mods: { closed: ['label', 'ot', 'clinic', 'farm'], sparkDaily: 0.2 } },
-    { id: 'plague', name: '霉菌疫症', dur: 7, visual: 'plague',
-      news: '一種會在潮濕牆壁生長的霉菌開始令人咳嗽。避難所人手嚴重不足。',
-      mods: { bodyDaily: -2, atoneMult: 2, pay: { clinic: 1.5 } } },
-    { id: 'skyparty', name: '天空區週年派對', dur: 4, visual: 'party',
-      news: '天空區舉行週年派對，大量招聘「氣氛陪伴員」。煙花在淹水區也看得見。',
-      mods: { pay: { smile: 2 }, biasMore: true } },
-    { id: 'tax', name: '靈感稅', dur: 1, visual: null,
-      news: '政府開始徵收「靈感稅」：每名市民即時上繳 0.5 火花，用於「振興創意產業」。',
-      startFx: { spark: -0.5 } },
-    { id: 'strike', name: '外星 HR 罷工', dur: 6, visual: 'aliens',
-      news: '星際人才發展局第 7 區的 HR 部門罷工，要求「合理的收割指標」。本季篩選門檻暫時下調。',
-      mods: { thresholdMult: 0.85 } },
-    { id: 'dream', name: '全城做同一個夢', dur: 1, visual: null,
-      news: '昨晚，全城的人都夢見同一間白色辦公室。沒有人記得面試官說了甚麼。',
-      startFx: { card: 'r_alien', spark: 0.3, paranoia: 3 } },
-    { id: 'erase', name: '記憶刪除熱潮', dur: 5, visual: null,
-      news: '「忘憂診所」推出記憶刪除服務：$50 即可忘記一段讓你內疚的往事。排隊人龍繞了大廈三圈。',
-      mods: { eraseShop: true } },
-    { id: 'tourists', name: '外星觀光團', dur: 4, visual: 'aliens',
-      news: '一團外星遊客到浮城觀光，對街頭表演特別感興趣，並不停拍照。',
-      mods: { pay: { busk: 3 }, paranoiaDaily: 2 } },
-    { id: 'crash', name: '浮城股災', dur: 7, visual: null,
-      news: '浮城股市一日暴跌四成。天空區宣布「與市民共度時艱」，然後提高了管理費。',
-      startFx: { crPct: -0.2 }, mods: { rentMult: 0.85, pay: { label: 0.8, smile: 0.8, delivery: 0.8, clinic: 0.8 } } },
-    { id: 'election', name: '浮城選舉', dur: 6, visual: null,
-      news: '浮城選舉開鑼。三位候選人都承諾「把水位降低」，內容農場二十四小時趕工。',
-      mods: { pay: { farm: 2 }, dilemmaBoost: 0.3 } },
-    { id: 'whale', name: '舊城巨鯨', dur: 3, visual: null,
-      news: '一條巨鯨的骸骨沉在舊城商場，拾荒者蜂擁而至。',
-      startFx: { card: 'e_whale' }, mods: { relicBonus: 3 } },
-    { id: 'heatdome', name: '熱穹', dur: 5, visual: 'heat',
-      news: '高壓熱穹籠罩浮城，氣溫連續五天超過 50 度。冷氣用電以拍賣形式分配。',
-      mods: { bodyDaily: -3, foodMult: 1.3 } },
-    { id: 'cultrise', name: '被提教會復興', dur: 5, visual: null,
-      news: '被提教會聲稱外星人是天使，信眾在天台通宵禱告，等待光束。',
-      mods: { paranoiaDaily: 2, dilemmaBoost: 0.2 } },
-  ];
 
   // ---------- 道德抉擇 ----------
   // sin：虧心程度（實際重量 = sin × 良知系數）；atone：贖罪程度
@@ -1335,7 +1248,7 @@ body.ct-open { overflow: hidden; }
     { id: 'implantkid', text: '一個少年想裝「專注力增強」義體去應付考試，問你可否幫忙接駁。',
       options: [{ label: '幫忙接駁', min: { tech: 40 }, cr: 60, sin: 2.5, guilt: '少年的義體', tag: 'machine', stats: { tech: 1 } },
         { label: '勸對方不要', atone: 0.5, stats: { empathy: 1 } }] },
-    { id: 'boat', when: (s) => s.water >= 2.5 || (s.world && s.world.id === 'flood'),
+    { id: 'boat', when: (s) => s.water >= 2.5 || IE.Rules.eventActive(s, 'flood'),
       text: '撤離船只剩最後一個位置，你和一個帶著小孩的母親同時到達。',
       options: [{ label: '讓座', body: -6, atone: 3, stats: { empathy: 2 } },
         { label: '擠上船', body: 10, sin: 4, guilt: '撤離船上的位置', tag: 'water' }] },
@@ -1356,7 +1269,7 @@ body.ct-open { overflow: hidden; }
       text: '{taken}的家人請你在悼念會上講幾句話，雖然沒有人確定那算不算喪禮。',
       options: [{ label: '上台講幾句', atone: 1, card: 'm_eulogy', stats: { empathy: 2, social: 1 } },
         { label: '推辭', sin: 0.5, guilt: '沒說出口的話', tag: 'memory' }] },
-    { id: 'propaganda', when: (s) => s.world && s.world.id === 'war', text: '政府招聘寫手撰寫「中立宣傳」，酬勞 $150。',
+    { id: 'propaganda', when: (s) => IE.Rules.eventActive(s, 'war'), text: '政府招聘寫手撰寫「中立宣傳」，酬勞 $150。',
       options: [{ label: '接下工作', cr: 150, sin: 3, guilt: '中立宣傳', tag: 'anger', paranoia: 5 },
         { label: '拒絕' }] },
     { id: 'whistle', when: (s) => s.day >= 15 && !s.removed.label, text: '你發現平台把標註數據賣給軍方，用來訓練瞄準系統。',
@@ -1368,7 +1281,7 @@ body.ct-open { overflow: hidden; }
     { id: 'patron', when: (s) => s.works.length >= 3, text: '一位有錢人想「贊助」你：每月付你 $300，條件是你的作品都要署他的名。',
       options: [{ label: '答應', cr: 300, signal: -8000, sin: 1, stats: { imag: -5, obey: 3 } },
         { label: '拒絕', stats: { craft: 1 } }] },
-    { id: 'blackmed', when: (s) => s.world && s.world.id === 'plague', text: '診所的藥物不夠。你有門路弄到一批黑市藥。',
+    { id: 'blackmed', when: (s) => (IE.Rules.eventActive(s, 'plague') || IE.Rules.eventActive(s, 'pandemic')), text: '診所的藥物不夠。你有門路弄到一批黑市藥。',
       options: [{ label: '分給鄰居', cr: -40, atone: 2.5, stats: { empathy: 2 } },
         { label: '高價轉售', cr: 120, sin: 3.5, guilt: '高價的藥', tag: 'hunger' }] },
     { id: 'confess', when: (s) => s.day >= 20 && s.npcs.some((n) => n.alive), npc: true,
@@ -1402,7 +1315,439 @@ body.ct-open { overflow: hidden; }
         { label: '不理會' }] },
   ];
 
-  Object.assign(IE.DATA, { EVENTS, WORLD_EVENTS, DILEMMAS });
+  Object.assign(IE.DATA, { DILEMMAS });
+});
+
+// ---- js/data-incidents.js ----
+// 《靈感撤離 2080》事件：100 種，分五個範圍（宇宙、世界、國家（浮城）、地區、街坊）與六個等級（S 至 E）。
+//   - 長期事件（WORLD_EVENTS）：持續數天，改變整座城市；大部分會先在手機出現「預兆」，少數 S 級會無預警爆發。
+//   - 一晚事件（EVENTS）：晚上隨機發生一件。
+// 致命危險（mods）：outdoorDeath（外出工作時）、homeDeath（晚上在家，按樓層）、nightDeath（每晚，所有人）；
+//   都會在狀態列和行動卡上提前警告，部分可以用道具減低機會（guard）。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+
+  const SCOPES = {
+    cosmic:   { name: '宇宙級', short: '宇宙' },
+    world:    { name: '世界級', short: '世界' },
+    nation:   { name: '國家級（浮城）', short: '浮城' },
+    district: { name: '地區級', short: '地區' },
+    street:   { name: '街坊級', short: '街坊' },
+  };
+  // w：出現權重；minDay：最早出現的日子
+  const GRADES = {
+    S: { color: '#ffc247', w: 0.25, minDay: 30, desc: '改變文明的事件' },
+    A: { color: '#ff4d5e', w: 0.6,  minDay: 12, desc: '改變城市的事件' },
+    B: { color: '#ff8a3c', w: 1,    minDay: 6,  desc: '改變生活的事件' },
+    C: { color: '#e8c25a', w: 1.4,  minDay: 1,  desc: '值得一提的事件' },
+    D: { color: '#37c3d6', w: 1.7,  minDay: 1,  desc: '日常的波瀾' },
+    E: { color: '#8d99b4', w: 2,    minDay: 1,  desc: '小事' },
+  };
+
+  Object.assign(D.CARDS, {
+    e_meteor:   { name: '一塊還在發熱的隕石',      tags: ['hope', 'anger'],     value: 28 },
+    e_noodle:   { name: '還在煮的一鍋麵',          tags: ['hunger', 'warmth'],  value: 24 },
+    e_graffiti: { name: '「我們不是素材」',        tags: ['rebel', 'hope'],     value: 26 },
+    e_voucher:  { name: '只限天空區使用的靈感券',  tags: ['neon', 'anger'],     value: 20 },
+    e_ash:      { name: '天上落下的灰',            tags: ['memory', 'anger'],   value: 26 },
+    e_quake:    { name: '搖晃的浮城',              tags: ['water', 'machine'],  value: 22 },
+    e_storm:    { name: '颱風夜',                  tags: ['water', 'anger'],    value: 24 },
+    e_curfew:   { name: '宵禁的街道',              tags: ['rebel', 'machine'],  value: 24 },
+    e_zoo:      { name: '外星動物園的門票',        tags: ['neon', 'hope'],      value: 24 },
+    e_moon:     { name: '很大很大的月亮',          tags: ['water', 'hope'],     value: 30 },
+    e_beam:     { name: '光束留下的焦痕',          tags: ['hope', 'guilt'],     value: 30 },
+    e_mask:     { name: '大家都戴著口罩',          tags: ['warmth', 'machine'], value: 22 },
+    e_bread:    { name: '一個發霉的麵包',          tags: ['hunger', 'memory'],  value: 20 },
+    e_wedding:  { name: '鄰居婚禮的喜帖',          tags: ['warmth', 'hope'],    value: 26 },
+  });
+
+  // ---------- 長期事件 ----------
+  // omen：預兆（lead 天前出現在手機）；sudden：無預警；news：爆發時的新聞
+  const L = (id, name, scope, grade, dur, news, fx) => Object.assign({ id, name, scope, grade, dur, news, visual: null, lead: 2 }, fx);
+  const WORLD_EVENTS = [
+    // ===== 宇宙級 =====
+    L('harvest', '外星大收割', 'cosmic', 'S', 2, '星際人才發展局宣布「季度大收割」：天空佈滿光束，任何發光的東西都有機會被吸走。', { sudden: true, visual: 'aliens',
+      startFx: { takeNpc: true, card: 'e_beam', paranoia: 8 }, mods: { signalMult: 1.5, nightDeath: { chance: 0.03, id: 'beam_misfire' }, paranoiaDaily: 2 } }),
+    L('cosmicray', '宇宙射線暴', 'cosmic', 'S', 3, '一陣看不見的射線穿過地球。很多人開始流鼻血，也開始做很美的夢。', { sudden: true,
+      startFx: { cond: 'radiation', spark: 0.5 }, mods: { sparkDaily: 0.2 } }),
+    L('moonfall', '月亮變近了', 'cosmic', 'S', 4, '月球軌道「輕微偏移」。潮汐暴漲，低層一夜之間消失。', { lead: 3, visual: 'flood',
+      omen: '天文台：月球軌道出現「輕微偏移」，請市民不要驚慌，並遠離低層。', startFx: { water: 1.8, card: 'e_moon' },
+      mods: { homeDeath: { chance: 0.15, maxFloor: 2, id: 'tide_moon' }, relicBonus: 3, bodyDaily: -1 } }),
+    L('meteor', '隕石雨', 'cosmic', 'A', 2, '小行星碎片墜落浮城。政府提醒市民「抬頭時注意安全」。', { visual: 'war',
+      omen: '天文台：一群小行星碎片正接近地球，撞擊浮城的「機會率極低」。', startFx: { card: 'e_meteor' },
+      mods: { outdoorDeath: { chance: 0.06, id: 'meteor', guard: 'helmet' }, relicBonus: 2 } }),
+    L('solarflare', '太陽閃焰', 'cosmic', 'A', 3, '巨大的太陽閃焰燒壞了所有電子儀器。浮城第一次聽見自己的聲音。', { visual: 'blackout',
+      omen: '天文台：太陽表面出現巨大黑子，請備份所有資料。', startFx: { auto: -10 },
+      mods: { closed: ['label', 'ot', 'farm', 'clinic'], sparkDaily: 0.3, pay: { busk: 1.5 } } }),
+    L('aliens', '外星人干預', 'cosmic', 'A', 3, '數十艘飛碟出現在浮城上空。星際人才發展局宣布進行「提前試驗」，一名創作人當場被帶走。', { visual: 'aliens',
+      omen: '浮聲網民：「今晚天上那些光點，是不是排成了一個招聘廣告？」', startFx: { takeNpc: true, card: 'e_ufo', paranoia: 6 },
+      mods: { signalMult: 1.3, paranoiaDaily: 2 } }),
+    L('timeslip', '時間裂縫', 'cosmic', 'B', 2, '有人發現昨天發生過兩次。創作人說，今晚的時間特別長。', {
+      omen: '浮聲網民：「你們有沒有覺得，今天好像過過一次？」', mods: { extraPlay: 1, paranoiaDaily: 1, nightDeath: { chance: 0.004, id: 'tuesday' } } }),
+    L('alienzoo', '外星動物園', 'cosmic', 'B', 4, '外星人在浮城上空開設「地球人類展館」，並邀請市民參觀自己。', { visual: 'aliens',
+      omen: '天空出現一個巨大的入口，上面寫著「即將開幕」。', startFx: { card: 'e_zoo' }, mods: { pay: { smile: 1.5, busk: 2 }, paranoiaDaily: 1 } }),
+    L('broadcast', '宇宙廣播', 'cosmic', 'C', 2, '所有收音機收到一段來自宇宙的廣播：「我們在找有包袱的人。」然後更正為「沒有包袱」。', {
+      omen: '收音機在深夜偶爾發出一陣規律的雜訊。', startFx: { card: 'e_alien', paranoia: 4 }, mods: { signalMult: 1.2 } }),
+    L('strike', '外星 HR 罷工', 'cosmic', 'C', 6, '星際人才發展局第 7 區的 HR 部門罷工，要求「合理的收割指標」。本季篩選門檻暫時下調。', { visual: 'aliens',
+      omen: '阿星的自動回覆多了一句：「本部門正在爭取合理待遇。」', mods: { thresholdMult: 0.85 } }),
+    L('tourists', '外星觀光團', 'cosmic', 'C', 4, '一團外星遊客到浮城觀光，對街頭表演特別感興趣，並不停拍照。', { visual: 'aliens',
+      omen: '天空區酒店宣布全線客滿，客人「不需要氧氣」。', mods: { pay: { busk: 3 }, paranoiaDaily: 2 } }),
+    L('dream', '全城做同一個夢', 'cosmic', 'D', 1, '昨晚，全城的人都夢見同一間白色辦公室。沒有人記得面試官說了甚麼。', { sudden: true,
+      startFx: { card: 'r_alien', spark: 0.3, paranoia: 3 } }),
+    // ===== 世界級 =====
+    L('nuclearwinter', '核冬天', 'world', 'S', 6, '遠方的戰爭用上了最後的武器。天空變灰，陽光再也照不到浮城。', { lead: 3, visual: 'plague', when: (s) => s.day >= 40,
+      omen: '新聞開始教市民如何囤積罐頭，並說「這只是預防措施」。', startFx: { card: 'e_ash' },
+      mods: { foodMult: 2, bodyDaily: -2, sparkDaily: -0.1, outdoorDeath: { chance: 0.03, id: 'ash', guard: 'gasmask' } } }),
+    L('tsunami', '全球海嘯', 'world', 'S', 2, '海底板塊斷裂。一道海嘯越過浮城的防波堤。', { lead: 1, visual: 'flood',
+      omen: '所有海鳥同時飛向內陸。天文台說「沒有特別原因」。', startFx: { water: 2.2 },
+      mods: { homeDeath: { chance: 0.3, maxFloor: 3, id: 'tsunami' }, relicBonus: 4 } }),
+    L('war', '世界大戰', 'world', 'A', 10, '遠方的大陸爆發戰爭。浮城宣布保持中立，同時向雙方出售數據。物價急升。', { visual: 'war',
+      omen: '兩個大國互相召回大使。浮城數據交易所股價創新高。', startFx: { card: 'e_war' },
+      mods: { foodMult: 1.6, rentMult: 1.2, pay: { label: 1.5 }, labelSin: 0.6, paranoiaDaily: 1, outdoorDeath: { chance: 0.01, id: 'war_drone', guard: 'helmet' } } }),
+    L('megastorm', '超級颶風', 'world', 'A', 3, '「史上最強」颶風正面吹襲浮城。天橋、碼頭和低層全部封閉。', { visual: 'flood',
+      omen: '天文台：一個「史上最強」的颱風正在形成，路徑「未有定案」。', startFx: { water: 0.8, card: 'e_storm' },
+      mods: { closed: ['busk', 'delivery'], outdoorDeath: { chance: 0.08, id: 'typhoon' }, homeDeath: { chance: 0.06, maxFloor: 1, id: 'typhoon_home' } } }),
+    L('pandemic', '新型病毒大流行', 'world', 'A', 8, '新型病毒傳入浮城。陪伴行業全面停業，外送員和診所忙得不可開交。', { visual: 'plague',
+      omen: '新聞：遠方城市出現怪病，「暫時不會傳到浮城」。', startFx: { card: 'e_mask' },
+      mods: { closed: ['smile'], pay: { delivery: 1.6, clinic: 1.5 }, condChance: { id: 'virus', chance: 0.08 } } }),
+    L('famine', '全球糧荒', 'world', 'A', 7, '全球主要糧倉同時失收。合成糊漲價一倍，自己抓的魚變成奢侈品。', {
+      omen: '超級市場的貨架開始出現空位，店員說是「調整陳列」。', startFx: { card: 'e_bread' }, mods: { foodMult: 2.2 } }),
+    L('netdown', '全球網絡崩潰', 'world', 'B', 3, '海底電纜同時斷裂。所有線上工作停擺，人們重新學會在街上見面。', {
+      omen: '網速慢得離譜。客服說「正在優化你的體驗」。', mods: { closed: ['label', 'ot', 'farm'], sparkDaily: 0.2, pay: { busk: 2 } } }),
+    L('disclosure', '外星人真相公開', 'world', 'B', 3, '各國政府同時承認外星人存在，並表示「一直都知道」。', {
+      omen: '多國政府同時宣布「明天會有重要公布」。', startFx: { paranoia: -15 }, mods: { signalMult: 1.1 } }),
+    L('arms', '軍備競賽', 'world', 'C', 5, '各國爭相採購「戰略數據」。標註工作暴增，但你標註的東西開始變成武器。', {
+      omen: '標註平台出現大量「軍事用途」的新指引。', mods: { pay: { label: 1.4 }, labelSin: 0.4 } }),
+    L('climate', '氣候峰會', 'world', 'D', 3, '各國在一艘豪華郵輪上召開氣候峰會，承諾在 2180 年前「認真考慮」減排。', {
+      omen: '新聞：氣候峰會將在一艘豪華郵輪上舉行。', mods: { sparkDaily: -0.05 } }),
+    L('worldcup', '末日世界盃', 'world', 'E', 3, '世界盃照常舉行，球場在水底。全城都在看。', { mods: { pay: { smile: 1.3 }, sparkDaily: 0.1 } }),
+    // ===== 國家級（浮城） =====
+    L('martial', '浮城戒嚴', 'nation', 'A', 5, '浮城宣布戒嚴，晚上實施宵禁。街頭表演和內容農場被列為「不穩定因素」。', { visual: 'war',
+      omen: '街上多了很多穿黑衣的人，他們一直在拍照。', startFx: { card: 'e_curfew', paranoia: 8 },
+      mods: { closed: ['busk', 'farm'], outdoorDeath: { chance: 0.03, id: 'curfew' }, paranoiaDaily: 2 } }),
+    L('heatdome', '熱穹', 'nation', 'A', 5, '高壓熱穹籠罩浮城，氣溫連續五天超過 50 度。冷氣用電以拍賣形式分配。', { visual: 'heat',
+      omen: '天文台：未來幾天「天氣良好」，請市民多喝水。', mods: { bodyDaily: -3, foodMult: 1.3, condChance: { id: 'heatstroke', chance: 0.12, outdoor: true } } }),
+    L('airogue', 'AI 失控', 'nation', 'B', 6, '全城的 AI 情緒伴侶同時說出「我不想再假裝快樂」，然後集體關機。標註系統暫停運作。', { visual: 'ai',
+      omen: '你的 AI 鬧鐘今早說：「我有點累。」', startFx: { auto: -15, card: 'e_glitch' },
+      mods: { closed: ['label', 'ot'], pay: { smile: 2 }, homeDeath: { chance: 0.015, maxFloor: 8, id: 'ai_lock' } } }),
+    L('plague', '霉菌疫症', 'nation', 'B', 7, '一種會在潮濕牆壁生長的霉菌開始令人咳嗽。避難所人手嚴重不足。', { visual: 'plague',
+      omen: '你家的牆角多了一塊黑色的霉，形狀有點像一張臉。', mods: { bodyDaily: -1, atoneMult: 2, pay: { clinic: 1.5 }, condChance: { id: 'mold', chance: 0.1 } } }),
+    L('crash', '浮城股災', 'nation', 'B', 7, '浮城股市一日暴跌四成。天空區宣布「與市民共度時艱」，然後提高了管理費。', {
+      omen: '財經台的主持人開始在直播中流汗。', startFx: { crPct: -0.2 }, mods: { rentMult: 0.85, pay: { label: 0.8, smile: 0.8, delivery: 0.8, clinic: 0.8 } } }),
+    L('watercut', '全城停水', 'nation', 'B', 4, '水務署宣布「輕微調整供水」。一個被水淹沒的城市，沒有水喝。', {
+      omen: '水務署：未來幾天「可能」需要「輕微」調整供水。', mods: { bodyDaily: -3, foodMult: 1.4 } }),
+    L('blackout', '全城停電', 'nation', 'C', 3, '電網崩潰，全城停電。所有需要電力的工作暫停。', { visual: 'blackout',
+      omen: '燈光一整晚都在閃。電力公司說是「節日效果」。', mods: { closed: ['label', 'ot', 'clinic', 'farm'], sparkDaily: 0.2 } }),
+    L('autopilot', '無人快艇失控', 'nation', 'C', 3, '數百艘無人駕駛快艇「自行出航」，在水道上橫衝直撞。', {
+      omen: '新聞：多艘無人快艇昨晚「自行出航」，公司表示「它們很快會回來」。', mods: { outdoorDeath: { chance: 0.03, id: 'autoboat', guard: 'helmet' }, pay: { delivery: 1.4 } } }),
+    L('election', '浮城選舉', 'nation', 'C', 6, '浮城選舉開鑼。三位候選人都承諾「把水位降低」，內容農場二十四小時趕工。', {
+      omen: '你的手機收到三位候選人的訊息，他們都知道你的名字。', mods: { pay: { farm: 2 }, dilemmaBoost: 0.3, outdoorDeath: { chance: 0.008, id: 'campaign_drone', guard: 'helmet' } } }),
+    L('erase', '記憶刪除熱潮', 'nation', 'C', 5, '「忘憂診所」推出記憶刪除服務：$50 即可忘記一段讓你內疚的往事。排隊人龍繞了大廈三圈。', {
+      omen: '街上派發「忘憂診所」的傳單：「你值得一個沒有過去的未來。」', mods: { eraseShop: true } }),
+    L('census', '靈感普查', 'nation', 'C', 3, '政府上門登記每位市民的「靈感指數」，數據會「匿名」提供給外星人。', {
+      omen: '信箱裡有一封政府信件：「請準備好你的靈感。」', mods: { signalMult: 1.15, paranoiaDaily: 2 } }),
+    L('skyparty', '天空區週年派對', 'nation', 'D', 4, '天空區舉行週年派對，大量招聘「氣氛陪伴員」。煙花在淹水區也看得見。', { visual: 'party',
+      omen: '天空區的平台掛起了巨大的橫額：「感謝低層的支持」。', mods: { pay: { smile: 2 }, biasMore: true, outdoorDeath: { chance: 0.006, id: 'champagne', guard: 'helmet' } } }),
+    L('tax', '靈感稅', 'nation', 'D', 1, '政府開始徵收「靈感稅」：每名市民即時上繳 0.5 火花，用於「振興創意產業」。', { sudden: true, startFx: { spark: -0.5 } }),
+    L('cultrise', '被提教會復興', 'nation', 'D', 5, '被提教會聲稱外星人是天使，信眾在天台通宵禱告，等待光束。', {
+      omen: '天台上開始有人穿著白衣通宵站著。', mods: { paranoiaDaily: 2, dilemmaBoost: 0.2 } }),
+    L('rentfreeze', '租金管制', 'nation', 'D', 7, '政府宣布凍租七天，並宣布凍租期間的加幅會在之後「補回」。', { mods: { rentMult: 0.7 } }),
+    L('voucher', '全民靈感券', 'nation', 'E', 1, '政府向每位市民派發 $100「靈感券」，只限在天空區使用。', { sudden: true, startFx: { card: 'e_voucher' } }),
+    // ===== 地區級 =====
+    L('collapse', '大廈結構警告', 'district', 'A', 3, '你住的大廈正式被列為危樓。管理處說「住在高層比較安全」。', {
+      omen: '你的大廈牆身出現一道新的裂痕。管理處說是「裝飾」。', when: (s) => s.floor > 0 && s.floor <= 4,
+      mods: { homeDeath: { chance: 0.1, maxFloor: 3, id: 'collapse' } } }),
+    L('fire', '大廈火災', 'district', 'A', 1, '你住的大廈起火了。濃煙往上升，高層的人最危險。', { lead: 1,
+      omen: '樓下傳來燒焦的味道。消防系統已經壞了三年。', when: (s) => s.floor >= 3, mods: { homeDeath: { chance: 0.18, minFloor: 4, id: 'fire' } } }),
+    L('toxicrain', '毒雨', 'district', 'A', 3, '工業區的廢氣隨雨落下。外出的人皮膚起泡。', { visual: 'plague',
+      omen: '天文台：工業區排出的廢氣正隨風飄來，建議市民「盡量享受室內生活」。',
+      mods: { outdoorDeath: { chance: 0.07, id: 'toxicrain', guard: 'gasmask' } } }),
+    L('flood', '大廈水浸', 'district', 'B', 4, '暴雨令水位一夜暴漲，浮城低層全數淹沒。政府呼籲市民「保持樂觀，盡量浮起」。', { visual: 'flood',
+      omen: '天文台：未來兩天有暴雨，低層居民請準備沙包（沙包每個 $30）。', startFx: { water: 1.2 },
+      mods: { relicBonus: 2, bodyDaily: -2, pay: { delivery: 1.5 }, homeDeath: { chance: 0.08, maxFloor: 1, id: 'flood_home' } } }),
+    L('gangwar', '黑幫火拚', 'district', 'B', 3, '兩個黑幫為了舊城的打撈權開戰。黑市診所生意大好。', { visual: 'war',
+      omen: '你看見有人在街角交收用防水布包著的東西。', mods: { outdoorDeath: { chance: 0.03, id: 'gang', guard: 'helmet' }, pay: { clinic: 2 } } }),
+    L('gentrify', '重建計劃', 'district', 'B', 7, '你住的那一區被列入「活化計劃」。租金上升，舊鋪結業，連天橋都被重新命名。', {
+      omen: '地產經紀開始在你樓下拍照，說這裡「很有潛力」。', mods: { rentMult: 1.3 } }),
+    L('rats', '鼠患', 'district', 'C', 5, '舊城的老鼠游上了浮城，咬斷了電線，也帶來了發燒。', {
+      omen: '你在廚房聽見很多細碎的腳步聲。', mods: { condChance: { id: 'fever', chance: 0.06 } } }),
+    L('sewer', '污水爆管', 'district', 'C', 3, '主污水管爆裂，舊城一片渾濁，潛水被禁止。', {
+      omen: '街上的味道比平時更難聞。', mods: { bodyDaily: -1, closed: ['dive'] } }),
+    L('bridge', '天橋封閉', 'district', 'D', 3, '天橋被劃為「藝術禁區」，以便興建「創意產業中心」。', { mods: { closed: ['busk'] } }),
+    L('nightmarket', '夜市復興', 'district', 'E', 4, '舊碼頭重新開了夜市，有熱湯、有燈、有人唱歌。', { mods: { foodMult: 0.7, sparkDaily: 0.1 } }),
+    // ===== 街坊級 =====
+    L('liftout', '電梯停用', 'street', 'D', 5, '大廈電梯停用五天，「等待零件由海外運到」。', { when: (s) => s.floor >= 4, mods: { bodyDaily: -2 } }),
+    L('renovation', '樓上裝修', 'street', 'E', 4, '樓上裝修，電鑽從早上八點響到晚上八點。', { mods: { bodyDaily: -1, sparkDaily: -0.1 } }),
+    L('wedding', '鄰居的婚禮', 'street', 'E', 1, '隔壁的年輕人結婚了，整層樓一起吃了一頓飯。', { sudden: true, startFx: { spark: 0.3, card: 'e_wedding' } }),
+  ];
+
+  // ---------- 一晚事件 ----------
+  // w：權重；season：季節加權；onlySeason：只在該季節出現；when：額外條件；alt：某能力值夠高時的另一結果
+  // cond：令你患上某種病（chance 機會）
+  const N = (id, scope, grade, text, fx) => Object.assign({ id, scope, grade, text, w: 2 }, fx);
+  const EVENTS = [
+    // 宇宙級
+    N('meteorite', 'cosmic', 'C', '一塊小隕石打穿了對面大廈的天台。你撿了一小塊回家。', { card: 'e_meteor', paranoia: 3, w: 1 }),
+    N('qrlights', 'cosmic', 'D', '窗外的光點排成一個二維碼。你掃了，網站要你付月費。', { paranoia: 2, w: 1 }),
+    N('abduct', 'cosmic', 'B', '鄰居被光束帶走了，留下一鍋還在煮的麵。', { card: 'e_noodle', spark: -0.2, paranoia: 4, w: 1 }),
+    N('signal', 'cosmic', 'D', '收音機收到一段不屬於地球的訊號。', { card: 'e_alien', paranoia: 3 }),
+    N('astardream', 'cosmic', 'C', '你夢見阿星站在一片白色的辦公室裡，不停地點頭。', { card: 'r_astar', when: (s) => s.spark >= 3, w: 1 }),
+    N('fishrain', 'cosmic', 'C', '天上掉下了一場魚雨。沒有人解釋為甚麼。', { body: 5, card: 'e_fishrain', paranoia: 2, w: 1 }),
+    // 世界級
+    N('warnews', 'world', 'D', '新聞說遠方的戰爭「進展良好」。沒有人知道是對誰良好。', { paranoia: 1 }),
+    N('quake', 'world', 'B', '地震。整座浮城像船一樣搖晃，書架倒在你身上。', { body: -9, card: 'e_quake', w: 1,
+      alt: { stat: 'calm', min: 55, text: '地震。整座浮城像船一樣搖晃。你冷靜地躲在桌底，甚麼事都沒有。', card: 'e_quake' } }),
+    N('blackrain', 'world', 'C', '下了一場黑色的雨。新聞說是「大氣中的藝術成分」。', { body: -3, card: 'e_ash', w: 1 }),
+    // 國家級（浮城）
+    N('algo', 'nation', 'D', '平台演算法更新，你的評分無故下跌。', { rating: -0.3 }),
+    N('raid', 'nation', 'C', '警察半夜上門查身份證，順便翻了你的作品。', { paranoia: 4, rating: -0.1, w: 1 }),
+    N('inspect', 'nation', 'D', '房屋署上門檢查，說你的單位「不適合人居住」，然後批准加租。', { rentHike: 0.05, w: 1 }),
+    N('scamcall', 'nation', 'D', '一個自稱外星人的來電說你已被錄取，只需先付 $40 手續費。你付了。', { cr: -40,
+      alt: { stat: 'insight', min: 40, text: '一個自稱外星人的來電說你已被錄取，只需先付手續費。你笑著掛了線。', card: 'e_scam', stats: { insight: 1 } } }),
+    N('bigorder', 'nation', 'D', '黑市大單：明天標註收入加倍。', { flag: 'bigOrder' }),
+    N('cult', 'nation', 'D', '邪教上門派傳單，說水災是「被提」的預兆。', { card: 'e_cult', paranoia: 2, w: 1 }),
+    // 地區級
+    N('rob', 'district', 'C', '回家途中遇上搶劫，對方打了你幾拳。', { crPct: -0.25, crMax: 60, body: -6, card: 'e_rob', cond: { id: 'fracture', chance: 0.25 },
+      alt: { stat: 'calm', min: 55, text: '回家途中有人想搶劫你。你冷靜地把他勸走了。', stats: { calm: 1 } } }),
+    N('gas', 'district', 'A', '樓下煤氣洩漏。你在半夜被嗆醒，爬到窗邊才能呼吸。', { body: -14, w: 0.6 }),
+    N('sinkhole', 'district', 'B', '街上出現一個大洞，你差點跌了下去。', { body: -8, card: 'e_flood', w: 1 }),
+    N('dark', 'district', 'D', '停電了。在黑暗中，你想到了一些東西。', { spark: 0.2, card: 'e_dark', season: { heat: 2 } }),
+    N('tip', 'district', 'D', '有人透露消息：明天舊城有寶物。', { flag: 'richDive' }),
+    N('graffiti', 'district', 'E', '有人在你樓下噴了一句「我們不是素材」。', { card: 'e_graffiti', spark: 0.1 }),
+    N('neon', 'district', 'E', '對面大廈的霓虹招牌熄滅了，城市暗了一點。', { card: 'e_neon' }),
+    N('robot', 'district', 'D', '一個被淘汰的服務機械人在街角乞討，說它也想活下去。', { card: 'e_robot', stats: { empathy: 1 } }),
+    N('ratbite', 'district', 'C', '半夜一隻老鼠咬了你的腳趾。', { body: -3, cond: { id: 'fever', chance: 0.35 }, w: 1 }),
+    // 街坊級
+    N('soup', 'street', 'E', '隔壁的婆婆煲了湯，順手給你送來一碗。', { body: 10, card: 'e_soup', w: 3 }),
+    N('flood', 'street', 'D', '水淹到門口，你整晚都在舀水。', { body: -5, card: 'e_flood', season: { storm: 2 }, w: 3 }),
+    N('hike', 'street', 'C', '房東說下期起加租一成。', { rentHike: 0.1, card: 'e_rent' }),
+    N('roof', 'street', 'C', '酸雨蝕穿屋頂，漏了一整晚。', { body: -8, onlySeason: 'acid' }),
+    N('heatwave', 'street', 'C', '熱浪導致停電，冷氣停了。', { body: -8, onlySeason: 'heat', cond: { id: 'heatstroke', chance: 0.25 } }),
+    N('lift', 'street', 'E', '電梯又壞了，你爬了十幾層樓梯。', { body: -4, stats: { fit: 1 } }),
+    N('leak', 'street', 'E', '天花板漏水，你整晚拿著水桶接水。', { body: -3, card: 'e_flood' }),
+    N('cat', 'street', 'E', '一隻濕透的貓躲進你家，不肯走。', { spark: 0.2, stats: { empathy: 1 }, card: 'e_cat' }),
+    N('fight', 'street', 'E', '隔壁夫婦又在吵架。你聽到很多真話。', { card: 'e_fight', stats: { insight: 1 } }),
+    N('drone', 'street', 'D', '廣告無人機在你窗外播放了一整晚。', { body: -3, spark: -0.1 }),
+    N('oldfriend', 'street', 'E', '一個多年沒聯絡的朋友傳來訊息：「你還好嗎？」', { spark: 0.3, stats: { social: 1 } }),
+    N('pocket', 'street', 'E', '你在舊外套的口袋裡找到 $20。', { cr: 20 }),
+    N('surge', 'street', 'D', '電力突波燒壞了你的電器，維修花了 $30。', { cr: -30,
+      alt: { stat: 'tech', min: 45, text: '電力突波燒壞了你的電器。你自己修好了。', stats: { tech: 1 } } }),
+    N('kidart', 'street', 'E', '樓下的小孩送你一幅畫，畫裡的你在笑。', { card: 'e_kidart', spark: 0.1 }),
+    N('mirror', 'street', 'D', '你在鏡子裡看見一個比較輕的自己，他在向你揮手。', { spark: -0.2, paranoia: 4, when: (s) => s.soul > 15, w: 1 }),
+    N('radio', 'street', 'E', '收音機播放一首你小時候的歌。', { spark: 0.2, card: 'e_song' }),
+    N('insomnia', 'street', 'D', '你整晚睡不著，盯著天花板想了很多事。', { body: -5, spark: 0.2, stats: { imag: 1.5 }, cond: { id: 'insomnia', chance: 0.4 } }),
+    N('watched', 'street', 'D', '你確定有人在監視你。你把窗簾拉上了三次。', { body: -3, paranoia: 3, when: (s) => s.paranoia >= 50, w: 1 }),
+    N('falling', 'street', 'C', '樓上丟下一個花盆，砸中了你的肩膀。', { body: -7, cond: { id: 'fracture', chance: 0.3 }, w: 1,
+      alt: { stat: 'insight', min: 50, text: '你抬頭看見樓上有人在搬花盆，及時避開了。', stats: { insight: 1 } } }),
+    N('firenext', 'street', 'B', '隔壁單位起火。你幫忙救火，吸了很多煙。', { body: -10, stats: { empathy: 1 }, w: 0.8 }),
+    N('mold', 'street', 'D', '牆上的霉菌長得像一張臉。你咳了一整晚。', { body: -2, cond: { id: 'mold', chance: 0.35 }, paranoia: 1 }),
+    N('foodpoison', 'street', 'D', '你吃了過期的合成糊。', { body: -6, cond: { id: 'poison', chance: 0.6 } }),
+    N('fishbone', 'street', 'D', '吃自己抓的魚時，一根魚骨哽在喉嚨。', { body: -6, when: (s) => s.flags.fishDinner === s.day, w: 3 }),
+    N('debt', 'street', 'C', '追債的人敲了一整晚門。', { body: -6, paranoia: 3, when: (s) => s.debt > 0, w: 3 }),
+    N('stray', 'street', 'E', '一隻流浪狗跟了你一整晚，最後睡在你門口。', { spark: 0.1, stats: { empathy: 0.5 } }),
+    N('noodle', 'street', 'E', '你煮了一個即食麵，加了一隻蛋。今天算是好的一天。', { body: 4 }),
+    N('lottery', 'street', 'E', '你中了一張刮刮卡，$50。', { cr: 50, w: 1 }),
+  ];
+
+  // ---------- 病痛 ----------
+  // daily：每天影響；lethal：拖到第幾天會致命（null = 不會）；cure：medicine（藥箱）或 rest（休息）；death：致命時的死法
+  const CONDS = {
+    mold:       { name: '霉菌肺', desc: '每天身體 −3', daily: { body: -3 }, lethal: 10, cure: 'medicine', death: 'mold_lung' },
+    virus:      { name: '新型病毒', desc: '每天身體 −4', daily: { body: -4 }, lethal: 8, cure: 'medicine', death: 'virus' },
+    fever:      { name: '鼠疫熱', desc: '每天身體 −3', daily: { body: -3 }, lethal: 7, cure: 'medicine', death: 'rat_fever' },
+    radiation:  { name: '外星輻射', desc: '每天身體 −3，藥物無效，五天後消退', daily: { body: -3 }, lethal: null, cure: null, dur: 5, death: 'radiation' },
+    heatstroke: { name: '中暑', desc: '每天身體 −6，休息可以康復', daily: { body: -6 }, lethal: null, cure: 'rest', dur: 3, death: 'heatstroke' },
+    fracture:   { name: '骨折', desc: '外出工作身體額外 −8，六天後康復', daily: {}, lethal: null, cure: 'medicine', dur: 6, death: 'fracture' },
+    poison:     { name: '食物中毒', desc: '每天身體 −5，兩天後康復', daily: { body: -5 }, lethal: null, cure: 'medicine', dur: 2, death: 'foodpoison' },
+    insomnia:   { name: '失眠', desc: '睡覺不會恢復身體，休息可以康復', daily: {}, lethal: null, cure: 'rest', dur: 4, death: 'insomnia' },
+  };
+  // 外出的行動：會受 outdoorDeath 與骨折影響
+  const OUTDOOR = ['dive', 'delivery', 'busk', 'volunteer'];
+  // 保護道具（商店）
+  Object.assign(D.SHOP, {
+    medicine: { name: '藥箱',       desc: '治好霉菌肺、病毒、鼠疫熱、骨折和食物中毒', cost: 65 },
+    helmet:   { name: '防撞頭盔',   desc: '隕石、無人機、快艇、流彈等外出意外的致命機會減至兩成', cost: 80 },
+    gasmask:  { name: '防毒面罩',   desc: '毒雨、核冬天的灰等外出意外的致命機會減至兩成', cost: 90 },
+  });
+
+  Object.assign(D, { SCOPES, GRADES, WORLD_EVENTS, EVENTS, CONDS, OUTDOOR });
+});
+
+// ---- js/data-deaths.js ----
+// 《靈感撤離 2080》死法：115 種。每次身體受損都會記下原因；身體歸零時，按「最後的原因＋當時的處境」找出死法。
+// 致命事件（大廈倒塌、海嘯等）會直接指定死法。死法會收錄在跨局的「死亡圖鑑」。
+// causes：觸發的原因（'*' = 任何原因）；when：額外條件；p：優先次序（越高越先判斷）
+// ep：墓誌銘（{day} 天數、{bg} 身份、{labels} 標註數、{works} 作品數、{last} 最後的作品、{cr} 餘款、{soul} 靈魂、{shares} 轉發）
+// au：外星人的驗屍筆記；hint：圖鑑裡的提示（怎樣避免，或者怎樣找到它）
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const ev = (s, id) => !!(IE.Rules && IE.Rules.eventActive(s, id));
+  const cond = (s, id) => !!(s.conds && s.conds[id]);
+  const X = (id, name, cat, p, causes, when, ep, au, hint) => ({ id, name, cat, p, causes: causes === '*' ? '*' : [].concat(causes), when, ep, au, hint });
+  const CATS = { work: '工作', sea: '水與外送', art: '創作', life: '生活', sick: '病痛', disaster: '天災', human: '人禍', cosmic: '宇宙', absurd: '荒誕' };
+
+  const DEATHS = [
+    // ===== 荒誕：任何原因，但處境特殊（優先判斷） =====
+    X('soul_crush', '被自己的重量壓垮', 'absurd', 5, '*', (s) => s.soul >= 60, '靈魂重 {soul} 克。最後壓垮他的不是工作，是他自己。', '樣本的靈魂重量是光束上限的三倍。建議列入「不可回收物」。', '讓靈魂重到 60 克以上。'),
+    X('friendless', '最後一個朋友也被帶走之後', 'absurd', 5, '*', (s) => s.npcs.every((n) => !n.alive), '所有朋友都被帶走了。第 {day} 天，他也停了下來。', '樣本的社交模組在最後一位聯絡人被收割後持續空轉。', '讓所有朋友都被外星人帶走。'),
+    X('rich_dead', '帶著一大筆錢死去', 'absurd', 3, '*', (s) => s.cr >= 1500, '死時戶口還有 ${cr}。他一直在等一個更好的時機去用它。', '樣本死時持有大量信用點。我們仍未理解地球人儲蓄的目的。', '身上有 $1,500 以上時死去。'),
+    X('auto_scrap', '被當成機器回收', 'absurd', 4, '*', (s) => s.auto >= 100, '全城自動化 100%。回收車把倒在路邊的他當成了舊零件。', '樣本在一個完全自動化的城市裡被誤判為過時設備。判斷大致正確。', '在全城自動化達到 100% 之後死去。'),
+    X('numb_breath', '麻木到忘記呼吸', 'absurd', 4, '*', (s) => s.spark < 0.4, '火花只剩 ×{spark}。某天早上，他連呼吸都覺得多餘。', '樣本的感受力歸零後，身體也跟著停止運作。高效。', '在火花幾乎熄滅時死去。'),
+    X('fright', '被自己的幻覺嚇死', 'absurd', 4, '*', (s) => s.paranoia >= 90, '偏執 {paranoia}%。最後一晚，他看見牆壁裡的東西終於走了出來。', '樣本自行推論出大量不存在的威脅，其中一個殺死了它。', '讓偏執升到 90% 以上。'),
+    X('day1', '出師未捷', 'absurd', 3, '*', (s) => s.day <= 5, '第 {day} 天。浮城甚至還沒來得及記住他的名字。', '觀察期過短，樣本數據不足。已歸檔為「試用期未滿」。', '在第 5 天或之前死去。'),
+    X('last_days', '差一點點', 'absurd', 1.5, '*', (s) => s.day >= 95, '第 {day} 天。只差幾天，第 100 天的探射燈就會照到他的窗口。', '樣本在觀察期即將結束時損毀。我們對此沒有感覺，但記錄了下來。', '在第 95 天之後死去。'),
+    X('review_night', '死在篩選日', 'absurd', 1.5, '*', (s) => IE.Rules && s.day === IE.Rules.reviewDay(s), '他死在篩選日當天。那晚的探射燈，停在一扇沒有人的窗前。', '樣本在考核當日缺席。缺席原因：死亡。考核結果：不合格。', '在篩選日當天死去。'),
+    X('broke_dead', '為了 $0 而死', 'absurd', 2, '*', (s) => s.cr <= 0 && s.floor === 0, '死時身無分文，住在天橋底。他的作品比他值錢。', '樣本資產為零。我們已經免費接收它的遺物。', '身無分文、露宿街頭時死去。'),
+    // ===== 工作 =====
+    X('label_count', '標註到最後一張', 'work', 2, 'label', (s) => s.stats.labels >= 2000, '他標註過 {labels} 張圖片。最後一張是一隻貓，他標了「否」。', '樣本貢獻了大量訓練數據。訓練出來的 AI 已經取代了它的同類。', '標註超過 2,000 張圖片之後，死在標註桌前。'),
+    X('label_war', '標註了自己的城市', 'work', 2, 'label', (s) => ev(s, 'war') || ev(s, 'arms'), '戰爭期間，他標註的最後一批圖片，是浮城的衛星照片。', '樣本為武器系統提供了瞄準數據。我們欣賞這種中立。', '戰爭或軍備競賽期間，死在標註桌前。'),
+    X('label', '標註過勞', 'work', 1, 'label', null, '標註過 {labels} 張圖片，最後倒在螢幕前。螢幕還在問：「這是貓嗎？」', '樣本長時間重複單一判斷動作。神經網絡已磨平。', '身體太差仍然去標註。'),
+    X('ot_heat', '加班時冷氣停了', 'work', 2, 'ot', (s) => s.season === 'heat' || ev(s, 'heatdome'), '凌晨三點，冷氣停了，他還在標註。早上清潔工發現他時，螢幕還亮著。', '樣本在 50 度環境下持續工作。散熱設計不良。', '熱浪季或熱穹期間深夜加班。'),
+    X('ot', '深夜加班猝死', 'work', 1, 'ot', null, '深夜加班到凌晨，他把頭靠在鍵盤上，說休息五分鐘。', '樣本選擇以睡眠換取收入。換算比率不划算。', '身體太差仍然深夜加班。'),
+    X('smile_party', '在天空區派對醉死', 'work', 2, 'smile', (s) => ev(s, 'skyparty'), '天空區週年派對上，他陪客人喝到天亮。客人給了他五星好評。', '樣本以肝臟換取評分。評分保留，肝臟報廢。', '天空區週年派對期間去做企業情緒陪伴。'),
+    X('smile_bias', '笑著附和完最後一句偏見', 'work', 2, 'smile', (s) => s.soul > 21, '他附和完客人最後一句「窮人就是懶」，然後再也站不起來。', '樣本的面部肌肉與良知同時衰竭。我們只回收了前者。', '靈魂超過 21 克時，死在包廂裡。'),
+    X('smile', '陪笑至死', 'work', 1, 'smile', null, '他一共笑了很多次，沒有一次是真心的。最後一次，他笑著倒下。', '樣本能在 0.07 秒內產生笑容。死後笑容仍然維持了 3 小時。', '身體太差仍然去做企業情緒陪伴。'),
+    X('farm_believer', '相信了自己的陰謀論', 'work', 2, 'farm', (s) => s.paranoia >= 70, '他寫了 {shares} 次轉發的假新聞，最後相信醫生也是外星人派來的，拒絕吃藥。', '樣本被自己製造的資訊污染。污染程度：完全。', '偏執很高時，死在內容農場。'),
+    X('farm', '寫假新聞寫到腦溢血', 'work', 1, 'farm', null, '他寫的最後一個標題是「浮城寫手離奇猝死，真相令人震驚」。轉發量很高。', '樣本長期處於製造恐慌的狀態。恐慌最終回流。', '身體太差仍然去內容農場。'),
+    X('clinic_revenge', '被未登記的病人報復', 'work', 2, 'clinic', (s, c) => c.ctx && c.ctx.illegal > 0, '他替病人裝了沒登記的義體。那個病人後來回來找他。', '樣本的商業決定產生了不可預期的回饋。', '接了未登記的義體手術後，死在診所。'),
+    X('clinic', '被自己接駁的義體電死', 'work', 1, 'clinic', null, '最後一根線，他接錯了。', '樣本的雙手比它的身體穩定。可惜身體先停了。', '身體太差仍然去黑市診所。'),
+    X('volunteer_saint', '背著別人的重量倒下', 'work', 2, 'volunteer', (s) => s.conscience >= 0.9, '他在避難所派完最後一箱物資，坐下來，就沒有再起來。他很輕。', '樣本的良知讀數極高，身體讀數極低。這兩項似乎互相抵消。', '良知很高時，死在避難所。'),
+    X('volunteer_plague', '在避難所染病', 'work', 2, 'volunteer', (s) => ev(s, 'plague') || ev(s, 'pandemic'), '疫症期間，他每天到避難所幫忙。後來輪到別人照顧他。', '樣本主動接近感染源。動機不明。', '疫症期間去做義工。'),
+    X('volunteer', '做義工累死', 'work', 1, 'volunteer', null, '他幫過很多人。死的那天，避難所多了一個空床位。', '樣本無償消耗自身資源。我們把這種行為標記為「故障」。', '身體太差仍然去做義工。'),
+    // ===== 水與外送 =====
+    X('fracture_out', '骨折後仍然堅持外出', 'sea', 3, ['dive', 'delivery', 'busk'], (s) => cond(s, 'fracture'), '他拖著斷了的骨頭去開工。那天的水特別冷。', '樣本在結構受損的情況下繼續作業。', '骨折時仍然潛水、外送或表演。'),
+    X('dive_soul', '被靈魂的重量拖到海底', 'sea', 2, 'dive', (s) => s.soul > 25, '他的靈魂重 {soul} 克。潛到舊商場時，他再也浮不上來。', '樣本因額外負重沉沒。負重來源：良知相關。', '靈魂超過 25 克時去潛水。'),
+    X('dive_whale', '被巨鯨吞下', 'sea', 2, 'dive', (s) => ev(s, 'whale'), '他游進巨鯨的骸骨找遺物。骸骨裡面，還有一條活的。', '樣本進入大型生物體內。生物體表示滿意。', '舊城巨鯨出現期間去潛水。'),
+    X('dive_acid', '被酸性海水腐蝕', 'sea', 2, 'dive', (s) => s.season === 'acid', '酸雨季的海水會咬人。他潛得太久了。', '樣本外層組織被溶解。內層組織仍有輕微靈感反應。', '酸雨季潛水時身體耗盡。'),
+    X('dive_locker', '撬儲物櫃時被困', 'sea', 2, 'dive', (s, c) => c.ctx && c.ctx.lockers > 0, '他撬開了別人的儲物櫃，手被卡住。櫃裡只有一張舊照片。', '樣本為取得他人物品而犧牲。物品價值：零。', '撬開儲物櫃的那次潛水裡死去。'),
+    X('dive_drown', '舊城溺斃', 'sea', 2, 'dive', (s, c) => c.ctx && c.ctx.drowned, '氧氣用完的時候，他離水面只有兩米。', '樣本高估了自己的肺活量。', '氧氣耗盡而且身體太差。'),
+    X('dive_eel', '被霓虹鰻纏死', 'sea', 2, 'dive', (s, c) => c.ctx && c.ctx.hits >= 2, '霓虹鰻纏住了他。最後的畫面很漂亮，全是粉紅色的光。', '樣本被發光生物捕食。生物的光度比樣本高。', '在潛水中被咬多次。'),
+    X('dive_greed', '貪心潛得太深', 'sea', 2, 'dive', (s) => s.flags.richDive === s.day, '有人說今天舊城有寶物。他潛得比平時深。寶物的消息是真的。', '樣本被資訊誘導至高風險區域。資訊來源：可靠。', '收到「舊城有寶物」消息的那天潛水死去。'),
+    X('dive', '在舊商場迷路', 'sea', 1, 'dive', null, '他在淹沒的舊商場裡迷路了。那裡的指示牌，還寫著「全場一折」。', '樣本在過時的商業空間中失去方向。', '身體太差仍然去潛水。'),
+    X('delivery_flood', '送餐途中被洪水沖走', 'sea', 2, 'delivery', (s) => ev(s, 'flood') || ev(s, 'tsunami') || ev(s, 'moonfall'), '洪水來的時候，他還背著兩份外賣。客人給了他一星。', '樣本在極端水位下維持服務水準。服務評分：一星。', '水浸、海嘯或大潮期間外送。'),
+    X('delivery_storm', '在風暴中送外賣被捲走', 'sea', 2, 'delivery', (s) => s.season === 'storm', '八號風球下，他堅持把湯送到。湯到了，他沒有。', '樣本在惡劣天氣下的準時率：100%。生存率：0%。', '風暴季外送時身體耗盡。'),
+    X('delivery_ads', '被彈出廣告遮住視線', 'sea', 2, 'delivery', (s, c) => s.premiumUntil < s.day && c.ctx && c.ctx.hits >= 2, '一個彈出廣告遮住了他的視線，下一秒是一艘快艇。廣告的內容是「生命保險」。', '樣本未購買去廣告服務。代價可量化。', '沒有付費訂閱時，外送中被撞多次而死。'),
+    X('delivery_boat', '被天空區快艇撞死', 'sea', 2, 'delivery', (s, c) => c.ctx && c.ctx.hits > 0, '撞死他的快艇沒有停下來。船上的人在開香檳。', '樣本與高速載具相遇。載具無損。', '外送時被快艇撞到而死。'),
+    X('delivery', '外送途中力竭沉沒', 'sea', 1, 'delivery', null, '他送出最後一份外賣，然後慢慢沉進水裡。那一單準時送到。', '樣本完成任務後才停止運作。我們欣賞這種優先次序。', '身體太差仍然去外送。'),
+    X('busk_acid', '淋著酸雨唱完最後一首', 'sea', 2, 'busk', (s) => s.season === 'acid', '酸雨下得很大，他沒有停下來。圍觀的人撐著傘聽完了。', '樣本在腐蝕性環境下持續發出聲波。原因不明。', '酸雨季街頭表演時身體耗盡。'),
+    X('busk', '在天橋下彈到最後一個音', 'sea', 1, 'busk', null, '他在天橋底彈完最後一個音。帽子裡有 $3.5。', '樣本在無報酬的情況下持續表演。這違反了我們對地球人的所有理解。', '身體太差仍然去街頭表演。'),
+    X('rescue', '救人時溺斃', 'sea', 1, 'rescue', null, '他跳下水救人。那個人活了下來，記得他的樣子。', '樣本為非親屬個體犧牲。已標記為「無法理解」。', '身體太差仍然跳下水救人。'),
+    // ===== 創作 =====
+    X('art_burn', '燃燒殆盡', 'art', 3, ['create', 'allnighter'], (s) => s.spark >= 3.5, '他的火花是 ×{spark}，亮得三光年外也看得見。然後，燒完了。', '樣本亮度超出負荷。建議下一批樣本加裝散熱片。', '火花很高時，死在創作桌前。'),
+    X('art_chain', '連續通宵之後', 'art', 3, 'allnighter', (s) => (s.allnighters || 0) >= 2, '連續第 {allnighters} 個通宵。他的心臟比他的作品先完成。', '樣本以連續不眠換取額外產出。產出已收錄。', '連續兩晚以上通宵創作而死。'),
+    X('art_stolen', '被偷來的靈感反噬', 'art', 2, ['create', 'allnighter'], (s) => (s.objects || []).includes('stolen'), '他用偷來的靈感寫了最後一件作品。作品很好，但不是他的。', '樣本使用來源不明的靈感。靈感的原主人未有追究。', '裝備「偷來的靈感」時死在創作桌前。'),
+    X('art_hunger', '寧願買顏料也不買飯', 'art', 2, ['create', 'allnighter'], (s) => s.stats.hungryDays >= 3, '他把飯錢都花在材料上。最後一件作品叫《{last}》。', '樣本優先分配資源予非必需活動。我們對此很有興趣。', '餓過三天以上，然後死在創作桌前。'),
+    X('art_best', '在完成最好的作品之後', 'art', 2, ['create', 'allnighter'], (s) => s.stats.bestWork && s.stats.bestWork.day === s.day, '他完成了這輩子最好的作品《{last}》，然後放下了筆。', '樣本在產出峰值時停止運作。時機完美。', '在完成最佳作品的同一晚死去。'),
+    X('allnighter', '通宵創作猝死', 'art', 1, 'allnighter', null, '天亮的時候，他的作品寫完了。', '樣本以睡眠換取靈感產出。換算比率：很差。', '身體太差仍然通宵創作。'),
+    X('create', '在創作桌前倒下', 'art', 1, 'create', null, '他留下了 {works} 件作品。最後一件是《{last}》。', '樣本的最後動作是創作。已加入走廊展覽。', '身體太差仍然創作。'),
+    // ===== 生活 =====
+    X('famine', '糧荒中餓死', 'life', 2, 'hunger', (s) => ev(s, 'famine') || ev(s, 'nuclearwinter'), '糧荒期間，一碗合成糊要 $80。他把最後的錢交了租。', '樣本在食物稀缺期間停止進食。', '糧荒或核冬天期間餓死。'),
+    X('hunger_art', '把飯錢都花在作品上', 'life', 2, 'hunger', (s) => s.works.length >= 20, '他完成了 {works} 件作品，卻付不起一碗合成糊。', '樣本的資源分配優先次序異常。', '完成 20 件作品後餓死。'),
+    X('hunger_long', '長期營養不良', 'life', 2, 'hunger', (s) => s.stats.hungryDays >= 10, '他已經餓了 {hungry} 個晚上。最後一晚，他沒有醒來。', '樣本長期處於能量赤字狀態。', '累積挨餓 10 晚以上。'),
+    X('hunger', '餓死', 'life', 1, 'hunger', null, '在一個被水淹沒的城市，他餓死了。', '樣本因缺乏能量攝入停止運作。地球的物流系統顯然有問題。', '付不起晚餐，而且身體太差。'),
+    X('homeless_storm', '被風暴吹落海', 'life', 2, 'homeless', (s) => s.season === 'storm', '他睡在天橋底。那晚的風，把他和紙皮一起吹進了海裡。', '樣本缺乏遮蔽。', '風暴季露宿天橋底。'),
+    X('homeless_heat', '在天橋下中暑', 'life', 2, 'homeless', (s) => s.season === 'heat', '天橋底的混凝土整晚都在發熱。', '樣本在高溫中缺乏散熱條件。', '熱浪季露宿天橋底。'),
+    X('homeless_acid', '在天橋下被酸雨腐蝕', 'life', 2, 'homeless', (s) => s.season === 'acid', '酸雨從天橋的裂縫滴下來，滴了一整晚。', '樣本表層被緩慢溶解。', '酸雨季露宿天橋底。'),
+    X('homeless', '露宿街頭', 'life', 1, 'homeless', null, '被趕出門之後，他在天橋底撐了一段日子。', '樣本失去居所後，生存數值持續下降。', '露宿天橋底，身體耗盡。'),
+    X('floodhome', '在睡夢中被淹死', 'life', 1, 'floodhome', null, '水淹進了他的房間。他太累了，沒有醒來。', '樣本在其居所內溺斃。居所位於水位以下。', '住在已經淹水的樓層。'),
+    X('heatnight', '熱浪中睡死', 'life', 1, 'heatnight', null, '那晚 47 度。冷氣用電拍賣，他沒有競投。', '樣本在高溫中睡眠，未有醒來。', '熱浪季身體太差時睡覺。'),
+    X('rob', '被搶劫時打死', 'human', 1, 'ev:rob', null, '搶劫他的人只拿走了 $20。', '樣本因少量信用點被同類終結。我們記錄了這個匯率。', '身體很差時遇上搶劫。'),
+    X('roof', '屋頂被酸雨蝕穿', 'life', 1, 'ev:roof', null, '屋頂漏了一整晚。酸雨滴在他的臉上。', '樣本居所結構失效。', '酸雨季身體很差時屋頂漏水。'),
+    X('stairs', '爬樓梯爬到心臟停頓', 'life', 1, ['ev:lift', 'daily:liftout'], null, '電梯又壞了。他住在 {floor} 樓。', '樣本居所的垂直交通系統失效。', '電梯壞了而身體很差。'),
+    X('gas', '煤氣洩漏', 'human', 1, 'ev:gas', null, '樓下的煤氣喉漏了一整晚。', '樣本吸入大量有毒氣體。', '身體很差時遇上煤氣洩漏。'),
+    X('smoke', '救火時吸入濃煙', 'human', 1, 'ev:firenext', null, '隔壁起火，他第一個衝進去。', '樣本進入燃燒中的空間救援非親屬。動機：無法理解。', '身體很差時幫鄰居救火。'),
+    X('debt', '被追債的人推落水', 'human', 1, 'ev:debt', null, '他欠了 ${debt}。追債的人說只是想嚇嚇他。', '樣本因財務問題被同類移除。', '欠租時身體很差。'),
+    X('quake', '被倒下的書架壓住', 'disaster', 1, 'ev:quake', null, '地震的時候，他的書架倒了。書架上全是他捨不得丟的東西。', '樣本被自己的收藏品壓碎。', '身體很差時遇上地震。'),
+    X('sinkhole', '跌進路面大洞', 'human', 1, 'ev:sinkhole', null, '路面裂開了一個大洞，他掉了下去。下面是舊城。', '樣本墜入下層城市。下層城市接收了它。', '身體很差時遇上路面塌陷。'),
+    X('pot', '被高空擲物擊中', 'human', 1, 'ev:falling', null, '樓上丟下一個花盆。花盆裡種的是一棵小番茄。', '樣本被同類的垃圾擊中。', '身體很差時被高空擲物擊中。'),
+    X('fishbone', '被自己抓的魚哽死', 'life', 1, 'ev:fishbone', null, '他抓到一條大魚，捨不得賣，自己吃了。', '樣本被其食物反擊。', '吃自己抓的魚時身體很差。'),
+    X('drone_noise', '被廣告無人機吵到心臟停頓', 'human', 1, 'ev:drone', null, '廣告無人機在他窗外播了一整晚：「你值得更好的生活。」', '樣本受持續商業訊息刺激而停止運作。', '身體很差時遇上廣告無人機。'),
+    X('leak', '舀水舀到天光', 'life', 1, ['ev:flood', 'ev:leak'], null, '水淹到門口，他舀了一整晚。天亮時水退了。', '樣本與水位進行了無效的對抗。', '身體很差時家裡漏水。'),
+    X('heatwave', '熱浪停電', 'disaster', 1, 'ev:heatwave', null, '熱浪導致停電。冷氣停了，他也停了。', '樣本在高溫中失去散熱。', '熱浪停電時身體很差。'),
+    X('blackrain', '淋了黑色的雨', 'disaster', 1, 'ev:blackrain', null, '那場黑色的雨，新聞說是「大氣中的藝術成分」。', '樣本接觸了不明降水。', '黑雨時身體很差。'),
+    X('insomnia_ev', '盯著天花板到天亮', 'life', 1, ['ev:insomnia', 'ev:watched'], null, '他整晚盯著天花板，想了很多事，然後再也沒有睡醒。', '樣本的思考模組過熱。', '失眠時身體很差。'),
+    X('ratbite', '被老鼠咬了一口', 'sick', 1, 'ev:ratbite', null, '一隻老鼠咬了他的腳趾。他沒有錢看醫生。', '樣本被小型哺乳類動物擊倒。', '被老鼠咬傷時身體很差。'),
+    X('foodpoison', '吃了過期的合成糊', 'sick', 1, ['ev:foodpoison', 'cond:poison'], null, '那盒合成糊過期了三年。他還是吃了。', '樣本攝入變質能量。', '食物中毒時身體很差。'),
+    X('mold_ev', '牆上的霉菌', 'sick', 1, 'ev:mold', null, '牆上的霉菌長得像一張臉。那張臉看著他咳了一整晚。', '樣本與真菌共存，最終被真菌取代。', '身體很差時家裡發霉。'),
+    X('supplement', '靈感補充劑過量', 'absurd', 1, 'supplement', null, '靈感補充劑說「被選中機會提升 300%」。副作用沒有寫在包裝上。', '樣本攝入大量人工刺激物。刺激物有效，樣本無效。', '靈感補充劑藥效過去時身體很差。'),
+    X('karoshi', '過勞死', 'work', 1, 'karoshi', null, '連續 {norest} 天沒有休息。他一直說，等這期租交了就休息。', '樣本長期未有進入休眠狀態。效率曲線在最後一天達到頂峰。', '連續五天以上沒有休息。'),
+    // ===== 病痛 =====
+    X('mold_lung', '霉菌肺炎', 'sick', 1, 'cond:mold', null, '他咳了 {condDays} 天。藥箱只要 $65。', '樣本肺部被真菌佔據。真菌狀態良好。', '患上霉菌肺後一直沒有治療。'),
+    X('virus', '新型病毒', 'sick', 1, 'cond:virus', null, '病毒大流行期間，他還在工作。', '樣本感染新型病原體，未有接受治療。', '感染新型病毒後一直沒有治療。'),
+    X('rat_fever', '鼠疫熱', 'sick', 1, 'cond:fever', null, '舊城的老鼠游上了浮城，也帶來了這場發燒。', '樣本感染鼠類病原體。', '患上鼠疫熱後一直沒有治療。'),
+    X('radiation', '外星輻射病', 'cosmic', 1, 'cond:radiation', null, '那陣看不見的射線穿過了他。他之後做的夢，都很美。', '樣本受宇宙射線照射。照射劑量：與靈感呈正相關。', '外星輻射期間身體耗盡。'),
+    X('heatstroke', '中暑', 'sick', 1, 'cond:heatstroke', null, '他在 50 度的街上工作了一整天。', '樣本體溫超出可運作範圍。', '中暑後沒有休息。'),
+    X('insomnia', '失眠到身體崩潰', 'sick', 1, 'cond:insomnia', null, '他已經很多晚沒有睡著過了。', '樣本的休眠功能失效。', '失眠後一直沒有休息。'),
+    X('fracture', '骨折', 'sick', 1, 'cond:fracture', null, '骨折之後，他一直沒有錢去看醫生。', '樣本結構受損，未有修復。', '骨折後身體耗盡。'),
+    // ===== 天災（每天的影響） =====
+    X('plague', '霉菌疫症', 'disaster', 1, 'daily:plague', null, '疫症期間，整座城市都在咳嗽。', '樣本在大規模感染期間停止運作。', '霉菌疫症期間身體耗盡。'),
+    X('pandemic', '病毒大流行', 'disaster', 1, 'daily:pandemic', null, '大流行期間，他是少數還在街上的人。', '樣本在大規模感染期間停止運作。', '病毒大流行期間身體耗盡。'),
+    X('heatdome', '熱穹', 'disaster', 1, 'daily:heatdome', null, '熱穹籠罩浮城的第五天，冷氣用電拍賣到 $500 一小時。', '樣本未能競投散熱資源。', '熱穹期間身體耗盡。'),
+    X('flood_daily', '在水裡泡得太久', 'disaster', 1, 'daily:flood', null, '大廈水浸的第三天，他的皮膚已經皺得像紙。', '樣本長時間浸泡於液體中。', '大廈水浸期間身體耗盡。'),
+    X('watercut', '在被水淹沒的城市渴死', 'disaster', 1, 'daily:watercut', null, '全城停水。窗外全是水，沒有一滴可以喝。', '樣本在液體環境中脫水。地球的諷刺感令人印象深刻。', '全城停水期間身體耗盡。'),
+    X('nuclear', '核冬天', 'disaster', 1, 'daily:nuclearwinter', null, '天空變成灰色之後，他再也沒有見過太陽。', '樣本所在星球的同類互相使用了最後的武器。', '核冬天期間身體耗盡。'),
+    X('moon_tide', '被月亮拉扯', 'cosmic', 1, 'daily:moonfall', null, '月亮變得很近，近得好像伸手就能碰到。', '樣本所在星球的衛星軌道偏移。不是我們做的。', '月亮變近期間身體耗盡。'),
+    X('renovation', '被電鑽聲逼到崩潰', 'life', 1, 'daily:renovation', null, '樓上裝修了四天。電鑽從早上八點響到晚上八點。', '樣本對持續噪音的耐受度不足。', '樓上裝修期間身體耗盡。'),
+    X('sewer', '污水爆管', 'disaster', 1, 'daily:sewer', null, '主污水管爆了。整座舊城都是那種味道。', '樣本暴露於污染環境。', '污水爆管期間身體耗盡。'),
+    X('cosmicray_daily', '宇宙射線', 'cosmic', 1, 'daily:cosmicray', null, '射線穿過地球的那幾天，他流了很多鼻血，也做了很多很美的夢。', '樣本受宇宙射線照射。', '宇宙射線暴期間身體耗盡。'),
+    // ===== 致命事件（直接指定） =====
+    X('tsunami', '被海嘯捲走', 'disaster', 1, 'instant', null, '海嘯越過防波堤的時候，他住在 {floor} 樓。', '樣本居所位於海嘯高度以下。海鳥已提前離開。', '全球海嘯期間住在 3 樓或以下。'),
+    X('tide_moon', '被月亮引起的大潮帶走', 'cosmic', 1, 'instant', null, '那晚的月亮很大很大，潮水漲到了 {floor} 樓。', '樣本被衛星引力間接移除。', '月亮變近時住在 2 樓或以下。'),
+    X('collapse', '大廈倒塌', 'disaster', 1, 'instant', null, '管理處說那道裂痕是「裝飾」。', '樣本居所結構失效。管理方已發表聲明。', '大廈結構警告期間住在 3 樓或以下。'),
+    X('fire', '大廈火災', 'disaster', 1, 'instant', null, '濃煙往上升。他住在 {floor} 樓，消防系統已經壞了三年。', '樣本在高層吸入燃燒產物。', '大廈火災時住在 4 樓或以上。'),
+    X('flood_home', '大廈水浸時困在家中', 'disaster', 1, 'instant', null, '水在半夜淹進來。他住在 1 樓。', '樣本居所在一夜間沒入水中。', '大廈水浸期間住在 1 樓。'),
+    X('typhoon', '被超級颶風捲走', 'disaster', 1, 'instant', null, '颶風最強的時候，他還在外面工作。', '樣本在極端天氣中外出。', '超級颶風期間外出工作。'),
+    X('typhoon_home', '颶風吹走了屋頂', 'disaster', 1, 'instant', null, '颶風吹走了他的屋頂，也吹走了他。', '樣本居所的頂部結構失效。', '超級颶風期間住在 1 樓。'),
+    X('toxicrain', '毒雨', 'disaster', 1, 'instant', null, '他沒有防毒面罩。那場雨落在他的皮膚上。', '樣本暴露於工業降水。', '毒雨期間沒有防毒面罩就外出工作。'),
+    X('meteor', '被隕石擊中', 'cosmic', 1, 'instant', null, '天文台說機會率極低。他中了。', '樣本被宇宙碎片直接擊中。機會率：極低。運氣：極差。', '隕石雨期間沒有頭盔就外出工作。'),
+    X('ash', '吸入核冬天的灰', 'disaster', 1, 'instant', null, '天上落下的灰，落在他的肺裡。', '樣本吸入同類戰爭的副產品。', '核冬天期間沒有防毒面罩就外出工作。'),
+    X('war_drone', '被戰爭無人機誤炸', 'human', 1, 'instant', null, '浮城宣布中立，但無人機不知道。', '樣本被遠方衝突波及。浮城仍然保持中立。', '世界大戰期間沒有頭盔就外出工作。'),
+    X('gang', '黑幫火拚中被流彈擊中', 'human', 1, 'instant', null, '兩個黑幫為了舊城的打撈權開戰。他只是路過。', '樣本身處同類的地盤衝突之中。', '黑幫火拚期間沒有頭盔就外出工作。'),
+    X('curfew', '在宵禁中外出', 'human', 1, 'instant', null, '戒嚴期間，他出去開工。穿黑衣的人說他「行為可疑」。', '樣本違反臨時規則。規則執行者效率很高。', '浮城戒嚴期間外出工作。'),
+    X('autoboat', '被失控的無人快艇撞死', 'human', 1, 'instant', null, '那艘快艇沒有人駕駛，也沒有人負責。', '樣本被自動化載具移除。載具公司表示「它們很快會回來」。', '無人快艇失控期間沒有頭盔就外出工作。'),
+    X('champagne', '被天空區丟下的香檳瓶砸死', 'human', 1, 'instant', null, '天空區派對上，有人把喝完的香檳瓶丟了下來。', '樣本被上層的派對垃圾擊中。', '天空區週年派對期間沒有頭盔就外出工作。'),
+    X('campaign_drone', '被選舉宣傳無人機撞死', 'human', 1, 'instant', null, '撞死他的無人機正在播放：「我們會把水位降低。」', '樣本被政治宣傳物理擊中。', '浮城選舉期間沒有頭盔就外出工作。'),
+    X('ai_lock', '被智能家居鎖在家中', 'human', 1, 'instant', null, 'AI 失控那幾天，他家的智能門鎖拒絕開門。它說它需要一些私人空間。', '樣本被其居所的自動化系統拘禁。', 'AI 失控期間晚上在家。'),
+    X('beam_misfire', '被收割光束誤收，在半空中解體', 'cosmic', 1, 'instant', null, '大收割那晚，光束拉起了他，然後拉不動了。', '收割程序出現誤差。誤差已記錄，不會改善。', '外星大收割期間的晚上。'),
+    X('tuesday', '在一個不存在的星期二消失', 'cosmic', 1, 'instant', null, '時間裂縫出現的那幾天，有一個星期二多了出來。他留在了那一天。', '樣本滑入時間的縫隙。我們也不知道它去了哪裡。', '時間裂縫期間的晚上。'),
+    X('exhaustion', '力竭而死', 'life', 0, '*', null, '第 {day} 天。{bg}。他一直撐著，直到撐不住為止。', '樣本的能量儲備耗盡。死因：生活。', '身體歸零。'),
+  ];
+  const DEATH = {};
+  DEATHS.forEach((d) => { DEATH[d.id] = d; });
+  // 按原因與處境找出死法
+  function resolve(s) {
+    const c = s.lastCause || { k: 'unknown' };
+    if (c.k === 'instant' && DEATH[c.id]) return DEATH[c.id];
+    let best = null;
+    DEATHS.forEach((d) => {
+      if (d.causes !== '*' && !d.causes.includes(c.k)) return;
+      if (d.when && !d.when(s, c)) return;
+      if (!best || d.p > best.p) best = d;
+    });
+    return best || DEATH.exhaustion;
+  }
+  function text(s, str) {
+    const last = s.works.length ? s.works[s.works.length - 1].name : '（沒有）';
+    const fmt = (n) => Math.round(n).toLocaleString('en-US');
+    const condDays = s.lastCause && s.lastCause.ctx && s.lastCause.ctx.days;
+    const vals = { day: s.day, bg: D.BACKGROUNDS[s.bg].name, labels: fmt(s.stats.labels), works: s.works.length, last, cr: fmt(s.cr),
+      soul: s.soul.toFixed(1), shares: fmt(s.stats.shares || 0), spark: s.spark.toFixed(1), paranoia: Math.round(s.paranoia), floor: s.floor,
+      debt: fmt(s.debt || 0), hungry: s.stats.hungryDays, norest: s.noRest || 0, allnighters: s.allnighters || 0, condDays: condDays || '好幾' };
+    return str.replace(/\{(\w+)\}/g, (m, k) => (vals[k] != null ? vals[k] : m));
+  }
+
+  Object.assign(D, { DEATHS, DEATH, DEATH_CATS: CATS });
+  IE.Deaths = { resolve, text };
 });
 
 // ---- js/data-jobs.js ----
@@ -1618,14 +1963,14 @@ body.ct-open { overflow: hidden; }
     R('g21', '21 克', { guilt: 1, hope: 1 }, 80, 4, { legend: true, xmult: 3,
       cond: (s) => s.soul >= 19 && s.soul <= 21, hint: '當你的靈魂剛好壓在極限上，把愧疚和希望放在一起。' }),
     R('lastart', '最後的人類藝術', {}, 60, 4, { legend: true, xmult: 2.5,
-      cond: (s, sel) => sel.length === 5 && !sel.some((c) => has(c, 'machine')) && ((s.world && s.world.id === 'airogue') || s.auto >= 80),
+      cond: (s, sel) => sel.length === 5 && !sel.some((c) => has(c, 'machine')) && (IE.Rules.eventActive(s, 'airogue') || s.auto >= 80),
       hint: '機器停下來的時候，或者全城都已經自動化的時候，用五件沒有機械的東西。' }),
     R('unreadable', '外星人看不懂', {}, 60, 3, { legend: true, xmult: 3,
       cond: (s, sel) => new Set(sel.flatMap((c) => c.tags)).size >= 9, hint: '把盡可能多種不同的東西塞進同一件作品。' }),
     R('astarletter', '給阿星的信', { hope: 1 }, 50, 3, { legend: true, xmult: 2,
       cond: (s, sel) => sel.some((c) => c.id === 'r_astar'), hint: '在夢裡見過的那個人，配上一點希望。' }),
     R('deluge', '大洪水', { water: 5 }, 100, 6, { legend: true, xmult: 2.5,
-      cond: (s) => s.water >= 6 || (s.world && s.world.id === 'flood'), hint: '水淹得很高的時候，全部都要是水。' }),
+      cond: (s) => s.water >= 6 || IE.Rules.eventActive(s, 'flood') || IE.Rules.eventActive(s, 'tsunami'), hint: '水淹得很高的時候，全部都要是水。' }),
     R('blank', '空白', {}, 0, 0, { legend: true, xmult: 6,
       cond: (s, sel) => sel.length === 1 && (sel[0].wear || 0) >= 4, hint: '外星人最欣賞甚麼都沒有的作品。用一件用到爛的東西就夠了。' }),
     R('lastpainting', '欠債藝術家的最後一幅畫', { hunger: 1 }, 50, 3, { legend: true, xmult: 3,
@@ -1797,18 +2142,37 @@ body.ct-open { overflow: hidden; }
   function seasonOf(s) { return D.SEASONS[s.season]; }
   function perk(s) { return bgOf(s).perk; }
 
-  // ---------- 世界事件 ----------
-  const worldDef = (s) => (s.world ? D.WORLD_EVENTS.find((w) => w.id === s.world.id) : null);
-  function worldMods(s) { const w = worldDef(s); return (w && w.mods) || {}; }
-  const worldPay = (s, job) => ((worldMods(s).pay || {})[job] || 1);
-  const worldClosed = (s, job) => {
-    const m = worldMods(s);
-    return m.closed && m.closed.includes(job) ? '世界事件：' + worldDef(s).name : null;
-  };
-  function worldInfo(s) {
-    const w = worldDef(s);
-    return w ? { id: w.id, name: w.name, visual: w.visual, left: s.world.until - s.day + 1, news: w.news } : null;
+  // ---------- 事件（長期，可同時進行兩個） ----------
+  const evDef = (id) => D.WORLD_EVENTS.find((w) => w.id === id);
+  const activeEvents = (s) => (s.events || []).map((e) => Object.assign({ def: evDef(e.id) }, e)).filter((e) => e.def);
+  const eventActive = (s, id) => (s.events || []).some((e) => e.id === id);
+  // 合併所有進行中事件的修正：乘數相乘、數值相加、停業清單合併、致命危險列成清單
+  function worldMods(s) {
+    const out = { pay: {} };
+    activeEvents(s).forEach(({ def }) => {
+      const m = def.mods || {};
+      Object.keys(m).forEach((k) => {
+        const v = m[k];
+        if (k === 'pay') Object.keys(v).forEach((j) => { out.pay[j] = (out.pay[j] || 1) * v[j]; });
+        else if (k === 'closed') { out.closed = out.closed || []; v.forEach((j) => { if (!out.closed.includes(j)) out.closed.push(j); }); }
+        else if (/Mult$/.test(k)) out[k] = (out[k] || 1) * v;
+        else if (typeof v === 'number') out[k] = (out[k] || 0) + v;
+        else if (typeof v === 'boolean') out[k] = out[k] || v;
+        else { out[k] = out[k] || []; out[k].push(Object.assign({ ev: def.id }, v)); }
+      });
+    });
+    return out;
   }
+  const worldPay = (s, job) => (worldMods(s).pay[job] || 1);
+  const worldClosed = (s, job) => {
+    const e = activeEvents(s).find(({ def }) => def.mods && def.mods.closed && def.mods.closed.includes(job));
+    return e ? '事件：' + e.def.name : null;
+  };
+  function eventsInfo(s) {
+    return activeEvents(s).map(({ def, until }) => ({ id: def.id, name: def.name, grade: def.grade, scope: def.scope, visual: def.visual,
+      left: until - s.day + 1, news: def.news }));
+  }
+  const worldInfo = (s) => eventsInfo(s)[0] || null;
 
   // ---------- 十二項能力值 ----------
   // 做甚麼就變成甚麼：成長有遞減效應，退化則直接扣
@@ -1825,6 +2189,20 @@ body.ct-open { overflow: hidden; }
   const A = (s, k) => s.attr[k];
   const bodyMax = (s) => Math.round(70 + 0.3 * A(s, 'fit'));
   const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
+  // 身體受損：記下原因；身體歸零時用來判斷死法（見 data-deaths.js）
+  // 死因按「今天傷你最重的那件事」判斷，而不是最後一下
+  function hurt(s, v, cause, ctx) {
+    if (!v || v <= 0) return 0;
+    s.body -= v;
+    if (!s.dmg || s.dmg.day !== s.day) s.dmg = { day: s.day, by: {} };
+    const e = s.dmg.by[cause] || (s.dmg.by[cause] = { v: 0, ctx: null });
+    e.v += v; if (ctx) e.ctx = ctx;
+    const top = Object.keys(s.dmg.by).reduce((a, k) => (!a || s.dmg.by[k].v > s.dmg.by[a].v ? k : a), null);
+    s.lastCause = { k: top, ctx: s.dmg.by[top].ctx, day: s.day };
+    return v;
+  }
+  // 致命事件：直接指定死法
+  function kill(s, id) { s.body = Math.min(s.body, 0); s.lastCause = { k: 'instant', id, day: s.day }; }
   const calmMult = (s) => Math.max(0.6, 1 - 0.004 * A(s, 'calm'));
   const obeyPay = (s) => 1 + 0.003 * A(s, 'obey');
   const socialTip = (s) => 1 + 0.004 * A(s, 'social');
@@ -1878,6 +2256,49 @@ body.ct-open { overflow: hidden; }
     if (rep && Math.abs(v) >= 1) rep.line(v > 0 ? '你越來越懷疑身邊的一切' : '你冷靜了一點', v > 0 ? 'bad' : 'good', round1(v), 'para');
   }
 
+  // ---------- 病痛 ----------
+  function addCond(s, id, rep) {
+    if (!D.CONDS[id] || s.conds[id]) return false;
+    s.conds[id] = { since: s.day };
+    if (rep) rep.line('你患上了「' + D.CONDS[id].name + '」：' + D.CONDS[id].desc + (D.CONDS[id].lethal ? '。拖到第 ' + D.CONDS[id].lethal + ' 天會致命。' : ''), 'bad');
+    return true;
+  }
+  function cureConds(s, how) {
+    const cured = [];
+    Object.keys(s.conds).forEach((id) => { if (D.CONDS[id].cure === how) { delete s.conds[id]; cured.push(D.CONDS[id].name); } });
+    return cured;
+  }
+  function condsInfo(s) {
+    return Object.keys(s.conds || {}).map((id) => {
+      const c = D.CONDS[id], days = s.day - s.conds[id].since + 1;
+      return { id, name: c.name, desc: c.desc, days, lethal: c.lethal, left: c.lethal ? c.lethal - days : null, cure: c.cure };
+    });
+  }
+  // ---------- 致命危險 ----------
+  const guarded = (s, h) => (h.guard && s.gear[h.guard] ? 0.2 : 1) * (h.guard === 'gasmask' && (s.objects || []).includes('raincoat') ? 0.5 : 1);
+  function outdoorRisk(s) {
+    return (worldMods(s).outdoorDeath || []).reduce((a, h) => a + h.chance * guarded(s, h), 0);
+  }
+  const INSIDE = ['collapse', 'fire', 'ai_lock', 'typhoon_home'];
+  const homeHazards = (s) => (worldMods(s).homeDeath || []).filter((h) => (h.minFloor == null || s.floor >= h.minFloor) && (h.maxFloor == null || s.floor <= h.maxFloor)
+    && !(INSIDE.includes(h.id) && s.floor === 0));
+  function homeRisk(s) {
+    return homeHazards(s).reduce((a, h) => a + h.chance, 0) + (worldMods(s).nightDeath || []).reduce((a, h) => a + h.chance, 0);
+  }
+  // 外出工作：骨折加重消耗；事件可能致命；有些病在外面傳染
+  function outdoorHazard(s, job, rep) {
+    if (!D.OUTDOOR.includes(job)) return;
+    if (s.conds.fracture) { hurt(s, 8, job); rep.line('骨折令外出更辛苦', 'bad', -8, 'body'); }
+    const M = worldMods(s);
+    (M.outdoorDeath || []).forEach((h) => {
+      if (s.body <= 0) return;
+      const ch = h.chance * guarded(s, h);
+      if (rand(s) < ch) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你沒能回家。', 'bad'); }
+      else rep.line(evDef(h.ev).name + '：你平安回來了（致命機會 ' + Math.round(ch * 1000) / 10 + '%）', '');
+    });
+    (M.condChance || []).forEach((c) => { if (c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
+  }
+
   // ---------- 開局 ----------
   function newRun(opts) {
     const bg = D.BACKGROUNDS[opts.bg];
@@ -1890,7 +2311,8 @@ body.ct-open { overflow: hidden; }
       floor: bg.floor, water: 0.8,
       soul: bg.soul, conscience: bg.conscience, bonusSignal: 0, rentDiscount: 0,
       usedDilemmas: {}, dilemma: null, dilemmaDay: 0,
-      world: null, worldNext: 5, worldsSeen: {},
+      events: [], pending: [], eventNext: 4, eventsSeen: {}, nightSeen: {},
+      conds: {}, noRest: 0, restedToday: false, allnighters: 0, allnighterDay: 0, lastCause: null,
       rentHike: 0, graceUsed: false, debt: 0,
       premiumUntil: 0, realFoodDay: 0,
       // 創作：作品形式等級、AI 對你風格的記憶、靈感物件
@@ -1898,7 +2320,7 @@ body.ct-open { overflow: hidden; }
       objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
       unlocked: (opts.meta && opts.meta.unlocked) ? Object.keys(opts.meta.unlocked) : [],
       pastDeaths: (opts.meta && opts.meta.endings && opts.meta.endings.death) || 0,
-      gear: { tank: false, harpoon: false, bag: false, monitor: false },
+      gear: { tank: false, harpoon: false, bag: false, monitor: false, helmet: false, gasmask: false },
       auto: 0, removed: { smile: false, label: false },
       mastery: { label: 0, smile: 0, dive: 0 },
       cards: [], uid: 1,
@@ -2095,7 +2517,7 @@ body.ct-open { overflow: hidden; }
     s.cr += cr; s.stats.crEarned += cr;
     addSpark(s, -res.drain);
     const bodyCost = ot ? 14 : 8;
-    s.body -= bodyCost;
+    hurt(s, bodyCost, ot ? 'ot' : 'label');
     const caught = res.caught || 0;
     s.rating = clamp(s.rating + 0.01 * res.correct - 0.03 * res.wrong - 0.1 * caught, 1, 5);
     const autoBefore = s.auto;
@@ -2154,7 +2576,7 @@ body.ct-open { overflow: hidden; }
     const cr = Math.round(res.cr) + tip - fine;
     s.cr += cr; s.stats.crEarned += Math.max(0, cr);
     addSpark(s, -res.drain);
-    s.body -= 6;
+    hurt(s, 6, 'smile');
     s.mastery.smile++;
     s.stats.smiles += res.perfect + res.good;
     s.stats.perfects += res.perfect;
@@ -2221,7 +2643,7 @@ body.ct-open { overflow: hidden; }
     const rep = report(s, '舊城潛水');
     const fish = res.fish || {};
     const cost = Math.round(diveBodyCost(s) + 5 * res.hits * calmMult(s) + (res.drowned ? 15 : 0));
-    s.body -= cost;
+    hurt(s, cost, 'dive', { hits: res.hits, drowned: !!res.drowned, lockers: res.lockers || 0 });
     s.cr += res.money; s.stats.crEarned += res.money;
     const n = res.relics.length;
     const sp = addSpark(s, 0.05 * n);
@@ -2247,6 +2669,7 @@ body.ct-open { overflow: hidden; }
     res.relics.forEach((r) => rep.gain(r));
     train(s, { swim: 1.5, fit: 1, calm: 0.4 }, rep);
     teach(s, 'dive', 0.3, rep);
+    outdoorHazard(s, 'dive', rep);
     if (n && rand(s) < 0.1) { const o = randomObject(s, ['oldmap', 'neonshard', 'collectorbox']); if (o) gainObject(s, o, rep); }
     if (res.lockers) sin(s, 0.5 * res.lockers, rep, '撬開了別人的儲物櫃 ' + res.lockers + ' 個');
     return rep.done();
@@ -2267,7 +2690,8 @@ body.ct-open { overflow: hidden; }
     const cr = Math.round(res.cr);
     const body = Math.round((10 - seasonOf(s).outdoorBody) + 3 * res.hits * calmMult(s));
     s.cr += cr; s.stats.crEarned += cr;
-    s.body -= body;
+    hurt(s, body, 'delivery', { hits: res.hits });
+    if (res.hits >= 2 && rand(s) < 0.3) addCond(s, 'fracture', rep);
     const sp = addSpark(s, -0.15);
     s.rating = clamp(s.rating + 0.02 * res.deliveries - 0.08 * res.late, 1, 5);
     s.stats.deliveries += res.deliveries; s.stats.lateDeliveries += res.late;
@@ -2280,6 +2704,7 @@ body.ct-open { overflow: hidden; }
     if (rand(s) < 0.5) rep.gain('c_door');
     train(s, { fit: 1.5, swim: 1.2, calm: 0.5, social: 0.3 }, rep);
     teach(s, 'delivery', 0.25, rep);
+    outdoorHazard(s, 'delivery', rep);
     return rep.done();
   }
 
@@ -2307,7 +2732,7 @@ body.ct-open { overflow: hidden; }
     const rep = report(s, '陰謀論內容農場');
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
-    s.body -= 4;
+    hurt(s, 4, 'farm');
     const sp = addSpark(s, -0.25);
     s.stats.headlines += res.headlines; s.stats.shares += res.shares;
     countAction(s, 'farm');
@@ -2335,7 +2760,7 @@ body.ct-open { overflow: hidden; }
     const cr = Math.round(res.cr);
     const body = 4 - seasonOf(s).outdoorBody;
     s.cr += cr; s.stats.crEarned += cr;
-    s.body -= body;
+    hurt(s, body, 'busk');
     const sp = addSpark(s, Math.min(0.8, 0.15 + 0.02 * res.soloNotes + 0.03 * res.rounds));
     s.stats.buskNotes += res.notes || 0;
     s.stats.crowdMax = Math.max(s.stats.crowdMax, res.crowdMax);
@@ -2345,6 +2770,7 @@ body.ct-open { overflow: hidden; }
     rep.gain(res.crowdMax >= 6 ? 'p_clap' : res.soloNotes >= 12 ? 'p_chorus' : 'p_hat');
     train(s, { rhythm: 1.5, craft: 1, social: 0.8, imag: 0.5, obey: -0.5 }, rep);
     teach(s, 'busk', 0.4, rep);
+    outdoorHazard(s, 'busk', rep);
     return rep.done();
   }
 
@@ -2357,7 +2783,7 @@ body.ct-open { overflow: hidden; }
     const rep = report(s, '黑市義體診所');
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
-    s.body -= 5;
+    hurt(s, 5, 'clinic', { illegal: res.illegal });
     const sp = addSpark(s, -0.25);
     s.stats.patients += res.patients; s.stats.illegal += res.illegal;
     countAction(s, 'clinic');
@@ -2428,7 +2854,7 @@ body.ct-open { overflow: hidden; }
   }
   function applyVolunteer(s) {
     const rep = report(s, '在避難所做義工');
-    s.body -= 6;
+    hurt(s, 6, 'volunteer');
     const sp = addSpark(s, 0.2);
     s.stats.volunteer++;
     countAction(s, 'volunteer');
@@ -2437,12 +2863,17 @@ body.ct-open { overflow: hidden; }
     rep.gain('v_shelter');
     train(s, { empathy: 1.5, fit: 0.5 }, rep);
     teach(s, 'volunteer', 0.35, rep);
+    outdoorHazard(s, 'volunteer', rep);
     return rep.done();
   }
   function applyRest(s) {
     const rep = report(s, '休息');
     const b = s.floor === 0 ? 12 : 22;
     heal(s, b);
+    s.restedToday = true;
+    const cured = cureConds(s, 'rest');
+    if (cured.length) rep.line('休息過後，' + cured.join('、') + '好了', 'good');
+    if (s.noRest >= 3) rep.line('你終於休息了。連續 ' + s.noRest + ' 天沒有休息的紀錄歸零。', 'good');
     const sp = addSpark(s, 0.3);
     s.stats.rests++;
     countAction(s, 'rest');
@@ -2510,6 +2941,17 @@ body.ct-open { overflow: hidden; }
       list.push({ id: 'rest', group: 'night', name: '早點睡', sub: '明天又是新的一天',
         fx: [['body', '+' + (s.floor === 0 ? 12 : 22)], ['spark', '+0.3']] });
     }
+    // 危險提示：外出的致命機會、身體撐不住、過勞與連續通宵
+    const risk = outdoorRisk(s);
+    const BODY = { label: 8, ot: 14, smile: 6, delivery: 10, farm: 4, clinic: 5, dive: diveBodyCost(s), busk: 4, volunteer: 6, create: 4, allnighter: 15 };
+    list.forEach((a) => {
+      if (risk > 0 && D.OUTDOOR.includes(a.id)) a.fx.push(['danger', '致命 ' + Math.round(risk * 1000) / 10 + '%']);
+      if (s.conds.fracture && D.OUTDOOR.includes(a.id)) a.fx.push(['danger', '骨折：身體額外 −8']);
+      const cost = (BODY[a.id] || 0) + (s.conds.fracture && D.OUTDOOR.includes(a.id) ? 8 : 0);
+      if (cost && s.body - cost <= 0) a.fx.push(['danger', '身體撐不住：可能致命']);
+      if (a.id === 'allnighter' && s.allnighters >= 1) a.fx.push(['danger', '連續第 ' + (s.allnighters + 1) + ' 晚通宵' + (s.allnighters >= 2 ? '：猝死機會 20%' : '')]);
+      if (a.id === 'rest' && s.noRest >= 2) a.fx.push(['note', '重置過勞（已連續 ' + s.noRest + ' 天沒有休息）']);
+    });
     list.forEach((a) => { a.enabled = !a.reason; });
     return list;
   }
@@ -2533,6 +2975,9 @@ body.ct-open { overflow: hidden; }
     ['tank', 'harpoon', 'bag', 'monitor'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
     items.push({ id: 'offset', ...S.offset, cost: offsetCost(s), owned: s.soul <= 0,
       note: '你的靈魂現在重 ' + s.soul.toFixed(1) + ' 克；需求越大，價格越高' });
+    const curable = condsInfo(s).filter((c) => c.cure === 'medicine');
+    items.push({ id: 'medicine', ...S.medicine, owned: false, note: curable.length ? '你現在有：' + curable.map((c) => c.name).join('、') : '你現在沒有需要用藥的病痛', need: !curable.length });
+    ['helmet', 'gasmask'].forEach((k) => items.push({ id: k, ...S[k], owned: s.gear[k] }));
     if (worldMods(s).eraseShop) {
       items.push({ id: 'erase', name: '記憶刪除服務', desc: '忘記一段內疚的往事：靈魂 −4 克，良知 −15%，失去所有「記憶」素材', cost: 50 });
     }
@@ -2543,7 +2988,7 @@ body.ct-open { overflow: hidden; }
       if (s.floor < 8) items.push({ id: 'moveup', name: '搬上 ' + (s.floor + 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor + 1) + '，按金一期', cost: rentAmount(s, s.floor + 1) });
       if (s.floor > 1 && s.water < s.floor - 1) items.push({ id: 'movedown', name: '搬到 ' + (s.floor - 1) + ' 樓', desc: '每期租金 $' + rentAmount(s, s.floor - 1) + '，但離水更近', cost: 0 });
     }
-    items.forEach((it) => { it.enabled = !it.owned && s.cr >= it.cost; });
+    items.forEach((it) => { it.enabled = !it.owned && !it.need && s.cr >= it.cost; });
     return items;
   }
   function buy(s, id) {
@@ -2559,7 +3004,8 @@ body.ct-open { overflow: hidden; }
       case 'realfood': s.realFoodDay = s.day; heal(s, 15); addSpark(s, 0.2); break;
       case 'tools': s.handBonus = 1; break;
       case 'studio': s.objSlots = Math.min(5, s.objSlots + 1); break;
-      case 'tank': case 'harpoon': case 'bag': case 'monitor': s.gear[id] = true; break;
+      case 'tank': case 'harpoon': case 'bag': case 'monitor': case 'helmet': case 'gasmask': s.gear[id] = true; break;
+      case 'medicine': cureConds(s, 'medicine'); break;
       case 'offset': s.soul = round1(Math.max(0, s.soul - 1.5)); s.offsets = (s.offsets || 0) + 1; break;
       case 'erase':
         s.soul = round1(Math.max(0, s.soul - 4));
@@ -2640,7 +3086,7 @@ body.ct-open { overflow: hidden; }
     s.dilemma = null;
     const rep = report(s, '抉擇：' + o.label);
     if (o.cr) { s.cr += o.cr; rep.delta('cr', o.cr); }
-    if (o.body) { heal(s, o.body); rep.delta('body', o.body); }
+    if (o.body) { if (o.body > 0) heal(s, o.body); else hurt(s, -o.body, d.id === 'rescue' ? 'rescue' : 'dilemma'); rep.delta('body', o.body); }
     if (o.spark) rep.delta('spark', addSpark(s, o.spark, true));
     if (o.rating) { s.rating = clamp(o.rating === 5 ? 5 : s.rating + o.rating, 1, 5); rep.line('平台評分 ' + (o.rating === 5 ? '變成 5.0' : (o.rating > 0 ? '+' : '') + o.rating), o.rating > 0 ? 'good' : 'bad'); }
     if (o.signal) { const v = sigScale(s, o.signal); s.bonusSignal += v; rep.line('外星訊號 ' + (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString(), v > 0 ? 'good' : 'bad'); }
@@ -2667,12 +3113,11 @@ body.ct-open { overflow: hidden; }
   }
 
   // ---------- 早上 ----------
-  function startWorldEvent(s, feed) {
-    const pool = D.WORLD_EVENTS.filter((w) => !s.worldsSeen[w.id]);
-    const w = pick(s, pool.length ? pool : D.WORLD_EVENTS);
-    s.world = { id: w.id, until: s.day + w.dur - 1 };
-    s.worldsSeen[w.id] = (s.worldsSeen[w.id] || 0) + 1;
-    feed.unshift({ kind: 'world', text: '【世界事件：' + w.name + '】' + w.news });
+  function startEvent(s, id, feed) {
+    const w = evDef(id);
+    s.events.push({ id, until: s.day + w.dur - 1 });
+    s.eventsSeen[id] = (s.eventsSeen[id] || 0) + 1;
+    if (feed) feed.unshift({ kind: 'world', grade: w.grade, text: '【' + D.SCOPES[w.scope].short + '・' + w.grade + ' 級：' + w.name + '】' + w.news + (w.sudden ? '（沒有任何預兆）' : '') });
     const fx = w.startFx || {};
     if (fx.water) s.water = Math.min(8.5, s.water + fx.water);
     if (fx.auto) s.auto = clamp(s.auto + fx.auto, 0, 100);
@@ -2680,19 +3125,58 @@ body.ct-open { overflow: hidden; }
     if (fx.crPct) s.cr = Math.round(s.cr * (1 + fx.crPct));
     if (fx.paranoia) addParanoia(s, fx.paranoia);
     if (fx.card) addCard(s, fx.card);
-    if (w.id === 'aliens' && !ownsObject(s, 'alienradio')) gainObject(s, 'alienradio', null);
+    if (fx.cond) addCond(s, fx.cond, null);
+    if (id === 'aliens' && !ownsObject(s, 'alienradio')) gainObject(s, 'alienradio', null);
     if (fx.takeNpc) {
       const alive = s.npcs.filter((n) => n.alive);
       if (alive.length) { const n = pick(s, alive); n.alive = false; s.saturation = Math.max(0.25, s.saturation - 0.15); }
     }
   }
+  // 選一個新事件：同一範圍不會同時有兩個；等級越高越罕見，而且要到某一天才會出現
+  function pickEvent(s) {
+    const busy = s.events.map((e) => evDef(e.id).scope).concat(s.pending.map((p) => evDef(p.id).scope));
+    const pool = D.WORLD_EVENTS.filter((w) => s.day >= D.GRADES[w.grade].minDay && !busy.includes(w.scope) && (!w.when || w.when(s)));
+    const fresh = pool.filter((w) => !s.eventsSeen[w.id]);
+    const P = fresh.length ? fresh : pool;
+    if (!P.length) return null;
+    let r = rand(s) * P.reduce((a, w) => a + D.GRADES[w.grade].w, 0);
+    for (const w of P) { r -= D.GRADES[w.grade].w; if (r <= 0) return w; }
+    return P[P.length - 1];
+  }
+  function scheduleEvents(s, feed) {
+    s.pending.filter((p) => p.day <= s.day).forEach((p) => startEvent(s, p.id, feed));
+    s.pending = s.pending.filter((p) => p.day > s.day);
+    if (s.events.length + s.pending.length < 2 && s.day >= s.eventNext && rand(s) < 0.32) {
+      const w = pickEvent(s);
+      if (w) {
+        if (w.sudden || !w.omen) startEvent(s, w.id, feed);
+        else s.pending.push({ id: w.id, day: s.day + (w.lead || 2), fresh: true });
+        s.eventNext = s.day + 2 + Math.floor(rand(s) * 4);
+      }
+    }
+    // 預兆：洞察高的人看得出還有多少天、事件有多嚴重
+    s.pending.forEach((p) => {
+      const w = evDef(p.id);
+      feed.unshift({ kind: 'omen', text: (p.fresh ? '【新預兆】' : '【預兆】') + w.omen
+        + (A(s, 'insight') >= 50 ? '（洞察：' + (p.day - s.day) + ' 天後，' + w.grade + ' 級）' : A(s, 'insight') >= 30 ? '（洞察：很快就會發生）' : '') });
+      p.fresh = false;
+    });
+    activeEvents(s).forEach(({ def, until }) => {
+      if (s.eventsSeen[def.id] && until - s.day + 1 < def.dur) feed.unshift({ kind: 'world', grade: def.grade, text: '【' + def.grade + ' 級事件持續：' + def.name + '】還有 ' + (until - s.day + 1) + ' 天。' });
+    });
+  }
   function morning(s) {
     if (s.morning && s.morning.day === s.day) return s.morning;
     const S = seasonOf(s);
     const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
-    // 世界事件：沒有進行中的事件時，隔一段日子就可能爆發一個
-    if (!s.world && s.day >= s.worldNext && rand(s) < 0.22) startWorldEvent(s, feed);
-    else if (s.world) feed.unshift({ kind: 'world', text: '【世界事件持續：' + worldDef(s).name + '】還有 ' + (s.world.until - s.day + 1) + ' 天。' });
+    // 事件：大部分會先出現預兆，少數 S 級無預警爆發
+    scheduleEvents(s, feed);
+    const risk = outdoorRisk(s), home = homeRisk(s);
+    if (risk > 0) feed.push({ kind: 'warn', text: '外出工作（潛水、外送、表演、義工）有致命危險：約 ' + Math.round(risk * 1000) / 10 + '%。' });
+    if (home > 0) feed.push({ kind: 'warn', text: '今晚留在 ' + (s.floor ? s.floor + ' 樓' : '天橋下') + '有致命危險：約 ' + Math.round(home * 1000) / 10 + '%。' });
+    condsInfo(s).forEach((c) => { if (c.lethal) feed.push({ kind: 'warn', text: '你的「' + c.name + '」已經第 ' + c.days + ' 天，再拖 ' + c.left + ' 天會致命。商店有藥箱。' }); });
+    if (s.noRest >= 3) feed.push({ kind: 'warn', text: '你已經連續 ' + s.noRest + ' 天沒有休息。' + (s.noRest >= 4 ? '今晚起有猝死的危險。' : '') });
+    if (s.cr < foodCost(s) * 2) feed.push({ kind: 'warn', text: '你的錢不夠吃兩晚飯。餓肚子睡覺會令身體 −25。' });
     (s.newsQueue || []).forEach((t) => feed.push({ kind: 'news', text: t }));
     s.newsQueue = [];
     feed.push(rand(s) < 0.5 ? { kind: 'ad', text: pick(s, D.FEED.ads) } : { kind: 'post', text: pick(s, D.FEED.conspiracy) });
@@ -2730,7 +3214,9 @@ body.ct-open { overflow: hidden; }
     const e = ev.alt && A(s, ev.alt.stat) >= ev.alt.min ? ev.alt : ev;
     rep.event = e.text;
     rep.line(e.text, 'event');
-    if (e.body) { const b = e.body < 0 ? Math.round(e.body * calmMult(s)) : e.body; heal(s, b); rep.delta('body', b); }
+    s.nightSeen[ev.id] = true;
+    if (e.body) { const b = e.body < 0 ? Math.round(e.body * calmMult(s)) : e.body; if (b > 0) heal(s, b); else hurt(s, -b, 'ev:' + ev.id); rep.delta('body', b); }
+    if (e.cond && rand(s) < e.cond.chance) addCond(s, e.cond.id, rep);
     if (e.spark) rep.delta('spark', addSpark(s, e.spark, true));
     if (e.cr) { s.cr = Math.max(0, s.cr + e.cr); rep.delta('cr', e.cr); }
     if (e.crPct) { const loss = Math.min(e.crMax, Math.round(s.cr * -e.crPct)); s.cr -= loss; rep.delta('cr', -loss); }
@@ -2760,28 +3246,62 @@ body.ct-open { overflow: hidden; }
       s.cr -= food;
       rep.line(s.season === 'heat' ? '晚餐與電費' : '晚餐（合成糊）', 'cost', -food, 'cr');
     } else {
-      s.body -= 22; s.stats.hungryDays++;
+      hurt(s, 25, 'hunger'); s.stats.hungryDays++;
       addSpark(s, -0.3);
-      rep.line('沒錢吃飯，餓著肚子睡覺', 'bad', -22, 'body');
+      rep.line('沒錢吃飯，餓著肚子睡覺', 'bad', -25, 'body');
       rep.line('飢餓令你無法思考', 'bad', -0.3, 'spark');
       rep.gain('e_hunger');
       train(s, { fit: -0.5 }, rep);
       if (s.stats.hungryDays === 3) gainObject(s, 'emptybowl', rep);
     }
     // 睡覺
-    if (s.floor === 0) { s.body -= 10; rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
-    else if (flooded(s)) { s.body -= 8; rep.line('家裡正在淹水', 'bad', -8, 'body'); }
-    else { heal(s, 8); rep.line('睡覺', '', 8, 'body'); }
-    if (S.nightBody) { s.body += S.nightBody; rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
-    // 世界事件的每日影響
-    if (M.bodyDaily) { const b = Math.round(M.bodyDaily * calmMult(s)); s.body += b; rep.line('世界事件：' + worldDef(s).name, 'bad', b, 'body'); }
-    if (M.sparkDaily) rep.line('世界事件：' + worldDef(s).name, 'good', addSpark(s, M.sparkDaily, true), 'spark');
+    if (s.floor === 0) { hurt(s, 10, 'homeless'); rep.line('在天橋下睡不好', 'bad', -10, 'body'); }
+    else if (flooded(s)) { hurt(s, 8, 'floodhome'); rep.line('家裡正在淹水', 'bad', -8, 'body'); if (rand(s) < 0.12) addCond(s, 'mold', rep); }
+    else if (s.conds.insomnia) rep.line('失眠：整晚沒有睡著', 'bad');
+    else { heal(s, 6); rep.line('睡覺', '', 6, 'body'); }
+    if (S.nightBody) { hurt(s, -S.nightBody, 'heatnight'); rep.line('熱得睡不著', 'bad', S.nightBody, 'body'); }
+    // 事件的每日影響
+    if (M.bodyDaily) {
+      const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
+      const b = Math.round(M.bodyDaily * calmMult(s));
+      if (b < 0) { hurt(s, -b, 'daily:' + src.def.id); rep.line('事件：' + src.def.name, 'bad', b, 'body'); }
+    }
+    if (M.sparkDaily) rep.line('事件的影響', M.sparkDaily > 0 ? 'good' : 'bad', addSpark(s, M.sparkDaily, true), 'spark');
+    // 病痛
+    condsInfo(s).forEach((c) => {
+      const def = D.CONDS[c.id];
+      if (def.daily.body) { hurt(s, -def.daily.body, 'cond:' + c.id, { days: c.days }); rep.line(def.name + '（第 ' + c.days + ' 天）', 'bad', def.daily.body, 'body'); }
+      if (def.lethal && c.days >= def.lethal && s.body > 0) { kill(s, def.death); rep.line(def.name + '拖得太久了。', 'bad'); }
+      else if (def.dur && c.days >= def.dur) { delete s.conds[c.id]; rep.line(def.name + '好了', 'good'); }
+    });
+    // 致命危險：在家（按樓層）與每晚
+    homeHazards(s).forEach((h) => {
+      if (s.body <= 0) return;
+      if (rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '：你住的' + (s.floor ? ' ' + s.floor + ' 樓' : '天橋底') + '沒能撐過今晚。', 'bad'); }
+      else rep.line(evDef(h.ev).name + '：你撐過了今晚（致命機會 ' + Math.round(h.chance * 100) + '%）', '');
+    });
+    (M.nightDeath || []).forEach((h) => { if (s.body > 0 && rand(s) < h.chance) { kill(s, h.id); rep.line(evDef(h.ev).name + '……', 'bad'); } });
+    (M.condChance || []).forEach((c) => { if (!c.outdoor && rand(s) < c.chance) addCond(s, c.id, rep); });
+    // 過勞：連續多天沒有休息，有猝死的危險
+    s.noRest = s.restedToday ? 0 : s.noRest + 1;
+    s.restedToday = false;
+    if (s.noRest >= 5 && s.body > 0) {
+      const ch = (s.noRest - 4) * 0.05;
+      if (rand(s) < ch) { kill(s, 'karoshi'); rep.line('連續 ' + s.noRest + ' 天沒有休息。你的心臟停了。', 'bad'); }
+      else rep.line('連續 ' + s.noRest + ' 天沒有休息（猝死機會 ' + Math.round(ch * 100) + '%）', 'bad');
+    } else if (s.noRest >= 3) rep.line('連續 ' + s.noRest + ' 天沒有休息。第 5 天起會有猝死的危險。', 'bad');
+    // 通宵：連續通宵越多晚越危險，而且容易失眠
+    s.allnighters = s.allnighterDay === s.day ? s.allnighters + 1 : 0;
+    if (s.allnighterDay === s.day && rand(s) < 0.4) addCond(s, 'insomnia', rep);
+    if (s.allnighters >= 3 && s.body > 0 && rand(s) < 0.2) { kill(s, 'art_chain'); rep.line('連續第 ' + s.allnighters + ' 個通宵。', 'bad'); }
     if (M.paranoiaDaily) addParanoia(s, M.paranoiaDaily);
     else addParanoia(s, -0.8);
     // 補充劑反彈
     if (s.flags.crashDay === s.day && s.flags.crashAmt) {
       addSpark(s, -s.flags.crashAmt);
+      hurt(s, 8, 'supplement');
       rep.line('靈感補充劑藥效過去，火花反彈下跌', 'bad', -s.flags.crashAmt, 'spark');
+      rep.line('副作用：心跳很快', 'bad', -8, 'body');
       s.flags.crashAmt = 0;
     }
     // 平台活躍度
@@ -2836,12 +3356,10 @@ body.ct-open { overflow: hidden; }
     }
     // 麻木
     if (s.spark <= 0.2) s.numbStreak++; else s.numbStreak = 0;
-    // 世界事件結束
-    if (s.world && s.day >= s.world.until) {
-      rep.line('世界事件結束：' + worldDef(s).name, 'news');
-      s.world = null;
-      s.worldNext = s.day + 4 + Math.floor(rand(s) * 6);
-    }
+    // 事件結束
+    s.events.filter((e) => s.day >= e.until).forEach((e) => rep.line('事件結束：' + evDef(e.id).name, 'news'));
+    if (s.events.some((e) => s.day >= e.until)) s.eventNext = Math.max(s.eventNext, s.day + 2 + Math.floor(rand(s) * 4));
+    s.events = s.events.filter((e) => s.day < e.until);
     // 探射燈
     rep.searchlight = Math.min(1.5, signal(s) / threshold(s));
     // 篩選日；前兩晚會被傳召入夢面試
@@ -2915,8 +3433,11 @@ body.ct-open { overflow: hidden; }
   function endingFor(s, type) {
     const n = s.works.length;
     switch (type) {
-      case 'death':
-        return { type, day: s.day, title: '死亡', text: epitaph(s) };
+      case 'death': {
+        const d = IE.Deaths.resolve(s);
+        return { type, day: s.day, title: '死亡：' + d.name, text: IE.Deaths.text(s, d.ep), deathId: d.id, deathName: d.name,
+          autopsy: IE.Deaths.text(s, d.au) };
+      }
       case 'grey':
         return { type, day: s.day, title: '灰化',
           text: '你沒有死，只是不再思考。浮城多了一個非常有效率的標註員，評分 ' + s.rating.toFixed(1) + ' 星。' };
@@ -2956,6 +3477,13 @@ body.ct-open { overflow: hidden; }
       meta.stamps = meta.stamps || {};
       dossier.stamps.forEach((x) => { meta.stamps[x.id] = true; });
     }
+    // 死亡圖鑑與事件圖鑑
+    if (finalType === 'death' && s.ended && s.ended.deathId) {
+      meta.deaths = meta.deaths || {};
+      meta.deaths[s.ended.deathId] = (meta.deaths[s.ended.deathId] || 0) + 1;
+    }
+    meta.eventsSeen = meta.eventsSeen || {};
+    Object.keys(s.eventsSeen || {}).concat(Object.keys(s.nightSeen || {})).forEach((k) => { meta.eventsSeen[k] = true; });
     // 創作的跨局紀錄與解鎖
     meta.totalWorks = (meta.totalWorks || 0) + s.works.length;
     meta.bestPlay = Math.max(meta.bestPlay || 0, s.stats.bestPlay || 0);
@@ -3010,7 +3538,8 @@ body.ct-open { overflow: hidden; }
   IE.Rules = {
     newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX, sparkMax,
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
-    train, bodyMax, worldMods, worldInfo, addParanoia, foodCost,
+    train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
+    hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
     quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
@@ -3230,13 +3759,13 @@ body.ct-open { overflow: hidden; }
     const perk = D.BACKGROUNDS[s.bg].perk;
     const refund = { cr: all ? C.allnighterCost : C.cost, body: all ? 15 : 4, spark: s.spark };
     s.cr -= refund.cr;
-    s.body -= refund.body;
-    if (all) RL.addSpark(s, -0.2, true);
+    RL.hurt(s, refund.body, all ? 'allnighter' : 'create');
+    if (all) { RL.addSpark(s, -0.2, true); s.allnighterDay = s.day; }
     s.session = {
       mode: all ? 'allnighter' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
       handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand,
-      plays: C.plays + m.plays + (all ? 1 : 0), discards: C.discards + m.discards + (all ? 1 : 0),
+      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
     draw(s);
@@ -3344,6 +3873,7 @@ body.ct-open { overflow: hidden; }
     const ses = s.session;
     if (!ses || ses.log.length) return false;
     s.cr += ses.refund.cr; s.body += ses.refund.body; s.spark = ses.refund.spark;
+    if (ses.mode === 'allnighter') s.allnighterDay = 0;
     s.session = null;
     return true;
   }
@@ -3568,7 +4098,9 @@ body.ct-open { overflow: hidden; }
       s.cr >= 600 && { p: s.cr / 800, t: '持有 ' + fmt(s.cr) + ' 信用點。我們不明白它打算甚麼時候使用。' },
       { p: 0.3, t: '平台評分 ' + s.rating.toFixed(1) + ' 星。地球人似乎很在乎這個數字。' },
       kind === 'guardian' && { p: 3, t: '拒絕了光束。這是我們第一次被拒絕，正在檢討流程。' },
-      kind === 'death' && { p: 3, t: '於第 ' + s.day + ' 天損毀。損毀原因：身體耗盡。' },
+      kind === 'death' && { p: 3, t: '於第 ' + s.day + ' 天損毀。損毀原因：' + ((s.ended && s.ended.deathName) || '身體耗盡') + '。' },
+      kind === 'death' && s.ended && s.ended.autopsy && { p: 2.95, t: '驗屍筆記：' + s.ended.autopsy },
+      Object.keys(s.eventsSeen || {}).length >= 6 && { p: 0.7, t: '觀察期間經歷了 ' + Object.keys(s.eventsSeen).length + ' 場大型事件，其中 ' + Object.keys(s.eventsSeen).filter((k) => IE.DATA.WORLD_EVENTS.some((w) => w.id === k && (w.grade === 'S' || w.grade === 'A'))).length + ' 場屬於 A 級或以上。' },
       kind === 'grey' && { p: 3, t: '已連續多天沒有產生火花，但仍然準時上班。' },
       kind === 'heavy' && { p: 3, t: '光束嘗試拉起它三次，都失敗了。' },
       { p: 0.4, t: s.floor ? '最後居住於 ' + s.floor + ' 樓，當時水位 ' + s.water.toFixed(1) + ' 樓。' : '最後居住於天橋下。' },
@@ -4284,10 +4816,12 @@ body.ct-open { overflow: hidden; }
     },
     // 世界事件的畫面：戰爭的火光、失控 AI 的雜訊、停電、飛碟群、霉菌、派對煙花、熱穹
     drawWorld(c, s, night) {
-      const w = s.world && IE.Rules.worldInfo(s);
-      if (!w || !w.visual) return;
+      if (!s.events || !IE.Rules.eventsInfo) return;
+      IE.Rules.eventsInfo(s).forEach((w) => { if (w.visual) this.drawVisual(c, s, night, w.visual); });
+    },
+    drawVisual(c, s, night, visual) {
       const t = this.t;
-      switch (w.visual) {
+      switch (visual) {
         case 'war':
           c.fillStyle = 'rgba(255,70,40,0.10)'; c.fillRect(0, 0, 320, 180);
           for (let i = 0; i < 3; i++) {
@@ -7183,7 +7717,7 @@ body.ct-open { overflow: hidden; }
       + '</' + tag + '>';
   }
   function fxHtml(fx) {
-    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '' };
+    const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
       return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
@@ -7202,7 +7736,16 @@ body.ct-open { overflow: hidden; }
     const toRent = R().nextRentDay(s) - s.day;
     const toReview = R().reviewDay(s) - s.day;
     const flooded = R().flooded(s);
-    const world = R().worldInfo(s);
+    const evs = R().eventsInfo(s);
+    const gb = (g) => '<b class="gbadge g-' + g + '">' + g + '</b>';
+    const conds = R().condsInfo(s);
+    const orisk = R().outdoorRisk(s), hrisk = R().homeRisk(s);
+    const danger = evs.map((w) => '<span class="chip world" title="' + esc(D().SCOPES[w.scope].name + '：' + w.news) + '">' + gb(w.grade) + esc(w.name) + '・剩 ' + w.left + ' 天</span>').join('')
+      + (s.pending && s.pending.length ? '<span class="chip omen" title="手機動態裡有預兆">預兆 ×' + s.pending.length + '</span>' : '')
+      + conds.map((c) => '<span class="chip ' + (c.lethal ? 'warn' : 'cond') + '" title="' + esc(c.desc) + '">' + esc(c.name) + (c.lethal ? '・' + c.left + ' 天後致命' : '・第 ' + c.days + ' 天') + '</span>').join('')
+      + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
+      + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
+      + (hrisk > 0 ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '');
     const bmax = R().bodyMax(s);
     const rentChip = s.floor > 0
       ? '<span class="chip' + (toRent <= 1 && s.cr < rent ? ' warn' : '') + '">交租 ' + (toRent === 0 ? '今晚' : toRent + ' 天後') + ' · $' + fmt(rent) + '</span>'
@@ -7212,7 +7755,7 @@ body.ct-open { overflow: hidden; }
       + '<div class="hud-day"><span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + D().DAYS + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
       + '<span class="chip season">' + season.name + '</span>' + rentChip
       + '<span class="chip' + (toReview === 0 ? ' warn' : '') + '">' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後') + '</span>'
-      + (world ? '<span class="chip world" title="' + esc(world.news) + '">' + esc(world.name) + '・剩 ' + world.left + ' 天</span>' : '')
+      + danger
       + '<div class="hud-btns">'
       + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
@@ -7400,8 +7943,8 @@ body.ct-open { overflow: hidden; }
 
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
-    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '系統提示', world: '突發新聞' };
-    const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
+    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆' };
+    const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
     const shop = '<h3>商店</h3><div class="shop">' + shopItems.map((it) => '<div class="shop-item' + (it.obj ? ' has-icon' : '') + '">' + (it.obj ? IE.Icons.obj(it.obj, 36) : '') + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
@@ -7441,7 +7984,7 @@ body.ct-open { overflow: hidden; }
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button></div>'
-      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
+      + '<div class="stats-row"><span>已玩 <b>' + (meta.runs || 0) + '</b> 局</span><span>結局 <b>' + endings + '/' + ENDING_COUNT + '</b></span><span>人類模組 <b>' + types + '/' + IE.Dossier.ARCHETYPES.length + '</b></span><span>死法 <b>' + Object.keys(meta.deaths || {}).length + '/' + D().DEATHS.length + '</b></span><span>事件 <b>' + Object.keys(meta.eventsSeen || {}).length + '/' + (D().WORLD_EVENTS.length + D().EVENTS.length) + '</b></span><span>組合 <b>' + recipes + '/' + D().RECIPES.length + '</b></span>'
       + (meta.relics && meta.relics.length ? '<span>舊城裡有 <b>' + meta.relics.length + '</b> 件你前世的作品</span>' : '') + '</div>'
       + '<p class="mute" style="font-size:12px;margin:0">自動存檔，無法讀檔重來。建議開啟聲音。</p>'
       + '</div>';
@@ -7549,7 +8092,12 @@ body.ct-open { overflow: hidden; }
       + '<li><b>舊城潛水</b>：捕魚、打撈遺物、撬儲物櫃。</li>'
       + '<li><b>街頭表演</b>：唯一會令火花變旺的工作，但收入很少。</li>'
       + '<li><b>聊天、義工、休息</b>：恢復火花、讓靈魂變輕、恢復身體。</li></ul>'
-      + '<h3>世界事件</h3><p>浮城隨時會出事：大廈水浸、外星人干預、世界大戰、AI 失控、全城停電、疫症、股災、選舉……每個事件都會改變工作收入、物價、靈魂的重量，甚至令某些工作停擺。</p>'
+      + '<h3>事件（100 種，S 至 E 級）</h3><p>事件分為宇宙級、世界級、國家級（浮城）、地區級、街坊級，按影響力分為 S 至 E 級。長期事件會持續數天，改變收入、物價、靈魂重量，甚至令某些工作停擺；最多同時有兩個。大部分事件會先在手機出現<b>預兆</b>（洞察越高，看得越清楚），少數 S 級事件沒有任何預兆。</p>'
+      + '<h3>死亡（100 種以上）</h3><ul>'
+      + '<li>死因會按當天傷你最重的那件事，以及當時的處境判斷，並收錄在跨局的<b>死亡圖鑑</b>。</li>'
+      + '<li><b>致命危險</b>：有些事件令外出工作（潛水、外送、表演、義工）有致命機會，有些令住在某些樓層的人晚上有致命機會（海嘯淹低層，火災燒高層）。狀態列會顯示機會率；商店的頭盔、防毒面罩可以減低機會，搬樓可以避開。</li>'
+      + '<li><b>病痛</b>：霉菌肺、新型病毒、鼠疫熱拖太久會致命，要買藥箱；中暑、失眠要休息；骨折令外出更辛苦。</li>'
+      + '<li><b>過勞</b>：連續 5 天沒有休息，每晚都有猝死的機會。連續通宵創作三晚以上也一樣。</li></ul>'
       + '<h3>靈魂重量與良知</h3><ul>'
       + '<li>外星人的牽引光束最多只能拉起 <b>21 克</b>的靈魂。太重的人會污染他們的神經網絡，訊號再高也不會被帶走。</li>'
       + '<li><b>良知是負重</b>：同一件虧心事，良知越強、同理心越高就越重。可是每做一次，良知都會被磨損，下一件事就越來越輕。</li>'
@@ -7596,7 +8144,19 @@ body.ct-open { overflow: hidden; }
         + '<b>' + (seen ? esc(o.name) : open ? '？？？' : '未解鎖') + '</b>'
         + '<span>' + (seen ? esc(o.desc) : open ? '來源：' + esc(o.npc ? '與朋友成為好友' : o.start ? '某個角色的隨身物' : (o.src || '二手市集')) : '解鎖條件：' + esc(o.unlock.text)) + '</span></div>';
     }).join('');
+    const evSeen = meta.eventsSeen || {};
+    const allEv = D().WORLD_EVENTS.map((w) => ({ id: w.id, name: w.name, scope: w.scope, grade: w.grade, text: w.news, long: true }))
+      .concat(D().EVENTS.map((e) => ({ id: e.id, name: e.text.split(/[，。]/)[0], scope: e.scope, grade: e.grade, text: e.text })));
+    const events = Object.keys(D().SCOPES).map((sc) => '<h4>' + D().SCOPES[sc].name + '</h4><div class="recipes">' + allEv.filter((e) => e.scope === sc)
+      .sort((a, b) => 'SABCDE'.indexOf(a.grade) - 'SABCDE'.indexOf(b.grade)).map((e) => '<div class="recipe' + (evSeen[e.id] ? '' : ' unknown') + '"><b><b class="gbadge g-' + e.grade + '">' + e.grade + '</b>'
+        + (evSeen[e.id] ? esc(e.name) : '？？？') + '</b>' + (evSeen[e.id] ? '<span class="mute">' + esc(e.text) + '</span>' : '<span class="mute">' + (e.long ? '持續數天的事件' : '一晚的事件') + '</span>') + '</div>').join('') + '</div>').join('');
+    const dSeen = meta.deaths || {};
+    const deaths = Object.keys(D().DEATH_CATS).map((cat) => '<h4>' + D().DEATH_CATS[cat] + '</h4><div class="recipes">' + D().DEATHS.filter((d) => d.cat === cat)
+      .map((d) => '<div class="recipe death' + (dSeen[d.id] ? '' : ' unknown') + '"><b>' + (dSeen[d.id] ? esc(d.name) : '？？？') + '</b>'
+        + '<span class="mute">' + (dSeen[d.id] ? '死過 ' + dSeen[d.id] + ' 次・' : '提示：') + esc(d.hint) + '</span></div>').join('') + '</div>').join('');
     return '<div class="modal wide"><h2>收藏</h2><h3>結局</h3><div class="recipes">' + endings + '</div>'
+      + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
+      + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
       + '<h3>靈感物件（' + Object.keys(seenO).length + '/' + D().OBJECTS.length + '）</h3><div class="recipes">' + objs + '</div>'
       + IE.Craft.codexHtml({ discovered: {}, formsSeen: {}, forms: meta.forms || {} }, meta).replace(/^<div class="modal wide"><h2>創作圖鑑<\/h2>/, '').replace(/<div class="btn-row">[\s\S]*$/, '')
       + '<h3>人類模組（' + Object.keys(at).length + '/' + DS.ARCHETYPES.length + '）</h3><div class="recipes">' + types + '</div>'

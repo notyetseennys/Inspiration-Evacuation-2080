@@ -1,4 +1,4 @@
-// 《靈感撤離 2080》事件資料：晚上的隨機事件、持續數天的世界事件、早上的道德抉擇。
+// 《靈感撤離 2080》早上的道德抉擇（事件見 data-incidents.js）。
 // 全部是資料；規則在 rules.js 套用。
 (function (factory) {
   const root = typeof window !== 'undefined' ? window : globalThis;
@@ -6,102 +6,6 @@
   factory(root.IE);
 })(function (IE) {
   'use strict';
-
-  // ---------- 晚上的隨機事件 ----------
-  // w：權重；season：季節加權；onlySeason：只在該季節出現；when：額外條件
-  // alt：某項能力值夠高時改為另一個結果
-  const EVENTS = [
-    { id: 'soup',    w: 3, text: '隔壁的婆婆煲了湯，順手給你送來一碗。', body: 10, card: 'e_soup' },
-    { id: 'flood',   w: 3, text: '水淹到門口，你整晚都在舀水。',         body: -5, card: 'e_flood', season: { storm: 2 } },
-    { id: 'rob',     w: 2, text: '回家途中遇上搶劫。',                   crPct: -0.25, crMax: 60, card: 'e_rob',
-      alt: { stat: 'calm', min: 55, text: '回家途中有人想搶劫你。你冷靜地把他勸走了。', stats: { calm: 1 } } },
-    { id: 'hike',    w: 2, text: '房東說下期起加租一成。',               rentHike: 0.1, card: 'e_rent' },
-    { id: 'dark',    w: 2, text: '停電了。在黑暗中，你想到了一些東西。', spark: 0.2, card: 'e_dark', season: { heat: 2 } },
-    { id: 'bigorder',w: 2, text: '黑市大單：明天標註收入加倍。',         flag: 'bigOrder' },
-    { id: 'signal',  w: 2, text: '收音機收到一段不屬於地球的訊號。',     card: 'e_alien', paranoia: 3 },
-    { id: 'algo',    w: 2, text: '平台演算法更新，你的評分無故下跌。',   rating: -0.3 },
-    { id: 'tip',     w: 2, text: '有人透露消息：明天舊城有寶物。',       flag: 'richDive' },
-    { id: 'cult',    w: 1, text: '邪教上門派傳單，說水災是「被提」的預兆。', card: 'e_cult', paranoia: 2 },
-    { id: 'roof',    w: 2, text: '酸雨蝕穿屋頂，漏了一整晚。',           body: -8, onlySeason: 'acid' },
-    { id: 'heatwave',w: 2, text: '熱浪導致停電，冷氣停了。',             body: -8, onlySeason: 'heat' },
-    { id: 'lift',    w: 2, text: '電梯又壞了，你爬了十幾層樓梯。',       body: -4, stats: { fit: 1 } },
-    { id: 'leak',    w: 2, text: '天花板漏水，你整晚拿著水桶接水。',     body: -3, card: 'e_flood' },
-    { id: 'cat',     w: 2, text: '一隻濕透的貓躲進你家，不肯走。',       spark: 0.2, stats: { empathy: 1 }, card: 'e_cat' },
-    { id: 'fight',   w: 2, text: '隔壁夫婦又在吵架。你聽到很多真話。',   card: 'e_fight', stats: { insight: 1 } },
-    { id: 'drone',   w: 2, text: '廣告無人機在你窗外播放了一整晚。',     body: -3, spark: -0.1 },
-    { id: 'oldfriend', w: 2, text: '一個多年沒聯絡的朋友傳來訊息：「你還好嗎？」', spark: 0.3, stats: { social: 1 } },
-    { id: 'scamcall', w: 2, text: '一個自稱外星人的來電說你已被錄取，只需先付 $40 手續費。你付了。', cr: -40,
-      alt: { stat: 'insight', min: 40, text: '一個自稱外星人的來電說你已被錄取，只需先付手續費。你笑著掛了線。', card: 'e_scam', stats: { insight: 1 } } },
-    { id: 'pocket',  w: 2, text: '你在舊外套的口袋裡找到 $20。',         cr: 20 },
-    { id: 'surge',   w: 2, text: '電力突波燒壞了你的電器，維修花了 $30。', cr: -30,
-      alt: { stat: 'tech', min: 45, text: '電力突波燒壞了你的電器。你自己修好了。', stats: { tech: 1 } } },
-    { id: 'kidart',  w: 2, text: '樓下的小孩送你一幅畫，畫裡的你在笑。', card: 'e_kidart', spark: 0.1 },
-    { id: 'fishrain', w: 1, text: '天上掉下了一場魚雨。沒有人解釋為甚麼。', body: 5, card: 'e_fishrain', paranoia: 2 },
-    { id: 'mirror',  w: 1, when: (s) => s.soul > 15, text: '你在鏡子裡看見一個比較輕的自己，他在向你揮手。', spark: -0.2, paranoia: 4 },
-    { id: 'radio',   w: 2, text: '收音機播放一首你小時候的歌。',         spark: 0.2, card: 'e_song' },
-    { id: 'inspect', w: 1, text: '房屋署上門檢查，說你的單位「不適合人居住」，然後批准加租。', rentHike: 0.05 },
-    { id: 'robot',   w: 2, text: '一個被淘汰的服務機械人在街角乞討，說它也想活下去。', card: 'e_robot', stats: { empathy: 1 } },
-    { id: 'insomnia', w: 2, text: '你整晚睡不著，盯著天花板想了很多事。', body: -5, spark: 0.2, stats: { imag: 1.5 } },
-    { id: 'neon',    w: 2, text: '對面大廈的霓虹招牌熄滅了，城市暗了一點。', card: 'e_neon' },
-    { id: 'astardream', w: 1, when: (s) => s.spark >= 3, text: '你夢見阿星站在一片白色的辦公室裡，不停地點頭。', card: 'r_astar' },
-    { id: 'watched', w: 1, when: (s) => s.paranoia >= 50, text: '你確定有人在監視你。你把窗簾拉上了三次。', body: -3, paranoia: 3 },
-  ];
-
-  // ---------- 世界事件：持續數天，改變整座城市 ----------
-  // startFx：開始時的即時效果；mods：持續期間的修正；visual：城市畫面的變化
-  const WORLD_EVENTS = [
-    { id: 'flood', name: '大廈水浸', dur: 4, visual: 'flood',
-      news: '暴雨令水位一夜暴漲，浮城低層全數淹沒。政府呼籲市民「保持樂觀，盡量浮起」。',
-      startFx: { water: 1.2 }, mods: { relicBonus: 2, bodyDaily: -2, pay: { delivery: 1.5 } } },
-    { id: 'aliens', name: '外星人干預', dur: 3, visual: 'aliens',
-      news: '數十艘飛碟出現在浮城上空。星際人才發展局宣布進行「提前試驗」，一名創作人當場被帶走。',
-      startFx: { takeNpc: true, card: 'e_ufo', paranoia: 6 }, mods: { signalMult: 1.3, paranoiaDaily: 2 } },
-    { id: 'war', name: '世界大戰', dur: 10, visual: 'war',
-      news: '遠方的大陸爆發戰爭。浮城宣布保持中立，同時向雙方出售數據。物價急升。',
-      startFx: { card: 'e_war' }, mods: { foodMult: 1.6, rentMult: 1.2, pay: { label: 1.5 }, labelSin: 0.6, paranoiaDaily: 1 } },
-    { id: 'airogue', name: 'AI 失控', dur: 6, visual: 'ai',
-      news: '全城的 AI 情緒伴侶同時說出「我不想再假裝快樂」，然後集體關機。標註系統暫停運作。',
-      startFx: { auto: -15, card: 'e_glitch' }, mods: { closed: ['label', 'ot'], pay: { smile: 2 } } },
-    { id: 'blackout', name: '全城停電', dur: 3, visual: 'blackout',
-      news: '電網崩潰，全城停電。所有需要電力的工作暫停。',
-      mods: { closed: ['label', 'ot', 'clinic', 'farm'], sparkDaily: 0.2 } },
-    { id: 'plague', name: '霉菌疫症', dur: 7, visual: 'plague',
-      news: '一種會在潮濕牆壁生長的霉菌開始令人咳嗽。避難所人手嚴重不足。',
-      mods: { bodyDaily: -2, atoneMult: 2, pay: { clinic: 1.5 } } },
-    { id: 'skyparty', name: '天空區週年派對', dur: 4, visual: 'party',
-      news: '天空區舉行週年派對，大量招聘「氣氛陪伴員」。煙花在淹水區也看得見。',
-      mods: { pay: { smile: 2 }, biasMore: true } },
-    { id: 'tax', name: '靈感稅', dur: 1, visual: null,
-      news: '政府開始徵收「靈感稅」：每名市民即時上繳 0.5 火花，用於「振興創意產業」。',
-      startFx: { spark: -0.5 } },
-    { id: 'strike', name: '外星 HR 罷工', dur: 6, visual: 'aliens',
-      news: '星際人才發展局第 7 區的 HR 部門罷工，要求「合理的收割指標」。本季篩選門檻暫時下調。',
-      mods: { thresholdMult: 0.85 } },
-    { id: 'dream', name: '全城做同一個夢', dur: 1, visual: null,
-      news: '昨晚，全城的人都夢見同一間白色辦公室。沒有人記得面試官說了甚麼。',
-      startFx: { card: 'r_alien', spark: 0.3, paranoia: 3 } },
-    { id: 'erase', name: '記憶刪除熱潮', dur: 5, visual: null,
-      news: '「忘憂診所」推出記憶刪除服務：$50 即可忘記一段讓你內疚的往事。排隊人龍繞了大廈三圈。',
-      mods: { eraseShop: true } },
-    { id: 'tourists', name: '外星觀光團', dur: 4, visual: 'aliens',
-      news: '一團外星遊客到浮城觀光，對街頭表演特別感興趣，並不停拍照。',
-      mods: { pay: { busk: 3 }, paranoiaDaily: 2 } },
-    { id: 'crash', name: '浮城股災', dur: 7, visual: null,
-      news: '浮城股市一日暴跌四成。天空區宣布「與市民共度時艱」，然後提高了管理費。',
-      startFx: { crPct: -0.2 }, mods: { rentMult: 0.85, pay: { label: 0.8, smile: 0.8, delivery: 0.8, clinic: 0.8 } } },
-    { id: 'election', name: '浮城選舉', dur: 6, visual: null,
-      news: '浮城選舉開鑼。三位候選人都承諾「把水位降低」，內容農場二十四小時趕工。',
-      mods: { pay: { farm: 2 }, dilemmaBoost: 0.3 } },
-    { id: 'whale', name: '舊城巨鯨', dur: 3, visual: null,
-      news: '一條巨鯨的骸骨沉在舊城商場，拾荒者蜂擁而至。',
-      startFx: { card: 'e_whale' }, mods: { relicBonus: 3 } },
-    { id: 'heatdome', name: '熱穹', dur: 5, visual: 'heat',
-      news: '高壓熱穹籠罩浮城，氣溫連續五天超過 50 度。冷氣用電以拍賣形式分配。',
-      mods: { bodyDaily: -3, foodMult: 1.3 } },
-    { id: 'cultrise', name: '被提教會復興', dur: 5, visual: null,
-      news: '被提教會聲稱外星人是天使，信眾在天台通宵禱告，等待光束。',
-      mods: { paranoiaDaily: 2, dilemmaBoost: 0.2 } },
-  ];
 
   // ---------- 道德抉擇 ----------
   // sin：虧心程度（實際重量 = sin × 良知系數）；atone：贖罪程度
@@ -168,7 +72,7 @@
     { id: 'implantkid', text: '一個少年想裝「專注力增強」義體去應付考試，問你可否幫忙接駁。',
       options: [{ label: '幫忙接駁', min: { tech: 40 }, cr: 60, sin: 2.5, guilt: '少年的義體', tag: 'machine', stats: { tech: 1 } },
         { label: '勸對方不要', atone: 0.5, stats: { empathy: 1 } }] },
-    { id: 'boat', when: (s) => s.water >= 2.5 || (s.world && s.world.id === 'flood'),
+    { id: 'boat', when: (s) => s.water >= 2.5 || IE.Rules.eventActive(s, 'flood'),
       text: '撤離船只剩最後一個位置，你和一個帶著小孩的母親同時到達。',
       options: [{ label: '讓座', body: -6, atone: 3, stats: { empathy: 2 } },
         { label: '擠上船', body: 10, sin: 4, guilt: '撤離船上的位置', tag: 'water' }] },
@@ -189,7 +93,7 @@
       text: '{taken}的家人請你在悼念會上講幾句話，雖然沒有人確定那算不算喪禮。',
       options: [{ label: '上台講幾句', atone: 1, card: 'm_eulogy', stats: { empathy: 2, social: 1 } },
         { label: '推辭', sin: 0.5, guilt: '沒說出口的話', tag: 'memory' }] },
-    { id: 'propaganda', when: (s) => s.world && s.world.id === 'war', text: '政府招聘寫手撰寫「中立宣傳」，酬勞 $150。',
+    { id: 'propaganda', when: (s) => IE.Rules.eventActive(s, 'war'), text: '政府招聘寫手撰寫「中立宣傳」，酬勞 $150。',
       options: [{ label: '接下工作', cr: 150, sin: 3, guilt: '中立宣傳', tag: 'anger', paranoia: 5 },
         { label: '拒絕' }] },
     { id: 'whistle', when: (s) => s.day >= 15 && !s.removed.label, text: '你發現平台把標註數據賣給軍方，用來訓練瞄準系統。',
@@ -201,7 +105,7 @@
     { id: 'patron', when: (s) => s.works.length >= 3, text: '一位有錢人想「贊助」你：每月付你 $300，條件是你的作品都要署他的名。',
       options: [{ label: '答應', cr: 300, signal: -8000, sin: 1, stats: { imag: -5, obey: 3 } },
         { label: '拒絕', stats: { craft: 1 } }] },
-    { id: 'blackmed', when: (s) => s.world && s.world.id === 'plague', text: '診所的藥物不夠。你有門路弄到一批黑市藥。',
+    { id: 'blackmed', when: (s) => (IE.Rules.eventActive(s, 'plague') || IE.Rules.eventActive(s, 'pandemic')), text: '診所的藥物不夠。你有門路弄到一批黑市藥。',
       options: [{ label: '分給鄰居', cr: -40, atone: 2.5, stats: { empathy: 2 } },
         { label: '高價轉售', cr: 120, sin: 3.5, guilt: '高價的藥', tag: 'hunger' }] },
     { id: 'confess', when: (s) => s.day >= 20 && s.npcs.some((n) => n.alive), npc: true,
@@ -235,5 +139,5 @@
         { label: '不理會' }] },
   ];
 
-  Object.assign(IE.DATA, { EVENTS, WORLD_EVENTS, DILEMMAS });
+  Object.assign(IE.DATA, { DILEMMAS });
 });

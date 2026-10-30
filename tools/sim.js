@@ -9,7 +9,7 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-jobs.js', 'data-craft.js', 'rules.js', 'create.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'rules.js', 'create.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;
@@ -295,6 +295,9 @@ const STRATEGIES = {
 
 function shopping(s, moral) {
   if (moral === 'random') return;
+  // 保命：有會致命的病就買藥；外出危險時買頭盔或面罩
+  if (R.condsInfo(s).some((c) => c.cure === 'medicine')) R.buy(s, 'medicine');
+  (R.worldMods(s).outdoorDeath || []).forEach((h) => { if (h.guard && !s.gear[h.guard]) R.buy(s, h.guard); });
   if (R.flooded(s)) R.buy(s, 'moveup');
   if (s.floor === 0) R.buy(s, 'rehouse');
   if (!s.handBonus && s.cr > 450) R.buy(s, 'tools');
@@ -330,9 +333,12 @@ function runOne(strat, bg, season, seed) {
     if (R.drawDilemma(s)) chooseDilemma(s, S.moral, rng);
     for (let slot = 0; slot < 3 && !s.ended; slot++) {
       s.slot = slot;
-      // 普通玩家都懂得：身體太差就休息（隨機策略除外）
-      const tired = S.moral !== 'random' && strat !== 'workaholic' && s.body < (R.isNight(s) ? 36 : 26);
-      act(s, tired ? 'rest' : S.act(s, rng), rng, S.moral);
+      // 普通玩家都懂得：身體太差就休息、連續工作太多天要休息、外出太危險就留在室內（隨機策略除外）
+      const careful = S.moral !== 'random' && strat !== 'workaholic';
+      const tired = careful && (s.body < (R.isNight(s) ? 36 : 26) || (s.noRest >= 3 && slot === 1) || ((s.conds.heatstroke || s.conds.insomnia) && slot === 1));
+      let choice = tired ? 'rest' : S.act(s, rng);
+      if (careful && D.OUTDOOR.includes(choice) && R.outdoorRisk(s) >= 0.03) choice = R.isNight(s) ? 'rest' : (['label', 'smile', 'farm', 'clinic', 'chat', 'rest'].find((id) => enabled(s, id)) || 'rest');
+      act(s, choice, rng, S.moral);
       if (s.body <= 0) break;
     }
     if (s.day === R.reviewDay(s)) signals.push(R.signal(s));
@@ -343,8 +349,8 @@ function runOne(strat, bg, season, seed) {
   }
   const kind = { recruited: 'agent' }[s.ended.type] || s.ended.type;
   const dos = DS.evaluate(s, kind);
-  return { ending: s.ended.type, day: s.ended.day, signals, works: s.works.length, soul: s.soul,
-    conscience: s.conscience, sparkMax: R.sparkMax(s), overweightFails, type: dos.archetype.id, worlds: Object.keys(s.worldsSeen).length };
+  return { ending: s.ended.type, death: s.ended.deathId, day: s.ended.day, signals, works: s.works.length, soul: s.soul,
+    conscience: s.conscience, sparkMax: R.sparkMax(s), overweightFails, type: dos.archetype.id, worlds: Object.keys(s.eventsSeen).length };
 }
 
 const bgs = Object.keys(D.BACKGROUNDS);

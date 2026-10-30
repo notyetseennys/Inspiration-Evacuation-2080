@@ -203,13 +203,13 @@
     const perk = D.BACKGROUNDS[s.bg].perk;
     const refund = { cr: all ? C.allnighterCost : C.cost, body: all ? 15 : 4, spark: s.spark };
     s.cr -= refund.cr;
-    s.body -= refund.body;
-    if (all) RL.addSpark(s, -0.2, true);
+    RL.hurt(s, refund.body, all ? 'allnighter' : 'create');
+    if (all) { RL.addSpark(s, -0.2, true); s.allnighterDay = s.day; }
     s.session = {
       mode: all ? 'allnighter' : 'normal', day: s.day,
       deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
       handSize: C.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand,
-      plays: C.plays + m.plays + (all ? 1 : 0), discards: C.discards + m.discards + (all ? 1 : 0),
+      plays: C.plays + m.plays + (all ? 1 : 0) + (RL.worldMods(s).extraPlay || 0), discards: C.discards + m.discards + (all ? 1 : 0),
       discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
     };
     draw(s);
@@ -317,6 +317,7 @@
     const ses = s.session;
     if (!ses || ses.log.length) return false;
     s.cr += ses.refund.cr; s.body += ses.refund.body; s.spark = ses.refund.spark;
+    if (ses.mode === 'allnighter') s.allnighterDay = 0;
     s.session = null;
     return true;
   }

@@ -44,6 +44,7 @@ const URL = 'http://localhost:' + PORT + '/';
     createdWorks++;
   };
   let createdWorks = 0;
+  const window_name = (id) => id;
   const fail = async (msg) => {
     console.error('✗ ' + msg);
     if (process.env.SHOT) { try { await page.screenshot({ path: process.env.SHOT }); } catch (e) { /* 忽略 */ } }
@@ -147,6 +148,9 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('.dossier .d-class h3');
     const stamps = await page.$$eval('.dossier .dstamp', (els) => els.map((e) => e.textContent));
     ok('人類樣本檔案：' + (await page.textContent('.dossier .d-class h3')) + '｜印章 ' + stamps.join('、'));
+    const md = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('ie2080.meta')).deaths || {}; } catch (e) { return {}; } });
+    if (!Object.keys(md).length) await fail('死亡圖鑑沒有記錄');
+    ok('死亡圖鑑記錄：' + Object.keys(md).map((k) => window_name(k)).join('、'));
 
     if (errors.length) await fail('有錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');

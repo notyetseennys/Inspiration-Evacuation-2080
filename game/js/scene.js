@@ -129,10 +129,12 @@
     },
     // 世界事件的畫面：戰爭的火光、失控 AI 的雜訊、停電、飛碟群、霉菌、派對煙花、熱穹
     drawWorld(c, s, night) {
-      const w = s.world && IE.Rules.worldInfo(s);
-      if (!w || !w.visual) return;
+      if (!s.events || !IE.Rules.eventsInfo) return;
+      IE.Rules.eventsInfo(s).forEach((w) => { if (w.visual) this.drawVisual(c, s, night, w.visual); });
+    },
+    drawVisual(c, s, night, visual) {
       const t = this.t;
-      switch (w.visual) {
+      switch (visual) {
         case 'war':
           c.fillStyle = 'rgba(255,70,40,0.10)'; c.fillRect(0, 0, 320, 180);
           for (let i = 0; i < 3; i++) {
