@@ -3538,6 +3538,274 @@ p.sch-manifesto .mf-tag {
   }
 }
 
+/* =========================================================
+   任務 14：手機（360px / 390px / 768px）與無障礙（觸控、焦點、色弱、對比）
+   ========================================================= */
+
+/* 1. 文字對比強化（WCAG AA 對比度升級）与防橫向溢出 */
+:root {
+  --mute: #a5b4cf;
+}
+html, body {
+  overflow-x: hidden;
+}
+.ct-obj.empty {
+  color: #8b7aa8;
+}
+.memo.unknown,
+.recipe.unknown {
+  color: #9eacC6;
+}
+.cc-wear {
+  color: #6b4e0e;
+  font-weight: 700;
+}
+
+/* 2. 觸控目標不少於 44×44px */
+.btn,
+.btn.mini,
+.icon-btn,
+.view-tab,
+.seg button,
+.store-tab,
+.shop-item .btn,
+.ct-tool:not(.empty),
+.ct-schools .sch,
+.fare {
+  min-height: 44px;
+  min-width: 44px;
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  font-weight: 700;
+}
+.view-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+}
+.seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+}
+.btn.mini {
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+.store-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+}
+.ct-tool:not(.empty) {
+  padding: 6px 12px 6px 8px;
+}
+.ct-schools .sch {
+  align-items: center;
+  padding: 6px 10px;
+}
+
+/* 3. 統一高對比雙層鍵盤焦點外框（:focus-visible） */
+button:focus-visible,
+[role="button"]:focus-visible,
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.view-tab:focus-visible,
+.act:focus-visible,
+.d-opt:focus-visible,
+.bg-card:focus-visible,
+.seg button:focus-visible,
+.store-tab:focus-visible,
+.fare:focus-visible,
+.card:focus-visible,
+.cc:focus-visible,
+.ct-obj:focus-visible,
+.ct-tool:focus-visible,
+.ct-schools .sch:focus-visible,
+.redact:focus-visible {
+  outline: 2px solid #ffd36b !important;
+  outline-offset: 2px !important;
+  box-shadow:
+    0 0 0 4px rgba(10, 14, 23, 0.92),
+    0 0 14px rgba(255, 211, 107, 0.7) !important;
+  z-index: 4;
+}
+
+/* 4. 色弱友善設計：除顏色外以幾何符號、紋理與邊框形狀區分 */
+.tag[data-tag]::before,
+.cc-tags .t[data-tag]::before {
+  display: inline-block;
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+/* 媒材標記：五種媒材除顏色與字元外，加上不同外框幾何特徵 */
+.cc.med-paper .cc-med { border-radius: 2px; border: 1.5px solid #1b1b28; }
+.cc.med-sound .cc-med { border-radius: 50%; border: 1.5px solid #1b1b28; }
+.cc.med-image .cc-med { border-radius: 4px; border: 1.5px double #1b1b28; }
+.cc.med-body .cc-med { border-radius: 6px 2px 6px 2px; border: 1.5px solid #1b1b28; }
+.cc.med-data .cc-med { border-radius: 0; border: 1.5px dashed #1b1b28; }
+
+/* 結算明細與浮動提示：正負與事件加入符號前綴 */
+.lines li.good > span:first-child::before {
+  content: '▲ ';
+  font-size: 11px;
+  margin-right: 3px;
+  color: #9be36b;
+}
+.lines li.bad > span:first-child::before {
+  content: '▼ ';
+  font-size: 11px;
+  margin-right: 3px;
+  color: #ff8a9a;
+}
+.lines li.event > span:first-child::before {
+  content: '◆ ';
+  font-size: 11px;
+  margin-right: 3px;
+  color: #ffd36b;
+}
+.lines li.sin > span:first-child::before {
+  content: '❖ ';
+  font-size: 11px;
+  margin-right: 3px;
+  color: #e9dcc4;
+}
+.toast.good {
+  border-left: 4px solid var(--cash);
+}
+.toast.good::before {
+  content: '✓ ';
+  font-weight: 900;
+  color: var(--cash);
+}
+.toast.bad {
+  border-left: 4px double var(--danger);
+}
+.toast.bad::before {
+  content: '⚠ ';
+  font-weight: 900;
+  color: #ff8a9a;
+}
+
+/* HUD 狀態條紋理區分（色弱可辨識） */
+.m-body .bar > i {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.18) 0 3px,
+    transparent 3px 6px
+  );
+}
+.m-spark .bar > i {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.35) 1px, transparent 1.5px),
+    linear-gradient(90deg, #ff8a3c, var(--spark));
+  background-size: 6px 6px, 100% 100%;
+}
+.m-signal .bar > i {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 2px, transparent 2px 5px),
+    linear-gradient(90deg, var(--sea), var(--neon));
+}
+.m-soul .bar > i {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.25) 0 2px,
+    transparent 2px 5px
+  );
+}
+
+/* 5. 平板與手機版面檢視優化（768px / 390px / 360px） */
+@media (max-width: 820px) {
+  .hud-meters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hud-meters .m-signal {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .hud-meters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hud-meters .m-signal {
+    grid-column: span 2;
+  }
+  .hud-top {
+    gap: 8px;
+  }
+  .hud-btns {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 420px) {
+  #app {
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+  }
+  .hud-top {
+    justify-content: space-between;
+  }
+  .hud-btns {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .hud-btns .icon-btn {
+    width: 100%;
+    padding: 0 6px;
+    font-size: 12.5px;
+  }
+  .ct-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ct-objs {
+    gap: 4px;
+  }
+  .ct-obj {
+    padding: 5px 2px 4px;
+  }
+  .ct-actions {
+    gap: 6px;
+  }
+  .ct-actions .btn {
+    padding: 0 10px;
+    font-size: 14px;
+  }
+  .ct-actions .btn.big {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 370px) {
+  .acts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bg-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ct-hand {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    row-gap: 12px;
+  }
+  .micro-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 
 
 

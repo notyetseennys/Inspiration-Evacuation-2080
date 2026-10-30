@@ -373,6 +373,34 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 14：手機與無障礙（P2）
+
+### 改動摘要
+1. **`game/css/art.css`（360px、390px 與 768px 跨尺寸響應式檢視與觸控目標）**：
+   - 在寬 `360px`、`390px` 及 `768px` 逐頁檢查標題畫面、選角畫面、浮城主畫面與創作桌，確保零橫向捲軸（`overflow-x: hidden`）與零文字截斷。
+   - **觸控目標不少於 44×44px**：將 `.btn`、`.btn.mini`、`.icon-btn`（能力、手機、玩法、聲音）、`.view-tab`（房間、浮城、地圖、世界）、`.seg button`（難度與季節選擇）、`.store-tab`、`.shop-item .btn`、`.ct-tool:not(.empty)`、`.ct-schools .sch` 與 `.fare` 全部提升至 `min-height: 44px; min-width: 44px`。
+   - **平板與窄螢幕排版優化**：
+     - `820px` 以下將 `.hud-meters` 改為三欄網格（`768px` 平板下每格寬敞易讀），`720px` 以下改為雙欄網格。
+     - `420px` 以下（`390px` 與 `360px`）將 `.hud-btns` 改為四等分觸控工具列，並收緊 `.ct-top`、`.ct-objs` 與 `.ct-actions` 間距；`370px` 以下（`360px`）將 `.acts`、`.bg-grid` 與 `.micro-steps` 改為單欄，`.ct-hand` 改為三欄手牌網格。
+2. **無障礙強化（鍵盤焦點、色弱可分辨標籤與狀態、文字對比）**：
+   - **統一高對比雙層鍵盤焦點外框（`:focus-visible`）**：為所有按鈕、行動卡（`.act`）、角色卡（`.bg-card`）、分段掣（`.seg button`）、素材卡（`.card`、`.cc`）、物件格（`.ct-obj`）、工具卡（`.ct-tool`）、流派欄（`.ct-schools .sch`）與機密塗黑條（`.redact`）加上 `#ffd36b` 雙層發光焦點框。
+   - **色弱友善設計**：
+     - 除任務 2 的 10 種標籤幾何符號與底紋外，為 5 種媒材標記（`.cc .cc-med`）加上不同幾何邊框（方框、圓形、雙線框、斜角框、虛線框）。
+     - 為結算明細（`.lines li.good`、`bad`、`event`、`sin`）與浮動提示（`.toast.good`、`bad`）加上 `▲`、`▼`、`◆`、`❖`、`✓`、`⚠` 符號前綴。
+     - 為 HUD 狀態條（`.m-body`、`.m-spark`、`.m-signal`、`.m-soul`）加上斜紋、圓點、直紋與交叉紋理，不依賴單一色彩區分。
+   - **文字對比度升級**：將次要文字色 `--mute` 提升為 `#a5b4cf`（對比度 > 5.2:1，符合 WCAG AA 標準），並提高 `.ct-obj.empty`、`.memo.unknown`、`.recipe.unknown` 與 `.cc-wear` 的可讀性。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t14-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t14-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t14-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t14-after-mobile.png`
+
+### 已知問題
+- 無。
+
 
 
 
