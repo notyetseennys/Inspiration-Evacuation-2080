@@ -530,9 +530,11 @@
     $('.ct-play').disabled = true; $('.ct-discard').disabled = true;
     $('.ct-hint').innerHTML = '';
     await wait(380);
+    const bestBefore = st.best, stageBefore = ses.stage ? IE.Stages.stageScore(ses) : 0;
     const res = C().play(s, uids);
     await animate(res);
     await showTotal(res);
+    frenzy(s, res, bestBefore, stageBefore);
     // 收起舞台，補牌
     root.querySelectorAll('.ct-played .cc').forEach((el, i) => el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-60px) rotate(' + (i * 6 - 10) + 'deg)', opacity: 0 }],
       { duration: 300 / Math.min(2, speedK()), fill: 'forwards' }));
@@ -694,6 +696,15 @@
     setTimeout(() => f.remove(), 500);
   }
 
+  // 背景音樂升級：打出傳說組合、達到關卡目標或刷新最佳一筆之後，今晚換成節奏更強的音樂
+  function frenzy(s, res, bestBefore, stageBefore) {
+    if (st.frenzy || !IE.BGM) return;
+    const ses = s.session;
+    const legend = res.recipes.some((id) => (D().RECIPES.find((r) => r.id === id) || {}).legend);
+    const cleared = ses && ses.stage && stageBefore < ses.stage.target && IE.Stages.stageScore(ses) >= ses.stage.target;
+    const record = bestBefore > 0 && res.total > bestBefore;
+    if (legend || cleared || record) { st.frenzy = true; IE.BGM.play('frenzy'); }
+  }
   async function showTotal(res) {
     const s = st.s;
     const el = $('.ct-total');

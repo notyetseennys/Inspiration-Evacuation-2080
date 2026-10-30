@@ -1121,6 +1121,7 @@ body.ct-open { overflow: hidden; }
 </div>
 <div id="modal" class="modal-wrap" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
+<script>window.IE_AUDIO_BASE = "../game/";</script>
 <script>
 // ---- js/data.js ----
 // 《靈感撤離 2080》遊戲內容資料：標籤、素材卡、組合、KPI、開局背景、季節、NPC、事件、小遊戲內容與文字。
@@ -7852,6 +7853,8 @@ body.ct-open { overflow: hidden; }
   'use strict';
   let ctx = null, master = null, musicBus = null, sfxBus = null, noiseBuf = null;
   let muted = false, timer = null, step = 0, nextTime = 0;
+  // 有錄好的背景音樂（bgm.js）時，合成的背景音樂會靜下來；音效不受影響
+  let musicOn = true;
   let spark = 2, mode = 'city', tempo = 92;
   const layers = {};
 
@@ -7871,7 +7874,7 @@ body.ct-open { overflow: hidden; }
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.7; master.connect(ctx.destination);
-    musicBus = ctx.createGain(); musicBus.gain.value = 0.32; musicBus.connect(master);
+    musicBus = ctx.createGain(); musicBus.gain.value = musicOn ? 0.32 : 0; musicBus.connect(master);
     sfxBus = ctx.createGain(); sfxBus.gain.value = 0.55; sfxBus.connect(master);
     ['beat', 'bass', 'arp', 'lead'].forEach((k) => {
       layers[k] = ctx.createGain(); layers[k].gain.value = 0; layers[k].connect(musicBus);
@@ -7981,6 +7984,7 @@ body.ct-open { overflow: hidden; }
     init,
     get ready() { return !!ctx; },
     setSpark(v) { spark = v; applyLayers(); },
+    music(on) { musicOn = !!on; if (musicBus) musicBus.gain.setTargetAtTime(musicOn ? 0.32 : 0, ctx.currentTime, 0.3); },
     setMode(m, bpm) { mode = m; tempo = bpm || (m === 'work' ? 120 : m === 'alien' ? 84 : 92); applyLayers(); },
     sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗不影響遊戲 */ } } },
     // 創作計分：n 越大音越高（每張素材升半音），營造越計越興奮的感覺
@@ -8012,6 +8016,129 @@ body.ct-open { overflow: hidden; }
       return muted;
     },
     get muted() { return muted; },
+  };
+})(window.IE = window.IE || {});
+
+// ---- js/bgm.js ----
+// 背景音樂（BGM）：按畫面與情況播放錄好的音樂檔（game/audio/），取代合成的背景音樂；音效仍然由 audio.js 合成。
+// 小遊戲期間暫停 BGM，讓小遊戲自己的節拍音樂（例如街頭表演）接手。
+// 每首音樂第一次用到時才下載；切換時淡入淡出，回到同一首時由上次停下的位置繼續。
+(function (IE) {
+  'use strict';
+  const TRACKS = {
+    cartridge: { file: 'audio/cosmic-cartridge.mp3', name: 'Cosmic Cartridge', desc: '標題畫面與浮城白天的日常' },
+    orbit: { file: 'audio/pixel-orbit.mp3', name: 'Pixel Orbit', desc: '浮城的晚上；翻看收藏和對局紀錄' },
+    plaza: { file: 'audio/pixel-plaza.mp3', name: 'Pixel Plaza', desc: '整備：選角、浮城百貨、市集、古董、畫廊、物件' },
+    acid: { file: 'audio/acid-arcade.mp3', name: 'Acid Arcade', desc: '創作之夜（速寫與平常的創作）' },
+    funk: { file: 'audio/pixel-funk.mp3', name: 'Pixel Funk', desc: '社區小展、畫廊聯展與通宵創作', restart: true },
+    overdrive: { file: 'audio/subspace-overdrive.mp3', name: 'Subspace Overdrive', desc: '外星評審之夜（頭目戰）', restart: true },
+    bounce: { file: 'audio/cosmic-bounce.mp3', name: 'Cosmic Bounce', desc: '創作途中打出傳說組合、達到關卡目標或刷新紀錄之後', restart: true },
+    drift: { file: 'audio/cosmic-drift.mp3', name: 'Cosmic Drift', desc: '人才扭蛋機與結局' },
+    phantom: { file: 'audio/phantom-cartridge.mp3', name: 'Phantom Cartridge', desc: '夢境面試與道德抉擇' },
+    pulse: { file: 'audio/stellar-pulse.mp3', name: 'Stellar Pulse', desc: '舊城潛水與世界地圖' },
+    fractal: { file: 'audio/fractal-groove.mp3', name: 'Fractal Groove', desc: '沒有固定節拍的工作小遊戲（標註、診所、外送、內容農場、拆樓、夜市）' },
+    promenade: { file: 'audio/pixel-promenade.mp3', name: 'Pixel Promenade', desc: '篩選日入選、被選中，以及旅途中的日子' },
+    astral: { file: 'audio/astral-pulse.mp3', name: 'Astral Pulse', desc: '最後一期的浮城（殘局）', restart: true },
+  };
+  // 情況 → 音樂（null：交給合成音樂，例如有自己節拍的小遊戲）
+  const SCENES = {
+    title: 'cartridge', city: 'cartridge', night: 'orbit', archive: 'orbit', cozy: 'orbit', endgame: 'astral', setup: 'plaza', shop: 'plaza',
+    create: 'acid', stage: 'funk', boss: 'overdrive', frenzy: 'bounce', gacha: 'drift', ending: 'drift', victory: 'promenade',
+    dream: 'phantom', dilemma: 'phantom', deep: 'pulse', world: 'pulse', travel: 'promenade', work: 'fractal', none: null,
+  };
+  const VOL = 0.5, FADE = 900;
+  const KEY = 'ie2080.bgm';
+  const els = {};
+  const failed = {};
+  let enabled = true, scene = null, cur = null, unlocked = false, fadeTimer = null;
+  try { enabled = localStorage.getItem(KEY) !== 'off'; } catch (e) { /* 私隱模式 */ }
+
+  const audio = () => IE.Audio;
+  const muted = () => !!(audio() && audio().muted);
+  function el(id) {
+    if (els[id]) return els[id];
+    const a = new Audio();
+    a.preload = 'none'; a.loop = true; a.volume = 0;
+    // 單一 HTML 版本（dist/）從 ../game/audio/ 讀取
+    a.src = (window.IE_AUDIO_BASE || '') + TRACKS[id].file;
+    a.addEventListener('error', () => { failed[id] = true; if (cur === id) syncSynth(); });
+    els[id] = a;
+    return a;
+  }
+  // 合成的背景音樂只在沒有 BGM 時出現
+  function syncSynth() {
+    const A = audio();
+    if (!A || !A.music) return;
+    A.music(!(enabled && cur && !failed[cur]));
+  }
+  function fade(a, to, done) {
+    const from = a.volume, t0 = Date.now(), dur = IE.Pixel && IE.Pixel.reducedMotion ? 200 : FADE;
+    const tick = () => {
+      const k = Math.min(1, (Date.now() - t0) / dur);
+      try { a.volume = Math.max(0, Math.min(1, from + (to - from) * k)); } catch (e) { /* iOS 不能調音量 */ }
+      if (k < 1) a._fade = setTimeout(tick, 40); else if (done) done();
+    };
+    clearTimeout(a._fade);
+    tick();
+  }
+  function stopOthers(keep) {
+    Object.keys(els).forEach((id) => {
+      if (id === keep) return;
+      const a = els[id];
+      if (!a.paused) fade(a, 0, () => a.pause());
+    });
+  }
+  function start(id) {
+    const a = el(id);
+    if (TRACKS[id].restart && cur !== id) { try { a.currentTime = 0; } catch (e) { /* 還未載入 */ } }
+    a.muted = muted();
+    const p = a.play();
+    if (p && p.catch) p.catch(() => { /* 還沒有使用者操作：等第一下點擊 */ });
+    fade(a, VOL);
+  }
+  // 切換情況
+  function play(sc) {
+    scene = sc;
+    const id = enabled && !document.hidden ? SCENES[sc] : null;
+    if (id === cur && (!id || !els[id] || !els[id].paused)) { syncSynth(); return; }
+    cur = id;
+    stopOthers(id);
+    if (id && !failed[id]) start(id);
+    syncSynth();
+  }
+  // 音樂開關（音效不受影響）
+  function setEnabled(on) {
+    enabled = on;
+    try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch (e) { /* 私隱模式 */ }
+    cur = null;
+    play(scene || 'title');
+  }
+  // 靜音：跟隨 audio.js 的靜音
+  function syncMute() { Object.keys(els).forEach((id) => { els[id].muted = muted(); }); }
+  // 瀏覽器要求先有使用者操作才可以播放
+  function unlock() {
+    if (unlocked) return;
+    unlocked = true;
+    const id = cur;
+    cur = null;
+    if (scene) play(scene); else if (id) play('title');
+  }
+  if (typeof document !== 'undefined') {
+    ['pointerdown', 'keydown', 'touchend'].forEach((ev) => document.addEventListener(ev, unlock, { once: true, capture: true }));
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { Object.keys(els).forEach((id) => els[id].pause()); }
+      else if (scene) { cur = null; play(scene); }
+    });
+  }
+
+  IE.BGM = {
+    TRACKS, SCENES, play, setEnabled, syncMute,
+    get enabled() { return enabled; },
+    get current() { return cur; },
+    get scene() { return scene; },
+    // 測試用：正在播放和載入失敗的音樂
+    get playing() { return Object.keys(els).filter((id) => !els[id].paused); },
+    get failed() { return Object.keys(failed); },
   };
 })(window.IE = window.IE || {});
 
@@ -12808,7 +12935,7 @@ body.ct-open { overflow: hidden; }
       + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
-      + '<button class="icon-btn" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '">' + (IE.Audio.muted ? '靜音' : '聲音') + '</button>'
+      + '<button class="icon-btn" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
       + '</div></div>'
       + '<div class="hud-meters">'
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
@@ -14097,9 +14224,11 @@ body.ct-open { overflow: hidden; }
     $('.ct-play').disabled = true; $('.ct-discard').disabled = true;
     $('.ct-hint').innerHTML = '';
     await wait(380);
+    const bestBefore = st.best, stageBefore = ses.stage ? IE.Stages.stageScore(ses) : 0;
     const res = C().play(s, uids);
     await animate(res);
     await showTotal(res);
+    frenzy(s, res, bestBefore, stageBefore);
     // 收起舞台，補牌
     root.querySelectorAll('.ct-played .cc').forEach((el, i) => el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-60px) rotate(' + (i * 6 - 10) + 'deg)', opacity: 0 }],
       { duration: 300 / Math.min(2, speedK()), fill: 'forwards' }));
@@ -14261,6 +14390,15 @@ body.ct-open { overflow: hidden; }
     setTimeout(() => f.remove(), 500);
   }
 
+  // 背景音樂升級：打出傳說組合、達到關卡目標或刷新最佳一筆之後，今晚換成節奏更強的音樂
+  function frenzy(s, res, bestBefore, stageBefore) {
+    if (st.frenzy || !IE.BGM) return;
+    const ses = s.session;
+    const legend = res.recipes.some((id) => (D().RECIPES.find((r) => r.id === id) || {}).legend);
+    const cleared = ses && ses.stage && stageBefore < ses.stage.target && IE.Stages.stageScore(ses) >= ses.stage.target;
+    const record = bestBefore > 0 && res.total > bestBefore;
+    if (legend || cleared || record) { st.frenzy = true; IE.BGM.play('frenzy'); }
+  }
   async function showTotal(res) {
     const s = st.s;
     const el = $('.ct-total');
@@ -14507,8 +14645,13 @@ body.ct-open { overflow: hidden; }
     requestAnimationFrame(frame);
   }
 
+  // 背景音樂：按畫面切換（見 bgm.js）
+  const music = (sc) => { if (IE.BGM) IE.BGM.play(sc); };
+  // 白天、晚上、旅途、世界地圖與最後一期（殘局）各有自己的音樂
+  const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
   function showTitle() {
+    music('title');
     document.getElementById('hud').hidden = true;
     document.getElementById('views').hidden = true;
     S.City.enter('attract');
@@ -14518,9 +14661,9 @@ body.ct-open { overflow: hidden; }
       continue() { A.init(); Game.state = savedRun(); S.City.enter('hub'); resumeRun(); },
       new() { A.init(); store.del(KEY_RUN); showSetup(); },
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
-      collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      collection() { music('archive'); UI.modal(UI.collectionModal(Game.meta), { close() { UI.closeModal(); music('title'); } }, { dismiss: () => music('title') }); },
       gacha() { A.init(); openGacha(() => showTitle()); },
-      history() { UI.modal(UI.historyModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      history() { music('archive'); UI.modal(UI.historyModal(Game.meta), { close() { UI.closeModal(); music('title'); } }, { dismiss: () => music('title') }); },
       weekly() {
         A.init(); store.del(KEY_RUN);
         const w = IE.Meta.weekly(IE.Meta.weekKey()), mod = IE.Meta.WEEKLY_MODS[w.mod], rec = Game.meta.weekly && Game.meta.weekly[w.key];
@@ -14544,6 +14687,7 @@ body.ct-open { overflow: hidden; }
   }
   // 人才扭蛋機
   function openGacha(after) {
+    music('gacha');
     const render = (result, spinning, type) => UI.modal(UI.gachaModal(Game.meta, result, spinning, type), {
       pull(el) {
         const type = el.dataset.id || 'silver';
@@ -14567,7 +14711,7 @@ body.ct-open { overflow: hidden; }
   }
   function showSetup() {
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
-    const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
+    const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
       bg(el) {
         Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render();
         // 手機：選了角色就捲到角色資料
@@ -14609,6 +14753,7 @@ body.ct-open { overflow: hidden; }
     const s = Game.state;
     S.City.forceNight = false;
     const m = R.morning(s);
+    hubMusic(s);
     // 灰人逃兵被追捕的日子：白天要躲起來
     if (R.hiding(s) && s.slot === 0) { s.slot = 1; UI.toast('追捕隊來了。你躲了一整個早上。', 'bad'); }
     IE.Maps.actions = R.actions(s);
@@ -14651,6 +14796,7 @@ body.ct-open { overflow: hidden; }
   // 浮城百貨：分類貨架（疊在手機或地圖上面）
   function openStore(cat, after) {
     const s = Game.state;
+    music('shop');
     let cur = cat || 'life';
     const render = () => UI.pushModal(UI.storeModal(s, cur), {
       tab(el) { cur = el.dataset.id; UI.closeModal(); render(); },
@@ -14660,12 +14806,13 @@ body.ct-open { overflow: hidden; }
         if (r.ok) A.sfx('coin');
         UI.renderHud(s); A.setSpark(s.spark); save(); UI.closeModal(); render();
       },
-      close() { UI.closeModal(); if (after) after(); else showHub(); },
-    }, { dismiss: () => { if (after) after(); else showHub(); } });
+      close() { UI.closeModal(); music('city'); if (after) after(); else showHub(); },
+    }, { dismiss: () => { music('city'); if (after) after(); else showHub(); } });
     render();
   }
   function openSouvenir() {
     const s = Game.state;
+    music('shop');
     if (!s.trip) return;
     const render = () => UI.modal(UI.souvenirModal(s), {
       buy(el) { const r = IE.World.buySouvenir(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
@@ -14678,6 +14825,7 @@ body.ct-open { overflow: hidden; }
     const s = Game.state;
     if (!R.drawDilemma(s)) { showHub(); return; }
     save();
+    music('dilemma');
     UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
     UI.modal(UI.dilemmaModal(R.dilemmaView(s), s), {
       pick(el) {
@@ -14691,6 +14839,7 @@ body.ct-open { overflow: hidden; }
   function showHub() {
     const s = Game.state;
     if (!s || s.ended) return;
+    hubMusic(s);
     const acts = R.actions(s);
     IE.Maps.actions = acts;
     setScene(viewScene(currentView()));
@@ -14812,6 +14961,7 @@ body.ct-open { overflow: hidden; }
   // 天空區畫廊：委託與賣畫
   function openGallery() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.modal(UI.galleryModal(s), {
       sell(el) {
         const r = IE.World.sellWork(s, Number(el.dataset.i));
@@ -14825,6 +14975,7 @@ body.ct-open { overflow: hidden; }
   }
   function openAntique() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.modal(UI.antiqueModal(s), {
       buy(el) { const r = IE.World.buyAntique(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
       sellcard(el) { const r = IE.World.sellCard(s, Number(el.dataset.uid)); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
@@ -14834,6 +14985,7 @@ body.ct-open { overflow: hidden; }
   }
   function openDecor() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.modal(UI.decorModal(s), {
       buy(el) { const r = IE.World.buyDecor(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('pickup'); UI.renderHud(s); save(); render(); },
       close() { UI.closeModal(); showHub(); },
@@ -14842,6 +14994,9 @@ body.ct-open { overflow: hidden; }
   }
   function openCraft() {
     const s = Game.state;
+    // 關卡之夜和通宵用節奏更強的音樂
+    const ses = s.session;
+    music(ses && ses.stage && ses.stage.kind === 'boss' ? 'boss' : ses && (ses.stage || ses.mode === 'allnighter') ? 'stage' : 'create');
     IE.Craft.open(s, (res) => {
       UI.renderHud(s); A.setSpark(s.spark); save();
       if (!res) { showHub(); return; }
@@ -14851,6 +15006,7 @@ body.ct-open { overflow: hidden; }
   // 靈感物件：裝備、卸下、排列（碎鏡會複製右邊的物件）、賣給天空區
   function openObjects() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.pushModal(UI.objectsModal(s), {
       equip(el) { R.equipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
       unequip(el) { R.unequipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
@@ -14864,6 +15020,10 @@ body.ct-open { overflow: hidden; }
 
   // ---------- 小遊戲 ----------
   function startMicro(kind, onResult) {
+    // 小遊戲有自己的節拍音樂；夢境面試用空靈的音樂
+    // 街頭表演和情緒陪伴跟著合成音樂的拍子，所以不播背景音樂
+    const SC = { interview: 'dream', dive: 'deep', garden: 'cozy', label: 'work', ot: 'work', clinic: 'work', delivery: 'work', farm: 'work', salvage: 'work', haggle: 'work' };
+    music(SC[kind] || 'none');
     const token = {};
     Game.microToken = token;
     const done = (result) => {
@@ -14946,6 +15106,7 @@ body.ct-open { overflow: hidden; }
           UI.closeModal();
           if (rep.review) {
             A.sfx(rep.review.pass ? 'combo' : 'stamp');
+            if (rep.review.pass) music('victory');
             UI.modal(UI.reviewModal(rep.review), {
               ok() {
                 UI.closeModal();
@@ -14965,6 +15126,7 @@ body.ct-open { overflow: hidden; }
   // ---------- 夢境面試（篩選日前兩晚） ----------
   function dreamInterview() {
     const s = Game.state;
+    music('dream');
     R.interviewQuestions(s);
     save();
     UI.setPanel('<p class="mute">你睡著了。</p>');
@@ -14984,6 +15146,7 @@ body.ct-open { overflow: hidden; }
 
   // ---------- 被選中 ----------
   function chooseToGo() {
+    music('victory');
     const s = Game.state;
     UI.modal(UI.stayModal(s), {
       go() { UI.closeModal(); recruit(); },
@@ -15033,6 +15196,7 @@ body.ct-open { overflow: hidden; }
   }
 
   function finishRun(ending) {
+    music(ending && (ending.type === 'agent' || ending.type === 'returned' || ending.type === 'recruited') ? 'victory' : 'ending');
     const s = Game.state;
     const kind = ending.kind || ending.type;
     ending.kind = kind;
@@ -15106,7 +15270,15 @@ body.ct-open { overflow: hidden; }
       const b = e.target.closest('[data-hud]');
       if (!b || !Game.state) return;
       A.sfx('click');
-      if (b.dataset.hud === 'mute') { A.init(); A.toggleMute(); UI.renderHud(Game.state); }
+      // 聲音按鈕輪流切換：全部 → 只有音效（關掉背景音樂）→ 靜音 → 全部
+      if (b.dataset.hud === 'mute') {
+        A.init();
+        if (!A.muted && IE.BGM && IE.BGM.enabled) IE.BGM.setEnabled(false);
+        else if (!A.muted) A.toggleMute();
+        else { A.toggleMute(); if (IE.BGM) IE.BGM.setEnabled(true); }
+        if (IE.BGM) IE.BGM.syncMute();
+        UI.renderHud(Game.state);
+      }
       else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);

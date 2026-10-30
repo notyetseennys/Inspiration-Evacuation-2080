@@ -4,6 +4,8 @@
   'use strict';
   let ctx = null, master = null, musicBus = null, sfxBus = null, noiseBuf = null;
   let muted = false, timer = null, step = 0, nextTime = 0;
+  // 有錄好的背景音樂（bgm.js）時，合成的背景音樂會靜下來；音效不受影響
+  let musicOn = true;
   let spark = 2, mode = 'city', tempo = 92;
   const layers = {};
 
@@ -23,7 +25,7 @@
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.7; master.connect(ctx.destination);
-    musicBus = ctx.createGain(); musicBus.gain.value = 0.32; musicBus.connect(master);
+    musicBus = ctx.createGain(); musicBus.gain.value = musicOn ? 0.32 : 0; musicBus.connect(master);
     sfxBus = ctx.createGain(); sfxBus.gain.value = 0.55; sfxBus.connect(master);
     ['beat', 'bass', 'arp', 'lead'].forEach((k) => {
       layers[k] = ctx.createGain(); layers[k].gain.value = 0; layers[k].connect(musicBus);
@@ -133,6 +135,7 @@
     init,
     get ready() { return !!ctx; },
     setSpark(v) { spark = v; applyLayers(); },
+    music(on) { musicOn = !!on; if (musicBus) musicBus.gain.setTargetAtTime(musicOn ? 0.32 : 0, ctx.currentTime, 0.3); },
     setMode(m, bpm) { mode = m; tempo = bpm || (m === 'work' ? 120 : m === 'alien' ? 84 : 92); applyLayers(); },
     sfx(name) { if (ctx && SFX[name] && !muted) { try { SFX[name](); } catch (e) { /* 音效失敗不影響遊戲 */ } } },
     // 創作計分：n 越大音越高（每張素材升半音），營造越計越興奮的感覺

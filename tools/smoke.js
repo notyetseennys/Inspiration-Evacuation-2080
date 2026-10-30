@@ -191,6 +191,10 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.click('.act[data-id="create"]');
     if (await page.$('#modal [data-do="close"]')) await page.click('#modal [data-do="close"]');
     await page.waitForSelector('#ctable .ct-stagebar:not([hidden])');
+    // 背景音樂：關卡之夜（社區小展）播 Pixel Funk
+    const bgm = await page.evaluate(() => ({ cur: window.__IE.BGM.current, failed: window.__IE.BGM.failed }));
+    if (bgm.cur !== 'funk') await fail('關卡之夜的背景音樂不對：' + bgm.cur);
+    if (bgm.failed.length) await fail('背景音樂載入失敗：' + bgm.failed.join('、'));
     const playsBefore = await page.evaluate(() => window.__IE.Game.state.session.plays);
     await page.click('#ctable .ct-tool[data-tool="0"]');
     const playsAfter = await page.evaluate(() => window.__IE.Game.state.session.plays);

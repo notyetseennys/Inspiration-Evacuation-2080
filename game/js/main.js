@@ -83,8 +83,13 @@
     requestAnimationFrame(frame);
   }
 
+  // 背景音樂：按畫面切換（見 bgm.js）
+  const music = (sc) => { if (IE.BGM) IE.BGM.play(sc); };
+  // 白天、晚上、旅途、世界地圖與最後一期（殘局）各有自己的音樂
+  const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
   function showTitle() {
+    music('title');
     document.getElementById('hud').hidden = true;
     document.getElementById('views').hidden = true;
     S.City.enter('attract');
@@ -94,9 +99,9 @@
       continue() { A.init(); Game.state = savedRun(); S.City.enter('hub'); resumeRun(); },
       new() { A.init(); store.del(KEY_RUN); showSetup(); },
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
-      collection() { UI.modal(UI.collectionModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      collection() { music('archive'); UI.modal(UI.collectionModal(Game.meta), { close() { UI.closeModal(); music('title'); } }, { dismiss: () => music('title') }); },
       gacha() { A.init(); openGacha(() => showTitle()); },
-      history() { UI.modal(UI.historyModal(Game.meta), { close: UI.closeModal }, { dismiss: () => {} }); },
+      history() { music('archive'); UI.modal(UI.historyModal(Game.meta), { close() { UI.closeModal(); music('title'); } }, { dismiss: () => music('title') }); },
       weekly() {
         A.init(); store.del(KEY_RUN);
         const w = IE.Meta.weekly(IE.Meta.weekKey()), mod = IE.Meta.WEEKLY_MODS[w.mod], rec = Game.meta.weekly && Game.meta.weekly[w.key];
@@ -120,6 +125,7 @@
   }
   // 人才扭蛋機
   function openGacha(after) {
+    music('gacha');
     const render = (result, spinning, type) => UI.modal(UI.gachaModal(Game.meta, result, spinning, type), {
       pull(el) {
         const type = el.dataset.id || 'silver';
@@ -143,7 +149,7 @@
   }
   function showSetup() {
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
-    const render = () => UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
+    const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
       bg(el) {
         Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render();
         // 手機：選了角色就捲到角色資料
@@ -185,6 +191,7 @@
     const s = Game.state;
     S.City.forceNight = false;
     const m = R.morning(s);
+    hubMusic(s);
     // 灰人逃兵被追捕的日子：白天要躲起來
     if (R.hiding(s) && s.slot === 0) { s.slot = 1; UI.toast('追捕隊來了。你躲了一整個早上。', 'bad'); }
     IE.Maps.actions = R.actions(s);
@@ -227,6 +234,7 @@
   // 浮城百貨：分類貨架（疊在手機或地圖上面）
   function openStore(cat, after) {
     const s = Game.state;
+    music('shop');
     let cur = cat || 'life';
     const render = () => UI.pushModal(UI.storeModal(s, cur), {
       tab(el) { cur = el.dataset.id; UI.closeModal(); render(); },
@@ -236,12 +244,13 @@
         if (r.ok) A.sfx('coin');
         UI.renderHud(s); A.setSpark(s.spark); save(); UI.closeModal(); render();
       },
-      close() { UI.closeModal(); if (after) after(); else showHub(); },
-    }, { dismiss: () => { if (after) after(); else showHub(); } });
+      close() { UI.closeModal(); music('city'); if (after) after(); else showHub(); },
+    }, { dismiss: () => { music('city'); if (after) after(); else showHub(); } });
     render();
   }
   function openSouvenir() {
     const s = Game.state;
+    music('shop');
     if (!s.trip) return;
     const render = () => UI.modal(UI.souvenirModal(s), {
       buy(el) { const r = IE.World.buySouvenir(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
@@ -254,6 +263,7 @@
     const s = Game.state;
     if (!R.drawDilemma(s)) { showHub(); return; }
     save();
+    music('dilemma');
     UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
     UI.modal(UI.dilemmaModal(R.dilemmaView(s), s), {
       pick(el) {
@@ -267,6 +277,7 @@
   function showHub() {
     const s = Game.state;
     if (!s || s.ended) return;
+    hubMusic(s);
     const acts = R.actions(s);
     IE.Maps.actions = acts;
     setScene(viewScene(currentView()));
@@ -388,6 +399,7 @@
   // 天空區畫廊：委託與賣畫
   function openGallery() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.modal(UI.galleryModal(s), {
       sell(el) {
         const r = IE.World.sellWork(s, Number(el.dataset.i));
@@ -401,6 +413,7 @@
   }
   function openAntique() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.modal(UI.antiqueModal(s), {
       buy(el) { const r = IE.World.buyAntique(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
       sellcard(el) { const r = IE.World.sellCard(s, Number(el.dataset.uid)); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('coin'); UI.renderHud(s); save(); render(); },
@@ -410,6 +423,7 @@
   }
   function openDecor() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.modal(UI.decorModal(s), {
       buy(el) { const r = IE.World.buyDecor(s, el.dataset.id); UI.toast(r.msg, r.ok ? 'good' : 'bad'); if (r.ok) A.sfx('pickup'); UI.renderHud(s); save(); render(); },
       close() { UI.closeModal(); showHub(); },
@@ -418,6 +432,9 @@
   }
   function openCraft() {
     const s = Game.state;
+    // 關卡之夜和通宵用節奏更強的音樂
+    const ses = s.session;
+    music(ses && ses.stage && ses.stage.kind === 'boss' ? 'boss' : ses && (ses.stage || ses.mode === 'allnighter') ? 'stage' : 'create');
     IE.Craft.open(s, (res) => {
       UI.renderHud(s); A.setSpark(s.spark); save();
       if (!res) { showHub(); return; }
@@ -427,6 +444,7 @@
   // 靈感物件：裝備、卸下、排列（碎鏡會複製右邊的物件）、賣給天空區
   function openObjects() {
     const s = Game.state;
+    music('shop');
     const render = () => UI.pushModal(UI.objectsModal(s), {
       equip(el) { R.equipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
       unequip(el) { R.unequipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
@@ -440,6 +458,10 @@
 
   // ---------- 小遊戲 ----------
   function startMicro(kind, onResult) {
+    // 小遊戲有自己的節拍音樂；夢境面試用空靈的音樂
+    // 街頭表演和情緒陪伴跟著合成音樂的拍子，所以不播背景音樂
+    const SC = { interview: 'dream', dive: 'deep', garden: 'cozy', label: 'work', ot: 'work', clinic: 'work', delivery: 'work', farm: 'work', salvage: 'work', haggle: 'work' };
+    music(SC[kind] || 'none');
     const token = {};
     Game.microToken = token;
     const done = (result) => {
@@ -522,6 +544,7 @@
           UI.closeModal();
           if (rep.review) {
             A.sfx(rep.review.pass ? 'combo' : 'stamp');
+            if (rep.review.pass) music('victory');
             UI.modal(UI.reviewModal(rep.review), {
               ok() {
                 UI.closeModal();
@@ -541,6 +564,7 @@
   // ---------- 夢境面試（篩選日前兩晚） ----------
   function dreamInterview() {
     const s = Game.state;
+    music('dream');
     R.interviewQuestions(s);
     save();
     UI.setPanel('<p class="mute">你睡著了。</p>');
@@ -560,6 +584,7 @@
 
   // ---------- 被選中 ----------
   function chooseToGo() {
+    music('victory');
     const s = Game.state;
     UI.modal(UI.stayModal(s), {
       go() { UI.closeModal(); recruit(); },
@@ -609,6 +634,7 @@
   }
 
   function finishRun(ending) {
+    music(ending && (ending.type === 'agent' || ending.type === 'returned' || ending.type === 'recruited') ? 'victory' : 'ending');
     const s = Game.state;
     const kind = ending.kind || ending.type;
     ending.kind = kind;
@@ -682,7 +708,15 @@
       const b = e.target.closest('[data-hud]');
       if (!b || !Game.state) return;
       A.sfx('click');
-      if (b.dataset.hud === 'mute') { A.init(); A.toggleMute(); UI.renderHud(Game.state); }
+      // 聲音按鈕輪流切換：全部 → 只有音效（關掉背景音樂）→ 靜音 → 全部
+      if (b.dataset.hud === 'mute') {
+        A.init();
+        if (!A.muted && IE.BGM && IE.BGM.enabled) IE.BGM.setEnabled(false);
+        else if (!A.muted) A.toggleMute();
+        else { A.toggleMute(); if (IE.BGM) IE.BGM.setEnabled(true); }
+        if (IE.BGM) IE.BGM.syncMute();
+        UI.renderHud(Game.state);
+      }
       else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);

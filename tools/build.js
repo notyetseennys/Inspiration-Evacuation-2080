@@ -27,15 +27,23 @@ const inner = [title, metaSides, metaDesc, fontLinks, '<style>\n' + css + '</sty
 const full = '<!doctype html>\n<html lang="zh-HK">\n<head>\n<meta charset="utf-8">\n'
   + '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
   + [title, metaSides, metaDesc, fontLinks, '<style>\n' + css + '</style>'].join('\n')
-  + '\n</head>\n<body>\n' + body + '\n<script>\n' + js + '</script>\n</body>\n</html>\n';
+  + '\n</head>\n<body>\n' + body + '\n<script>window.IE_AUDIO_BASE = "../game/";</script>\n<script>\n' + js + '</script>\n</body>\n</html>\n';
 
 const out = path.join(root, 'dist');
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'inspiration-evacuation-2080.html'), full);
 console.log('dist/inspiration-evacuation-2080.html  ' + (full.length / 1024).toFixed(0) + ' KB');
+// 背景音樂：dist/ 直接讀 game/audio/（不在 git 裡重複存一份）；Artifact 版本把音樂檔複製到 HTML 旁邊的 audio/
 const ai = process.argv.indexOf('--artifact');
 if (ai !== -1) {
   const target = process.argv[ai + 1] || path.join(out, 'artifact.html');
   fs.writeFileSync(target, inner + '\n');
   console.log(target + '  ' + (inner.length / 1024).toFixed(0) + ' KB');
+  const audioDir = path.join(game, 'audio');
+  if (fs.existsSync(audioDir)) {
+    const dest = path.join(path.dirname(target), 'audio');
+    fs.mkdirSync(dest, { recursive: true });
+    fs.readdirSync(audioDir).filter((f) => f.endsWith('.mp3')).forEach((f) => fs.copyFileSync(path.join(audioDir, f), path.join(dest, f)));
+    console.log(dest + '/  ' + fs.readdirSync(dest).length + ' 首背景音樂');
+  }
 }
