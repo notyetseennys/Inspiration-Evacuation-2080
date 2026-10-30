@@ -104,7 +104,7 @@
       + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
-      + '<button class="icon-btn" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '">' + (IE.Audio.muted ? '靜音' : '聲音') + '</button>'
+      + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '">' + (IE.Audio.muted ? '靜音' : '聲音') + '</button>'
       + '</div></div>'
       + '<div class="hud-meters">'
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
@@ -333,9 +333,20 @@
   function metaResultHtml(meta) {
     const M = IE.Meta;
     let h = '<div class="meta-result"><div class="mr-xp">人才檔案經驗 <b>+' + (meta.lastXp || 0) + '</b></div>' + profileHtml(meta);
-    (meta.lastLevels || []).forEach((l) => { h += '<div class="mr-level"><b>升到 Lv.' + l.level + '！</b>' + esc(l.text) + (l.memo ? '<p class="memo">' + esc(l.memo) + '</p>' : '') + '</div>'; });
+    const lvls = meta.lastLevels || [];
+    const achs = meta.lastAch || [];
+    if (lvls.length && IE.Audio) {
+      setTimeout(() => IE.Audio.sfx('levelUp'), 150);
+      if (lvls.some((l) => l.memo)) {
+        [0, 65, 130, 195, 260].forEach((ms) => setTimeout(() => IE.Audio.sfx('typewriter'), 420 + ms));
+      }
+    }
+    if (achs.length && IE.Audio) {
+      setTimeout(() => IE.Audio.sfx('ach'), lvls.length ? 360 : 160);
+    }
+    lvls.forEach((l) => { h += '<div class="mr-level"><b>升到 Lv.' + l.level + '！</b>' + esc(l.text) + (l.memo ? '<p class="memo">' + esc(l.memo) + '</p>' : '') + '</div>'; });
     if (meta.lastStake) h += '<div class="mr-stake">通過外星評級 ' + meta.lastStake + '：這個角色解鎖了評級 ' + Math.min(8, meta.lastStake + 1) + '</div>';
-    (meta.lastAch || []).forEach((id) => { const a = M.ACH.find((x) => x.id === id); if (a) h += '<div class="mr-ach">成就「' + esc(a.name) + '」：' + esc(a.desc) + '<b>+' + a.t + ' 扭蛋券</b></div>'; });
+    achs.forEach((id) => { const a = M.ACH.find((x) => x.id === id); if (a) h += '<div class="mr-ach">成就「' + esc(a.name) + '」：' + esc(a.desc) + '<b>+' + a.t + ' 扭蛋券</b></div>'; });
     return h + '</div>';
   }
   function profileHtml(meta) {

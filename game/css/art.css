@@ -795,3 +795,77 @@
   animation: none !important;
 }
 
+/* =========================================================
+   任務 5：聲音擴充（音軌與音色動態指示徽章、HUD 聲波圖示）
+   ========================================================= */
+.ct-audio-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #b7e9f7;
+  background: rgba(55, 195, 214, 0.12);
+  border: 1px solid rgba(55, 195, 214, 0.38);
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.ct-audio-badge.ping {
+  animation: audio-badge-ping 0.38s ease-out;
+  border-color: #ffd36b;
+  color: #fff6c2;
+  background: rgba(255, 211, 107, 0.16);
+}
+@keyframes audio-badge-ping {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+.eq-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+.eq-bars s {
+  display: block;
+  width: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  animation: eq-bounce 0.75s ease-in-out infinite alternate;
+}
+.eq-bars s:nth-child(1) { height: 5px; animation-delay: 0s; }
+.eq-bars s:nth-child(2) { height: 9px; animation-delay: 0.22s; }
+.eq-bars s:nth-child(3) { height: 6px; animation-delay: 0.44s; }
+@keyframes eq-bounce {
+  0% { transform: scaleY(0.45); }
+  100% { transform: scaleY(1.05); }
+}
+
+.icon-btn.sound-on::before {
+  content: "♪ ";
+  color: #37c3d6;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .ct-audio-badge {
+    display: inline-flex;
+    margin-left: 0;
+    margin-top: 3px;
+    font-size: 10px;
+    padding: 1px 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-bars s,
+  .ct-audio-badge.ping {
+    animation: none !important;
+  }
+}
+
+

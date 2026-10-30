@@ -133,3 +133,51 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 5：聲音擴充（P0）
+
+### 改動摘要
+1. **`game/js/audio.js`（純 Web Audio 即時合成）**：
+   - **十個流派觸發音色（`IE.Audio.school(id)`）**：
+     - `flood`（水淹流）：三段連續上浮氣泡與高通濾波水流聲。
+     - `neon`（霓虹流）：120Hz 鋸齒波電流嗡鳴與高頻方波閃爍。
+     - `cliche`（陳腔濫調流）：黑膠高頻雜音與三段衰減走音磁帶回聲。
+     - `guilt`（愧疚流）：110Hz 低音鐘鳴與金屬泛音枷鎖聲。
+     - `machine`（機械流）：五連發高速方波數據滴答脈衝。
+     - `hunger`（飢餓流）：低頻空腹共鳴與清脆陶碗敲擊聲。
+     - `rebel`（反叛流）：失真五度和弦與噴漆高頻嘶聲。
+     - `warmth`（人情流）：溫暖木結他大七和弦三角波琶音。
+     - `faraway`（遠方流）：高音泛音空靈風鈴。
+     - `minimal`（極簡流）：單一清脆木魚敲擊與留白泛音。
+   - **五種媒材下筆／選牌質感音（`IE.Audio.medium(m)`）**：
+     - `paper`（紙）：雙段高通白噪音翻紙沙沙聲。
+     - `sound`（聲）：清亮電鋼琴雙泛音琴音。
+     - `image`（影）：雙擊機械相機快門聲。
+     - `body`（身）：78Hz／68Hz 雙拍低沉心跳聲。
+     - `data`（數）：復古數據機雙音多頻（DTMF）撥號音。
+   - **事件音效（`IE.Audio.sfx`）**：
+     - `stagePass`（關卡入選）：昂揚大調銅管與高八度方波琶音。
+     - `stageFail`（關卡落選）：半音下墜小調嘆息與低沉印章聲。
+     - `judge`（外星評審主題）：低音鋸齒波 Drone 加不協和減五度和弦。
+     - `levelUp`（人才檔案升級）：清脆上行晶體音階。
+     - `ach`（成就解鎖）：閃亮徽章短號。
+     - `typewriter`（外星 HR 備忘錄）：機械打字機敲擊聲。
+   - **多層次音樂擴充**：
+     - 新增 `stageDrum` 音軌層：關卡之夜（`stage` 與 `boss` 模式）自動疊加切分低鼓、過門小鼓與電子鈸節奏。
+     - 外星評審之夜（`boss` 模式）自動換調為 **D 和聲小調**（`Dm – Bb – Gm – A`），並改用更具壓迫感的鋸齒波低音與增二度旋律音階。
+2. **`game/js/craft.js`、`game/js/ui.js` 與 `game/css/art.css`**：
+   - 在創作桌選牌與計分時播放對應媒材質感音，流派觸發時播放流派音色，關卡結算時播放 `stagePass`／`stageFail`。
+   - 在局外結算畫面（`metaResultHtml`）觸發升級（`levelUp`）、成就（`ach`）與備忘錄打字機（`typewriter`）音效。
+   - 新增創作桌頂部動態音軌與音色指示徽章（`.ct-audio-badge`）及 HUD 聲音按鈕音符標示。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t5-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t5-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t5-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t5-after-mobile.png`
+
+### 已知問題
+- 無。
+
+

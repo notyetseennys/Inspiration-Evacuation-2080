@@ -73,7 +73,7 @@
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
     root.innerHTML = '<canvas class="ct-fx"></canvas><div class="ct-inner">'
-      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span></div>'
+      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
       + '<div class="ct-stagebar" hidden></div>'
@@ -95,9 +95,12 @@
     root.addEventListener('click', onClick);
     root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
     fxInit();
+    const stg = s.session && s.session.stage;
+    if (stg && stg.kind === 'boss') A().setMode('boss', 88);
+    else if (stg) A().setMode('stage', 84);
+    else A().setMode('alien', 80);
     render();
-    A().setMode('alien', 80);
-    if (s.session && s.session.stage) showStageIntro(s.session.stage);
+    if (stg) showStageIntro(stg);
     const meta = IE.Game.meta || {};
     if (!meta.craftTutorial) {
       meta.craftTutorial = true;
@@ -127,10 +130,27 @@
     else cards.sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a));
     return cards;
   }
+  const MED_SOUND_DESC = { paper: '紙・沙沙聲', sound: '聲・琴音', image: '影・快門', body: '身・心跳', data: '數・撥號音' };
+  const SCH_SOUND_DESC = { flood: '水淹・氣泡音', neon: '霓虹・電流聲', cliche: '陳腔・磁帶回聲', guilt: '愧疚・低音鐘鳴', machine: '機械・數據滴答', hunger: '飢餓・陶碗低鳴', rebel: '反叛・失真和弦', warmth: '人情・木結他琶音', faraway: '遠方・空靈風鈴', minimal: '極簡・清脆木魚' };
+  function updateAudioBadge(note) {
+    if (!root) return;
+    const ab = $('.ct-audio-badge');
+    if (!ab) return;
+    const ses = st && st.s && st.s.session;
+    const g = ses && ses.stage;
+    const bgm = g ? (g.kind === 'boss' ? '♪ 評審變調・D和聲小調＋鼓層' : '♪ 展場編曲・附加鼓層') : '♪ 創作夜曲';
+    ab.innerHTML = '<i class="eq-bars"><s></s><s></s><s></s></i><span>' + esc(note ? bgm + '｜' + note : bgm) + '</span>';
+    if (note) {
+      ab.classList.remove('ping');
+      void ab.offsetWidth;
+      ab.classList.add('ping');
+    }
+  }
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
     $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    updateAudioBadge(st.lastNote);
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
@@ -327,7 +347,14 @@
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
     else if (SR && c && SR.forbidden(c)) { $('.ct-info').textContent = '外星評審：這張素材不能用。'; return; }
-    else if (st.sel.length < (SR ? SR.maxCards : 5)) st.sel.push(uid);
+    else if (st.sel.length < (SR ? SR.maxCards : 5)) {
+      st.sel.push(uid);
+      if (c && A().medium) {
+        const mk = D().mediumOf(c);
+        A().medium(mk);
+        st.lastNote = '媒材音：' + (MED_SOUND_DESC[mk] || mk);
+      }
+    }
     else { if (SR && SR.maxCards < 5) $('.ct-info').textContent = '外星評審：每次最多下筆 ' + SR.maxCards + ' 張。'; return; }
     A().fx('card', st.sel.length * 2);
     render();
@@ -539,6 +566,10 @@
       setTimeout(() => { if (el) el.classList.remove('sch-hit'); }, 650);
     }
     if (A().school) A().school(schoolId);
+    if (st && SCH_SOUND_DESC[schoolId]) {
+      st.lastNote = '流派音：' + SCH_SOUND_DESC[schoolId];
+      updateAudioBadge(st.lastNote);
+    }
   }
   // 傳說組合全屏字卡（點擊可跳過）
   function showLegendCard(x) {
@@ -631,6 +662,13 @@
           break;
         case 'card': {
           const el = stageCard(x.uid);
+          const cObj = s.cards.find((c) => c.uid === x.uid);
+          if (cObj && A().medium) {
+            const mk = D().mediumOf(cObj);
+            A().medium(mk);
+            st.lastNote = '媒材音：' + (MED_SOUND_DESC[mk] || mk);
+            updateAudioBadge(st.lastNote);
+          }
           bump(el, x.again ? 1.2 : 1.12);
           if (x.again) popAgain(el);
           floatText(el, '+' + x.chips, 'chips');
@@ -902,6 +940,9 @@
     if (closed) return;
     sc.textContent = fmt(total);
     A().sfx('boom');
+    if (res.stage) {
+      setTimeout(() => A().sfx(res.stage.pass ? 'stagePass' : 'stageFail'), 220);
+    }
     burst(sc, 100, 1.4);
     shake(10);
     panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
