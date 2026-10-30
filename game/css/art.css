@@ -1066,5 +1066,98 @@
   }
 }
 
+/* =========================================================
+   任務 7：流派徽章、媒材圖示與 3/3 滿流派流光外框
+   ========================================================= */
+.ct-obj .osc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ct-obj .osc .sch-ico {
+  width: 11px;
+  height: 11px;
+  vertical-align: -1px;
+}
+
+.ct-schools .sch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  overflow: hidden;
+}
+.ct-schools .sch .sch-ico {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+
+.sch-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sch-head .sch-ico {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
+.dk-med {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dk-med .med-ico {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+
+/* 流派湊滿三件（3/3）時，流派欄外框有流動的光 */
+.ct-schools .sch.max {
+  border: 1.5px solid transparent !important;
+  background:
+    linear-gradient(135deg, rgba(16, 22, 38, 0.94), rgba(22, 30, 50, 0.94)) padding-box,
+    linear-gradient(90deg, var(--c, #37c3d6), #ffffff, #ffd36b, var(--c, #37c3d6)) border-box !important;
+  background-size: 100% 100%, 240% 100% !important;
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--c, #37c3d6) 65%, transparent),
+    inset 0 0 10px color-mix(in srgb, var(--c, #37c3d6) 28%, transparent);
+  animation: sch-max-border-flow 2.8s linear infinite;
+}
+.ct-schools .sch.max::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.28) 48%,
+    rgba(255, 211, 107, 0.25) 52%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  animation: sch-max-sheen 3.2s ease-in-out infinite;
+}
+@keyframes sch-max-border-flow {
+  0% { background-position: 0 0, 0% 50%; }
+  100% { background-position: 0 0, 240% 50%; }
+}
+@keyframes sch-max-sheen {
+  0%, 25% { transform: translateX(-120%); }
+  75%, 100% { transform: translateX(120%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-schools .sch.max,
+  .ct-schools .sch.max::after {
+    animation: none !important;
+  }
+}
+
+
 
 

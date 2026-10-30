@@ -205,5 +205,28 @@
 ### 已知問題
 - 無。
 
+---
+
+## 任務 7：流派徽章與媒材圖示（P1）
+
+### 改動摘要
+1. **`game/js/icons.js`**：
+   - 新增 **10 個流派徽章（12×12）**（`sc_flood` 水滴波紋、`sc_neon` 霓虹星芒、`sc_cliche` 無限迴圈、`sc_guilt` 鎖鏈鉛錘、`sc_machine` 針腳晶片、`sc_hunger` 蒸氣裂碗、`sc_rebel` 鋸齒閃電、`sc_warmth` 雙層暖心、`sc_faraway` 四方羅盤、`sc_minimal` 留白禪圓）與 `IE.Icons.school(id, size)` 介面。
+   - 新增 **5 個媒材圖示（12×12）**（`med_paper` 摺角橫線稿紙、`med_sound` 雙八分音符、`med_image` 菲林鏡頭框、`med_body` 手印掌心、`med_data` 數據終端螢幕）與 `IE.Icons.media(m, size)` 介面。
+2. **`game/js/craft.js`、`game/js/ui.js` 與 `game/css/art.css`**：
+   - 將流派徽章嵌入創作桌物件格的流派標記（`.ct-obj .osc`）、創作桌流派欄（`.ct-schools .sch`）及收藏頁流派標題（`.sch-head`）。
+   - 將媒材圖示嵌入牌庫視窗的媒材分佈標籤（`.dk-med`）。
+   - 當流派湊滿三件（`.ct-schools .sch.max`，3/3）時，為流派欄加上雙色漸層流動光框（`sch-max-border-flow`）與斜向流光掃描（`sch-max-sheen`）。
+
+### 前後對比截圖
+- 修改前（桌面 1000px）：`docs/shots/t7-before-desktop.png`
+- 修改前（手機 390px）：`docs/shots/t7-before-mobile.png`
+- 修改後（桌面 1000px）：`docs/shots/t7-after-desktop.png`
+- 修改後（手機 390px）：`docs/shots/t7-after-mobile.png`
+
+### 已知問題
+- 無。
+
+
 
 

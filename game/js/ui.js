@@ -631,7 +631,7 @@
     const objs = Object.keys(SC).concat(['']).map((k) => {
       const list = D().OBJECTS.filter((o) => (o.school || '') === k);
       const n = list.filter((o) => seenO[o.id]).length;
-      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
+      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? (IE.Icons.school ? IE.Icons.school(k, 16) : '') + esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
         + '<span class="num">' + n + '/' + list.length + '</span></h4><div class="recipes">' + list.map(objCard).join('') + '</div>';
     }).join('');
     const evSeen = meta.eventsSeen || {};

@@ -2000,6 +2000,99 @@ body.ct-open { overflow: hidden; }
   }
 }
 
+/* =========================================================
+   任務 7：流派徽章、媒材圖示與 3/3 滿流派流光外框
+   ========================================================= */
+.ct-obj .osc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ct-obj .osc .sch-ico {
+  width: 11px;
+  height: 11px;
+  vertical-align: -1px;
+}
+
+.ct-schools .sch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  overflow: hidden;
+}
+.ct-schools .sch .sch-ico {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+
+.sch-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sch-head .sch-ico {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
+.dk-med {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dk-med .med-ico {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+
+/* 流派湊滿三件（3/3）時，流派欄外框有流動的光 */
+.ct-schools .sch.max {
+  border: 1.5px solid transparent !important;
+  background:
+    linear-gradient(135deg, rgba(16, 22, 38, 0.94), rgba(22, 30, 50, 0.94)) padding-box,
+    linear-gradient(90deg, var(--c, #37c3d6), #ffffff, #ffd36b, var(--c, #37c3d6)) border-box !important;
+  background-size: 100% 100%, 240% 100% !important;
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--c, #37c3d6) 65%, transparent),
+    inset 0 0 10px color-mix(in srgb, var(--c, #37c3d6) 28%, transparent);
+  animation: sch-max-border-flow 2.8s linear infinite;
+}
+.ct-schools .sch.max::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.28) 48%,
+    rgba(255, 211, 107, 0.25) 52%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  animation: sch-max-sheen 3.2s ease-in-out infinite;
+}
+@keyframes sch-max-border-flow {
+  0% { background-position: 0 0, 0% 50%; }
+  100% { background-position: 0 0, 240% 50%; }
+}
+@keyframes sch-max-sheen {
+  0%, 25% { transform: translateX(-120%); }
+  75%, 100% { transform: translateX(120%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-schools .sch.max,
+  .ct-schools .sch.max::after {
+    animation: none !important;
+  }
+}
+
+
 
 
 </style>
@@ -10854,6 +10947,220 @@ body.ct-open { overflow: hidden; }
       '................',
       '................',
     ],
+
+    // ---------- 任務 7：十個流派徽章（12×12） ----------
+    sc_flood: [
+      '.....kk.....',
+      '....kcck....',
+      '...kcaack...',
+      '..kcaaaack..',
+      '..kaawaack..',
+      '...kkkkkk...',
+      '.kk..kk..kk.',
+      'kcckkcckkcck',
+      'kaaaaaaaaaak',
+      '.kbbbbbbbbk.',
+      '..kkkkkkkk..',
+      '............',
+    ],
+    sc_neon: [
+      '.....kk.....',
+      '....kwwk....',
+      '..kkcaackk..',
+      '.kcwcaacwck.',
+      '..kcawwack..',
+      'kkcawbbwackk',
+      'kwwabbbbawwk',
+      'kkcawbbwackk',
+      '..kcawwack..',
+      '.kcwcaacwck.',
+      '..kkcaackk..',
+      '....kkkk....',
+    ],
+    sc_cliche: [
+      '............',
+      '..kkk..kkk..',
+      '.kccckkccck.',
+      'kcaaaccaaaak',
+      'kcakwccwkack',
+      'kcakkcckkack',
+      'kcaaaccaaaak',
+      '.kbbbkkbbbk.',
+      '..kkk..kkk..',
+      '...kcccck...',
+      '...kkkkkk...',
+      '............',
+    ],
+    sc_guilt: [
+      '....kkkk....',
+      '...kcccck...',
+      '...kckkck...',
+      '....kkkk....',
+      '..kkkkkkkk..',
+      '.kcccccccck.',
+      '.kaaaaaaaak.',
+      'kaabbbbbbaak',
+      'kaabwwwwbaak',
+      'kbbbbbbbbbbk',
+      '.kkkkkkkkkk.',
+      '............',
+    ],
+    sc_machine: [
+      '..k..kk..k..',
+      '..kkkkkkkk..',
+      'kkbbbbbbbbkk',
+      '.kbaaaaaabk.',
+      'kkbaccccabkk',
+      '.kbacwwcabk.',
+      '.kbacwwcabk.',
+      'kkbaccccabkk',
+      '.kbaaaaaabk.',
+      'kkbbbbbbbbkk',
+      '..kkkkkkkk..',
+      '..k..kk..k..',
+    ],
+    sc_hunger: [
+      '....c..c....',
+      '...c..c.....',
+      '....c..c....',
+      '.kkkkkkkkkk.',
+      'kcccccccccck',
+      'kaaaakkaaaak',
+      '.kaakkaaaak.',
+      '.kaaaakkaak.',
+      '..kbbbbbbk..',
+      '...kkkkkk...',
+      '....kbbk....',
+      '...kkkkkk...',
+    ],
+    sc_rebel: [
+      '......kkkk..',
+      '.....kcccck.',
+      '....kccaak..',
+      '...kccaak...',
+      '..kcccccckk.',
+      '.kccccccaak.',
+      '..kkkkccaak.',
+      '....kccaak..',
+      '...kccaak...',
+      '..kccaak....',
+      '.kbbbk......',
+      '.kkkk.......',
+    ],
+    sc_warmth: [
+      '............',
+      '..kkk..kkk..',
+      '.kccckkccck.',
+      'kccwwccwwcck',
+      'kcaaaaaaaack',
+      'kaaaaaaaaaak',
+      '.kaaaaaaaak.',
+      '..kaaaaaak..',
+      '...kbbbbk...',
+      '....kbbk....',
+      '.....kk.....',
+      '............',
+    ],
+    sc_faraway: [
+      '.....kk.....',
+      '....kwwk....',
+      '....kcck....',
+      '..kkcaackk..',
+      '.kccawwacck.',
+      'kwwawwbwwaww',
+      '.kccawwacck.',
+      '..kkcaackk..',
+      '....kbbk....',
+      '....kbbk....',
+      '.....kk.....',
+      '............',
+    ],
+    sc_minimal: [
+      '............',
+      '...kkkkkk...',
+      '..kcccccck..',
+      '.kcckkkkcck.',
+      '.kck....kck.',
+      '.kck.ww.kck.',
+      '.kck.ww.kck.',
+      '.kck....kck.',
+      '.kcckkkkcck.',
+      '..kaaaaaak..',
+      '...kkkkkk...',
+      '............',
+    ],
+
+    // ---------- 任務 7：五個媒材圖示（12×12） ----------
+    med_paper: [
+      '.kkkkkkkk...',
+      '.kwwwwwwkk..',
+      '.kwccccwak..',
+      '.kwwwwwwwwk.',
+      '.kwbbbbbbwk.',
+      '.kwwwwwwwwk.',
+      '.kwbbbbbbwk.',
+      '.kwwwwwwwwk.',
+      '.kwbbbbbbwk.',
+      '.kwaaaaaawk.',
+      '.kkkkkkkkkk.',
+      '............',
+    ],
+    med_sound: [
+      '.....kkkkkk.',
+      '....kcccccck',
+      '....kcaaaack',
+      '....kck..kck',
+      '....kck..kck',
+      '..kkkck..kck',
+      '.kcccckkkkck',
+      '.kcaackcccck',
+      '..kkkkkcaack',
+      '.......kkkk.',
+      '............',
+      '............',
+    ],
+    med_image: [
+      'kkkkkkkkkkkk',
+      'kwkwccccwkwk',
+      'kkkkkkkkkkkk',
+      'kbaaaaaaaabk',
+      'kbaccccccaak',
+      'kbacwwwwcaak',
+      'kbacwwwwcaak',
+      'kbaccccccaak',
+      'kbaaaaaaaabk',
+      'kkkkkkkkkkkk',
+      'kwkwbbbbwkwk',
+      'kkkkkkkkkkkk',
+    ],
+    med_body: [
+      '...kk.kk....',
+      '..kckkckkk..',
+      '.kckcaackck.',
+      '.kcaaaaaack.',
+      'kkcaaaaaack.',
+      'kccaawwaaack',
+      'kcaaawwaaaak',
+      '.kaaaaaaaaak',
+      '.kaabbbbbaak',
+      '..kbbbbbbbk.',
+      '...kkkkkkk..',
+      '............',
+    ],
+    med_data: [
+      '.kkkkkkkkkk.',
+      'kbbbbbbbbbbk',
+      'kbccccccccbk',
+      'kbcwwccwwcbk',
+      'kbccccccccbk',
+      'kbaaaaaaaabk',
+      'kbacwkcwcaak',
+      'kbacwkcwcaak',
+      'kbaaaaaaaabk',
+      'kbbbbbbbbbbk',
+      '.kkkkkkkkkk.',
+      '............',
+    ],
   };
 
   const cache = new Map();
@@ -10903,8 +11210,29 @@ body.ct-open { overflow: hidden; }
     d_bookshelf: { a: '#d6334a', b: '#37c3d6', c: '#ffc247', w: '#9be36b' }, d_easel: { a: '#ff4fb4', c: '#37c3d6', w: '#eef1f7' }, d_telescope: { a: '#c9d1dc', c: '#37c3d6' },
     d_stereo: { a: '#ff4d5e', b: '#3b2a1e', c: '#1b1b28', w: '#ffffff' }, d_neonsign: { a: '#ff4fb4', c: '#37c3d6' }, d_poster: { a: '#d6334a', c: '#ffd36b' },
   };
+  const SCHOOL_PAL = {
+    flood:   { a: '#3fb6d9', b: '#1e6b85', c: '#a8f0ff', w: '#ffffff' },
+    neon:    { a: '#ff4fb4', b: '#9e1966', c: '#ffb3e0', w: '#ffffff' },
+    cliche:  { a: '#e8c25a', b: '#8f6f1f', c: '#fff0ad', w: '#ffffff' },
+    guilt:   { a: '#a89a82', b: '#5c5243', c: '#ded4c3', w: '#ffffff' },
+    machine: { a: '#8e9bb0', b: '#434d5e', c: '#37c3d6', w: '#e8fdff' },
+    hunger:  { a: '#f08a3c', b: '#8c4310', c: '#ffd0a6', w: '#ffffff' },
+    rebel:   { a: '#a77bff', b: '#562eb0', c: '#e0cfff', w: '#ffffff' },
+    warmth:  { a: '#ff6b5e', b: '#9e2b22', c: '#ffc2bd', w: '#ffffff' },
+    faraway: { a: '#6cc070', b: '#2b6e30', c: '#c4f7c6', w: '#ffffff' },
+    minimal: { a: '#d8e2ef', b: '#6c7a8f', c: '#ffffff', w: '#37c3d6' },
+  };
+  const MEDIA_PAL = {
+    paper: { a: '#e8c25a', b: '#8f6f1f', c: '#fff2bd', w: '#ffffff' },
+    sound: { a: '#ff6b5e', b: '#9e2b22', c: '#ffc2bd', w: '#ffffff' },
+    image: { a: '#c38bff', b: '#5e2ca8', c: '#ebd6ff', w: '#ffffff' },
+    body:  { a: '#f08a3c', b: '#8c4310', c: '#ffd0a6', w: '#ffffff' },
+    data:  { a: '#37c3d6', b: '#165a66', c: '#a8f5ff', w: '#ffffff' },
+  };
+  const school = (id, size) => (SCHOOL_PAL[id] ? '<img class="px-icon sch-ico sc-' + id + '" src="' + url('sc_' + id, SCHOOL_PAL[id]) + '" width="' + (size || 14) + '" height="' + (size || 14) + '" alt="">' : '');
+  const media = (m, size) => (MEDIA_PAL[m] ? '<img class="px-icon med-ico med-' + m + '" src="' + url('med_' + m, MEDIA_PAL[m]) + '" width="' + (size || 14) + '" height="' + (size || 14) + '" alt="">' : '');
   const item = (icon, size) => '<img class="px-icon item" src="' + url(icon, ITEM_PAL[icon]) + '" width="' + (size || 36) + '" height="' + (size || 36) + '" alt="">';
-  IE.Icons = { SHAPES, url, obj, item, ITEM_PAL };
+  IE.Icons = { SHAPES, url, obj, item, school, media, ITEM_PAL, SCHOOL_PAL, MEDIA_PAL };
 })(window.IE = window.IE || {});
 
 // ---- js/chars.js ----
@@ -17551,7 +17879,7 @@ body.ct-open { overflow: hidden; }
     const objs = Object.keys(SC).concat(['']).map((k) => {
       const list = D().OBJECTS.filter((o) => (o.school || '') === k);
       const n = list.filter((o) => seenO[o.id]).length;
-      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
+      return '<h4 class="sch-head"' + (k ? ' style="--c:' + SC[k].color + '"' : '') + '>' + (k ? (IE.Icons.school ? IE.Icons.school(k, 16) : '') + esc(SC[k].name) + '<small>' + esc(SC[k].motto) + '・兩件：' + esc(SC[k].b2) + '；三件：' + esc(SC[k].b3) + '</small>' : '不屬於任何流派')
         + '<span class="num">' + n + '/' + list.length + '</span></h4><div class="recipes">' + list.map(objCard).join('') + '</div>';
     }).join('');
     const evSeen = meta.eventsSeen || {};
@@ -17728,7 +18056,7 @@ body.ct-open { overflow: hidden; }
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
     return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
-      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
+      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(o.school, 12) : '') + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
   }
   // 流派加成：裝備中每個流派的件數，兩件觸發、三件更強
   function schoolsHtml(s) {
@@ -17738,7 +18066,7 @@ body.ct-open { overflow: hidden; }
     return ids.map((id) => {
       const sc = D().SCHOOLS[id], k = n[id];
       const txt = k >= 3 ? sc.b2 + '；' + sc.b3 : k >= 2 ? sc.b2 + '（三件：' + sc.b3 + '）' : '再多一件：' + sc.b2;
-      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '"><b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
+      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
     }).join('');
   }
 
@@ -18068,7 +18396,7 @@ body.ct-open { overflow: hidden; }
       + '<div class="dk-bar"><i style="width:' + counts[g] / max * 100 + '%;background:' + D().TAGS[g].color + '"></i></div><b class="num">' + counts[g] + '</b></div>').join('');
     const M = D().MEDIA, mc = {};
     left.forEach((c) => { const m = D().mediumOf(c); mc[m] = (mc[m] || 0) + 1; });
-    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '"><b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
+    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '">' + (IE.Icons.media ? IE.Icons.media(m, 14) : '') + '<b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
     return '<div class="modal wide"><h2>牌庫</h2><p class="mute" style="font-size:13px">還沒抽到的素材有 ' + left.length + ' 張（用過的 ' + ses.used.length + ' 張會在牌庫抽完後洗回去）。改稿前看看接下來最可能抽到甚麼。</p>'
       + '<h3>標籤</h3><div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
       + '<h3>媒材</h3><div class="dk-media">' + media + '</div>'

@@ -49,7 +49,7 @@
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
     return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
-      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
+      + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(o.school, 12) : '') + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
   }
   // 流派加成：裝備中每個流派的件數，兩件觸發、三件更強
   function schoolsHtml(s) {
@@ -59,7 +59,7 @@
     return ids.map((id) => {
       const sc = D().SCHOOLS[id], k = n[id];
       const txt = k >= 3 ? sc.b2 + '；' + sc.b3 : k >= 2 ? sc.b2 + '（三件：' + sc.b3 + '）' : '再多一件：' + sc.b2;
-      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '"><b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
+      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
     }).join('');
   }
 
@@ -389,7 +389,7 @@
       + '<div class="dk-bar"><i style="width:' + counts[g] / max * 100 + '%;background:' + D().TAGS[g].color + '"></i></div><b class="num">' + counts[g] + '</b></div>').join('');
     const M = D().MEDIA, mc = {};
     left.forEach((c) => { const m = D().mediumOf(c); mc[m] = (mc[m] || 0) + 1; });
-    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '"><b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
+    const media = Object.keys(M).map((m) => '<span class="dk-med" style="--c:' + M[m].color + '">' + (IE.Icons.media ? IE.Icons.media(m, 14) : '') + '<b>' + M[m].name + '</b>' + M[m].full + ' <span class="num">' + (mc[m] || 0) + '</span></span>').join('');
     return '<div class="modal wide"><h2>牌庫</h2><p class="mute" style="font-size:13px">還沒抽到的素材有 ' + left.length + ' 張（用過的 ' + ses.used.length + ' 張會在牌庫抽完後洗回去）。改稿前看看接下來最可能抽到甚麼。</p>'
       + '<h3>標籤</h3><div class="dk-rows">' + (rows || '<p class="mute">牌庫已經抽完。</p>') + '</div>'
       + '<h3>媒材</h3><div class="dk-media">' + media + '</div>'
