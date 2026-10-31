@@ -108,6 +108,7 @@ ECON: {
   objReroll: [20, 30, 40, 50],    // 重抽物件
   pack: 40, packFar: 70,          // 素材包
   packStars: [0.55, 0.27, 0.12, 0.05, 0.01],  // 素材包的星級機會（★1 至 ★5）
+  packLegend: 0.03,               // 遠方包每張素材是極稀有（★5）的機會
   polish: [0, 30, 60, 100, 160],  // 打磨：★1→2 是 polish[1]……★4→5 是 polish[4]
   burn: 20, copy: 50, minDeck: 8,  // 起始素材庫約 11 張
   tech: 50, techStep: 25,         // 技法課：50 + 25 ×（現在等級 − 1）
@@ -167,7 +168,7 @@ s.shop = {
 | 天空區垃圾包 | `sky` | 標籤有 machine 或 neon | `ECON.pack` |
 | 街坊包 | `street` | 標籤有 warmth、hunger 或 hope | `ECON.pack` |
 | 地下包 | `under` | 標籤有 rebel、anger 或 guilt | `ECON.pack` |
-| 遠方包 | `far` | `origin` 不是 home 的素材（可以有極稀有，機會照抽） | `ECON.packFar` |
+| 遠方包 | `far` | `origin` 不是 home 的素材（不含極稀有）；每張另有 `ECON.packLegend` 的機會換成一張外國的極稀有（★5） | `ECON.packFar` |
 
 - 開包：抽 3 張不同的素材定義，每張按 `ECON.packStars` 擲一個星級（極稀有一律 ★5），存在 `s.pack`；玩家選一張加入素材庫（`R.addCard`，再設定 `card.star`），另外兩張丟掉。素材庫滿了照 `R.addCard` 原有規則。
 - 工作室服務：選一張素材（不可以是愧疚素材）。打磨＝升一星（★5 不能再磨，價錢 `ECON.polish[現在星級]`）；燒掉＝從素材庫刪除（素材庫不少於 `ECON.minDeck` 張）；複印＝複製一張（磨損歸零，名字加「（副本）」）。

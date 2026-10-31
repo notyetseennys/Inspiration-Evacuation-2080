@@ -7569,6 +7569,7 @@ body {
     objReroll: [20, 30, 40, 50],    // 重抽物件
     pack: 40, packFar: 70,          // 素材包
     packStars: [0.55, 0.27, 0.12, 0.05, 0.01],  // 素材包的星級機會（★1 至 ★5）
+    packLegend: 0.03,               // 遠方包每張素材是極稀有（★5）的機會
     polish: [0, 30, 60, 100, 160],  // 打磨：★1→2 是 polish[1]……★4→5 是 polish[4]
     burn: 20, copy: 50, minDeck: 8,  // 起始素材庫約 11 張
     tech: 50, techStep: 25,         // 技法課：50 + 25 ×（現在等級 − 1）
@@ -12468,16 +12469,19 @@ body {
 
   function openPack(s, pdef) {
     const allIds = Object.keys(D.CARDS);
+    const foreign = (c) => c.origin && c.origin !== 'home';
+    // 極稀有只會出現在遠方包，而且每張只有 ECON.packLegend 的機會（外國素材中約四分之一是極稀有，照抽就太常見）
+    const legends = pdef.foreign ? allIds.filter((k) => D.CARDS[k].rarity === 'legend' && foreign(D.CARDS[k])) : [];
     const pool = allIds.filter((k) => {
       const c = D.CARDS[k];
-      if (pdef.foreign) return c.origin && c.origin !== 'home';
       if (c.rarity === 'legend') return false;
+      if (pdef.foreign) return foreign(c);
       return (pdef.tags || []).some((t) => c.tags && c.tags.includes(t));
     });
     const fallback = allIds.filter((k) => D.CARDS[k].rarity !== 'legend' && !pool.includes(k));
     const cards = [];
-    while (cards.length < 3 && (pool.length || fallback.length)) {
-      const src = pool.length ? pool : fallback;
+    while (cards.length < 3 && (pool.length || fallback.length || legends.length)) {
+      const src = legends.length && (R.rand(s) < D.ECON.packLegend || !(pool.length || fallback.length)) ? legends : pool.length ? pool : fallback;
       const id = R.pick(s, src);
       src.splice(src.indexOf(id), 1);
       const def = D.CARDS[id];

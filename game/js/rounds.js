@@ -429,16 +429,19 @@
 
   function openPack(s, pdef) {
     const allIds = Object.keys(D.CARDS);
+    const foreign = (c) => c.origin && c.origin !== 'home';
+    // 極稀有只會出現在遠方包，而且每張只有 ECON.packLegend 的機會（外國素材中約四分之一是極稀有，照抽就太常見）
+    const legends = pdef.foreign ? allIds.filter((k) => D.CARDS[k].rarity === 'legend' && foreign(D.CARDS[k])) : [];
     const pool = allIds.filter((k) => {
       const c = D.CARDS[k];
-      if (pdef.foreign) return c.origin && c.origin !== 'home';
       if (c.rarity === 'legend') return false;
+      if (pdef.foreign) return foreign(c);
       return (pdef.tags || []).some((t) => c.tags && c.tags.includes(t));
     });
     const fallback = allIds.filter((k) => D.CARDS[k].rarity !== 'legend' && !pool.includes(k));
     const cards = [];
-    while (cards.length < 3 && (pool.length || fallback.length)) {
-      const src = pool.length ? pool : fallback;
+    while (cards.length < 3 && (pool.length || fallback.length || legends.length)) {
+      const src = legends.length && (R.rand(s) < D.ECON.packLegend || !(pool.length || fallback.length)) ? legends : pool.length ? pool : fallback;
       const id = R.pick(s, src);
       src.splice(src.indexOf(id), 1);
       const def = D.CARDS[id];

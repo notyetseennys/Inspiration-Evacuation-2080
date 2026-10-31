@@ -23,6 +23,7 @@ module.exports = (t) => {
     objReroll: [20, 30, 40, 50],
     pack: 40, packFar: 70,
     packStars: [0.55, 0.27, 0.12, 0.05, 0.01],
+    packLegend: 0.03,
     polish: [0, 30, 60, 100, 160],
     burn: 20, copy: 50, minDeck: 8,
     tech: 50, techStep: 25,
