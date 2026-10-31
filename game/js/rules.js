@@ -1913,7 +1913,7 @@
     deliveryConfig, applyDelivery, farmScore, farmConfig, applyFarm, buskConfig, applyBusk,
     clinicConfig, applyClinic, interviewQuestions, applyInterview,
     chatCost, aliveNpcs, applyChat, applyRest,
-    teach, gainObject, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
+    teach, gainObject, pickObjects, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, SHOP_CATS, morning, endDay, epitaph, endingFor, recordMeta,
     report, heal, outdoorHazard, applyMicro, MAX_CARDS,
   };

@@ -318,6 +318,348 @@
     return IE.Create.start(s, 'normal');
   }
 
+  // ---------- 市集：物件、素材包、服務、技法課、工具卡、遺物 ----------
+  function priceMod(s) {
+    return IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
+  }
+
+  function shopOpen(s) {
+    if (!s || !on(s) || s.phase !== 'shop') return null;
+    if (s.shop && s.shop.night === s.night) return s.shop;
+    const objs = R.pickObjects(s, 2);
+    // 第一局第 1 晚保證至少一件稀有物件
+    if (s.firstRun && s.night === 1 && !objs.some((id) => D.OBJ[id] && D.OBJ[id].rarity === 'rare')) {
+      const owns = (id) => s.objects.includes(id) || s.objStash.includes(id) || objs.includes(id);
+      const avail = (o) => !o.unlock || (s.unlocked && s.unlocked.includes(o.id));
+      const rares = D.OBJECTS.filter((o) => o.rarity === 'rare' && !o.npc && !o.start && !o.souvenir && avail(o) && !owns(o.id)).map((o) => o.id);
+      if (rares.length) {
+        const rId = R.pick(s, rares);
+        if (objs.length >= 2) objs[1] = rId;
+        else objs.push(rId);
+      }
+    }
+    const packPool = D.PACKS.map((p) => p.id);
+    const packs = [];
+    while (packs.length < 2 && packPool.length) {
+      const pid = R.pick(s, packPool);
+      packPool.splice(packPool.indexOf(pid), 1);
+      packs.push(pid);
+    }
+    const service = ['polish', 'burn', 'copy'][s.night % 3];
+    const techPool = ['adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono'];
+    if (s.formsSeen && s.formsSeen.paradox) techPool.push('paradox');
+    const tech = R.pick(s, techPool);
+    const hasToolSpace = IE.Stages && (s.tools || []).length < IE.Stages.toolSlots(s);
+    const tool = hasToolSpace ? IE.Stages.randomTool(s) : null;
+    const relic = s.night % 3 === 0 ? { items: R.pickObjects(s, 3, objs), taken: false } : null;
+    s.shop = {
+      night: s.night,
+      objs,
+      objRerolls: 0,
+      packs,
+      service,
+      tech,
+      tool,
+      relic,
+      bought: [],
+    };
+    return s.shop;
+  }
+
+  // 市集各項價錢（已乘 stakeMod(s, 'prices')，純查詢不消耗隨機數）
+  function price(s, slot, card) {
+    if (!s || typeof slot !== 'string') return 0;
+    const mod = priceMod(s);
+    if (slot.startsWith('obj:')) {
+      const id = slot.slice(4);
+      const o = D.OBJ[id];
+      return o ? Math.round((D.OBJ_PRICE[o.rarity] || 90) * mod) : 0;
+    }
+    if (slot.startsWith('pack:')) {
+      const pid = slot.slice(5);
+      const base = pid === 'far' ? D.ECON.packFar : D.ECON.pack;
+      return Math.round(base * mod);
+    }
+    if (slot.startsWith('polish:')) {
+      const st = Number(slot.slice(7));
+      return Math.round((D.ECON.polish[st] || 0) * mod);
+    }
+    if (slot === 'service') {
+      const srv = (s.pick && s.pick.service) || (s.shop && s.shop.service);
+      if (srv === 'burn') return Math.round(D.ECON.burn * mod);
+      if (srv === 'copy') return Math.round(D.ECON.copy * mod);
+      if (srv === 'polish') {
+        const c = typeof card === 'object' && card ? card : (card != null ? s.cards.find((x) => x.uid === card) : null);
+        const st = c && IE.Create ? IE.Create.starOf(c) : 1;
+        return Math.round((D.ECON.polish[st] || 0) * mod);
+      }
+      return 0;
+    }
+    if (slot === 'tech') {
+      const fid = s.shop && s.shop.tech;
+      const lv = (fid && s.forms && s.forms[fid]) || 1;
+      return Math.round((D.ECON.tech + D.ECON.techStep * (lv - 1)) * mod);
+    }
+    if (slot === 'tool') {
+      const tid = s.shop && s.shop.tool;
+      if (!tid || !IE.Stages || !IE.Stages.TOOL[tid]) return 0;
+      return Math.round(IE.Stages.toolPrice(s, tid) * D.ECON.toolMult);
+    }
+    if (slot === 'objReroll') {
+      const n = (s.shop && s.shop.objRerolls) || 0;
+      const arr = D.ECON.objReroll;
+      const base = arr[Math.min(n, arr.length - 1)];
+      return Math.round(base * mod);
+    }
+    if (slot.startsWith('relic:')) return 0;
+    return 0;
+  }
+
+  function rollPackStar(s, def) {
+    if (def && def.rarity === 'legend') return 5;
+    const probs = D.ECON.packStars;
+    const r = R.rand(s);
+    let acc = 0;
+    for (let i = 0; i < probs.length; i++) {
+      acc += probs[i];
+      if (r < acc) return i + 1;
+    }
+    return probs.length;
+  }
+
+  function openPack(s, pdef) {
+    const allIds = Object.keys(D.CARDS);
+    const pool = allIds.filter((k) => {
+      const c = D.CARDS[k];
+      if (pdef.foreign) return c.origin && c.origin !== 'home';
+      if (c.rarity === 'legend') return false;
+      return (pdef.tags || []).some((t) => c.tags && c.tags.includes(t));
+    });
+    const fallback = allIds.filter((k) => D.CARDS[k].rarity !== 'legend' && !pool.includes(k));
+    const cards = [];
+    while (cards.length < 3 && (pool.length || fallback.length)) {
+      const src = pool.length ? pool : fallback;
+      const id = R.pick(s, src);
+      src.splice(src.indexOf(id), 1);
+      const def = D.CARDS[id];
+      const star = rollPackStar(s, def);
+      cards.push({
+        id,
+        star,
+        name: def.name,
+        tags: def.tags.slice(),
+        value: def.value,
+        medium: D.mediumOf(def),
+        origin: def.origin,
+        rarity: def.rarity,
+      });
+    }
+    return { id: pdef.id, name: pdef.name, cards };
+  }
+
+  function shopBuy(s, slot) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    const sh = shopOpen(s);
+    if (!sh || typeof slot !== 'string') return { ok: false, msg: '無效的欄位' };
+    if (s.pack || s.pick) return { ok: false, msg: '請先完成目前的選擇' };
+
+    if (slot.startsWith('obj:')) {
+      const id = slot.slice(4);
+      if (!sh.objs.includes(id) || !D.OBJ[id]) return { ok: false, msg: '市集沒有這件物件' };
+      if (s.objects.includes(id) || s.objStash.includes(id)) return { ok: false, msg: '已經擁有這件物件' };
+      if (!(R.canEquip(s, id) || s.objStash.length < 4)) return { ok: false, msg: '物件欄和儲物箱都滿了' };
+      const cost = price(s, slot);
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      if (!R.gainObject(s, id, null)) return { ok: false, msg: '無法獲得物件' };
+      s.cr -= cost;
+      sh.objs = sh.objs.filter((x) => x !== id);
+      sh.bought.push(slot);
+      return { ok: true, msg: '買下「' + D.OBJ[id].name + '」' };
+    }
+
+    if (slot.startsWith('pack:')) {
+      const pid = slot.slice(5);
+      if (sh.bought.includes(slot) || !sh.packs.includes(pid)) return { ok: false, msg: '不能購買這個素材包' };
+      const pdef = D.PACKS.find((p) => p.id === pid);
+      if (!pdef) return { ok: false, msg: '找不到素材包' };
+      const cost = price(s, slot);
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      s.cr -= cost;
+      sh.bought.push(slot);
+      s.pack = openPack(s, pdef);
+      return { ok: true, msg: '打開「' + pdef.name + '」', pack: s.pack };
+    }
+
+    if (slot === 'service') {
+      if (sh.bought.includes('service')) return { ok: false, msg: '已經買過了' };
+      const srv = sh.service;
+      if (!srv) return { ok: false, msg: '沒有可用的服務' };
+      const cost = srv === 'polish' ? 0 : price(s, 'service');
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      s.cr -= cost;
+      sh.bought.push('service');
+      s.pick = { service: srv, paid: cost };
+      return { ok: true, msg: '選擇要處理的素材', pick: s.pick };
+    }
+
+    if (slot === 'tech') {
+      if (sh.bought.includes('tech')) return { ok: false, msg: '已經買過了' };
+      const fid = sh.tech;
+      if (!fid || !IE.Create || !IE.Create.FORM[fid]) return { ok: false, msg: '沒有可用的技法課' };
+      const cost = price(s, 'tech');
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      s.cr -= cost;
+      s.forms[fid] = ((s.forms && s.forms[fid]) || 1) + 1;
+      sh.bought.push('tech');
+      return { ok: true, msg: '技法課：' + IE.Create.FORM[fid].name + ' 升到 Lv.' + s.forms[fid] };
+    }
+
+    if (slot === 'tool') {
+      if (sh.bought.includes('tool')) return { ok: false, msg: '已經買過了' };
+      const tid = sh.tool;
+      if (!tid || !IE.Stages || !IE.Stages.TOOL[tid]) return { ok: false, msg: '沒有可用的工具卡' };
+      const cost = price(s, 'tool');
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      if (!IE.Stages.giveTool(s, tid)) return { ok: false, msg: '工具欄已滿' };
+      s.cr -= cost;
+      sh.bought.push('tool');
+      return { ok: true, msg: '買下工具卡「' + IE.Stages.TOOL[tid].name + '」' };
+    }
+
+    if (slot.startsWith('relic:')) {
+      const id = slot.slice(6);
+      if (!sh.relic || sh.relic.taken) return { ok: false, msg: '已經拿過遺物了' };
+      if (!Array.isArray(sh.relic.items) || !sh.relic.items.includes(id) || !D.OBJ[id]) {
+        return { ok: false, msg: '沒有這件遺物' };
+      }
+      if (s.objects.includes(id) || s.objStash.includes(id)) return { ok: false, msg: '已經擁有這件物件' };
+      if (!(R.canEquip(s, id) || s.objStash.length < 4)) return { ok: false, msg: '物件欄和儲物箱都滿了' };
+      const cost = price(s, slot);
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      if (!R.gainObject(s, id, null)) return { ok: false, msg: '無法獲得遺物' };
+      s.cr -= cost;
+      sh.relic.taken = true;
+      sh.bought.push(slot);
+      return { ok: true, msg: '收下遺物「' + D.OBJ[id].name + '」' };
+    }
+
+    return { ok: false, msg: '無效的欄位' };
+  }
+
+  function objReroll(s) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    const sh = shopOpen(s);
+    if (!sh) return { ok: false, msg: '不在市集' };
+    const cost = price(s, 'objReroll');
+    if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+    s.cr -= cost;
+    sh.objRerolls = (sh.objRerolls || 0) + 1;
+    const excl = (sh.objs || []).concat(sh.relic && sh.relic.items ? sh.relic.items : []);
+    let next = R.pickObjects(s, 2, excl);
+    if (next.length < 2) {
+      const more = R.pickObjects(s, 2 - next.length, next);
+      next = next.concat(more);
+    }
+    sh.objs = next;
+    return { ok: true, msg: '重抽了市集物件' };
+  }
+
+  function packPick(s, i) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
+    if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
+    const picked = s.pack.cards[i];
+    const res = R.addCard(s, picked.id);
+    res.card.star = picked.star;
+    s.pack = null;
+    return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
+  }
+
+  function pickCard(s, uid) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    if (!s.pick || !s.pick.service) return { ok: false, msg: '沒有進行中的服務' };
+    const c = s.cards.find((x) => x.uid === uid);
+    if (!c) return { ok: false, msg: '找不到這張素材' };
+    if (c.guilt) return { ok: false, msg: '愧疚素材不能使用工作室服務' };
+    const srv = s.pick.service;
+    if (srv === 'polish') {
+      const st = IE.Create.starOf(c);
+      if (st >= 5) return { ok: false, msg: '已經是最亮的 ★5' };
+      const cost = price(s, 'service', c);
+      if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
+      s.cr -= cost;
+      c.star = st + 1;
+      s.stats.polished = (s.stats.polished || 0) + 1;
+      s.pick = null;
+      return { ok: true, msg: '「' + c.name + '」打磨到 ★' + c.star, card: c };
+    }
+    if (srv === 'burn') {
+      if (s.cards.length <= D.ECON.minDeck) return { ok: false, msg: '素材庫最少要留 ' + D.ECON.minDeck + ' 張素材' };
+      s.cards = s.cards.filter((x) => x.uid !== uid);
+      s.pick = null;
+      return { ok: true, msg: '燒掉了「' + c.name + '」', card: c };
+    }
+    if (srv === 'copy') {
+      const copyDef = {
+        id: c.id,
+        name: c.name + '（副本）',
+        tags: c.tags.slice(),
+        value: c.value,
+        star: IE.Create.starOf(c),
+        medium: D.mediumOf(c),
+        wear: 0,
+      };
+      if (c.origin) copyDef.origin = c.origin;
+      if (c.rarity) copyDef.rarity = c.rarity;
+      if (c.mod) copyDef.mod = c.mod;
+      const res = R.addCard(s, copyDef);
+      res.card.star = copyDef.star;
+      if (c.mod) res.card.mod = c.mod;
+      s.pick = null;
+      return { ok: true, msg: '複製了「' + c.name + '」', card: res.card };
+    }
+    return { ok: false, msg: '未知的服務' };
+  }
+
+  function cancelPick(s) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    if (!s.pick) return { ok: false, msg: '沒有進行中的服務' };
+    const srv = s.pick.service;
+    const refund = s.pick.paid != null ? s.pick.paid : (srv === 'polish' ? 0 : price(s, 'service'));
+    s.cr += refund;
+    s.pick = null;
+    if (s.shop && Array.isArray(s.shop.bought)) {
+      s.shop.bought = s.shop.bought.filter((x) => x !== 'service');
+    }
+    return { ok: true, msg: '已取消工作室服務' };
+  }
+
+  // 到下一晚的白天（WO-15-04 簡單版本，WO-15-05 擴充為完整版本）
+  function advance(s) {
+    if (!s || !on(s)) return;
+    s.night = (s.night || 1) + 1;
+    s.day = dayOfNight(s.night);
+    s.slot = 0;
+    s.quarter = R.quarterOf(s.day, s);
+    s.phase = 'day';
+    s.offer = null;
+    s.shop = null;
+    s.pack = null;
+    s.pick = null;
+  }
+
+  function leaveShop(s) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    if (s.pack || s.pick) return { ok: false, msg: '請先完成開包或選素材' };
+    if (s.night % 3 === 0) {
+      s.phase = 'review';
+      s.shop = null;
+      return { ok: true, phase: 'review' };
+    }
+    advance(s);
+    return { ok: true, phase: s.phase };
+  }
+
   IE.Rounds = {
     on,
     roundOf,
@@ -339,5 +681,14 @@
     cleared,
     loseChance,
     startNight,
+    shopOpen,
+    price,
+    shopBuy,
+    objReroll,
+    packPick,
+    pickCard,
+    cancelPick,
+    leaveShop,
+    advance,
   };
 });
