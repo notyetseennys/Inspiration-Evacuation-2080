@@ -96,10 +96,12 @@
     const n0 = next[0];
     const rentChip = '<span class="chip next' + (n0.d === 0 ? ' warn' : '') + '"' + (n0.c ? ' style="--c:' + n0.c + '"' : '') + ' title="' + esc(season.name + '\n' + next.map((x) => when(x.d) + '：' + x.t).join('\n')) + '">' + when(n0.d) + '・' + esc(n0.t) + '</span>'
       + (s.floor <= 0 ? '<span class="chip warn">露宿天橋下</span>' : toRent <= 1 && s.cr < rent && n0.t.indexOf('交租') < 0 ? '<span class="chip warn">' + when(toRent) + '交租 $' + fmt(rent) + '・錢不夠</span>' : '');
+    const wd = R().weatherOf ? R().weatherOf(s) : null;
+    const wxChip = wd ? '<span class="chip wx' + (wd.kind === 'odd' ? ' odd' : '') + '" title="' + esc(wd.forecast + '\n' + D().weatherNote(wd)) + '"><i aria-hidden="true">' + wd.glyph + '</i>' + esc(wd.name) + '</span>' : '';
     hud.innerHTML = ''
       + '<div class="hud-top">'
       + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + R().days(s) + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
-      + rentChip
+      + wxChip + rentChip
       + danger
       + '<div class="hud-btns">'
       + '<button class="icon-btn" type="button" data-hud="stats">狀態</button>'
@@ -346,7 +348,7 @@
 
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
-    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
+    const who = { odd: '異常天氣', weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
     // 網民的帖子只留一則（其餘是同一類的閒話）
     let posts = 0;
     const feed = m.feed.filter((p) => p.kind !== 'post' || posts++ < 1).map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
@@ -576,11 +578,13 @@
     if (s.floor > 0) plan.push({ d: R().nextRentDay(s) - s.day, t: '交租 $' + fmt(R().rentAmount(s) + s.debt) });
     plan.sort((a, b) => a.d - b.d);
     const tk = s.runTickets ? ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '外星' }[k]) + ' ' + s.runTickets[k]).join('・') : '';
+    const wd = R().weatherOf ? R().weatherOf(s) : null;
     const items = [
       ['季節', D().SEASONS[s.season].name], ['本季 KPI', R().kpi(s).name],
+    ].concat(wd ? [['今天的天氣', wd.name + (D().weatherNote(wd) ? '：' + D().weatherNote(wd) : '')]] : []).concat([
       ['火花上限', '×' + R().sparkMax(s).toFixed(1)], ['平台評分', '★' + s.rating.toFixed(1)], ['全城自動化', s.auto.toFixed(0) + '%'],
       ['水位', s.water.toFixed(1) + ' 樓'], ['住處', s.floor ? s.floor + ' 樓' : '天橋下'],
-    ];
+    ]);
     if (s.stake > 1) items.push(['外星評級', String(s.stake)]);
     if (tk) items.push(['本局扭蛋券', tk]);
     if (IE.World && IE.World.stamps(s)) items.push(['護照印章', '×' + IE.World.stamps(s)]);

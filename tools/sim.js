@@ -11,7 +11,7 @@
 //   - 有節奏、懂得取捨的玩家被選中機會最高，但要管理靈魂重量
 'use strict';
 const path = require('path');
-['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js', 'data-abilities.js', 'data-stories.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
+['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js', 'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js', 'data-abilities.js', 'data-stories.js', 'data-weather.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js', 'stages.js', 'meta.js', 'dossier.js'].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 const { DATA: D, Rules: R, Dossier: DS, Create: CR, World: W } = globalThis.IE;
 
 const RUNS = Number(process.argv[2]) || 400;

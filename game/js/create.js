@@ -231,15 +231,17 @@
     const ai = aiFactor(s, F.id, objs, schools);
     const wm = (RL.worldMods(s).signalMult) || 1;
     const tm = IE.World ? IE.World.tripMult(s) : 1;
+    const wt = RL.weatherTag ? RL.weatherTag(s, sel) : null, wx = wt ? wt.x : 1;
     const sm = SR ? SR.mult(F.id, ctx.kpiMod, sel) : 1;
     const sp = s.spark * (SR ? SR.sparkMult : 1);
     if (ai !== 1) steps.push({ t: 'ai', x: ai });
     if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
     if (wm !== 1) steps.push({ t: 'world', x: wm });
     if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
+    if (wt) steps.push({ t: 'weather', x: wx, name: wt.name });
     if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
     steps.push({ t: 'spark', x: sp });
-    const raw = Math.round(chips * mult * sp * ai * wm * tm * sm);
+    const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx);
     const total = Math.round(raw * ctx.kpiMod);
     const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
     return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),

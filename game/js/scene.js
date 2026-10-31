@@ -498,8 +498,10 @@
       }
     },
     drawWeather(c, s) {
-      const w = IE.DATA.SEASONS[s.season].weather;
       const wy = waterY(s.water);
+      // 第十期：每日天氣與奇怪狀態；回傳的基本天氣（風暴、酸雨、熱浪）沿用下面的畫法
+      const wd = IE.Rules && IE.Rules.weatherOf ? IE.Rules.weatherOf(s) : null;
+      const w = wd && IE.WeatherFX ? IE.WeatherFX.draw(c, wd.vis, { t: this.t, wy, night: s.slot === 2 }) : IE.DATA.SEASONS[s.season].weather;
       if (w === 'storm') {
         // 風暴季：強風斜雨與水面濺花
         c.strokeStyle = 'rgba(175,218,255,0.52)';

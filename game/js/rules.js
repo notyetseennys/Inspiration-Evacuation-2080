@@ -32,9 +32,12 @@
   const activeEvents = (s) => (s.events || []).map((e) => Object.assign({ def: evDef(e.id) }, e)).filter((e) => e.def);
   const eventActive = (s, id) => (s.events || []).some((e) => e.id === id);
   // 合併所有進行中事件的修正：乘數相乘、數值相加、停業清單合併、致命危險列成清單
+  // 今天的天氣（第十期）：旅行時不計浮城的天氣
+  const weatherOf = (s) => (s.weather && s.weather.day === s.day && !s.trip && D.WEATHER_BY ? D.WEATHER_BY[s.weather.id] || null : null);
   function worldMods(s) {
     const out = { pay: {} };
-    activeEvents(s).forEach(({ def }) => {
+    const w = weatherOf(s);
+    activeEvents(s).concat(w ? [{ def: w }] : []).forEach(({ def }) => {
       const m = def.mods || {};
       Object.keys(m).forEach((k) => {
         const v = m[k];
@@ -51,8 +54,28 @@
   const worldPay = (s, job) => (worldMods(s).pay[job] || 1);
   const worldClosed = (s, job) => {
     const e = activeEvents(s).find(({ def }) => def.mods && def.mods.closed && def.mods.closed.includes(job));
-    return e ? '事件：' + e.def.name : null;
+    if (e) return '事件：' + e.def.name;
+    const w = weatherOf(s);
+    return w && w.mods.closed && w.mods.closed.includes(job) ? '天氣：' + w.name : null;
   };
+  // 每天早上擲天氣：一般天氣跟季節走；奇怪狀態由一成多開始，越到後期越常見；不會連續兩天一樣
+  function rollWeather(s) {
+    if (!D.WEATHER || s.trip || (s.weather && s.weather.day === s.day)) return;
+    const odd = rand(s) < 0.14 + 0.16 * age(s) / 100;
+    const prev = s.weather && s.weather.id;
+    const pool = D.WEATHER.filter((w) => w.id !== prev && (odd ? w.kind === 'odd' : w.kind === 'normal' && (!w.seasons || w.seasons.includes(s.season))));
+    const total = pool.reduce((a, w) => a + w.w, 0);
+    let r = rand(s) * total, pickW = pool[0];
+    for (const w of pool) { r -= w.w; if (r <= 0) { pickW = w; break; } }
+    s.weather = { id: pickW.id, day: s.day };
+    s.weatherSeen = s.weatherSeen || {};
+    s.weatherSeen[pickW.id] = true;
+  }
+  // 天氣對作品的影響：下筆的素材有指定標籤時的乘數
+  function weatherTag(s, sel) {
+    const w = weatherOf(s);
+    return w && w.tag && sel.some((c) => c.tags.includes(w.tag.t)) ? { x: w.tag.x, name: w.name } : null;
+  }
   function eventsInfo(s) {
     return activeEvents(s).map(({ def, until }) => ({ id: def.id, name: def.name, grade: def.grade, scope: def.scope, visual: def.visual,
       left: until - s.day + 1, news: def.news }));
@@ -1300,7 +1323,10 @@
   function morning(s) {
     if (s.morning && s.morning.day === s.day) return s.morning;
     const S = seasonOf(s);
-    const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
+    rollWeather(s);
+    const w = weatherOf(s);
+    const feed = [w ? { kind: w.kind === 'odd' ? 'odd' : 'weather', text: '【' + w.name + '】' + w.forecast + (D.weatherNote(w) ? '（' + D.weatherNote(w) + '）' : '') }
+      : { kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
     abilityMorning(s, feed);
     // 事件：大部分會先出現預兆，少數 S 級無預警爆發
     scheduleEvents(s, feed);
@@ -1423,11 +1449,11 @@
     if (perk(s).paranoiaDaily) addParanoia(s, perk(s).paranoiaDaily);
     // 事件的每日影響
     if (M.bodyDaily) {
-      const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
+      const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily) || { def: weatherOf(s) || { id: 'weather', name: '天氣' } };
       const b = Math.round(M.bodyDaily * calmMult(s));
-      if (b < 0) { hurt(s, -b, 'daily:' + src.def.id); rep.line('事件：' + src.def.name, 'bad', b, 'body'); }
+      if (b < 0) { hurt(s, -b, 'daily:' + src.def.id); rep.line((activeEvents(s).some(({ def }) => def === src.def) ? '事件：' : '天氣：') + src.def.name, 'bad', b, 'body'); }
     }
-    if (M.sparkDaily) rep.line('事件的影響', M.sparkDaily > 0 ? 'good' : 'bad', addSpark(s, M.sparkDaily, true), 'spark');
+    if (M.sparkDaily) rep.line(weatherOf(s) && weatherOf(s).mods.sparkDaily && !activeEvents(s).some(({ def }) => def.mods && def.mods.sparkDaily) ? '天氣：' + weatherOf(s).name : '事件的影響', M.sparkDaily > 0 ? 'good' : 'bad', addSpark(s, M.sparkDaily, true), 'spark');
     // 病痛
     condsInfo(s).forEach((c) => {
       const def = D.CONDS[c.id];
@@ -1734,7 +1760,7 @@
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
-    modeOf, days, age, hiding, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
+    modeOf, days, age, hiding, weatherOf, rollWeather, weatherTag, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
     diveConfig, diveBodyCost, applyDive,

@@ -1195,6 +1195,11 @@
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
+        case 'weather':
+          tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
+          A().fx('mult', 2);
+          await wait(260);
+          break;
         case 'trip':
           tag((x.abroad ? '異鄉之夜' : '旅行的餘韻') + ' ×' + x.x, 'kpi-good');
           A().fx('mult', 3);
