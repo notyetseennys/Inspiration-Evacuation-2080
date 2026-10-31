@@ -294,7 +294,7 @@
   // 航班：平時很安全；戰爭、AI 失控、太陽閃焰、超級颶風期間就不一定
   const FLIGHT = { base: 0.002, events: { war: 0.02, airogue: 0.012, solarflare: 0.015, megastorm: 0.01, netdown: 0.006 } };
   // 旅行教你的技法：按目的地的種類
-  Object.assign(D.TEACH, { trip_modern: 'collage', trip_ancient: 'mural', trip_prehistoric: 'sketch', trip_alien: 'symphony', trip_legend: 'epic' });
+  Object.assign(D.TEACH, { trip_modern: 'full', trip_ancient: 'triad', trip_prehistoric: 'mono', trip_alien: 'tetrad', trip_legend: 'paradox' });
 
   Object.assign(D, { DESTINATIONS, DEST, HOME, KINDS, REGIONS, PLACES, DECOR, DEC, ANTIQUES, DECOR_GIFTS, TRIP_EVENTS, FLIGHT });
 });

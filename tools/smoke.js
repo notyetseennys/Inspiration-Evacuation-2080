@@ -40,10 +40,11 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.waitForFunction(() => !!document.querySelector('.ct-end') || !window.__IE.Craft.isBusy(), null, { timeout: 30000 });
     }
     await page.waitForSelector('.ct-end [data-end="done"]', { timeout: 30000 });
+    lastArts = await page.$$eval('.ct-end .art-card svg', (els) => els.length);
     await page.click('.ct-end [data-end="done"]');
     createdWorks++;
   };
-  let createdWorks = 0;
+  let createdWorks = 0, lastArts = 0;
   const window_name = (id) => id;
   const fail = async (msg) => {
     console.error('✗ ' + msg);
@@ -223,16 +224,50 @@ const URL = 'http://localhost:' + PORT + '/';
     const est = await page.textContent('#ctable .ct-est');
     if (!/預計/.test(est)) await fail('沒有預計得分');
     await page.click('#ctable .ct-hand .cc[data-uid="' + u0 + '"]');
-    // 第十三期：起承轉合（次序就是結構）
-    const p13 = await page.evaluate(() => {
-      const C = window.__IE.Create, mk = (t) => ({ tags: t });
-      const good = C.structure({ session: {} }, [mk(['water']), mk(['water']), mk(['neon']), mk(['water', 'neon'])]).filter((x) => x.ok).map((x) => x.name);
-      const bad = C.structure({ session: {} }, [mk(['neon']), mk(['water']), mk(['water', 'neon']), mk(['water'])]).filter((x) => x.ok).map((x) => x.name);
-      return { good, bad, rows: document.querySelectorAll('#ctable .ct-struct .sx').length };
+    // 第十四期：情緒色輪（配色）、色輪元件、打磨
+    const p14 = await page.evaluate(() => {
+      const C = window.__IE.Create, mk = (t, v) => ({ tags: t, value: v || 12 });
+      const f = (...cards) => C.detectForm(cards).id;
+      const r = {
+        comp: f(mk(['warmth']), mk(['machine'])),
+        mono: f(mk(['water']), mk(['water']), mk(['water'])),
+        mono2: f(mk(['water']), mk(['water'])),
+        adj: f(mk(['water', 'memory']), mk(['hope'])),
+        triad: f(mk(['warmth']), mk(['memory']), mk(['guilt'])),
+        tetrad: f(mk(['warmth', 'machine']), mk(['hope', 'guilt'])),
+        paradox: f(mk(['warmth', 'machine']), mk(['warmth', 'machine']), mk(['warmth', 'machine'])),
+        mix: f(mk(['warmth', 'water']), mk(['rebel']), mk(['anger', 'neon']), mk(['hunger'])),
+      };
+      const mixF = C.detectForm([mk(['warmth', 'water']), mk(['rebel'], 30), mk(['anger', 'neon'])]);
+      r.mixScoring = mixF.scoring.length;
+      return r;
     });
-    if (p13.good.join() !== '呼應,反轉,首尾呼應,收束' || p13.bad.length >= p13.good.length || p13.rows < 4) await fail('起承轉合不對：' + JSON.stringify(p13));
-    ok('第十三期：起承轉合（好次序：' + p13.good.join('、') + '；亂次序只有 ' + p13.bad.length + ' 項）；結構追蹤 ' + p13.rows + ' 格');
-    // 第九期：「這手牌可以」的建議、手上的標籤、牌型表；按建議後預計得分和建議一致
+    const want14 = { comp: 'comp', mono: 'mono', mono2: 'mix', adj: 'adj', triad: 'triad', tetrad: 'tetrad', paradox: 'paradox', mix: 'mix', mixScoring: 1 };
+    Object.keys(want14).forEach((k) => { if (p14[k] !== want14[k]) p14.bad = (p14.bad || '') + k + '=' + p14[k] + ' '; });
+    if (p14.bad) await fail('色輪配色不對：' + p14.bad);
+    // 色輪元件：選兩張素材，亮起的顏色數目等於調色盤
+    const two14 = await page.evaluate(() => window.__IE.Game.state.session.hand.slice(0, 2));
+    for (const u of two14) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
+    const wheel = await page.evaluate((us) => {
+      const s = window.__IE.Game.state, cs = us.map((u) => s.cards.find((c) => c.uid === u));
+      const pal = new Set(cs.flatMap((c) => c.tags));
+      return { on: document.querySelectorAll('#ctable .ct-wheel .ws.on').length, pal: pal.size, segs: document.querySelectorAll('#ctable .ct-wheel .ws').length, info: document.querySelector('#ctable .cw-info').textContent, stars: document.querySelectorAll('#ctable .ct-hand .cc-star').length };
+    }, two14);
+    for (const u of two14) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
+    if (wheel.segs !== 10 || wheel.on !== wheel.pal || !wheel.info) await fail('色輪元件不對：' + JSON.stringify(wheel));
+    if (!wheel.stars) await fail('手牌沒有星級');
+    const pol = await page.evaluate(() => {
+      const s = window.__IE.Game.state, C = window.__IE.Create;
+      const c = s.cards.find((x) => !x.guilt && C.starOf(x) < 5);
+      const st0 = C.starOf(c), cr0 = s.cr, cost = C.polishCost(s, c);
+      s.cr = Math.max(s.cr, cost);
+      const crA = s.cr;
+      const r = C.polishStar(s, c.uid);
+      return { ok: r.ok, st0, st1: C.starOf(c), paid: crA - s.cr, cost };
+    });
+    if (!pol.ok || pol.st1 !== pol.st0 + 1 || pol.paid !== pol.cost) await fail('打磨不對：' + JSON.stringify(pol));
+    ok('第十四期：色輪（人情＋機械＝互補、三張水＝單色、亂配＝草稿只計 1 張、三張「人情・機械」＝矛盾）；色輪亮起 ' + wheel.on + ' 色；打磨 ★' + pol.st0 + '→★' + pol.st1 + '（$' + pol.cost + '）');
+    // 第九期：「這手牌可以」的建議、配色表；按建議後預計得分和建議一致
     const sgN = await page.$$eval('#ctable .ct-sugg .sg', (els) => els.length);
     if (!sgN) await fail('沒有「這手牌可以」的建議');
     const sgEst = (await page.textContent('#ctable .sg.top .sg-est')).replace(/[^0-9]/g, '');
@@ -240,9 +275,9 @@ const URL = 'http://localhost:' + PORT + '/';
     const selEst = (await page.textContent('#ctable .ct-est b')).replace(/[^0-9]/g, '');
     if (sgEst !== selEst) await fail('建議的分數（' + sgEst + '）和選好後的預計（' + selEst + '）不一致');
     const canN = await page.$$eval('#ctable .ct-flist .fr.can', (els) => els.length);
-    if (!canN) await fail('牌型表沒有亮起可以組成的形式');
+    if (!canN) await fail('配色表沒有亮起可以配成的配色');
     while (await page.$('#ctable .ct-hand .cc.sel')) await page.click('#ctable .ct-hand .cc.sel');
-    ok('第九期：' + sgN + ' 個建議，最高預計 ' + Number(sgEst).toLocaleString() + ' 分（選好後一致）；牌型表亮起 ' + canN + ' 種形式');
+    ok('第九期：' + sgN + ' 個建議，最高預計 ' + Number(sgEst).toLocaleString() + ' 分（選好後一致）；配色表亮起 ' + canN + ' 種配色');
     // 第七期：每張手牌都有媒材標記；兩件水淹流物件觸發流派加成；轉檔令選中的素材變成同一媒材
     const meds = await page.$$eval('#ctable .ct-hand .cc-med', (els) => els.map((e) => e.textContent));
     const handN = await page.evaluate(() => window.__IE.Game.state.session.hand.length);
@@ -258,6 +293,9 @@ const URL = 'http://localhost:' + PORT + '/';
     await createNight();
     const stage = await page.evaluate(() => window.__IE.Game.state.stageDone && window.__IE.Game.state.stageDone[4]);
     if (!stage) await fail('關卡沒有結算');
+    const galN = await page.evaluate(() => (window.__IE.Game.state.gallery || []).length);
+    if (!lastArts || !galN) await fail('沒有看得見的作品：結束面板 ' + lastArts + ' 幅、作品集 ' + galN + ' 幅');
+    ok('第十四期：今晚畫了 ' + lastArts + ' 幅作品（這一局的作品集 ' + galN + ' 幅）');
     // 第十一期：關卡之夜之後到遺物攤（三件物件，可以重抽）
     await page.waitForSelector('#modal .stall', { timeout: 10000 });
     const stallN = await page.$$eval('#modal .stall-item', (els) => els.length);

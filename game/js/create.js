@@ -25,51 +25,26 @@
     return m;
   }
   // 作品形式由低至高（決定「差一張」提示是否算升級）
-  const RANK = ['sketch', 'poem', 'couplet', 'song', 'collage', 'crossover', 'novel', 'series', 'mural', 'symphony', 'epic', 'trilogy', 'opus', 'film'];
+  const RANK = ['mix', 'adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono', 'paradox'];
+  // ---------- 星級（第十四期）：素材的點數 ----------
+  // 沒有標明星級的素材按籌碼換算；極稀有一律 ★5
+  const STAR_CHIPS = [0, 10, 18, 28, 42, 60];
+  function starOf(c) {
+    if (!c) return 1;
+    if (c.star) return c.star;
+    if (c.rarity === 'legend') return 5;
+    const v = c.value || 0;
+    return v < 16 ? 1 : v < 24 ? 2 : v < 32 ? 3 : v < 60 ? 4 : 5;
+  }
 
   // ---------- 素材 ----------
   const cardOf = (s, uid) => s.cards.find((c) => c.uid === uid);
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(c.value * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
+    return Math.round(STAR_CHIPS[starOf(c)] * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
-
-  // ---------- 起承轉合（第十三期）：下筆的次序就是作品的結構 ----------
-  // 起：定下主題。承：和起有相同標籤 → 呼應。轉：和前兩張完全不同 → 反轉。
-  // 合：和起有相同標籤 → 首尾呼應；同時接回轉的標籤 → 收束。尾：和合有相同標籤 → 餘韻。
-  // 系列作：這一筆的起延續上一筆的主題，同一晚越連越強。
-  const POS = ['起', '承', '轉', '合', '尾'];
-  const shares = (a, b) => !!a && !!b && a.tags.some((t) => b.tags.includes(t));
-  function structure(s, sel) {
-    const [a, b, c, d, e] = sel;
-    const ses = (s && s.session) || {};
-    const out = [];
-    const twist = !!c && !shares(c, a) && !shares(c, b);
-    if (b) out.push({ id: 'echo', name: '呼應', pos: 1, mult: 2, ok: shares(a, b), need: '「承」要和「起」有相同標籤' });
-    if (c) out.push({ id: 'twist', name: '反轉', pos: 2, xmult: 1.5, ok: twist, need: '「轉」要和前兩張完全沒有相同標籤' });
-    if (d) {
-      out.push({ id: 'callback', name: '首尾呼應', pos: 3, xmult: 1.5, ok: shares(d, a), need: '「合」要和「起」有相同標籤' });
-      out.push({ id: 'resolve', name: '收束', pos: 3, xmult: 1.5, ok: twist && shares(d, a) && shares(d, c), need: '「合」同時要有「轉」的標籤（雙標籤素材最合用）' });
-    }
-    if (e) out.push({ id: 'coda', name: '餘韻', pos: 4, mult: 3, ok: shares(e, d), need: '「尾」要和「合」有相同標籤' });
-    if (a && ses.lastTheme && a.tags.some((t) => ses.lastTheme.includes(t))) out.push({ id: 'series', name: '系列作', pos: 0, xmult: r2(1 + 0.25 * (ses.themeStreak || 1)), ok: true, need: '' });
-    return out;
-  }
-  // 自動排列（模擬機械人用）：主題最多的做起，同主題做承，完全不同的做轉，能接回兩邊的做合
-  function arrange(cards) {
-    if (cards.length < 3) return cards.slice();
-    const cnt = tagCounts(cards);
-    const theme = Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x])[0];
-    const pool = cards.slice().sort((x, y) => y.value - x.value);
-    const take = (f) => { const i = pool.findIndex(f); return i >= 0 ? pool.splice(i, 1)[0] : null; };
-    const a = take((c) => c.tags.includes(theme)) || pool.shift();
-    const b = take((c) => shares(c, a)) || pool.shift();
-    const c = take((x) => !shares(x, a) && !shares(x, b)) || pool.shift();
-    const d = take((x) => shares(x, a) && shares(x, c)) || take((x) => shares(x, a)) || pool.shift();
-    return [a, b, c, d].concat(pool).filter(Boolean);
-  }
 
   // ---------- 作品形式 ----------
   function tagCounts(cards) {
@@ -77,38 +52,64 @@
     cards.forEach((c) => c.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
     return counts;
   }
+  // ---------- 情緒色輪（第十四期） ----------
+  // 調色盤＝下筆素材的全部標籤。剛好符合哪個形狀就是哪種配色；不成形狀就是混濁。
+  const WHEEL = D.WHEEL || [];
+  const wpos = (t) => WHEEL.indexOf(t);
+  const wdist = (a, b) => { const d = Math.abs(wpos(a) - wpos(b)); return Math.min(d, WHEEL.length - d); };
+  const opposite = (t) => WHEEL[(wpos(t) + 5) % WHEEL.length];
+  // 調色盤在色輪上是否連成一段（最多 3 格）
+  function contiguous(pal) {
+    if (pal.length < 2 || pal.length > 3) return false;
+    return pal.some((start) => { const i = wpos(start); return pal.every((t) => { const d = (wpos(t) - i + 10) % 10; return d < pal.length; }); });
+  }
+  function paletteShape(pal) {
+    const n = pal.length;
+    if (n === 1) return 'mono';
+    if (n === 2 && wdist(pal[0], pal[1]) === 5) return 'comp';
+    if (n >= 8) return 'full';
+    if (n === 3) {
+      // 分裂互補：一種情緒，加它對面的兩個鄰居
+      const split = pal.some((x) => { const o = wpos(opposite(x)); const nb = [WHEEL[(o + 1) % 10], WHEEL[(o + 9) % 10]]; return nb.every((t) => pal.includes(t)); });
+      if (split) return 'split';
+      if (wdist(pal[0], pal[1]) >= 3 && wdist(pal[0], pal[2]) >= 3 && wdist(pal[1], pal[2]) >= 3) return 'triad';
+    }
+    if (n === 4) {
+      const pairs = pal.filter((t) => pal.includes(opposite(t)));
+      if (pairs.length === 4) return 'tetrad';
+    }
+    if (contiguous(pal)) return 'adj';
+    return 'mix';
+  }
+  // 所有合法形狀的調色盤（機械人和提示用）：單色、相鄰、互補、分裂互補、三色、四色
+  let targetsCache = null;
+  function paletteTargets() {
+    if (targetsCache) return targetsCache;
+    const out = [], W = WHEEL, at = (i) => W[(i + 10) % 10];
+    W.forEach((t, i) => {
+      out.push([t], [t, at(i + 1)], [t, at(i + 1), at(i + 2)]);
+      if (i < 5) out.push([t, at(i + 5)]);
+      out.push([t, at(i + 4), at(i + 6)]);
+      for (let a = i + 3; a < 10; a++) for (let b = a + 3; b < 10; b++) if (wdist(t, W[a]) >= 3 && wdist(t, W[b]) >= 3 && wdist(W[a], W[b]) >= 3) out.push([t, W[a], W[b]]);
+      for (let k = i + 1; k < 5; k++) if (i < 5) out.push([t, at(i + 5), W[k], at(k + 5)]);
+    });
+    targetsCache = out;
+    return out;
+  }
   function detectForm(cards) {
     const counts = tagCounts(cards);
-    const weight = (t) => cards.filter((c) => c.tags.includes(t)).reduce((a, c) => a + c.value, 0);
-    const tags = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || weight(b) - weight(a));
-    const t0 = tags[0], t1 = tags[1];
-    const c1 = counts[t0] || 0, c2 = counts[t1] || 0;
-    const n = cards.length, distinct = tags.length;
-    // 媒材：四張或以上同一種 = 連作（相當於同花）；五種各一 = 跨界（相當於順子）；五張同一種配合標籤 = 三部曲、傑作
+    const n = cards.length, pal = Object.keys(counts).filter((t) => wpos(t) >= 0), distinct = Object.keys(counts).length;
     const media = mediaCounts(cards), mdistinct = Object.keys(media).length;
-    const m0 = Object.keys(media).sort((a, b) => media[b] - media[a])[0];
-    const same = n >= 5 && mdistinct === 1, cross = n >= 5 && mdistinct === 5, run = (media[m0] || 0) >= 4;
-    let id, keys = null, all = false;
-    if (n >= 5 && c1 >= n && c2 >= n) { id = 'film'; keys = [t0, t1]; }
-    else if (same && c1 >= 5) { id = 'opus'; keys = [t0]; all = true; }
-    else if (same && c1 >= 3 && c2 >= 2) { id = 'trilogy'; keys = [t0, t1]; all = true; }
-    else if (c1 >= 5) { id = 'epic'; keys = [t0]; }
-    else if (c1 >= 4 && c2 >= 3) { id = 'symphony'; keys = [t0, t1]; }
-    else if (c1 >= 4) { id = 'mural'; keys = [t0]; }
-    else if (run) { id = 'series'; }
-    else if (c1 >= 3 && c2 >= 2) { id = 'novel'; keys = [t0, t1]; }
-    else if (cross) { id = 'crossover'; all = true; }
-    else if (n >= 5 && distinct >= 7) { id = 'collage'; }
-    else if (c1 >= 3) { id = 'song'; keys = [t0]; }
-    else if (c1 >= 2 && c2 >= 2) { id = 'couplet'; keys = [t0, t1]; }
-    else if (c1 >= 2) { id = 'poem'; keys = [t0]; }
-    else id = 'sketch';
-    let scoring;
-    if (all || id === 'collage') scoring = cards.slice();
-    else if (id === 'series') scoring = cards.filter((c) => med(c) === m0);
-    else if (keys) scoring = cards.filter((c) => c.tags.some((t) => keys.includes(t)));
-    else scoring = cards.length ? [cards.reduce((a, c) => (c.value > a.value ? c : a), cards[0])] : [];
-    return { id, keys, scoring, counts, distinct, media, mdistinct, same };
+    let id = n ? paletteShape(pal) : 'mix';
+    // 矛盾：互補色，而且每一張素材本身同時有那兩種情緒（至少三張）
+    if (id === 'comp' && n >= 3 && cards.every((c) => pal.every((t) => c.tags.includes(t)))) id = 'paradox';
+    // 單色至少三張、全光譜至少四張；不夠就只是草稿
+    if ((id === 'mono' && n < 3) || (id === 'full' && n < 4)) id = 'mix';
+    const tn = (t) => (D.TAGS[t] ? D.TAGS[t].name : t);
+    const label = pal.map(tn).join('・');
+    // 成形的配色：所有素材都計分；草稿只計最亮的一張（像撲克的單張）
+    const scoring = id !== 'mix' ? cards.slice() : n ? [cards.reduce((a, c) => (starOf(c) > starOf(a) || (starOf(c) === starOf(a) && c.value > a.value) ? c : a), cards[0])] : [];
+    return { id, keys: pal, palette: pal, scoring, counts, distinct, media, mdistinct, same: n >= 5 && mdistinct === 1, label };
   }
   const level = (s, id) => (s.forms && s.forms[id]) || 1;
   function formStats(s, id) {
@@ -203,7 +204,8 @@
     const objs = SR && SR.noObjects ? [] : activeObjects(s);
     const schools = activeSchools(s, objs);
     const ses = s.session || {};
-    const recs = matchRecipes(s, sel);
+    // 具名組合只在成形的配色中觸發：一件有名字的作品，先要有完整的配色
+    const recs = F.id === 'mix' ? [] : matchRecipes(s, sel);
     const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
     const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct, media: F.media, mdistinct: F.mdistinct,
       discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held,
@@ -262,12 +264,6 @@
       const e = x.def.play(ctx, x.n);
       if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id }, e))); }
     });
-    // 起承轉合：按次序判斷結構技巧
-    const struct = structure(s, sel);
-    struct.filter((x) => x.ok).forEach((x) => {
-      apply({ mult: x.mult, xmult: x.xmult });
-      steps.push(snap({ t: 'struct', id: x.id, name: x.name, pos: x.pos, mult: x.mult || 0, xmult: x.xmult || 0, uid: sel[x.pos] && sel[x.pos].uid }));
-    });
     mult = Math.max(0, mult);
     const ai = aiFactor(s, F.id, objs, schools);
     const wm = (RL.worldMods(s).signalMult) || 1;
@@ -295,7 +291,7 @@
     if (!sel.length) return null;
     const F = detectForm(sel);
     const fs = formStats(s, F.id);
-    const all = matchRecipes(s, sel);
+    const all = F.id === 'mix' ? [] : matchRecipes(s, sel);
     const recs = topRecipes(all).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
     // 預計得分（包括物件；黑盒之類的隨機效果按中間值計）與「差一張」提示
     const est = scorePlay(s, uids, { roll: 0.5 });
@@ -311,7 +307,7 @@
         });
         // 再加一張就升級成更高的作品形式（例如連作、跨界）
         const F2 = detectForm(sel.concat(c));
-        if (RANK.indexOf(F2.id) > RANK.indexOf(F.id) && RANK.indexOf(F2.id) >= RANK.indexOf('crossover') && !hints.some((h) => h.form === F2.id)) {
+        if (F2.id !== 'mix' && RANK.indexOf(F2.id) > RANK.indexOf(F.id) && RANK.indexOf(F2.id) >= RANK.indexOf('comp') && !hints.some((h) => h.form === F2.id)) {
           const f2 = FORM[F2.id];
           hints.push({ uid: u, card: c.name, form: F2.id, name: f2.name, power: f2.chips / 10 + f2.mult * 10 });
         }
@@ -340,7 +336,7 @@
         const total = scorePlay(s, ids, { roll: 0.5 }).total;
         const cur = best[F.id];
         // 同分時用較少的素材（陪襯不計分，留在手上更有用）
-        if (!cur || total > cur.est || (total === cur.est && ids.length < cur.uids.length)) best[F.id] = { form: F.id, uids: ids, est: total, keys: F.keys, media: F.id === 'series' ? med(F.scoring[0]) : null };
+        if (!cur || total > cur.est || (total === cur.est && ids.length < cur.uids.length)) best[F.id] = { form: F.id, uids: ids, est: total, keys: F.keys, label: F.label };
       }
       if (pick.length >= k || ++n > 4000) return;
       for (let j = i; j < cards.length; j++) { pick.push(cards[j]); visit(j + 1); pick.pop(); }
@@ -355,7 +351,6 @@
   }
   // 改稿方向：保留手上最多的一種標籤（或媒材），換走其他素材，追更高一級的作品形式。
   // 機會率按牌庫裡還有多少張計算（牌庫不夠時，用過的素材會洗回去）。
-  const TAG_FORM = { 3: 'song', 4: 'mural', 5: 'epic' };
   function chase(s, limit) {
     const ses = s.session;
     if (!ses || ses.discards <= 0 || ses.plays <= 0 || (perkOf(s).noEarlyDiscard && !ses.log.length)) return [];
@@ -372,19 +367,24 @@
       return rest.length ? 1 - comb(rest.length - hit(rest), Math.min(r, rest.length)) / comb(rest.length, Math.min(r, rest.length)) : 0;
     };
     const out = [];
-    const plan = (goal, match, label) => {
+    const plan = (goal, match, label, want) => {
       const keep = hand.filter(match);
       const toss = hand.filter((c) => !match(c)).sort((a, b) => cardValue(s, a) - cardValue(s, b)).slice(0, maxDisc);
       if (!toss.length || keep.length + toss.length < 4) return;
-      const p = odds(match, toss.length);
+      const p = odds(want || match, toss.length);
       if (p < 0.12) return;
       const fs = formStats(s, goal);
       out.push({ goal, name: FORM[goal].name, label, keep: keep.length, uids: toss.map((c) => c.uid), odds: Math.round(p * 100), value: p * fs.chips * fs.mult });
     };
-    const tc = tagCounts(hand);
-    Object.keys(tc).forEach((t) => { if (TAG_FORM[tc[t] + 1]) plan(TAG_FORM[tc[t] + 1], (c) => has(c, t), { tag: t }); });
-    const mc = mediaCounts(hand);
-    Object.keys(mc).forEach((m) => { if (mc[m] === 3) plan('series', (c) => med(c) === m, { medium: m }); });
+    // 單色：保留最多的一種情緒（只有那種情緒的素材），換走其他
+    const single = {};
+    hand.forEach((c) => { if (c.tags.length === 1) single[c.tags[0]] = (single[c.tags[0]] || 0) + 1; });
+    Object.keys(single).forEach((t) => {
+      if (single[t] >= 2 && single[t] < 5) plan('mono', (c) => c.tags.length === 1 && c.tags[0] === t, { tag: t });
+      // 互補：手上有某種情緒，牌庫裡有它的對面
+      const o = opposite(t);
+      if (single[t] >= 2 && !single[o]) plan('comp', (c) => c.tags.length === 1 && (c.tags[0] === t || c.tags[0] === o), { tag: o, from: t }, (c) => c.tags.length === 1 && c.tags[0] === o);
+    });
     return out.sort((a, b) => b.value - a.value).slice(0, limit || 2);
   }
 
@@ -531,12 +531,12 @@
     res.notes = notes;
     ses.notes.push(...notes);
     ses.total += res.total; ses.raw += res.raw;
-    ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
+    // 看得見的作品（第十四期）：每一筆都是一幅有編號的小畫，記在這一局的作品集裡
+    s.workNo = (s.workNo || 0) + 1;
+    res.art = { form: res.form, pal: res.keys.slice(), no: s.workNo, seed: (s.seed || 1) * 31 + s.workNo * 7919 + s.day, total: res.total, day: s.day };
+    s.gallery = (s.gallery || []).concat([res.art]).slice(-40);
+    ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
     ses.lastUids = uids.slice();
-    const first = cardOf(s, uids[0]);
-    const cont = !!(first && ses.lastTheme && first.tags.some((t) => ses.lastTheme.includes(t)));
-    ses.themeStreak = cont ? (ses.themeStreak || 1) + 1 : 1;
-    ses.lastTheme = first ? first.tags.slice() : null;
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
     ses.used.push(...uids.filter((u) => cardOf(s, u)));
@@ -563,6 +563,8 @@
     const rec = best.recipes.map((id) => D.RECIPES.find((r) => r.id === id)).filter(Boolean)
       .sort((a, b) => (b.legend ? 100 : 0) + b.mult - ((a.legend ? 100 : 0) + a.mult))[0];
     if (rec) return rec.name;
+    // 第十四期：沒有具名組合，就用最好一筆的作品標題
+    if (best.art && IE.Artwork) return IE.Artwork.title(best.art.form, best.art.pal, best.art.no).replace(/^《|》$/g, '');
     const counts = {};
     best.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
     const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
@@ -732,6 +734,23 @@
     return { ok: true, msg, res };
   }
 
+  // ---------- 打磨（第十四期）：花錢把素材升一星 ----------
+  const POLISH_COST = [0, 40, 80, 140, 220];
+  const polishCost = (s, c) => { const st = starOf(c); return st >= 5 ? 0 : Math.round(POLISH_COST[st] * (IE.Meta ? IE.Meta.stakeMod(s, 'prices') : 1)); };
+  function polishStar(s, uid) {
+    const c = cardOf(s, uid);
+    if (!c) return { ok: false, msg: '找不到這張素材' };
+    if (c.guilt) return { ok: false, msg: '愧疚不能打磨' };
+    const st = starOf(c);
+    if (st >= 5) return { ok: false, msg: '已經是最亮的 ★5' };
+    const cost = polishCost(s, c);
+    if (s.cr < cost) return { ok: false, msg: '打磨要 $' + cost };
+    s.cr -= cost;
+    c.star = st + 1;
+    s.stats.polished = (s.stats.polished || 0) + 1;
+    return { ok: true, star: c.star, cost, msg: '「' + c.name + '」打磨到 ★' + c.star + '（−$' + cost + '）' };
+  }
+
   // ---------- 模擬用：找出這手牌最好的下筆 ----------
   function bestPlay(s) {
     const ses = s.session;
@@ -759,17 +778,19 @@
       need.forEach((t) => byVal.filter((c) => c.tags.includes(t) && !pick.includes(c)).slice(0, r.need[t]).forEach((c) => pick.push(c)));
       if (pick.length <= 5) add(pick);
     });
-    // 起承轉合：主題兩張、一張反轉、一張能接回兩邊的雙標籤素材
-    tags.forEach((a) => tags.forEach((b) => {
-      if (a === b) return;
-      const pick = byVal.filter((c) => c.tags.includes(a) && !c.tags.includes(b)).slice(0, 2);
-      const tw = byVal.find((c) => c.tags.includes(b) && !c.tags.includes(a) && !pick.includes(c));
-      const br = byVal.find((c) => c.tags.includes(a) && c.tags.includes(b));
-      if (pick.length === 2 && tw && br) add(pick.concat([tw, br]));
-    }));
+    // 配色：列出所有合法形狀的調色盤，每個只取標籤完全落在裡面的素材
+    paletteTargets().forEach((pal) => add(byVal.filter((c) => c.tags.every((t) => pal.includes(t)))));
+    // 全光譜：盡量湊最多種情緒
+    const spread = [];
+    const seen = new Set();
+    for (let k = 0; k < maxN; k++) {
+      const next = byVal.filter((c) => !spread.includes(c)).sort((a, b) => b.tags.filter((t) => !seen.has(t)).length - a.tags.filter((t) => !seen.has(t)).length)[0];
+      if (!next) break;
+      spread.push(next); next.tags.forEach((t) => seen.add(t));
+    }
+    add(spread);
     let best = null;
-    cands.forEach((raw) => {
-      const uids = arrange(raw.map((u) => cardOf(s, u))).map((c) => c.uid);
+    cands.forEach((uids) => {
       const sc = scorePlay(s, uids);
       if (!best || sc.total > best.total) best = { uids, total: sc.total, form: sc.form };
     });
@@ -777,7 +798,7 @@
   }
 
   IE.Create = {
-    FORM, RANK, POS, structure, arrange, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    FORM, RANK, STAR_CHIPS, starOf, cardValue, polishCost, polishStar, opposite, wheelDist: wdist, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
     isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });

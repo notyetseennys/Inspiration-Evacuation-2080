@@ -108,7 +108,7 @@
     { id: 'memos', name: '真相', desc: '讀到最後一份外星 HR 備忘錄', t: 5, test: (m) => levelOf(m) >= MEMOS.length + 1 },
     { id: 'school', name: '自成一派', desc: '以三件同流派的靈感物件通過一個關卡', t: 2, test: (m, s) => Object.keys(s.stats.schoolPass || {}).length >= 1 },
     { id: 'schools5', name: '百家爭鳴', desc: '跨局以五個不同的流派通過關卡', t: 4, test: (m) => Object.keys(m.schoolPass || {}).length >= 5 },
-    { id: 'opus', name: '傑作', desc: '寫出作品形式「傑作」（同一媒材的史詩）', t: 3, test: (m, s) => !!(s.formsSeen && s.formsSeen.opus) },
+    { id: 'opus', name: '傑作', desc: '寫出「全光譜」或「矛盾」的作品', t: 3, test: (m, s) => !!(s.formsSeen && (s.formsSeen.full || s.formsSeen.paradox)) },
     { id: 'objects60', name: '靈感收藏家', desc: '跨局見過 60 件靈感物件', t: 3, test: (m) => Object.keys(m.objSeen || {}).length >= 60 },
   ];
 

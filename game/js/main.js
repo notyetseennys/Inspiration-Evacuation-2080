@@ -295,7 +295,7 @@
         startDay();
       },
       objs() { openObjects(); },
-      deck() { UI.modal(UI.deckModal(s), { close: UI.closeModal }); },
+      deck() { openDeckModal(); },
       contacts() { openContacts(); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
@@ -467,6 +467,21 @@
       reroll() { if (R.stallReroll(s)) { A.sfx('click'); UI.renderHud(s); save(); } render(); },
       objs() { UI.closeModal(); openObjects(() => render()); },
       close() { UI.closeModal(); save(); next(); },
+    });
+    render();
+  }
+  // 素材庫與打磨（第十四期）：花錢把素材升一星
+  function openDeckModal() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.deckModal(s), {
+      polish(el) {
+        const r = IE.Create.polishStar(s, Number(el.dataset.uid));
+        A.sfx(r.ok ? 'coin' : 'wrong');
+        UI.toast(r.msg, r.ok ? 'good' : 'bad');
+        if (r.ok) { UI.renderHud(s); save(); }
+        render();
+      },
+      close: UI.closeModal,
     });
     render();
   }

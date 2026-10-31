@@ -218,8 +218,13 @@ Claude 在第八期新增了以下介面。它們的**功能與結構**由 Claud
 | 這手牌可以（建議） | `js/craft.js` 的 `renderGuide` | `.ct-sugg`、`.sg`、`.sg.top`、`.sg-est` |
 | 改稿追（在建議列裡） | `js/craft.js` 的 `chaseHtml` | `.suit.chase` |
 | 狀態列的下一件事、狀態視窗、物件和素材庫按鈕（v1.5） | `js/ui.js` 的 `renderHud`、`statusHtml`、`invHtml`、`deckModal` | `.chip.next`、`.status`、`.st-grid`、`.inv-line`、`.inv-btn` |
-| 牌型表 | `js/craft.js` 的 `renderGuide` | `.ct-forms`、`.ct-flist .fr`（`.can`、`.on`） |
+| 配色表（v2.3 起取代牌型表） | `js/craft.js` 的 `renderForms` | `.ct-forms`、`.ct-flist .fr`（`.can`、`.on`）、`.fr .fg`（形狀小圖示） |
+| 情緒色輪（v2.3） | `js/craft.js` 的 `renderWheel` | `.ct-wheel`（`.f-配色代號`、`.live`、`.flash`）、`.cw`、`.ws`（`.on`）、`.wsh`、`.wc-n`、`.wc-m`、`.cw-info` |
+| 看得見的作品（v2.3） | `js/artwork.js`、`js/craft.js` 的 `showArt`、`renderWorks`、`endNight`，`js/ui.js` 的 `collectionModal` | `.ct-artpop`、`.ct-works .cw-thumb`、`.art-card`、`.ct-end-art`、`.gallery-wall` |
+| 星級與打磨（v2.3） | `js/craft.js` 的 `cardEl`，`js/ui.js` 的 `cardHtml`、`deckModal` | `.cc-star`、`.c-star`（`.s1`–`.s5`）、`.pol-grid`、`.pol-cell`、`.btn.pol`、`[data-do="polish"]` |
 | 手牌提示 | `js/craft.js` 的 `renderPreview`、`onHover` | `.cc.kin`、`.cc.near`、`.cc.guide-on` |
+
+v2.3（第十四期）的煙霧測試會用到 `.ct-wheel .ws`、`.ws.on`、`.cw-info`、`.cc-star`、`.ct-end .art-card svg`。像素小畫由 `IE.Artwork.svg(form, pal, seed)` 生成，可以加強構圖或加畫框，但請保留函數介面。起承轉合的 `.ct-struct`、`.cc-pos`、`.sx` 已經移除。
 
 新的煙霧測試會用到：`.su-grid .ch`、`.su-detail .sd-abil b`、`[data-do="mode"]`、`[data-do="pull"][data-id="rainbow"]`、`.gacha-result`、`[data-do="history"]`、`#modal .h-row`、`.ct-sugg .sg`、`.sg.top .sg-est`、`.ct-est b`、`.ct-flist .fr.can`。v2.0（第十一期）新增遺物攤 `.stall`、`.stall-item`，狀態列的機會 `.chip.lives`，行動卡的 `.act-boost`，第一局指引 `.coach`，結局摘要 `.run-sum`。v1.6（第十期）新增天氣動畫 `js/weather-fx.js`（可以加強每種天氣的畫面，但請保留 `draw(c, vis, env)` 的介面）、聊天視窗 `.modal.talk`、奇遇 `.modal.encounter`、人脈 `.contacts .ct-card`，以及統一質感的 `css/polish.css`。v1.5 做了減法：請不要把已收起的資訊（玩法說明、公式、長說明）加回畫面上，新內容盡量放在提示或視窗裡。
 

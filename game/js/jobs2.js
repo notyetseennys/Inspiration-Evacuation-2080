@@ -32,7 +32,7 @@
     q_clinic: C('完美的接駁', ['machine', 'hope'], 30), q_clinic2: C('病人的新手', ['machine', 'warmth'], 28),
     q_fail: C('今天搞砸了', ['anger', 'memory'], 16),
   });
-  Object.assign(D.TEACH, { garden: 'series', salvage: 'mural', haggle: 'crossover' });
+  Object.assign(D.TEACH, { garden: 'mono', salvage: 'tetrad', haggle: 'comp' });
   // 浮城地圖上的新地點
   if (D.PLACES) D.PLACES.push({ id: 'rooftop', name: '天台菜園', x: 128, y: 80, act: 'garden', icon: 'garden' },
     { id: 'demolition', name: '拆樓工地', x: 30, y: 110, act: 'salvage', icon: 'crane' },
@@ -107,7 +107,14 @@
     s.stats.ranks = s.stats.ranks || {};
     s.stats.ranks[rk.id] = (s.stats.ranks[rk.id] || 0) + 1;
     const line = (text, kind2, v, stat) => { r.lines.push({ text, kind: kind2 || '', v, stat }); if (stat && r.deltas[stat] != null) r.deltas[stat] += v; };
-    const gain = (id) => { if (!D.CARDS[id]) return; const x = R.addCard(s, id); r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped); };
+    // 第十四期：親手玩出 SS，得到的素材亮一星
+    const shine = rk.id === 'SS' && !(res && res.auto) && IE.Create;
+    const gain = (id) => {
+      if (!D.CARDS[id]) return;
+      const x = R.addCard(s, id);
+      if (shine && x.card) x.card.star = Math.min(5, IE.Create.starOf(x.card) + 1);
+      r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped);
+    };
     line((res && res.auto ? '照舊做：' : '') + '評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
     if (T.crPct && r.deltas.cr > 0) { const b = Math.round(r.deltas.cr * T.crPct); s.cr += b; line('評級獎金', 'good', b, 'cr'); }
     // 工作做得好不會令火花變旺（那是工作）；只有生活類的小遊戲會

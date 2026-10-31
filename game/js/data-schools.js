@@ -1,5 +1,5 @@
 // 《靈感撤離 2080》第七期：媒材、十個創作流派、靈感物件擴充至約 120 件。
-// 媒材是素材的第二條軸（相當於撲克牌的花色）：標籤決定小說、壁畫這類形式，媒材決定連作、跨界。
+// 媒材是素材的第二條軸：標籤決定配色（情緒色輪），媒材給物件和流派用。
 // 流派是靈感物件的分類：裝備兩件同流派的物件會觸發流派加成，三件更強。規則見 create.js。
 (function (factory) {
   const root = typeof window !== 'undefined' ? window : globalThis;
@@ -149,11 +149,11 @@
     // 陳腔濫調流
     O('rubberstamp', '橡皮印章', 'common', 'stone', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffd0d5' }, '每張用過兩次或以上的素材計分時，倍率 +3。', { school: 'cliche',
       card: (c) => ((c.wear || 0) >= 2 ? { mult: 3 } : null) }),
-    O('catchphrase', '口頭禪', 'common', 'paper', { a: '#ffd36b', b: '#8a6a1f', c: '#fff2c4' }, '作品形式和今晚上一筆相同時，倍率 +10。', { school: 'cliche',
+    O('catchphrase', '口頭禪', 'common', 'paper', { a: '#ffd36b', b: '#8a6a1f', c: '#fff2c4' }, '配色和今晚上一筆相同時，倍率 +10。', { school: 'cliche',
       play: (x) => { const L = x.ses && x.ses.log; return L && L.length && L[L.length - 1].form === x.form ? { mult: 10 } : null; } }),
     O('templatebook', '範本大全', 'common', 'book', { a: '#8d99b4', b: '#4a5568', c: '#e8edf6' }, '每張用過的素材計分時，籌碼 + 用過的次數 × 10。', { school: 'cliche',
       card: (c) => (c.wear ? { chips: 10 * c.wear } : null) }),
-    O('sequel', '續集合約', 'rare', 'film', { a: '#c38bff', b: '#2a1640', c: '#ffd36b' }, '作品形式和上一件作品最好的一筆相同時，倍率 ×2。', { school: 'cliche',
+    O('sequel', '續集合約', 'rare', 'film', { a: '#c38bff', b: '#2a1640', c: '#ffd36b' }, '配色和上一件作品最好的一筆相同時，倍率 ×2。', { school: 'cliche',
       play: (x) => { const w = x.s.works.filter((v) => v.day < x.s.day).pop(); return w && w.form === x.form ? { xmult: 2 } : null; } }),
     O('remaster', '重製版', 'rare', 'camera', { a: '#e8c25a', b: '#5a4a2a', c: '#ffffff' }, '「陳腔濫調」（用過四次或以上）的素材計分時，倍率 ×1.5。', { school: 'cliche',
       card: (c) => ((c.wear || 0) >= 4 ? { xmult: 1.5 } : null) }),
@@ -264,10 +264,10 @@
       card: (c) => (med(c) === 'data' ? { mult: 2 } : null) }),
     O('prism', '稜鏡', 'rare', 'shard', { a: '#ffffff', b: '#9b8cff', c: '#37c3d6' }, '下筆的素材每有一種不同的媒材，倍率 +4。', {
       play: (x) => ({ mult: 4 * x.mdistinct }) }),
-    O('curator', '策展人的名片', 'rare', 'card', { a: '#1b1b28', b: '#e8c25a', c: '#ffffff' }, '作品形式是「連作」或「三部曲」時，倍率 ×2.5。', {
-      play: (x) => (x.form === 'series' || x.form === 'trilogy' ? { xmult: 2.5 } : null) }),
-    O('gesamt', '總體藝術宣言', 'legend', 'book', { a: '#ffd36b', b: '#ff4fb4', c: '#37c3d6' }, '作品形式是「跨界」時，倍率 ×3。', {
-      play: (x) => (x.form === 'crossover' ? { xmult: 3 } : null) }),
+    O('curator', '策展人的名片', 'rare', 'card', { a: '#1b1b28', b: '#e8c25a', c: '#ffffff' }, '作品是「四色」或「全光譜」時，倍率 ×2.5。', {
+      play: (x) => (x.form === 'tetrad' || x.form === 'full' ? { xmult: 2.5 } : null) }),
+    O('gesamt', '總體藝術宣言', 'legend', 'book', { a: '#ffd36b', b: '#ff4fb4', c: '#37c3d6' }, '作品是「三色」時，倍率 ×3。', {
+      play: (x) => (x.form === 'triad' ? { xmult: 3 } : null) }),
   ];
   NEW_OBJECTS.forEach((o) => { D.OBJECTS.push(o); D.OBJ[o.id] = o; if (o.start) D.START_OBJECT[o.start] = o.id; });
 

@@ -31,11 +31,10 @@
       + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
-      + (o.sel && o.pos >= 0 ? '<span class="cc-pos p' + o.pos + '">' + C().POS[o.pos] + '</span>' : '')
       + '<span class="cc-name">' + esc(c.name) + '</span>'
       + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
       + '<span class="cc-tags">' + tags + '</span>'
-      + '<span class="cc-foot"><b class="cc-val num">' + val + '</b>'
+      + '<span class="cc-foot"><span class="cc-star s' + C().starOf(c) + '" title="' + C().starOf(c) + ' 星素材">' + '★'.repeat(C().starOf(c)) + '</span><b class="cc-val num">' + val + '</b>'
       + (wear ? '<span class="cc-wear" title="用過 ' + wear + ' 次，籌碼 ×' + C().wearMult(c).toFixed(2) + '">' + (wear >= 4 ? '陳腔濫調' : '用過 ×' + wear) + '</span>' : '') + '</span>'
       + (c.mod ? '<span class="cc-mod">' + D_.CARD_MODS[c.mod].name + '</span>' : '')
       + (c.guilt ? '<span class="cc-grams">愧疚 ' + c.grams + ' 克</span>' : '')
@@ -70,17 +69,17 @@
     {
       id: 'pick',
       short: '選牌',
-      title: '步驟 1/6：起承轉合（點選的次序就是結構）',
-      desc: '依次點選素材，它們會成為「起、承、轉、合」。承和起同標籤是呼應；轉和前兩張完全不同是反轉；合接回起是首尾呼應，同時接回轉更是收束。次序排得好，分數可以差幾倍。左邊的「起承轉合」會告訴你每一步做到沒有。',
-      action: '試著依次點選四張素材，看看左邊的結構追蹤',
-      target: '.ct-hand, .ct-struct',
+      title: '步驟 1/6：配色（亮起的顏色就是這一筆的調色盤）',
+      desc: '每張素材有一至兩種情緒，每種情緒是色輪上的一種顏色。選中的素材會在左邊的色輪亮起：只有一種顏色是「單色」，兩種正對面是「互補色」，三種平均分開是「三色」，連在一起是「鄰近色」。顏色太雜就只是「草稿」，只計最亮的一張。',
+      action: '點選幾張素材，看看左邊的色輪變成甚麼形狀',
+      target: '.ct-hand, .ct-wheel',
     },
     {
       id: 'est',
       short: '看預計分數',
       title: '步驟 2/6：看預計分數（籌碼 × 倍率 × 火花）',
-      desc: '選牌後，計分板顯示作品形式的基本籌碼與倍率，下面是連同素材、物件和加成的「預計得分」，以及「只差一張」的提示。牌型表列出所有作品形式，● 表示這手牌組得出。',
-      action: '看看計分板、預計得分和牌型表，再按「下一步」',
+      desc: '配色決定倍率；素材的星級（★1 至 ★5）決定籌碼。計分板下面是連同物件和加成的「預計得分」，以及「只差一張」的提示。配色表列出所有配色，● 表示這手牌配得出。',
+      action: '看看計分板、預計得分和配色表，再按「下一步」',
       target: '.ct-score, .ct-est, .ct-forms',
     },
     {
@@ -103,7 +102,7 @@
       id: 'media',
       short: '媒材',
       title: '步驟 5/6：媒材（紙・聲・影・身・數）',
-      desc: '每張素材右上角標有媒材。下筆 4 張同媒材觸發「連作」，5 種媒材各一觸發「跨界」；5 張同媒材的小說或史詩更會昇華為「三部曲」與「傑作」！',
+      desc: '每張素材右上角標有媒材。媒材不影響配色，但不少靈感物件和流派只對某一種媒材起作用，例如「每張紙 +2 倍率」。',
       action: '留意手牌右上角的媒材標記，再按「下一步」',
       target: '.ct-hand',
     },
@@ -175,20 +174,20 @@
       + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
-      // 版面參考《小丑牌》：左欄是關卡、計分板和牌型表；主欄上方是物件和工具，下面是舞台、建議和手牌
+      // 版面參考《小丑牌》：左欄是關卡、計分板、色輪和配色表；主欄上方是物件和工具，下面是舞台、建議和手牌
       + '<div class="ct-body"><aside class="ct-side">'
       + '<div class="ct-stagebar" hidden></div>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
-      + '<div class="ct-struct" aria-live="polite"></div>'
+      + '<div class="ct-wheel" aria-live="polite"></div>'
       + '<p class="ct-hint"></p>'
-      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>牌型表<small>● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
+      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>配色表<small>● 這手牌配得出</small></summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
       + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
-      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-tags"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-works" aria-label="今晚的作品"></div><div class="ct-tags"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
       + '<div class="ct-sugg" aria-live="polite"></div>'
       + '<div class="ct-suits"></div>'
       + '<section class="ct-hand"></section>'
@@ -232,7 +231,7 @@
   function sortedHand() {
     const s = st.s, ses = s.session;
     const cards = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
-    const order = D().TAGS ? Object.keys(D().TAGS) : [];
+    const order = D().WHEEL || Object.keys(D().TAGS);
     const morder = Object.keys(D().MEDIA);
     if (st.sortBy === 'tag') cards.sort((a, b) => order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]) || b.value - a.value);
     else if (st.sortBy === 'medium') cards.sort((a, b) => morder.indexOf(D().mediumOf(a)) - morder.indexOf(D().mediumOf(b)) || order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]));
@@ -546,12 +545,12 @@
     $('.ct-chips').classList.toggle('preview', cls === 'preview');
     $('.ct-mult').classList.toggle('preview', cls === 'preview');
   }
-  // ---------- 指引（第九期）：這手牌可以組成甚麼、手上有甚麼標籤、牌型表 ----------
+  // ---------- 指引（第九期）：這手牌可以配成甚麼、配色表 ----------
   const handCards = () => st.s.session.hand.map((u) => st.s.cards.find((c) => c.uid === u)).filter(Boolean);
   // 建議只在手牌、物件或火花改變時重新計算
   function suggestions() {
     const s = st.s, ses = s.session;
-    const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
+    const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + C().starOf(c) + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
       + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
     if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 && s.firstRun ? C().suggest(s, ses.hand, 3) : []; }
     return st.sg;
@@ -559,11 +558,9 @@
   function sgKeyText(x) {
     const s = st.s, D_ = D();
     const sel = x.uids.map((u) => s.cards.find((c) => c.uid === u));
-    if (x.keys) return x.keys.map((t) => '<span class="sg-t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + ' ×' + sel.filter((c) => c.tags.includes(t)).length + '</span>').join('');
-    if (x.form === 'series') return '<span class="sg-t" style="--c:' + D_.MEDIA[x.media].color + '">' + D_.MEDIA[x.media].full + ' ×' + sel.filter((c) => D_.mediumOf(c) === x.media).length + '</span>';
-    if (x.form === 'crossover') return '<span class="sg-t">五種媒材各一</span>';
-    if (x.form === 'collage') return '<span class="sg-t">' + Object.keys(C().tagCounts(sel)).length + ' 種標籤</span>';
-    return '<span class="sg-t">最高分的一張</span>';
+    if (x.form === 'full') return '<span class="sg-t">' + x.keys.length + ' 種情緒</span>';
+    if (x.keys && x.form !== 'mix') return x.keys.map((t) => '<span class="sg-t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + ' ×' + sel.filter((c) => c.tags.includes(t)).length + '</span>').join('');
+    return '<span class="sg-t">最亮的一張</span>';
   }
   function renderGuide() {
     const s = st.s, ses = s.session, D_ = D();
@@ -593,26 +590,27 @@
     if (handCards().length) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
     renderForms(new Set(sg.map((x) => x.form)));
   }
-  // 牌型表：由高至低；這手牌組得出的形式會亮起
+  // 配色表：由高至低；這手牌配得出的會亮起；每一行有一個小圖示表示形狀
+  const FORM_GLYPH = { mix: '·', adj: '◠', triad: '△', split: 'Y', comp: '⟷', tetrad: '□', full: '✺', mono: '●', paradox: '◐' };
   function renderForms(can) {
     const s = st.s;
     const meta = IE.Game.meta || {};
     $('.ct-flist').innerHTML = C().RANK.slice().reverse().map((id) => {
       const f = C().FORM[id], fs = C().formStats(s, id);
       const hide = f.secret && fs.level <= 1 && !(meta.forms && meta.forms[id]) && !(s.formsSeen && s.formsSeen[id]);
-      return '<li class="fr' + (can.has(id) ? ' can' : '') + '" data-form="' + id + '" title="' + esc(hide ? '隱藏的作品形式' : f.desc + '。升級：' + f.teach) + '">'
-        + '<b>' + (hide ? '？？？' : esc(f.name)) + '</b><small>Lv.' + fs.level + '</small><span class="num">' + fs.chips + ' × ' + fs.mult + '</span>'
-        + '<em>' + (hide ? '隱藏的作品形式' : esc(f.desc)) + '</em></li>';
+      return '<li class="fr' + (can.has(id) ? ' can' : '') + '" data-form="' + id + '" title="' + esc(hide ? '隱藏的配色' : f.desc + '。升級：' + f.teach) + '">'
+        + '<b><i class="fg">' + (hide ? '？' : FORM_GLYPH[id] || '') + '</i>' + (hide ? '？？？' : esc(f.name)) + '</b><small>Lv.' + fs.level + '</small><span class="num">' + fs.chips + ' × ' + fs.mult + '</span>'
+        + '<em>' + (hide ? '隱藏的配色' : esc(f.desc)) + '</em></li>';
     }).join('');
   }
-  // 改稿方向：保留最多的標籤或媒材，換走其他，追更高的作品形式
+  // 改稿方向：追單色（保留最多的一種情緒）或互補色（手上有 X，去抽它的對面）
   function chaseHtml() {
     const D_ = D();
     st.chase = C().chase(st.s, 2);
     if (!st.chase.length) return '';
     return '<span class="su-sep"></span>' + st.chase.slice(0, 1).map((x, i) => {
-      const what = x.label.tag ? D_.TAGS[x.label.tag] : D_.MEDIA[x.label.medium];
-      return '<button type="button" class="suit chase" data-chase="' + i + '" style="--c:' + what.color + '" title="保留 ' + x.keep + ' 張「' + (what.full || what.name) + '」，選好要換走的 ' + x.uids.length + ' 張，再按「改稿」：抽中一張「' + (what.full || what.name) + '」的機會約 ' + x.odds + '%">'
+      const what = D_.TAGS[x.label.tag];
+      return '<button type="button" class="suit chase" data-chase="' + i + '" style="--c:' + what.color + '" title="保留 ' + x.keep + ' 張，選好要換走的 ' + x.uids.length + ' 張，再按「改稿」：抽中一張「' + what.name + '」的機會約 ' + x.odds + '%">'
         + '改稿追「' + esc(x.name) + '」<small>' + x.odds + '%</small></button>';
     }).join('');
   }
@@ -639,35 +637,70 @@
     render();
     root.querySelectorAll('.ct-hand .cc.sel').forEach((b, i) => b.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)' }, { transform: 'translateY(-16px)' }], { duration: 220, delay: i * 35 }));
   }
-  // 起承轉合的結構追蹤（第十三期）：每一格放了甚麼、技巧有沒有達成、下一張要選怎樣的素材
-  const STRUCT_RULE = ['定下主題', '和「起」有相同標籤 → 呼應 +2 倍率', '和前兩張完全不同 → 反轉 ×1.5', '接回「起」→ 首尾呼應 ×1.5；同時接回「轉」→ 收束 ×1.5', '和「合」有相同標籤 → 餘韻 +3 倍率'];
-  function renderStruct() {
-    const s = st.s, ses = s.session, el = $('.ct-struct');
+  // ---------- 情緒色輪（第十四期）：選中的素材在色輪上亮起，連成形狀 ----------
+  const WR = { o: 44, i: 29, dot: 25 };
+  const wAng = (i) => (-90 + i * 36) * Math.PI / 180;
+  const wPt = (i, r) => [Math.cos(wAng(i)) * r, Math.sin(wAng(i)) * r];
+  const f1 = (v) => v.toFixed(1);
+  function wSeg(i) {
+    const a0 = wAng(i - 0.47), a1 = wAng(i + 0.47);
+    const p = (a, r) => f1(Math.cos(a) * r) + ' ' + f1(Math.sin(a) * r);
+    return 'M' + p(a0, WR.o) + ' A' + WR.o + ' ' + WR.o + ' 0 0 1 ' + p(a1, WR.o) + ' L' + p(a1, WR.i) + ' A' + WR.i + ' ' + WR.i + ' 0 0 0 ' + p(a0, WR.i) + 'Z';
+  }
+  // 草稿時的提示：拿走哪一張就成形
+  function wheelFix(s, sel) {
+    if (sel.length < 2) return null;
+    let best = null;
+    sel.forEach((c) => {
+      const rest = sel.filter((x) => x !== c);
+      const F = C().detectForm(rest);
+      if (F.id !== 'mix' && (!best || C().RANK.indexOf(F.id) > C().RANK.indexOf(best.form))) best = { card: c, form: F.id };
+    });
+    return best;
+  }
+  function renderWheel(pv) {
+    const s = st.s, el = $('.ct-wheel');
     if (!el) return;
+    const W = D().WHEEL, T = D().TAGS;
     const sel = st.sel.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
-    const techs = C().structure(s, sel);
-    const POS = C().POS, max = C().maxCards(s);
-    const n = Math.min(max, sel.length >= 4 && max >= 5 ? 5 : 4);
-    const tagNames = (c) => c.tags.map((t) => D().TAGS[t].name).join('・');
-    const rows = [];
-    for (let i = 0; i < n; i++) {
-      const c = sel[i];
-      if (c) {
-        const mine = techs.filter((x) => x.pos === i && x.id !== 'series');
-        const okAny = mine.some((x) => x.ok);
-        rows.push('<li class="sx ' + (i === 0 ? 'done' : okAny ? 'ok' : 'miss') + '"><b>' + POS[i] + '</b><span>' + esc(c.name) + '<small>' + esc(tagNames(c)) + '</small></span>'
-          + '<i>' + (i === 0 ? '主題' : mine.map((x) => (x.ok ? '✓ ' : '✗ ') + x.name).join(' ')) + '</i></li>');
-      } else {
-        rows.push('<li class="sx ' + (i === sel.length ? 'next' : 'todo') + '"><b>' + POS[i] + '</b><span>' + STRUCT_RULE[i] + '</span></li>');
-      }
+    const F = C().detectForm(sel);
+    const pal = new Set(F.palette);
+    // 手上（未選）每種情緒有多少張：色輪外圍的小點
+    const pool = {};
+    handCards().filter((c) => !st.sel.includes(c.uid)).forEach((c) => c.tags.forEach((t) => { pool[t] = (pool[t] || 0) + 1; }));
+    const segs = W.map((t, i) => {
+      const on = pal.has(t), [lx, ly] = wPt(i, 37);
+      const pips = [];
+      for (let k = 0; k < Math.min(4, pool[t] || 0); k++) { const a = wAng(i + (k - ((Math.min(4, pool[t]) - 1) / 2)) * 0.2); pips.push('<circle cx="' + f1(Math.cos(a) * 47.5) + '" cy="' + f1(Math.sin(a) * 47.5) + '" r="1.4"/>'); }
+      return '<g class="ws' + (on ? ' on' : '') + '" data-tag="' + t + '" style="--c:' + T[t].color + '"><path d="' + wSeg(i) + '"/><text x="' + f1(lx) + '" y="' + f1(ly) + '">' + T[t].name.slice(0, 2) + '</text><g class="wp">' + pips.join('') + '</g></g>';
+    }).join('');
+    // 形狀：互補是穿過中心的線，三色和四色是多邊形，鄰近是一段弧，單色是一點
+    const idx = F.palette.map((t) => W.indexOf(t)).filter((i) => i >= 0).sort((a, b) => a - b);
+    let shape = '';
+    if (F.id !== 'mix' && idx.length) {
+      const pts = idx.map((i) => wPt(i, WR.dot).map(f1).join(',')).join(' ');
+      if (idx.length === 1) shape = '<circle class="wsh dot" cx="' + f1(wPt(idx[0], WR.dot)[0]) + '" cy="' + f1(wPt(idx[0], WR.dot)[1]) + '" r="3.2"/>';
+      else if (idx.length === 2 || F.id === 'adj') shape = '<polyline class="wsh" points="' + pts + '"/>';
+      else shape = '<polygon class="wsh" points="' + pts + '"/>';
+    } else if (idx.length) {
+      shape = idx.map((i) => '<circle class="wsh mix" cx="' + f1(wPt(i, WR.dot)[0]) + '" cy="' + f1(wPt(i, WR.dot)[1]) + '" r="1.8"/>').join('');
     }
-    const series = techs.find((x) => x.id === 'series');
-    const theme = ses.lastTheme ? ses.lastTheme.map((t) => D().TAGS[t].name).join('・') : '';
-    el.innerHTML = '<div class="sx-head"><b>起承轉合</b><small>下筆的次序就是作品的結構</small></div><ol class="sx-list">' + rows.join('') + '</ol>'
-      + (theme ? '<p class="sx-series' + (series ? ' on' : '') + '">' + (series ? '✓ 系列作 ×' + series.xmult : '系列作') + '：「起」延續上一筆的主題（' + esc(theme) + '）</p>' : '');
+    const f = C().FORM[F.id], fs = C().formStats(s, F.id);
+    const centre = sel.length ? '<text class="wc-n" y="-1">' + esc(f.name) + '</text><text class="wc-m" y="9">×' + fs.mult + '</text>' : '<text class="wc-n" y="3">色輪</text>';
+    let info;
+    if (!sel.length) info = '選素材：亮起的顏色就是這一筆的調色盤。外圈的小點是手上還有的情緒。';
+    else if (F.id === 'mix') {
+      const fix = wheelFix(s, sel);
+      info = pal.size >= 4 && sel.length < 4 && pal.size < 8 ? '顏色太雜' : pal.size === 1 ? '單色要三張或以上' : '未成形狀';
+      info += fix ? '：拿走「' + esc(fix.card.name) + '」就成<b>' + esc(C().FORM[fix.form].name) + '</b>' : '：草稿只計最亮的一張';
+    } else info = '<b>' + esc(f.tag) + '</b>：' + esc(f.desc);
+    el.className = 'ct-wheel f-' + F.id + (sel.length ? ' live' : '');
+    el.innerHTML = '<svg class="cw" viewBox="-50 -50 100 100" aria-hidden="true">' + segs + '<g class="wshape">' + shape + '</g>' + centre + '</svg>'
+      + '<p class="cw-info">' + info + '</p>';
   }
   function renderPreview() {
-    renderStruct();
+    renderWheel();
+    renderWorks();
     const s = st.s;
     const pv = st.sel.length ? C().preview(s, st.sel) : null;
     root.querySelectorAll('.ct-flist .fr').forEach((li) => li.classList.toggle('on', !!pv && li.dataset.form === pv.form));
@@ -693,13 +726,13 @@
     const chasing = st.chasing === st.sel.join(',');
     if (chasing) bits.unshift('<span class="rc near">已選好要換走的 ' + st.sel.length + ' 張：按「改稿」換牌</span>');
     $('.ct-discard').classList.toggle('ready', chasing);
-    $('.ct-hint').innerHTML = bits.join('') || (pv.form === 'sketch' ? '<span class="mute">隨筆只計最高的一張</span>' : '');
+    $('.ct-hint').innerHTML = bits.join('');
     // 預計得分
     const g = st.s.session.stage;
     const need = g ? Math.max(0, g.target - IE.Stages.stageScore(st.s.session)) : 0;
     const ch = chasing && (st.chase || []).find((x) => x.uids.join(',') === st.sel.join(','));
     if (ch) {
-      const what = ch.label.tag ? D().TAGS[ch.label.tag].name : D().MEDIA[ch.label.medium].full;
+      const what = D().TAGS[ch.label.tag].name;
       $('.ct-est').innerHTML = '改稿：換走這 ' + ch.uids.length + ' 張，抽中一張「' + esc(what) + '」就可以組成「' + esc(ch.name) + '」<b class="num">' + ch.odds + '%</b>';
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
       return;
@@ -1051,6 +1084,35 @@
     fx = null;
   }
 
+  // ---------- 看得見的作品（第十四期） ----------
+  const artTitle = (a) => IE.Artwork.title(a.form, a.pal, a.no);
+  function renderWorks() {
+    const el = $('.ct-works');
+    if (!el || !IE.Artwork) return;
+    const log = (st.s.session && st.s.session.log) || [];
+    el.innerHTML = log.filter((x) => x.art).map((x) => '<span class="cw-thumb f-' + x.art.form + '" title="' + esc(artTitle(x.art) + '・' + fmt(x.total)) + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '</span>').join('');
+  }
+  // 計分之後，作品在舞台中央亮相，然後縮進左上角的「今晚的作品」
+  async function showArt(res) {
+    if (!res || !res.art || !IE.Artwork || !root) return;
+    const a = res.art, f = C().FORM[a.form];
+    const el = document.createElement('div');
+    el.className = 'ct-artpop f-' + a.form;
+    el.innerHTML = '<span class="ap-eye">作品完成・' + esc(f.name) + '</span>' + IE.Artwork.svg(a.form, a.pal, a.seed) + '<b>' + esc(artTitle(a)) + '</b>';
+    root.appendChild(el);
+    const d = 300 / Math.min(2, speedK());
+    el.animate([{ transform: 'translate(-50%,-50%) scale(.5) rotate(-8deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1) rotate(-2deg)', opacity: 1 }], { duration: d, easing: 'cubic-bezier(.2,1.6,.4,1)', fill: 'backwards' });
+    A().fx('card', 3);
+    await wait(1000);
+    if (!root) return;
+    const to = $('.ct-works'), r0 = el.getBoundingClientRect(), r1 = to ? to.getBoundingClientRect() : r0;
+    const dx = r1.left + 20 - (r0.left + r0.width / 2), dy = r1.bottom - 14 - (r0.top + r0.height / 2);
+    const fly = el.animate([{ transform: 'translate(-50%,-50%) rotate(-2deg)', opacity: 1 }, { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(.2)', opacity: 0.2 }], { duration: 320 / Math.min(2, speedK()), easing: 'ease-in', fill: 'forwards' });
+    await new Promise((r) => { fly.onfinish = r; setTimeout(r, 400); });
+    el.remove();
+    renderWorks();
+  }
+
   // ---------- 下筆 ----------
   // 最後一筆之後仍然可以用的能力（安哥、倒帶）：不要自動結束今晚
   const canStillAct = (s) => ['encore', 'rewind'].some((k) => C().ability(s) && (s.bg === 'busker' ? k === 'encore' : s.bg === 'timetraveler' && k === 'rewind') && !C().abilityState(s, k));
@@ -1088,6 +1150,7 @@
     $('.ct-played').innerHTML = '';
     $('.ct-total').hidden = true;
     fx && (fx.burn = 0);
+    await showArt(res);
     $('.ct-mult').classList.remove('burning', 'inferno');
     st.busy = false;
     render();
@@ -1110,8 +1173,9 @@
           $('.ct-form .fl').textContent = 'Lv.' + x.level;
           setBoxes(x.chips, x.mult);
           pulse(chipsEl); pulse(multEl);
-          A().fx('chip', 0);
-          await wait(320);
+          if (x.form !== 'mix') { const wh = $('.ct-wheel'); if (wh) { pulse(wh.querySelector('svg')); wh.classList.add('flash'); setTimeout(() => wh && wh.classList.remove('flash'), 600); } tag(C().FORM[x.form].name + '・' + C().FORM[x.form].tag, 'form f-' + x.form); }
+          A().fx(x.form === 'mix' ? 'chip' : 'mult', x.form === 'mix' ? 0 : C().RANK.indexOf(x.form));
+          await wait(x.form === 'mix' ? 320 : 420);
           break;
         case 'card': {
           const el = stageCard(x.uid);
@@ -1225,17 +1289,6 @@
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
-        case 'struct': {
-          // 起承轉合的技巧：在那張牌上方彈出，並蓋印
-          const el = x.uid != null ? stageCard(x.uid) : null;
-          if (el) { bump(el, 1.18); floatText(el, x.name, 'xmult'); }
-          tag(x.name + (x.xmult ? ' ×' + x.xmult : ' +' + x.mult + ' 倍率'), x.id === 'resolve' || x.id === 'series' ? 'legend' : 'kpi-good');
-          setBoxes(x.C, x.M);
-          A().fx('mult', x.xmult ? 4 : 2);
-          if (x.id === 'resolve') shake(4);
-          await wait(x.id === 'resolve' ? 520 : 360);
-          break;
-        }
         case 'weather':
           tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
           A().fx('mult', 2);
@@ -1409,7 +1462,9 @@
       + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
       + '<div class="ct-end-score num">0</div>'
       + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
-      + '<ul class="ct-end-log">' + res.session.log.map((x, i) => '<li><span>第 ' + (i + 1) + ' 筆・' + C().FORM[x.form].name + '</span><b class="num">' + fmt(x.total) + '</b></li>').join('') + '</ul>'
+      + '<div class="ct-end-art">' + res.session.log.map((x, i) => (x.art && IE.Artwork
+        ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art)) + '</b><small>' + C().FORM[x.form].name + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
+        : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + C().FORM[x.form].name + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
       + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
@@ -1443,21 +1498,7 @@
     if (!closed) panel.querySelector('[data-end="done"]').focus({ preventScroll: true });
   }
 
-  // ---------- 教學與圖鑑 ----------
-  function tutorialHtml() {
-    return '<div class="modal"><h2>創作之夜</h2><div class="help">'
-      + '<p>從素材庫抽一手素材。每晚可以<b>下筆</b>三次、<b>改稿</b>兩次；三次下筆的分數加起來，就是今晚的作品。</p>'
-      + '<ul><li>選 1 至 5 張素材下筆。同一標籤出現得越多，<b>作品形式</b>越高級：短詩、對聯、歌、小說、壁畫、交響曲、史詩……</li>'
-      + '<li>特定標籤組合會觸發<b>具名組合</b>（例如「水＋記憶＋飢餓」＝水淹童年）。組合要<b>純</b>：下筆的每一張都要有組合要求的標籤。還有隱藏的<b>傳說組合</b>等你發現。</li>'
-      + '<li>選牌時會顯示<b>預計得分</b>，以及「加入某張就成為某個組合」的提示；「牌庫」可以看接下來會抽到甚麼。</li>'
-      + '<li>每季第 7、14、20 天晚上是<b>關卡之夜</b>：一晚之內要達到目標分數。第 20 天的外星評審還會改寫規則。<b>工具卡</b>可以在這裡改造素材。</li>'
-      + '<li>每張素材還有一種<b>媒材</b>（右上角的字）：紙、聲、影、身、數。四張同一媒材是「連作」，五種各一是「跨界」；五張同一媒材的小說和史詩，會變成「三部曲」和「傑作」。</li>'
-      + '<li><b>靈感物件</b>會在計分時觸發；朋友、潛水、事件和二手市集都可以找到。物件分屬十個<b>流派</b>：裝備兩件同流派觸發流派加成，三件更強。</li>'
-      + '<li>分數 = 籌碼 × 倍率 × 火花。素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格。</li>'
-      + '<li>白天做不同的事，會練成不同的技法，令相應的作品形式升級。</li></ul>'
-      + '<p class="mute">演出時點一下畫面可以快轉；右上角可以調整速度。</p></div>'
-      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">開始創作</button></div></div>';
-  }
+  // ---------- 圖鑑 ----------
   function recipeHint(r) {
     if (r.hint) return r.hint;
     const tags = Object.keys(r.need).map((t) => (r.need[t] > 1 ? '「' + D().TAGS[t].name + '」×' + r.need[t] : '「' + D().TAGS[t].name + '」'));
@@ -1469,7 +1510,7 @@
       const seen = (s.formsSeen && s.formsSeen[f.id]) || (meta.forms && meta.forms[f.id]) || !f.secret;
       const st2 = C().formStats(s, f.id);
       return '<div class="recipe' + (seen ? '' : ' unknown') + '"><b>' + (seen ? f.name + ' Lv.' + st2.level : '？？？') + '</b>'
-        + '<span>' + (seen ? esc(f.desc) : '一種隱藏的作品形式') + '</span>'
+        + '<span>' + (seen ? esc(f.tag + '：' + f.desc) : '一種隱藏的配色') + '</span>'
         + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率・練習：' + esc(f.teach) + '</span>' : '') + '</div>';
     }).join('');
     const nKnown = D().RECIPES.filter((r) => known(r.id)).length;
@@ -1481,7 +1522,7 @@
         + '<span class="mute">+' + r.chips + ' 籌碼・+' + r.mult + ' 倍率' + (r.xmult ? '・×' + r.xmult : '') + '</span></div>';
     }).join('');
     return '<div class="modal wide"><h2>創作圖鑑</h2>'
-      + '<h3>作品形式</h3><div class="recipes">' + forms + '</div>'
+      + '<h3>配色（情緒色輪）</h3><p class="mute" style="font-size:12px">色輪：人情 → 希望 → 水 → 記憶 → 反叛 → 機械 → 愧疚 → 憤怒 → 霓虹 → 飢餓 →（回到人情）。正對面是相反的情緒。</p><div class="recipes">' + forms + '</div>'
       + '<h3>具名組合（' + nKnown + '/' + D().RECIPES.length + '）</h3><div class="recipes">' + recipes + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
   }

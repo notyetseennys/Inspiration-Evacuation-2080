@@ -25,11 +25,16 @@
       + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
-      + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span><span class="c-val">' + c.value + '</span></span>'
+      + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span>' + starHtml(c) + '</span>'
       + (c.grams ? '<span class="c-grams">寫進作品可卸下 ' + c.grams + ' 克</span>' : '')
       + (c.mod ? '<span class="c-mod" style="--c:' + D().CARD_MODS[c.mod].color + '">' + D().CARD_MODS[c.mod].name + '</span>' : '')
       + (c.wear ? '<span class="c-wear">' + (c.wear >= 4 ? '陳腔濫調' : '用過 ×' + c.wear) + '</span>' : '')
       + '</' + tag + '>';
+  }
+  // 星級（第十四期）：★ 的數目就是素材的亮度
+  function starHtml(c) {
+    const n = IE.Create ? IE.Create.starOf(c) : 1;
+    return '<span class="c-star s' + n + '" title="' + n + ' 星：籌碼 ' + (IE.Create ? IE.Create.STAR_CHIPS[n] : '') + '">' + '★'.repeat(n) + '</span>';
   }
   function fxHtml(fx) {
     const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠', rare: '★' };
@@ -316,10 +321,18 @@
       + '<div class="btn-row"><button class="btn" type="button" data-do="close">關閉</button></div></div>';
   }
   // 素材庫（在浮城查看；創作桌上另有牌庫）
+  // 打磨（第十四期）：每張素材下面有「打磨」按鈕，花錢升一星。錢也要用來交租，這就是拉鋸。
   function deckModal(s) {
+    const C = IE.Create;
+    const cards = s.cards.slice().sort((a, b) => C.starOf(b) - C.starOf(a) || (D().WHEEL || []).indexOf(a.tags[0]) - (D().WHEEL || []).indexOf(b.tags[0]));
+    const pol = (c) => {
+      if (c.guilt) return '';
+      const n = C.starOf(c), cost = C.polishCost(s, c);
+      return n >= 5 ? '<span class="pol-max">★5</span>' : '<button class="btn mini pol" type="button" data-do="polish" data-uid="' + c.uid + '"' + (s.cr < cost ? ' disabled' : '') + '>打磨 ★' + (n + 1) + '・$' + cost + '</button>';
+    };
     return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</h2>'
-      + '<p class="mute" style="font-size:13px">晚上用來創作。用得越多次越殘；滿了會丟掉最殘的一張。</p>'
-      + '<div class="inv wrap">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute">還沒有素材。先去生活吧。</span>') + '</div>'
+      + '<p class="mute" style="font-size:13px">星級是素材的亮度：★1 至 ★5，籌碼 ' + C.STAR_CHIPS.slice(1).join('／') + '。花錢「打磨」可以升一星；但錢也要用來交租。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
+      + '<div class="inv wrap pol-grid">' + (cards.length ? cards.map((c) => '<div class="pol-cell">' + cardHtml(c) + pol(c) + '</div>').join('') : '<span class="mute">還沒有素材。先去生活吧。</span>') + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
   }
   function objectsModal(s) {
@@ -740,7 +753,7 @@
     return '<div class="modal wide"><h2>玩法</h2><div class="help help-quick">'
       + '<p class="hq-goal"><b>目標</b>：撐過 60 天、五輪篩選。最後一輪通過，外星人就會帶你走。落選三次，你會被歸入人才庫。</p>'
       + '<div class="hq-pillars">'
-      + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆，點選的次序就是「起承轉合」：承呼應起、轉要完全不同、合要接回起（最好也接回轉）。排得好，分數可以差幾倍。同一晚每一筆延續主題就是系列作。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
+      + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆。每張素材是一兩種情緒，情緒排成一個<b>色輪</b>：只有一種顏色是單色、正對面的兩種是互補、平均分開的三種是三色、連在一起是鄰近色。顏色太雜就只是草稿。<b>配色</b>決定倍率，素材的<b>星級</b>決定籌碼。每一筆都會畫成一幅作品。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
       + '<div class="hq-p"><span class="hq-n">2</span><b>靈魂</b><p>外星人只要又亮又輕的人：靈魂超過 21 克就不會被選中。做虧心事會變重，做好事會變輕；良知越高，虧心事越重。</p></div>'
       + '<div class="hq-p"><span class="hq-n">3</span><b>浮城</b><p>白天工作賺錢、生活收集素材、找朋友聊天。標着「今晚加成」的行動最划算；小遊戲不想玩可以按「跳過」。每天的天氣都會改變一些規則。</p></div>'
       + '</div>'
@@ -775,10 +788,12 @@
       + '<h3>人類樣本檔案</h3><p>無論被帶走、留下、死去還是灰化，外星人都會根據你最後的能力值、靈魂和所作所為，把你歸類為 30 種人類模組之一，寫下觀察筆記，再蓋上印章。</p>'
       + '<h3>創作（核心）</h3><ul>'
       + '<li>晚上選「創作」：從素材庫抽一手素材，下筆三次、改稿兩次。三次下筆的分數加起來就是今晚的作品，會變成外星訊號。「通宵創作」多一次下筆和改稿，但很傷身。</li>'
-      + '<li>每次下筆的分數 = 籌碼 × 倍率 × 火花。同一標籤出現得越多，作品形式越高級：隨筆、短詩、對聯、歌、拼貼、小說、壁畫、交響曲、史詩，還有一種隱藏形式。</li>'
+      + '<li>每次下筆的分數 = 籌碼 × 倍率 × 火花。下筆素材的全部情緒（雙標籤素材兩個都算）就是這一筆的<b>調色盤</b>，剛好符合哪個形狀就是哪種<b>配色</b>：鄰近色、三色、分裂互補、互補色、四色、全光譜（8 種或以上）、單色（最難得），還有一種隱藏配色。不成形狀是草稿，只計最亮的一張。</li>'
+      + '<li>色輪的次序：人情 → 希望 → 水 → 記憶 → 反叛 → 機械 → 愧疚 → 憤怒 → 霓虹 → 飢餓 →（回到人情）。正對面是相反的情緒，例如人情與機械、希望與愧疚。</li>'
+      + '<li><b>星級</b>：素材分 ★1 至 ★5，星越多籌碼越高。浮城的「素材庫」可以花錢<b>打磨</b>升星；小遊戲親手玩出 SS，得到的素材會亮一星。</li>'
       + '<li>特定標籤組合會觸發 ' + D().RECIPES.length + ' 個具名組合之一，其中 ' + D().RECIPES.filter((r) => r.legend).length + ' 個是隱藏的傳說組合。圖鑑跨局保存，未發現的組合會給你提示。</li>'
       + '<li><b>靈感物件</b>最多裝備 3 件（工作室可擴充至 5 件），在計分時觸發。朋友、潛水、事件、面試和二手市集都可以找到；部分要跨局解鎖。</li>'
-      + '<li><b>技法</b>：白天做不同的事、和不同的朋友聊天，會令相應的作品形式升級。為了創作，去試不同的生活吧。</li>'
+      + '<li><b>技法</b>：白天做不同的事、和不同的朋友聊天，會令相應的配色升級。為了創作，去試不同的生活吧。</li>'
       + '<li>素材用得越多次越殘；同一種形式用得太密，AI 會學會你的風格，倍率下降。</li></ul>'
       + '<h3>地圖、旅行與金錢</h3><ul>'
       + '<li>畫面上方可以切換<b>房間</b>、<b>浮城</b>（橫切面）、<b>地圖</b>和<b>世界</b>。房間、地圖和世界裡的東西都可以直接點選。</li>'
@@ -848,7 +863,12 @@
     const achHtml = '<h3>成就（' + Object.keys(achs).length + '/' + M.ACH.length + '）</h3><div class="recipes">' + M.ACH.map((a) => '<div class="recipe' + (achs[a.id] ? ' legend' : ' unknown') + '"><b>' + esc(a.name) + '</b><span class="mute">' + esc(a.desc) + '・' + a.t + ' 張扭蛋券</span></div>').join('') + '</div>';
     const nMemo = Math.min(M.MEMOS.length, M.levelOf(meta) - 1);
     const memoHtml = '<h3>外星 HR 內部備忘錄（' + nMemo + '/' + M.MEMOS.length + '）</h3><div class="memos">' + M.MEMOS.map((m, i) => classifiedMemoHtml(m, i, i < nMemo)).join('') + '</div>';
-    return '<div class="modal wide"><h2>收藏</h2>' + profileHtml(meta) + achHtml + memoHtml + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
+    // 作品集（第十四期）：跨局保存最近的 24 件作品
+    const gal = (meta.gallery || []).slice().reverse();
+    const galHtml = '<h3>作品集（' + gal.length + '）</h3>' + (gal.length && IE.Artwork ? '<div class="gallery-wall">' + gal.map((a) => '<figure class="art-card f-' + a.form + '">' + IE.Artwork.svg(a.form, a.pal, a.seed)
+      + '<figcaption><b>' + esc(IE.Artwork.title(a.form, a.pal, a.no)) + '</b><small>' + esc(((IE.Create.FORM[a.form] || {}).name || '') + (a.who ? '・' + a.who : '') + '・') + '<span class="num">' + fmt(a.total || 0) + '</span></small></figcaption></figure>').join('') + '</div>'
+      : '<p class="mute">還沒有作品。每一筆都會畫成一幅小畫，最好的會留在這裡。</p>');
+    return '<div class="modal wide"><h2>收藏</h2>' + profileHtml(meta) + achHtml + galHtml + memoHtml + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
       + worldCodexHtml(meta)
       + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events

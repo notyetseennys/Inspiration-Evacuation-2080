@@ -421,7 +421,7 @@
     const fid = D.TEACH[key];
     if (perk(s).noNpcTeach && D.NPCS.some((n) => n.id === key)) return;
     // 標準模式日子較少：技法學得快一點
-    if (!fid || rand(s) >= Math.min(1, chance * (days(s) < 100 ? 1.4 : 1))) return;
+    if (!fid || !D.FORMS.some((x) => x.id === fid) || rand(s) >= Math.min(1, chance * (days(s) < 100 ? 1.4 : 1))) return;
     s.forms[fid] = (s.forms[fid] || 1) + 1;
     const f = D.FORMS.find((x) => x.id === fid);
     if (rep) rep.line('技法提升：「' + f.name + '」升到 Lv.' + s.forms[fid], 'good');
@@ -518,14 +518,14 @@
     s.stats.objSold = (s.stats.objSold || 0) + 1;
     return price;
   }
-  // 朋友幫你打磨素材：隨機一張沒有變化的素材得到「閃亮／燃燒／淚痕／回音」
+  // 朋友幫你加工素材：隨機一張沒有變化的素材得到「閃亮／燃燒／淚痕／回音」
   function polishCard(s, rep, who) {
     const plain = s.cards.filter((c) => !c.mod && !c.guilt);
     if (!plain.length) return;
     const c = pick(s, plain);
     const r = rand(s);
     c.mod = r < 0.4 ? 'shine' : r < 0.7 ? 'burn' : r < 0.9 ? 'tear' : 'echo';
-    if (rep) rep.line((who || '你') + '幫你打磨了「' + c.name + '」：' + D.CARD_MODS[c.mod].name + '（' + D.CARD_MODS[c.mod].desc + '）', 'good');
+    if (rep) rep.line((who || '你') + '幫你加工了「' + c.name + '」：' + D.CARD_MODS[c.mod].name + '（' + D.CARD_MODS[c.mod].desc + '）', 'good');
   }
   // 二手靈感市集：每三天換三件貨。傳說物件較少見；你已經有的流派較常出現（方便湊流派）
   const RARITY_W = { common: 1, rare: 0.6, legend: 0.2 };
@@ -1814,6 +1814,10 @@
     Object.keys(s.objSeen || {}).forEach((k) => { meta.objSeen[k] = true; });
     meta.forms = meta.forms || {};
     Object.keys(s.formsSeen || {}).forEach((k) => { meta.forms[k] = Math.max(meta.forms[k] || 0, (s.forms && s.forms[k]) || 1); });
+    // 作品集（第十四期）：這一局分數最高的 6 件作品，跨局只留最近的 24 件
+    const who = D.BACKGROUNDS[s.bg] ? D.BACKGROUNDS[s.bg].short || D.BACKGROUNDS[s.bg].name : '';
+    const top = (s.gallery || []).slice().sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 6).sort((a, b) => a.no - b.no);
+    meta.gallery = (meta.gallery || []).concat(top.map((a) => Object.assign({}, a, { who }))).slice(-24);
     // 旅行：去過的地方、找到的極稀有素材
     meta.visited = meta.visited || {};
     Object.keys(s.visited || {}).forEach((k) => { meta.visited[k] = (meta.visited[k] || 0) + s.visited[k]; });

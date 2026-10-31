@@ -12,25 +12,25 @@
   // ---------- 作品形式（相當於撲克牌型） ----------
   // 按標籤出現次數判斷；一張素材有兩個標籤時，兩個都會計算。media：由媒材決定的形式（第七期，相當於同花和順子）。
   // up：每升一級增加的籌碼與倍率。teach：在哪裡可以練習這種技法。
+  // 第十四期：情緒色輪。十種情緒排成一圈，正對面是相反的情緒（相差 5 格）。
+  const WHEEL = ['warmth', 'hope', 'water', 'memory', 'rebel', 'machine', 'guilt', 'anger', 'neon', 'hunger'];
+  // 作品形式＝配色：一筆的「調色盤」（下筆素材的全部標籤）剛好符合哪個形狀。顏色太多又不成形狀就是混濁。
+  // 素材的星級（★1–★5）是亮度：決定籌碼。
+  // 數值按實際湊得出的機會排列：大部分素材有兩種情緒，所以「純粹」反而最難得。
   const FORMS = [
-    { id: 'sketch',   name: '隨筆',   desc: '任何素材，只計最高分的一張',           chips: 5,   mult: 1,  up: [10, 1], teach: 'AI 數據標註' },
-    { id: 'poem',     name: '短詩',   desc: '兩張素材有相同標籤',                   chips: 10,  mult: 2,  up: [15, 1], teach: '與何伯聊天' },
-    { id: 'couplet',  name: '對聯',   desc: '兩種標籤各出現兩次',                   chips: 20,  mult: 2,  up: [20, 1], teach: '陰謀論內容農場' },
-    { id: 'song',     name: '歌',     desc: '同一標籤出現三次',                     chips: 30,  mult: 3,  up: [20, 2], teach: '街頭表演、與小雨聊天' },
-    { id: 'collage',  name: '拼貼',   desc: '五張素材，合共七種或以上標籤',         chips: 35,  mult: 4,  up: [30, 2], teach: '舊城潛水、與 Miu 聊天' },
-    { id: 'crossover', name: '跨界',  desc: '五張素材，五種媒材各一張',             chips: 40,  mult: 5,  up: [25, 2], teach: '夜市擺地攤', media: true },
-    { id: 'novel',    name: '小說',   desc: '一種標籤三次，另一種兩次',             chips: 40,  mult: 4,  up: [25, 2], teach: '做義工、與 Mary 姐聊天' },
-    { id: 'series',   name: '連作',   desc: '四張或以上同一種媒材',                 chips: 55,  mult: 6,  up: [30, 3], teach: '天台菜園', media: true },
-    { id: 'mural',    name: '壁畫',   desc: '同一標籤出現四次',                     chips: 60,  mult: 7,  up: [30, 3], teach: '外送潛水、與阿 Ken 聊天' },
-    { id: 'symphony', name: '交響曲', desc: '一種標籤四次，另一種三次',             chips: 80,  mult: 8,  up: [35, 3], teach: '與 DJ 小妹聊天' },
-    { id: 'epic',     name: '史詩',   desc: '同一標籤出現五次',                     chips: 100, mult: 12, up: [40, 3], teach: '與芳姐聊天' },
-    { id: 'trilogy',  name: '三部曲', desc: '「小說」或「交響曲」，而且五張是同一種媒材', chips: 130, mult: 13, up: [45, 4], teach: '只可以用「作品集」升級', media: true },
-    { id: 'opus',     name: '傑作',   desc: '「史詩」，而且五張是同一種媒材',       chips: 180, mult: 18, up: [50, 4], teach: '只可以用「作品集」升級', media: true },
-    { id: 'film',     name: '電影',   desc: '五張素材全部擁有同樣的兩種標籤',       chips: 150, mult: 16, up: [50, 4], teach: '與老陳聊天', secret: true },
+    { id: 'mix',     name: '草稿',     tag: '未成配色', desc: '不成任何形狀：只計最亮的一張',                     chips: 5,   mult: 1,  up: [10, 1], teach: 'AI 數據標註' },
+    { id: 'adj',     name: '鄰近色',   tag: '和諧',     desc: '2 至 3 種情緒，在色輪上連在一起',                  chips: 15,  mult: 2,  up: [15, 1], teach: '陰謀論內容農場、與小雨聊天' },
+    { id: 'triad',   name: '三色',     tag: '平衡',     desc: '3 種情緒，兩兩在色輪上相隔至少 3 格',              chips: 25,  mult: 3,  up: [20, 2], teach: '外送潛水、與阿 Ken 聊天' },
+    { id: 'split',   name: '分裂互補', tag: '層次',     desc: '3 種：一種情緒，加它對面的兩個鄰居',               chips: 30,  mult: 3,  up: [20, 2], teach: '做義工、與 Mary 姐聊天' },
+    { id: 'comp',    name: '互補色',   tag: '張力',     desc: '剛好 2 種情緒，在色輪上正對面',                    chips: 40,  mult: 4,  up: [25, 2], teach: '舊城潛水、夜市擺地攤、與 Miu 聊天' },
+    { id: 'tetrad',  name: '四色',     tag: '交響',     desc: '4 種情緒：兩對互補',                               chips: 50,  mult: 5,  up: [30, 3], teach: '拆樓打撈、與 DJ 小妹聊天' },
+    { id: 'full',    name: '全光譜',   tag: '群像',     desc: '四張或以上，合共 8 種或以上的情緒',                chips: 80,  mult: 8,  up: [35, 3], teach: '與芳姐聊天' },
+    { id: 'mono',    name: '單色',     tag: '純粹',     desc: '三張或以上，只有 1 種情緒（最難得）',              chips: 100, mult: 10, up: [40, 4], teach: '街頭表演、天台菜園、與何伯聊天' },
+    { id: 'paradox', name: '矛盾',     tag: '一體兩面', desc: '三張或以上的互補色，而且每一張素材本身同時有那兩種情緒', chips: 150, mult: 15, up: [50, 4], teach: '與老陳聊天', secret: true },
   ];
   // 行動與朋友教你的技法
-  const TEACH = { label: 'sketch', farm: 'couplet', busk: 'song', dive: 'collage', volunteer: 'novel', delivery: 'mural',
-    ho: 'poem', yu: 'song', miu: 'collage', mary: 'novel', ken: 'mural', dj: 'symphony', fong: 'epic', chan: 'film' };
+  const TEACH = { label: 'mix', farm: 'adj', busk: 'mono', dive: 'comp', volunteer: 'split', delivery: 'triad',
+    ho: 'mono', yu: 'adj', miu: 'comp', mary: 'split', ken: 'triad', dj: 'tetrad', fong: 'full', chan: 'paradox' };
 
   // ---------- 具名組合 ----------
   // need：每個標籤最少要有多少張素材包含它（看所有下筆的素材，包括不計分的陪襯）。
@@ -129,8 +129,8 @@
       card: (c) => (has(c, 'rebel') ? { mult: 3 } : null) }),
     O('subwoofer', '天台低音喇叭', 'common', 'speaker', { a: '#37c3d6', b: '#1f6b7a', c: '#bff3fb' }, '每張「霓虹」素材計分時，倍率 +2。', { npc: 'dj',
       card: (c) => (has(c, 'neon') ? { mult: 2 } : null) }),
-    O('oldpoems', '何伯的舊詩集', 'common', 'book', { a: '#c98d5e', b: '#7a4f2a', c: '#f5d6c0' }, '作品形式是「短詩」或「對聯」時，籌碼 +60。', { npc: 'ho',
-      play: (x) => (x.form === 'poem' || x.form === 'couplet' ? { chips: 60 } : null) }),
+    O('oldpoems', '何伯的舊詩集', 'common', 'book', { a: '#c98d5e', b: '#7a4f2a', c: '#f5d6c0' }, '作品是「鄰近色」或「單色」時，籌碼 +60。', { npc: 'ho',
+      play: (x) => (x.form === 'adj' || x.form === 'mono' ? { chips: 60 } : null) }),
     O('robocat', 'Miu 的機械貓', 'common', 'cat', { a: '#8e9bb0', b: '#4a5568', c: '#e8edf6' }, '每張「機械」素材計分時，籌碼 +15。', { npc: 'miu',
       card: (c) => (has(c, 'machine') ? { chips: 15 } : null) }),
     O('costume', '芳姐的戲服', 'common', 'mask', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffd36b' }, '每張「記憶」素材計分時，倍率 +2。', { npc: 'fong',
@@ -148,8 +148,8 @@
       card: (c) => (has(c, 'water') ? { mult: 2 } : null) }),
     O('autoedit', '自動剪輯軟件', 'common', 'monitor', { a: '#37c3d6', b: '#26334d', c: '#e8fdff' }, '每次下筆籌碼 +60，但 AI 模仿你的速度加倍。', { start: 'programmer',
       play: () => ({ chips: 60 }), aiDouble: true }),
-    O('guitar', '斷弦結他', 'rare', 'guitar', { a: '#c98d5e', b: '#6b3a1e', c: '#ffd36b' }, '作品形式是「歌」時，倍率 ×1.6。', { start: 'busker',
-      play: (x) => (x.form === 'song' ? { xmult: 1.6 } : null) }),
+    O('guitar', '斷弦結他', 'rare', 'guitar', { a: '#c98d5e', b: '#6b3a1e', c: '#ffd36b' }, '作品是「單色」時，倍率 ×1.6。', { start: 'busker',
+      play: (x) => (x.form === 'mono' ? { xmult: 1.6 } : null) }),
     O('thermobag', '外送保溫袋', 'common', 'box', { a: '#ffc247', b: '#8a6a1f', c: '#fff2c4' }, '每次下筆籌碼 +25，並得到 $3 小費。', { start: 'courier',
       play: () => ({ chips: 25 }), after: () => ({ cr: 3 }) }),
     O('redpen', '批改紅筆', 'common', 'pen', { a: '#ff4d5e', b: '#8a1f2e', c: '#ffffff' }, '剛好用三張素材下筆時，倍率 ×2。', { start: 'teacher',
@@ -181,8 +181,8 @@
       mods: { discards: 2 } }),
     O('neonshard', '霓虹招牌碎片', 'rare', 'shard', { a: '#ff4fb4', b: '#37c3d6', c: '#ffffff' }, '今晚每改稿一次，之後下筆倍率 +4。', { src: '舊城潛水',
       play: (x) => (x.discardsUsed ? { mult: 4 * x.discardsUsed } : null) }),
-    O('oldmap', '舊城地圖', 'rare', 'map', { a: '#e8c25a', b: '#3fb6d9', c: '#fff2c4' }, '作品形式是「拼貼」時，倍率 ×2。', { src: '舊城潛水',
-      play: (x) => (x.form === 'collage' ? { xmult: 2 } : null) }),
+    O('oldmap', '舊城地圖', 'rare', 'map', { a: '#e8c25a', b: '#3fb6d9', c: '#fff2c4' }, '作品是「互補色」時，倍率 ×2。', { src: '舊城潛水',
+      play: (x) => (x.form === 'comp' ? { xmult: 2 } : null) }),
     O('collectorbox', '收藏家的盒子', 'rare', 'box', { a: '#c38bff', b: '#5a2f8a', c: '#ffd36b' }, '本局每打撈過一件遺物，籌碼 +4。', { src: '舊城潛水',
       play: (x) => (x.s.stats.relics ? { chips: 4 * x.s.stats.relics } : null) }),
     O('aliencard', '外星人的名片', 'rare', 'card', { a: '#9be36b', b: '#2b3a5c', c: '#ffffff' }, '每有一位朋友被帶走，倍率 +4。', { src: '夢境面試表現出色',
@@ -227,6 +227,6 @@
   const START_OBJECT = { copywriter: 'slogans', lifeguard: 'whistle', programmer: 'autoedit', busker: 'guitar', courier: 'thermobag',
     teacher: 'redpen', influencer: 'ringlight', cybertech: 'solder', nurse: 'confkey', animator: 'frame24' };
 
-  Object.assign(D, { FORMS, TEACH, RECIPES, CARD_MODS, STARTER, OBJECTS, OBJ, OBJ_PRICE, RARITY, START_OBJECT,
+  Object.assign(D, { WHEEL, FORMS, TEACH, RECIPES, CARD_MODS, STARTER, OBJECTS, OBJ, OBJ_PRICE, RARITY, START_OBJECT,
     CRAFT: { hand: 7, plays: 3, discards: 2, deckMax: 30, cost: 20, allnighterCost: 25, sketchCost: 10 } });
 });

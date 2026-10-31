@@ -48,7 +48,7 @@
       { hunted: true }),
     octopoet: A('八隻手', 'passive', '每次下筆最多可以用八張素材。', '每晚只有兩次下筆；家裡沒有淹水時太乾，每天早上身體 −1。',
       { maxCards: 8, playsSet: 2, needWater: 1, craftChips: 1.2 }),
-    awakenedai: A('自我學習', 'passive', 'AI 模仿反過來：同一種作品形式用得越密，倍率越高（最多 ×2）。', '沒有良知：「愧疚」素材不能下筆；也學不到朋友教的技法。',
+    awakenedai: A('自我學習', 'passive', 'AI 模仿反過來：同一種配色用得越密，倍率越高（最多 ×2）。', '沒有良知：「愧疚」素材不能下筆；也學不到朋友教的技法。',
       { aiInvert: true, noGuilt: true, noNpcTeach: true }),
     timetraveler: A('倒帶', 'night', '每晚一次撤回上一筆；每期一次可以把今天重過。', '每倒帶一次偏執 +6；偏執太高，你會在手機上看見另一個自己。',
       { rewind: true }),

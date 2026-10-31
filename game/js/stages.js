@@ -19,7 +19,7 @@
     { id: 'nomemory', name: '不准懷舊', desc: '「記憶」素材不計分', block: (c) => has(c, 'memory') },
     { id: 'oneshot', name: '只看一筆', desc: '只准下筆一次，但手牌 +2', start: (ses) => { ses.plays = 1; ses.handSize += 2; } },
     { id: 'censor', name: '審查', desc: '「反叛」素材不能用', forbid: (c) => has(c, 'rebel') },
-    { id: 'copied', name: 'AI 已經學會你', desc: '你最常用的作品形式 ×0.5', formMult: (s, form) => (topForm(s) === form ? 0.5 : 1) },
+    { id: 'copied', name: 'AI 已經學會你', desc: '你最常用的配色 ×0.5', formMult: (s, form) => (topForm(s) === form ? 0.5 : 1) },
     { id: 'sponsor', name: '天空區贊助', desc: '分數 ×2，但每次下筆靈魂 +1 克', mult: 2, sinPerPlay: 1 },
     { id: 'blackout', name: '停電', desc: '手牌的標籤看不見（計分照常）', ui: 'blackout' },
     { id: 'kpionly', name: 'KPI 大師', desc: '不符合本季 KPI 的下筆不計分', kpiOnly: true },
@@ -45,10 +45,10 @@
   // ---------- 關卡 ----------
   const KINDS = {
     small: { name: '社區小展', short: '小展', mult: 0.8, color: '#37c3d6', reward: { cr: 60, tools: 1 }, fail: { rating: -0.2, spark: -0.2 } },
-    big: { name: '畫廊聯展', short: '聯展', mult: 1.1, color: '#c38bff', reward: { cr: 120, tools: 1, tickets: 1 }, fail: { rating: -0.3, spark: -0.3 } },
-    boss: { name: '外星評審', short: '評審', mult: 1.45, color: '#ff4d5e', reward: { cr: 200, tools: 2, tickets: 2, obj: 0.5 }, fail: { signalPct: -0.08, spark: -0.4 } },
+    big: { name: '畫廊聯展', short: '聯展', mult: 1.02, color: '#c38bff', reward: { cr: 120, tools: 1, tickets: 1 }, fail: { rating: -0.3, spark: -0.3 } },
+    boss: { name: '外星評審', short: '評審', mult: 1.15, color: '#ff4d5e', reward: { cr: 200, tools: 2, tickets: 2, obj: 0.5 }, fail: { signalPct: -0.08, spark: -0.4 } },
   };
-  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 36000);
+  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 9000);
   // 一晚的目標分數：隨日子以每天約 4% 增長（與創作分數的增長曲線相若）
   const STAGE_G = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_G) || 1.032);
   // 用「進度日」計算：60 天的一局，目標也會走完整條增長曲線
@@ -176,7 +176,7 @@
     { id: 'collage', name: '拼貼', icon: 'card', price: 55, need: 2, desc: '把選中的兩張合成一張：保留最多的兩個標籤，籌碼相加 ×0.8' },
     { id: 'coffee', name: '濃縮咖啡', icon: 'cup', price: 30, need: 0, desc: '今晚改稿 +2' },
     { id: 'lamp', name: '加班燈', icon: 'lamp', price: 50, need: 0, desc: '今晚下筆 +1' },
-    { id: 'portfolio', name: '作品集', icon: 'book', price: 55, need: [1, 5], desc: '選中素材組成的作品形式升一級（永久）' },
+    { id: 'portfolio', name: '作品集', icon: 'book', price: 55, need: [1, 5], desc: '選中素材組成的配色升一級（永久）' },
     { id: 'dream', name: '夢境', icon: 'mirror', price: 70, need: 1, desc: '選中的一張素材變成一件隨機的古董或旅行素材' },
     { id: 'convert', name: '轉檔', icon: 'monitor', price: 40, need: [1, 3], desc: '選中的一至三張素材，變成手牌裡最常見的媒材' },
   ];
