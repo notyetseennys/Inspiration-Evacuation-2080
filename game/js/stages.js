@@ -71,7 +71,9 @@
     const kind = d === M.stageDays[0] ? 'small' : d === M.stageDays[1] ? 'big' : d === M.stageDays[2] ? 'boss' : null;
     if (!kind) return null;
     const K = KINDS[kind];
-    const target = Math.round(baseTarget(s, day) * K.mult * stakeMod(s, 'stageTarget') / 1000) * 1000;
+    // 第一局的頭兩關目標較低（第十二期），讓新玩家先嘗到過關的滋味
+    const easy = s.firstRun && q === 0 && kind !== 'boss' ? 0.6 : 1;
+    const target = Math.round(baseTarget(s, day) * K.mult * stakeMod(s, 'stageTarget') * easy / 1000) * 1000;
     return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
   }
   const today = (s) => stageOn(s, s.day);

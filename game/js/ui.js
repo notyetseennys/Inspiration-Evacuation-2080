@@ -735,9 +735,18 @@
       + dos.notes.map((n) => '・' + n).join('\n') + '\n'
       + '印章：' + dos.stamps.map((x) => '【' + DS.STAMPS[x.id].text + '】').join('');
   }
+  // 玩法（第十二期）：一頁看懂，三根支柱；詳細規則收起
   function helpModal() {
-    return '<div class="modal wide"><h2>玩法</h2><div class="help">'
-      + '<p>標準的一局有 <b>60 天</b>（長篇模式 100 天）。每天分為早上、下午、晚上三個時段，每個時段做一件事。每期最後一天（標準模式第 12、24、36、48、60 天）晚上是<b>篩選日</b>：累積訊號夠高、靈魂又夠輕，外星人就會把你帶走。篩選日前兩晚，外星 HR 會在夢裡面試你。</p>'
+    return '<div class="modal wide"><h2>玩法</h2><div class="help help-quick">'
+      + '<p class="hq-goal"><b>目標</b>：撐過 60 天、五輪篩選。最後一輪通過，外星人就會帶你走。落選三次，你會被歸入人才庫。</p>'
+      + '<div class="hq-pillars">'
+      + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆：同一標籤越多，作品形式越高；分數 = 籌碼 × 倍率 × 火花。不知道怎樣打，就按「這手牌可以」。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
+      + '<div class="hq-p"><span class="hq-n">2</span><b>靈魂</b><p>外星人只要又亮又輕的人：靈魂超過 21 克就不會被選中。做虧心事會變重，做好事會變輕；良知越高，虧心事越重。</p></div>'
+      + '<div class="hq-p"><span class="hq-n">3</span><b>浮城</b><p>白天工作賺錢、生活收集素材、找朋友聊天。標着「今晚加成」的行動最划算；小遊戲不想玩可以按「跳過」。每天的天氣都會改變一些規則。</p></div>'
+      + '</div>'
+      + '<p class="mute hq-foot">撐住三樣東西：錢（交租）、身體（降到 0 會死）、火花（創作的倍率，太低會麻木）。</p>'
+      + '</div><details class="help-more"><summary>詳細規則</summary><div class="help">'
+      + '<p>標準的一局有 <b>60 天</b>（長篇模式 100 天）。每天分為早上、下午、晚上三個時段，每個時段做一件事。每期最後一天（標準模式第 12、24、36、48、60 天）晚上是<b>篩選日</b>：累積訊號夠高、靈魂又夠輕，就通過這一輪；第五輪通過，外星人就會把你帶走。落選三次會被歸入人才庫，提早結束。篩選日前兩晚，外星 HR 會在夢裡面試你。</p>'
       + '<h3>三樣東西互相蠶食</h3><ul>'
       + '<li><b>錢</b>：每晚要吃飯，每 7 天要交租，租金每期上漲。兩次交不起租就會被趕出門。</li>'
       + '<li><b>身體</b>：降到 0 就會死。身體上限由體能決定。</li>'
@@ -780,7 +789,7 @@
       + '<li><b>古董市場</b>：買稀有的古董素材，也可以把素材賣給古董商。</li>'
       + '<li><b>家具</b>：彈簧床、冷氣機、抽水泵、防盜門、魚缸、書架、畫架、望遠鏡……全部看得見，也全部有用。被趕出門會失去全部家具。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
-      + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
+      + '</div></details><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
   }
   function collectionModal(meta) {
     const names = { agent: '星際特工', returned: '被遣返', guardian: '地球守護者', heavy: '良知太重', ordinary: '平凡人', death: '死亡', grey: '灰化' };

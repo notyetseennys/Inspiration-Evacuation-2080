@@ -296,7 +296,37 @@
   }
 
   // 結束後延遲一陣才回傳結果，讓「下班」橫額播完
+  // 即時評級條（第十二期）：記下小遊戲的結算函數，玩的時候就計算現在是 D 至 SS 哪一級
+  let lastGetter = null;
+  const RANK_COL = { SS: '#ffd36b', S: '#ff8fd1', A: '#9be36b', B: '#37c3d6', C: '#8d99b4', D: '#ff4d5e' };
+  function drawRank(c, m) {
+    const J = IE.Jobs2, kind = m.kind === 'ot' ? 'ot' : m.kind;
+    if (!J || !J.PERF[kind] || !m.liveResult) return;
+    let perf = 0;
+    try { perf = Math.max(0, Math.min(1, J.PERF[kind](m.liveResult() || {}))); } catch (e) { return; }
+    const rk = J.rankOf(perf), idx = J.RANKS.indexOf(rk);
+    m._rk = m._rk == null ? idx : m._rk;
+    if (idx < m._rk) { m._rk = idx; m._flash = 1; if (IE.Audio) IE.Audio.sfx(idx <= 1 ? 'combo' : 'coin'); }
+    m._flash = Math.max(0, (m._flash || 0) - 0.03);
+    const col = RANK_COL[rk.id] || '#37c3d6';
+    // 頂欄左邊（收入和時間條之間）：表現條與評級格
+    c.fillStyle = '#080c16'; c.fillRect(42, 2, 60, 9);
+    c.fillStyle = '#1b263d'; c.fillRect(44, 5, 38, 3);
+    c.fillStyle = col; c.fillRect(44, 5, Math.round(38 * perf), 3);
+    [0.3, 0.5, 0.7, 0.85, 0.95].forEach((t) => { c.fillStyle = '#0b0f1a'; c.fillRect(44 + Math.round(38 * t), 5, 1, 3); });
+    c.fillStyle = col; c.fillRect(84, 2, 17, 9);
+    if (m._flash > 0) { c.fillStyle = 'rgba(255,255,255,' + (m._flash * 0.25) + ')'; c.fillRect(0, 0, 320, 180); }
+    m._rkText = { id: rk.id, col };
+  }
+  // 文字在像素畫面之後另外畫（高解像度）
+  function drawRankText(m) {
+    const r = m._rkText;
+    if (!r) return;
+    P.text(r.id, 92.5, 2.5, { size: 7, align: 'center', color: '#0b0f1a', weight: 900, font: 'pixel' });
+    if (m._flash > 0.2) P.text(r.id + '！', 160, 24, { size: 16, align: 'center', color: r.col, weight: 900, font: 'pixel', alpha: m._flash, stroke: '#0b0f1a' });
+  }
   function ender(st, getResult, onDone) {
+    lastGetter = getResult;
     return (dt) => {
       if (st.phase !== 'end') return;
       st.endT += dt;
@@ -323,10 +353,18 @@
       const meta = MICRO_META[kind] || MICRO_META.label;
       m.kind = kind;
       m.meta = meta;
+      m.liveResult = lastGetter;
+      lastGetter = null;
       const origDraw = m.draw;
       m.draw = function (c) {
         origDraw.call(this, c);
         drawHudCorners(c, meta.color);
+        drawRank(c, m);
+      };
+      const origText = m.drawText;
+      m.drawText = function () {
+        if (origText) origText.call(this);
+        drawRankText(m);
       };
       return m;
     },

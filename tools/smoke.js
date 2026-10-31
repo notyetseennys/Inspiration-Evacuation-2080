@@ -291,6 +291,11 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.evaluate(() => { window.__IE.Game.state.body = 3; });
     if (await page.$('.phone [data-do="close"]')) await closePhone();
     await page.click('.act[data-id="label"]');
+    // 第十二期：小遊戲有即時評級條
+    await page.waitForTimeout(400);
+    const live = await page.evaluate(() => { const m = window.__IE.Game.micro; return m && typeof m.liveResult === 'function' && m._rkText ? m._rkText.id : null; });
+    if (!live) await fail('小遊戲沒有即時評級條');
+    ok('第十二期：小遊戲的即時評級條（開局是 ' + live + ' 級）');
     await page.evaluate(() => window.__IE.Game.applyMicroResult('label', { cr: 50, drain: 0.2, correct: 20, wrong: 1, maxCombo: 8 }));
     await page.click('#modal [data-do="ok"]');
     await page.waitForSelector('.ending.death');

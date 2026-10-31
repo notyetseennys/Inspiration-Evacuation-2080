@@ -61,7 +61,7 @@
   // 每天早上擲天氣：一般天氣跟季節走；奇怪狀態由一成多開始，越到後期越常見；不會連續兩天一樣
   function rollWeather(s) {
     if (!D.WEATHER || s.trip || (s.weather && s.weather.day === s.day)) return;
-    const odd = rand(s) < 0.14 + 0.16 * age(s) / 100;
+    const odd = !s.firstRun && rand(s) < 0.14 + 0.16 * age(s) / 100;
     const prev = s.weather && s.weather.id;
     const pool = D.WEATHER.filter((w) => w.id !== prev && (odd ? w.kind === 'odd' : w.kind === 'normal' && (!w.seasons || w.seasons.includes(s.season))));
     const total = pool.reduce((a, w) => a + w.w, 0);
@@ -377,6 +377,14 @@
     if (s.metaPerks) {
       s.objSlots += s.metaPerks.objSlots;
       if (IE.Stages) for (let i = 0; i < s.metaPerks.startTool; i++) IE.Stages.giveTool(s, IE.Stages.randomTool(s));
+    }
+    // 第一局（第十二期）：沒有奇怪天氣、頭兩天沒有奇遇、頭兩關目標較低，
+    // 並送一件和起始物件同流派的物件，第一晚就看得到流派加成
+    if (opts.meta && !(opts.meta.runs > 0) && !opts.daily && !opts.weekly) {
+      s.firstRun = true;
+      const st = D.OBJ[s.objects[0]];
+      const mate = st && st.school && D.OBJECTS.find((o) => o.school === st.school && o.rarity === 'common' && o.id !== st.id && !o.npc && !o.start && !o.unlock && !o.souvenir);
+      if (mate) s.objects.push(mate.id);
     }
     return s;
   }
@@ -992,7 +1000,7 @@
   // ---------- 街頭奇遇與人脈（第十期） ----------
   // 白天在浮城做完一件事之後，約三成機會碰到一件小事；每天最多一次；天氣限定的奇遇優先，見過少的優先
   function encounter(s) {
-    if (!D.ENCOUNTERS || s.trip || isNight(s) || s.encDay === s.day || rand(s) > 0.3) return null;
+    if (!D.ENCOUNTERS || s.trip || isNight(s) || s.encDay === s.day || (s.firstRun && s.day < 3) || rand(s) > 0.3) return null;
     const w = weatherOf(s), seen = s.encSeen || {};
     const pool = D.ENCOUNTERS.filter((e) => !e.weather || (w && e.weather.includes(w.id)));
     const special = pool.filter((e) => e.weather);

@@ -81,3 +81,14 @@ body {
   .ct-obj { align-content: start; padding: 8px 8px 9px; }
   .ct-obj .od { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; line-height: 1.35; color: #c9bde3; text-align: center; }
 }
+/* 第十二期：一頁玩法 */
+.help-quick { display: grid; gap: 12px; }
+.hq-goal { margin: 0; font-size: 15px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 79, 180, 0.1); border: 1px solid rgba(255, 79, 180, 0.4); }
+.hq-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.hq-p { position: relative; padding: 12px 12px 10px; border-radius: 12px; background: var(--surface), #141c30; border: 1px solid #2a3756; box-shadow: inset 0 1px 0 var(--edge); }
+.hq-p b { font-size: 17px; }
+.hq-p p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; color: #c3cde3; }
+.hq-n { position: absolute; top: 10px; right: 12px; font-family: var(--font-num); font-size: 22px; color: #3a4a70; }
+.hq-foot { margin: 0; font-size: 13px; }
+.help-more { margin-top: 6px; border-top: 1px solid #26334d; padding-top: 8px; }
+.help-more summary { cursor: pointer; color: var(--mute); font-size: 13px; }
