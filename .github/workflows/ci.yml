@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ['claude/**', 'main']
+
+jobs:
+  logic:
+    name: 單元測試、模擬器、打包
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 單元測試
+        run: node tools/test.js
+      - name: 模擬器（舊模式，確認可以跑完）
+        run: node tools/sim.js 5
+      - name: 打包
+        run: node tools/build.js
+
+  browser:
+    name: 瀏覽器煙霧測試
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 安裝 Playwright 與 Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: 煙霧測試（舊模式）
+        run: node tools/smoke.js

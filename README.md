@@ -12,6 +12,12 @@
 - **最快的方式**：直接用瀏覽器開啟 `dist/inspiration-evacuation-2080.html`（單一檔案，無須安裝）。
 - **開發版本**：執行 `node tools/serve.js`，然後開啟 <http://localhost:8080/>。
 
+- **測試**：`node tools/test.js`（邏輯單元測試）、`node tools/smoke.js`（瀏覽器煙霧測試，需要 Playwright）、`node tools/sim.js`（平衡模擬）。
+
+## 開發流程（第十五期起）
+
+由 Claude 設計和寫工單、Gemini 實作、Claude 審核。流程、工作守則、審核標準和每一張工單都在 `docs/workorders/`（先讀 `docs/workorders/README.md`）；設計依據是 `docs/REFORM_PLAN.md`。
+
 電腦可用鍵盤與滑鼠，手機可直接觸控畫面與下方按鈕。建議開啟聲音：十三首背景音樂會按畫面和情況切換（見「背景音樂」）。狀態列的聲音按鈕可以輪流切換「聲音」→「只有音效」→「靜音」。
 
 ## 核心循環
