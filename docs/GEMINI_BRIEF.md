@@ -221,7 +221,7 @@ Claude 在第八期新增了以下介面。它們的**功能與結構**由 Claud
 | 牌型表 | `js/craft.js` 的 `renderGuide` | `.ct-forms`、`.ct-flist .fr`（`.can`、`.on`） |
 | 手牌提示 | `js/craft.js` 的 `renderPreview`、`onHover` | `.cc.kin`、`.cc.near`、`.cc.guide-on` |
 
-新的煙霧測試會用到：`.su-grid .ch`、`.su-detail .sd-abil b`、`[data-do="mode"]`、`[data-do="pull"][data-id="rainbow"]`、`.gacha-result`、`[data-do="history"]`、`#modal .h-row`、`.ct-sugg .sg`、`.sg.top .sg-est`、`.ct-est b`、`.ct-flist .fr.can`。v1.6（第十期）新增天氣動畫 `js/weather-fx.js`（可以加強每種天氣的畫面，但請保留 `draw(c, vis, env)` 的介面）、聊天視窗 `.modal.talk`、奇遇 `.modal.encounter`、人脈 `.contacts .ct-card`，以及統一質感的 `css/polish.css`。v1.5 做了減法：請不要把已收起的資訊（玩法說明、公式、長說明）加回畫面上，新內容盡量放在提示或視窗裡。
+新的煙霧測試會用到：`.su-grid .ch`、`.su-detail .sd-abil b`、`[data-do="mode"]`、`[data-do="pull"][data-id="rainbow"]`、`.gacha-result`、`[data-do="history"]`、`#modal .h-row`、`.ct-sugg .sg`、`.sg.top .sg-est`、`.ct-est b`、`.ct-flist .fr.can`。v2.0（第十一期）新增遺物攤 `.stall`、`.stall-item`，狀態列的機會 `.chip.lives`，行動卡的 `.act-boost`，第一局指引 `.coach`，結局摘要 `.run-sum`。v1.6（第十期）新增天氣動畫 `js/weather-fx.js`（可以加強每種天氣的畫面，但請保留 `draw(c, vis, env)` 的介面）、聊天視窗 `.modal.talk`、奇遇 `.modal.encounter`、人脈 `.contacts .ct-card`，以及統一質感的 `css/polish.css`。v1.5 做了減法：請不要把已收起的資訊（玩法說明、公式、長說明）加回畫面上，新內容盡量放在提示或視窗裡。
 
 適合你的新任務：
 - **任務 6（角色立繪）** 現在最有價值：選角畫面的 `.sd-por` 和 `.ch-por` 正在用 8×12 的小像素人，換成 24×32 的立繪會大大提升質感。角色精通 Lv.4 有「金色外框」（`.gold`），Lv.5 有「大師」稱號。
