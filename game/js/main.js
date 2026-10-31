@@ -32,7 +32,7 @@
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 9 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && (r.v === 9 || r.v === 10) ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
