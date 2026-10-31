@@ -71,6 +71,10 @@
     const kind = d === M.stageDays[0] ? 'small' : d === M.stageDays[1] ? 'big' : d === M.stageDays[2] ? 'boss' : null;
     if (!kind) return null;
     const K = KINDS[kind];
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const target = IE.Rounds.target(s, day / 4);
+      return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
+    }
     // 第一局的頭兩關目標較低（第十二期），讓新玩家先嘗到過關的滋味
     const easy = s.firstRun && q === 0 && kind !== 'boss' ? 0.6 : 1;
     const target = Math.round(baseTarget(s, day) * K.mult * stakeMod(s, 'stageTarget') * easy / 1000) * 1000;
@@ -115,12 +119,41 @@
     return ses.total;
   }
   // 創作完成時結算關卡
-  function settle(s, ses) {
+  function settle(s, ses, playsLeft) {
     if (!ses || !ses.stage || (s.stageDone && s.stageDone[s.day])) return null;
     const score = stageScore(ses);
-    return resolve(s, ses.stage, score);
+    return resolve(s, ses.stage, score, playsLeft);
   }
-  function resolve(s, stage, score) {
+  function resolve(s, stage, score, playsLeft) {
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      s.stageDone = s.stageDone || {};
+      const pass = score >= stage.target;
+      const pl = playsLeft || 0;
+      const reward = pass ? IE.Rounds.nightReward(s, stage.kind, pl) : 0;
+      const out = { kind: stage.kind, name: stage.name, target: stage.target, score, pass, index: stage.index, reward, playsLeft: pl, lines: [], tools: [], objs: [], tickets: 0 };
+      s.stageDone[s.day] = pass ? 'pass' : 'fail';
+      s.stats.stages = s.stats.stages || { pass: 0, fail: 0 };
+      if (pass) {
+        s.stats.stages.pass++;
+        const sc = IE.Create.schoolCounts(s);
+        Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
+        s.cr += reward; s.stats.crEarned += reward; out.cr = reward;
+        out.lines.push('獎金 $' + reward);
+        if (score >= stage.target * 2) {
+          s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, D.ECON.overkillSpark, true);
+          if (stage.kind !== 'small') { R.gainTicket(s, 'gold', 1, '驚為天人'); out.lines.push('金色扭蛋券 +1'); }
+        }
+        if (stage.rules && stage.rules.length) { s.stats.judges = s.stats.judges || {}; stage.rules.forEach((id) => { s.stats.judges[id] = true; }); }
+      } else {
+        s.stats.stages.fail++;
+        R.addSpark(s, D.ECON.failSpark, true); out.lines.push('火花 ' + D.ECON.failSpark);
+        IE.Rounds.loseChance(s, 'night', { line: (t) => out.lines.push(t) });
+      }
+      s.nightLog = s.nightLog || [];
+      s.nightLog.push({ night: s.night, kind: stage.kind, target: stage.target, score, pass, reward, playsLeft: pl });
+      s.stageLog = (s.stageLog || []).concat({ day: s.day, kind: stage.kind, pass, score, target: stage.target });
+      return out;
+    }
     s.stageDone = s.stageDone || {};
     const pass = score >= stage.target;
     const K = KINDS[stage.kind];

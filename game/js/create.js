@@ -393,6 +393,11 @@
   const stageTonight = (s) => !!(IE.Stages && IE.Stages.today(s) && !(s.stageDone && s.stageDone[s.day]));
   const isSketch = (s, mode) => mode === 'normal' && RL.modeOf(s).sketch && !stageTonight(s);
   function canStart(s, mode) {
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (mode !== 'normal') return '五輪模式只接受正常創作';
+      if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
+      return null;
+    }
     const cost = mode === 'allnighter' ? C.allnighterCost : isSketch(s, mode) ? C.sketchCost : C.cost;
     if (s.spark < 1) return '火花不足 ×1.0，你甚麼都想不出來';
     if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
@@ -406,6 +411,27 @@
     return a;
   }
   function start(s, mode) {
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const m = objMods(s);
+      const perk = D.BACKGROUNDS[s.bg].perk;
+      const E = D.ECON;
+      const refund = { cr: 0, body: 0, spark: s.spark };
+      s.session = {
+        mode: 'normal', day: s.day,
+        deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
+        handSize: E.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
+        plays: (perk.playsSet || E.plays) + m.plays + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0),
+        discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
+        discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
+      };
+      s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
+      s.session.abil = { used: 0, bought: 0 };
+      s.phase = 'night';
+      s.slot = 2;
+      if (IE.Stages) IE.Stages.onStart(s, s.session);
+      draw(s);
+      return s.session;
+    }
     const all = mode === 'allnighter', sketch = isSketch(s, mode);
     const m = objMods(s);
     const perk = D.BACKGROUNDS[s.bg].perk;
@@ -574,7 +600,14 @@
     const ses = s.session;
     if (!ses) return null;
     s.session = null;
-    if (!ses.log.length) return { work: null, session: ses };
+    if (!ses.log.length) {
+      if (IE.Rounds && IE.Rounds.on(s)) {
+        const stage = IE.Stages ? IE.Stages.settle(s, ses, ses.plays) : null;
+        s.phase = s.ended ? 'ended' : 'shop';
+        return { work: null, session: ses, paid: [], stage, spore: null };
+      }
+      return { work: null, session: ses };
+    }
     const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
     // 蘑菇星交換生的「菌絲」：一張用過的素材長出孢子
     let spore = null;
@@ -595,6 +628,12 @@
     if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const paid = [];
+      const stage = IE.Stages ? IE.Stages.settle(s, ses, ses.plays) : null;
+      s.phase = s.ended ? 'ended' : 'shop';
+      return { work, session: ses, paid, stage, spore };
+    }
     const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
     const stage = IE.Stages ? IE.Stages.settle(s, ses) : null;
     return { work, session: ses, paid, stage, spore };
