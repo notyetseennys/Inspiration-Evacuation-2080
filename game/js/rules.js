@@ -250,14 +250,16 @@
   }
 
   // ---------- 招牌能力：每天早上（第八期） ----------
-  const hiding = (s) => !!(s.huntDays && s.huntDays.includes(s.day));
+  const hiding = (s) => !(IE.Rounds && IE.Rounds.on(s)) && !!(s.huntDays && s.huntDays.includes(s.day));
   function abilityMorning(s, feed) {
     const P = perk(s);
     // 時間旅人：記下今天早上的狀態，之後可以「重過今天」
     if (P.rewind) s.dayStart = JSON.stringify(s, (k, v) => (k === 'dayStart' || k === 'undo' ? undefined : v));
-    if (P.dayTire && !s.trip) { s.body = Math.max(1, s.body - P.dayTire); feed.push({ kind: 'warn', text: '地球的重力令你很累：身體 −' + P.dayTire }); }
-    if (P.needWater && !flooded(s)) { s.body = Math.max(1, s.body - P.needWater); feed.push({ kind: 'warn', text: '家裡太乾了，你的皮膚在龜裂：身體 −' + P.needWater }); }
-    if (P.nightShift && s.flags.shiftDay === s.day - 1) { addSpark(s, -0.3, true); feed.push({ kind: 'warn', text: '昨晚返夜班，今天整個人昏昏沉沉：火花 −0.3' }); }
+    if (!(IE.Rounds && IE.Rounds.on(s))) {
+      if (P.dayTire && !s.trip) { s.body = Math.max(1, s.body - P.dayTire); feed.push({ kind: 'warn', text: '地球的重力令你很累：身體 −' + P.dayTire }); }
+      if (P.needWater && !flooded(s)) { s.body = Math.max(1, s.body - P.needWater); feed.push({ kind: 'warn', text: '家裡太乾了，你的皮膚在龜裂：身體 −' + P.needWater }); }
+      if (P.nightShift && s.flags.shiftDay === s.day - 1) { addSpark(s, -0.3, true); feed.push({ kind: 'warn', text: '昨晚返夜班，今天整個人昏昏沉沉：火花 −0.3' }); }
+    }
     if (hiding(s)) feed.unshift({ kind: 'warn', text: '【追捕】星際人才發展局的追捕隊來了浮城。你整個早上都要躲起來。' });
     // 外星人偶然在街上派發扭蛋券
     if (rand(s) < 0.03) { gainTicket(s, 'silver', 1, '街上的外星推廣員塞給你'); feed.push({ kind: 'news', text: '一個穿著吉祥物裝的外星推廣員在街上派發扭蛋券，塞了一張給你。（扭蛋券 +1）' }); }
