@@ -921,7 +921,8 @@
   // ---------- 聊天、義工、休息 ----------
   function chatCost(s) { return perk(s).freeChat ? 0 : 15; }
   function aliveNpcs(s) { return s.npcs.filter((n) => n.alive); }
-  function applyChat(s, npcId) {
+  // reply（第十期）：傾聽、傾訴、一起創作；不給就是以前的聊天
+  function applyChat(s, npcId, reply) {
     const n = s.npcs.find((x) => x.id === npcId);
     const def = D.NPCS.find((x) => x.id === npcId);
     const rep = report(s, '與' + def.name + '聊天');
@@ -944,6 +945,9 @@
     teach(s, npcId, n.friend === 2 || n.friend === 4 ? 1 : 0.25, rep);
     if (n.friend === 3) { const o = D.OBJECTS.find((x) => x.npc === npcId); if (o) gainObject(s, o.id, rep); }
     if (rand(s) < 0.3 + 0.002 * A(s, 'social')) polishCard(s, rep, def.name);
+    if (reply === 'listen') { rep.line('你一直聽着', 'good', addSpark(s, 0.1, true), 'spark'); train(s, { empathy: 0.8 }, rep); }
+    else if (reply === 'confide') { atone(s, 0.4, rep, '你說出了心裡話'); train(s, { social: 0.8 }, rep); }
+    else if (reply === 'jam') { hurt(s, 3, 'chat'); rep.delta('body', -3); rep.gain(nth(n.friend + 1)); train(s, { craft: 0.6 }, rep); }
     return rep.done();
   }
   function applyVolunteer(s) {

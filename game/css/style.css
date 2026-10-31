@@ -138,6 +138,15 @@ button { font: inherit; color: inherit; }
 .chip.wx { display: inline-flex; align-items: center; gap: 4px; }
 .chip.wx i { font-style: normal; font-size: 13px; line-height: 1; }
 .chip.wx.odd { border-color: #c38bff; color: #f1e6ff; background: linear-gradient(90deg, rgba(195,139,255,0.18), rgba(255,79,180,0.12)); box-shadow: 0 0 10px -2px rgba(195,139,255,0.7); }
+/* 和朋友聊天 */
+.modal.talk { max-width: 520px; }
+.talk-lines { display: grid; gap: 8px; margin: 10px 0 14px; }
+.bubble { margin: 0; padding: 10px 14px; border-radius: 4px 14px 14px 14px; background: #1c2540; border: 1px solid #2c3a60; font-size: 15px; line-height: 1.6; opacity: 0; animation: bubble-in 0.35s ease forwards; animation-delay: var(--d); }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.talk-replies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.talk-reply { display: grid; gap: 2px; justify-items: center; min-height: 56px; }
+.talk-reply small { font-size: 11px; color: var(--mute); font-weight: 400; }
+@media (prefers-reduced-motion: reduce) { .bubble { animation: none; opacity: 1; } }
 .post.odd { border: 1px solid #c38bff; background: linear-gradient(135deg, rgba(195,139,255,0.16), rgba(255,79,180,0.08)); }
 .m-signal .num { font-size: 18px; color: #ffd6ef; }
 .hud-sub { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mute); }

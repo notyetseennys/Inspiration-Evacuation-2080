@@ -273,6 +273,14 @@
       + '<h3>儲物箱</h3>' + (s.objStash.map((id) => row(id, false)).join('') || '<p class="mute">沒有</p>')
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">完成</button></div></div>';
   }
+  // 和朋友聊天（第十期）：三句對話，然後選擇怎樣回應
+  function talkModal(s, id, lines) {
+    const def = D().NPCS.find((x) => x.id === id), n = s.npcs.find((x) => x.id === id) || { friend: 0 };
+    return '<div class="modal talk"><span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span>'
+      + '<h2>' + esc(def.name) + '</h2>'
+      + '<div class="talk-lines">' + lines.map((t, i) => '<p class="bubble" style="--d:' + (i * 0.45) + 's">' + esc(t) + '</p>').join('') + '</div>'
+      + '<div class="talk-replies">' + D().TALK_REPLIES.map((r) => '<button class="btn talk-reply" type="button" data-do="reply" data-id="' + r.id + '"><b>' + r.name + '</b><small>' + r.desc + '</small></button>').join('') + '</div></div>';
+  }
   function chatPanel(s) {
     const npcs = R().aliveNpcs(s);
     return '<div class="panel-head"><h2>找誰聊天？</h2><p>' + (R().chatCost(s) ? '請對方喝東西 $' + R().chatCost(s) : '街頭樂手不用請客') + '。越熟絡，火花恢復得越多。</p></div>'
@@ -863,7 +871,7 @@
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
-    actionsPanel, invHtml, deckModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
+    actionsPanel, invHtml, deckModal, talkModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };

@@ -327,7 +327,13 @@
         return afterAction(R.applyVolunteer(s));
       case 'chat':
         return UI.setPanel(UI.chatPanel(s), {
-          npc(el) { afterAction(R.applyChat(s, el.dataset.id)); },
+          npc(el) {
+            const id = el.dataset.id;
+            if (!IE.Talk) return afterAction(R.applyChat(s, id));
+            UI.modal(UI.talkModal(s, id, IE.Talk.lines(s, id)), {
+              reply(b) { UI.closeModal(); afterAction(R.applyChat(s, id, b.dataset.id)); },
+            });
+          },
           back() { showHub(); },
         });
       case 'create': case 'allnighter':
