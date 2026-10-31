@@ -25990,7 +25990,9 @@ body {
   function newGame(bg, season, o) {
     A.init();
     o = o || {};
-    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard' });
+    // 測試可以用 localStorage 的 ie2080.seed 固定新局的種子（煙霧測試用，令每次走同一條路）
+    const testSeed = store.get('ie2080.seed');
+    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard' });
     Game.ticketShown = 0;
     if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
