@@ -31,6 +31,7 @@
       + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
+      + (o.sel && o.pos >= 0 ? '<span class="cc-pos p' + o.pos + '">' + C().POS[o.pos] + '</span>' : '')
       + '<span class="cc-name">' + esc(c.name) + '</span>'
       + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
       + '<span class="cc-tags">' + tags + '</span>'
@@ -69,10 +70,10 @@
     {
       id: 'pick',
       short: '選牌',
-      title: '步驟 1/6：選牌（挑選 1 至 5 張素材）',
-      desc: '手牌上方的「這手牌可以」列出這手牌組得出的作品形式和預計分數，按一下就會選好；也可以自己點選素材卡（或按數字鍵 1–9）。相同標籤出現得越多，作品形式越高級；湊齊特定標籤還能觸發「具名組合」。',
-      action: '試著按「這手牌可以」的第一個建議，或按「下一步」',
-      target: '.ct-sugg, .ct-hand',
+      title: '步驟 1/6：起承轉合（點選的次序就是結構）',
+      desc: '依次點選素材，它們會成為「起、承、轉、合」。承和起同標籤是呼應；轉和前兩張完全不同是反轉；合接回起是首尾呼應，同時接回轉更是收束。次序排得好，分數可以差幾倍。左邊的「起承轉合」會告訴你每一步做到沒有。',
+      action: '試著依次點選四張素材，看看左邊的結構追蹤',
+      target: '.ct-hand, .ct-struct',
     },
     {
       id: 'est',
@@ -181,6 +182,7 @@
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
+      + '<div class="ct-struct" aria-live="polite"></div>'
       + '<p class="ct-hint"></p>'
       + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>牌型表<small>● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
@@ -348,7 +350,7 @@
     renderStage();
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
-    $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
+    $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid), pos: st.sel.indexOf(c.uid) })).join('');
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
@@ -551,7 +553,7 @@
     const s = st.s, ses = s.session;
     const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
       + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
-    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 3) : []; }
+    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 && s.firstRun ? C().suggest(s, ses.hand, 3) : []; }
     return st.sg;
   }
   function sgKeyText(x) {
@@ -637,7 +639,35 @@
     render();
     root.querySelectorAll('.ct-hand .cc.sel').forEach((b, i) => b.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)' }, { transform: 'translateY(-16px)' }], { duration: 220, delay: i * 35 }));
   }
+  // 起承轉合的結構追蹤（第十三期）：每一格放了甚麼、技巧有沒有達成、下一張要選怎樣的素材
+  const STRUCT_RULE = ['定下主題', '和「起」有相同標籤 → 呼應 +2 倍率', '和前兩張完全不同 → 反轉 ×1.5', '接回「起」→ 首尾呼應 ×1.5；同時接回「轉」→ 收束 ×1.5', '和「合」有相同標籤 → 餘韻 +3 倍率'];
+  function renderStruct() {
+    const s = st.s, ses = s.session, el = $('.ct-struct');
+    if (!el) return;
+    const sel = st.sel.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const techs = C().structure(s, sel);
+    const POS = C().POS, max = C().maxCards(s);
+    const n = Math.min(max, sel.length >= 4 && max >= 5 ? 5 : 4);
+    const tagNames = (c) => c.tags.map((t) => D().TAGS[t].name).join('・');
+    const rows = [];
+    for (let i = 0; i < n; i++) {
+      const c = sel[i];
+      if (c) {
+        const mine = techs.filter((x) => x.pos === i && x.id !== 'series');
+        const okAny = mine.some((x) => x.ok);
+        rows.push('<li class="sx ' + (i === 0 ? 'done' : okAny ? 'ok' : 'miss') + '"><b>' + POS[i] + '</b><span>' + esc(c.name) + '<small>' + esc(tagNames(c)) + '</small></span>'
+          + '<i>' + (i === 0 ? '主題' : mine.map((x) => (x.ok ? '✓ ' : '✗ ') + x.name).join(' ')) + '</i></li>');
+      } else {
+        rows.push('<li class="sx ' + (i === sel.length ? 'next' : 'todo') + '"><b>' + POS[i] + '</b><span>' + STRUCT_RULE[i] + '</span></li>');
+      }
+    }
+    const series = techs.find((x) => x.id === 'series');
+    const theme = ses.lastTheme ? ses.lastTheme.map((t) => D().TAGS[t].name).join('・') : '';
+    el.innerHTML = '<div class="sx-head"><b>起承轉合</b><small>下筆的次序就是作品的結構</small></div><ol class="sx-list">' + rows.join('') + '</ol>'
+      + (theme ? '<p class="sx-series' + (series ? ' on' : '') + '">' + (series ? '✓ 系列作 ×' + series.xmult : '系列作') + '：「起」延續上一筆的主題（' + esc(theme) + '）</p>' : '');
+  }
   function renderPreview() {
+    renderStruct();
     const s = st.s;
     const pv = st.sel.length ? C().preview(s, st.sel) : null;
     root.querySelectorAll('.ct-flist .fr').forEach((li) => li.classList.toggle('on', !!pv && li.dataset.form === pv.form));
@@ -1195,6 +1225,17 @@
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
+        case 'struct': {
+          // 起承轉合的技巧：在那張牌上方彈出，並蓋印
+          const el = x.uid != null ? stageCard(x.uid) : null;
+          if (el) { bump(el, 1.18); floatText(el, x.name, 'xmult'); }
+          tag(x.name + (x.xmult ? ' ×' + x.xmult : ' +' + x.mult + ' 倍率'), x.id === 'resolve' || x.id === 'series' ? 'legend' : 'kpi-good');
+          setBoxes(x.C, x.M);
+          A().fx('mult', x.xmult ? 4 : 2);
+          if (x.id === 'resolve') shake(4);
+          await wait(x.id === 'resolve' ? 520 : 360);
+          break;
+        }
         case 'weather':
           tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
           A().fx('mult', 2);

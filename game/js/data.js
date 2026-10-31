@@ -211,12 +211,12 @@
   const SOUL_LIMIT = 21;
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
-  const THRESHOLDS = [575000, 2130000, 7200000, 13300000, 25200000];
+  const THRESHOLDS = [1150000, 4260000, 14400000, 26600000, 50400000];
   // 一局的長度（第八期）：標準 60 天約一小時；長篇 100 天是以前的玩法。
   // period：一個篩選期的天數；stageDays：每期的三個關卡之夜；season：季節長度；sketch：平常晚上只可以速寫。
   const MODES = {
     standard: { id: 'standard', name: '標準', desc: '60 天，約一小時', days: 60, period: 12, stageDays: [4, 8, 12], season: 20, shopEvery: 2, sketch: true,
-      thresholds: [280000, 900000, 2750000, 5200000, 9600000] },
+      thresholds: [560000, 1800000, 5500000, 10400000, 19200000] },
     long: { id: 'long', name: '長篇', desc: '100 天，以前的玩法', days: 100, period: 20, stageDays: [7, 14, 20], season: 25, shopEvery: 3, sketch: false,
       thresholds: THRESHOLDS },
   };

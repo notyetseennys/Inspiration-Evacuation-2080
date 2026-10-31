@@ -48,7 +48,7 @@
     big: { name: '畫廊聯展', short: '聯展', mult: 1.1, color: '#c38bff', reward: { cr: 120, tools: 1, tickets: 1 }, fail: { rating: -0.3, spark: -0.3 } },
     boss: { name: '外星評審', short: '評審', mult: 1.45, color: '#ff4d5e', reward: { cr: 200, tools: 2, tickets: 2, obj: 0.5 }, fail: { signalPct: -0.08, spark: -0.4 } },
   };
-  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 17000);
+  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 36000);
   // 一晚的目標分數：隨日子以每天約 4% 增長（與創作分數的增長曲線相若）
   const STAGE_G = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_G) || 1.032);
   // 用「進度日」計算：60 天的一局，目標也會走完整條增長曲線

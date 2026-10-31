@@ -223,6 +223,15 @@ const URL = 'http://localhost:' + PORT + '/';
     const est = await page.textContent('#ctable .ct-est');
     if (!/預計/.test(est)) await fail('沒有預計得分');
     await page.click('#ctable .ct-hand .cc[data-uid="' + u0 + '"]');
+    // 第十三期：起承轉合（次序就是結構）
+    const p13 = await page.evaluate(() => {
+      const C = window.__IE.Create, mk = (t) => ({ tags: t });
+      const good = C.structure({ session: {} }, [mk(['water']), mk(['water']), mk(['neon']), mk(['water', 'neon'])]).filter((x) => x.ok).map((x) => x.name);
+      const bad = C.structure({ session: {} }, [mk(['neon']), mk(['water']), mk(['water', 'neon']), mk(['water'])]).filter((x) => x.ok).map((x) => x.name);
+      return { good, bad, rows: document.querySelectorAll('#ctable .ct-struct .sx').length };
+    });
+    if (p13.good.join() !== '呼應,反轉,首尾呼應,收束' || p13.bad.length >= p13.good.length || p13.rows < 4) await fail('起承轉合不對：' + JSON.stringify(p13));
+    ok('第十三期：起承轉合（好次序：' + p13.good.join('、') + '；亂次序只有 ' + p13.bad.length + ' 項）；結構追蹤 ' + p13.rows + ' 格');
     // 第九期：「這手牌可以」的建議、手上的標籤、牌型表；按建議後預計得分和建議一致
     const sgN = await page.$$eval('#ctable .ct-sugg .sg', (els) => els.length);
     if (!sgN) await fail('沒有「這手牌可以」的建議');
@@ -288,8 +297,12 @@ const URL = 'http://localhost:' + PORT + '/';
     ok('夢境面試（訊號 ' + before + ' → ' + after + '）');
 
     // 強制死亡 → 結局
-    await page.evaluate(() => { window.__IE.Game.state.body = 3; });
+    await page.evaluate(() => { const s = window.__IE.Game.state; s.body = 3; s.spark = Math.max(2, s.spark); s.weather = null; });
     if (await page.$('.phone [data-do="close"]')) await closePhone();
+    // 重新顯示行動列表（天氣、火花可能令標註暫停）
+    await page.click('#views [data-view="city"]');
+    const why = await page.evaluate(() => { const b = document.querySelector('.act[data-id="label"]'); return b && b.disabled ? (b.querySelector('.act-why') || {}).textContent : ''; });
+    if (why) await fail('AI 數據標註不能做：' + why);
     await page.click('.act[data-id="label"]');
     // 第十二期：小遊戲有即時評級條
     await page.waitForTimeout(400);

@@ -36,6 +36,41 @@
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
+  // ---------- 起承轉合（第十三期）：下筆的次序就是作品的結構 ----------
+  // 起：定下主題。承：和起有相同標籤 → 呼應。轉：和前兩張完全不同 → 反轉。
+  // 合：和起有相同標籤 → 首尾呼應；同時接回轉的標籤 → 收束。尾：和合有相同標籤 → 餘韻。
+  // 系列作：這一筆的起延續上一筆的主題，同一晚越連越強。
+  const POS = ['起', '承', '轉', '合', '尾'];
+  const shares = (a, b) => !!a && !!b && a.tags.some((t) => b.tags.includes(t));
+  function structure(s, sel) {
+    const [a, b, c, d, e] = sel;
+    const ses = (s && s.session) || {};
+    const out = [];
+    const twist = !!c && !shares(c, a) && !shares(c, b);
+    if (b) out.push({ id: 'echo', name: '呼應', pos: 1, mult: 2, ok: shares(a, b), need: '「承」要和「起」有相同標籤' });
+    if (c) out.push({ id: 'twist', name: '反轉', pos: 2, xmult: 1.5, ok: twist, need: '「轉」要和前兩張完全沒有相同標籤' });
+    if (d) {
+      out.push({ id: 'callback', name: '首尾呼應', pos: 3, xmult: 1.5, ok: shares(d, a), need: '「合」要和「起」有相同標籤' });
+      out.push({ id: 'resolve', name: '收束', pos: 3, xmult: 1.5, ok: twist && shares(d, a) && shares(d, c), need: '「合」同時要有「轉」的標籤（雙標籤素材最合用）' });
+    }
+    if (e) out.push({ id: 'coda', name: '餘韻', pos: 4, mult: 3, ok: shares(e, d), need: '「尾」要和「合」有相同標籤' });
+    if (a && ses.lastTheme && a.tags.some((t) => ses.lastTheme.includes(t))) out.push({ id: 'series', name: '系列作', pos: 0, xmult: r2(1 + 0.25 * (ses.themeStreak || 1)), ok: true, need: '' });
+    return out;
+  }
+  // 自動排列（模擬機械人用）：主題最多的做起，同主題做承，完全不同的做轉，能接回兩邊的做合
+  function arrange(cards) {
+    if (cards.length < 3) return cards.slice();
+    const cnt = tagCounts(cards);
+    const theme = Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x])[0];
+    const pool = cards.slice().sort((x, y) => y.value - x.value);
+    const take = (f) => { const i = pool.findIndex(f); return i >= 0 ? pool.splice(i, 1)[0] : null; };
+    const a = take((c) => c.tags.includes(theme)) || pool.shift();
+    const b = take((c) => shares(c, a)) || pool.shift();
+    const c = take((x) => !shares(x, a) && !shares(x, b)) || pool.shift();
+    const d = take((x) => shares(x, a) && shares(x, c)) || take((x) => shares(x, a)) || pool.shift();
+    return [a, b, c, d].concat(pool).filter(Boolean);
+  }
+
   // ---------- 作品形式 ----------
   function tagCounts(cards) {
     const counts = {};
@@ -226,6 +261,12 @@
       if (!x.def.play) return;
       const e = x.def.play(ctx, x.n);
       if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id }, e))); }
+    });
+    // 起承轉合：按次序判斷結構技巧
+    const struct = structure(s, sel);
+    struct.filter((x) => x.ok).forEach((x) => {
+      apply({ mult: x.mult, xmult: x.xmult });
+      steps.push(snap({ t: 'struct', id: x.id, name: x.name, pos: x.pos, mult: x.mult || 0, xmult: x.xmult || 0, uid: sel[x.pos] && sel[x.pos].uid }));
     });
     mult = Math.max(0, mult);
     const ai = aiFactor(s, F.id, objs, schools);
@@ -492,6 +533,10 @@
     ses.total += res.total; ses.raw += res.raw;
     ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
     ses.lastUids = uids.slice();
+    const first = cardOf(s, uids[0]);
+    const cont = !!(first && ses.lastTheme && first.tags.some((t) => ses.lastTheme.includes(t)));
+    ses.themeStreak = cont ? (ses.themeStreak || 1) + 1 : 1;
+    ses.lastTheme = first ? first.tags.slice() : null;
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
     ses.used.push(...uids.filter((u) => cardOf(s, u)));
@@ -714,8 +759,17 @@
       need.forEach((t) => byVal.filter((c) => c.tags.includes(t) && !pick.includes(c)).slice(0, r.need[t]).forEach((c) => pick.push(c)));
       if (pick.length <= 5) add(pick);
     });
+    // 起承轉合：主題兩張、一張反轉、一張能接回兩邊的雙標籤素材
+    tags.forEach((a) => tags.forEach((b) => {
+      if (a === b) return;
+      const pick = byVal.filter((c) => c.tags.includes(a) && !c.tags.includes(b)).slice(0, 2);
+      const tw = byVal.find((c) => c.tags.includes(b) && !c.tags.includes(a) && !pick.includes(c));
+      const br = byVal.find((c) => c.tags.includes(a) && c.tags.includes(b));
+      if (pick.length === 2 && tw && br) add(pick.concat([tw, br]));
+    }));
     let best = null;
-    cands.forEach((uids) => {
+    cands.forEach((raw) => {
+      const uids = arrange(raw.map((u) => cardOf(s, u))).map((c) => c.uid);
       const sc = scorePlay(s, uids);
       if (!best || sc.total > best.total) best = { uids, total: sc.total, form: sc.form };
     });
@@ -723,7 +777,7 @@
   }
 
   IE.Create = {
-    FORM, RANK, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    FORM, RANK, POS, structure, arrange, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
     isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
