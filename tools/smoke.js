@@ -249,6 +249,14 @@ const URL = 'http://localhost:' + PORT + '/';
     await createNight();
     const stage = await page.evaluate(() => window.__IE.Game.state.stageDone && window.__IE.Game.state.stageDone[4]);
     if (!stage) await fail('關卡沒有結算');
+    // 第十一期：關卡之夜之後到遺物攤（三件物件，可以重抽）
+    await page.waitForSelector('#modal .stall', { timeout: 10000 });
+    const stallN = await page.$$eval('#modal .stall-item', (els) => els.length);
+    if (stallN !== 3) await fail('遺物攤不是三件物件：' + stallN);
+    const slots = await page.evaluate(() => window.__IE.Rules.slotsOf(window.__IE.Game.state));
+    if (slots !== 5) await fail('靈感物件欄不是五格：' + slots);
+    await page.click('#modal .stall [data-do="close"]');
+    ok('第十一期：遺物攤三件物件，物件欄 ' + slots + ' 格');
     ok('第 1 關社區小展：' + (stage === 'pass' ? '入選' : '落選') + '（' + est.trim().slice(0, 24) + '…）');
     await page.waitForSelector('#modal [data-do="ok"]', { timeout: 10000 });
     await page.click('#modal [data-do="ok"]');

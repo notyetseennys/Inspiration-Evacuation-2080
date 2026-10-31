@@ -52,3 +52,32 @@ body {
   .btn, .icon-btn, .inv-btn, .view-tab, .act { transition: none; }
   .btn:hover:not(:disabled), .icon-btn:hover, .inv-btn:hover, .view-tab:hover { transform: none; }
 }
+/* 第十一期：三次機會 */
+.chip.lives { border-color: #ff8fd1; }
+.chip.lives b { color: #ff8fd1; letter-spacing: 2px; font-weight: 400; }
+.chip.lives i { font-style: normal; color: #5b4a6b; }
+/* 第十一期：遺物攤 */
+.stall-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.stall-item { display: grid; justify-items: center; text-align: center; gap: 8px; padding: 14px 12px; border-radius: 14px; background: var(--surface), #141c30; border: 1px solid #2a3756; box-shadow: inset 0 1px 0 var(--edge), var(--lift); }
+.stall-item.r-rare { border-color: #37c3d6; }
+.stall-item.r-legend { border-color: #ffc247; box-shadow: inset 0 1px 0 var(--edge), 0 0 18px rgba(255, 194, 71, 0.25); }
+.stall-item .px-icon { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
+.si-txt { display: grid; gap: 4px; }
+.si-txt b { font-size: 16px; }
+.si-txt span { font-size: 13px; color: #b9c4dc; line-height: 1.45; }
+.si-meta { font-size: 11px !important; color: var(--mute) !important; }
+.si-meta i { font-style: normal; }
+.stall-item .btn { width: 100%; }
+/* 第十一期：今晚加成、第一局指引、結局摘要 */
+.act-boost { font-size: 11px; font-weight: 700; color: #ffe2a0; }
+.act:has(.act-boost) { border-color: rgba(255, 194, 71, 0.55); }
+.coach { margin: 6px 0 0; padding: 8px 12px; border-radius: 10px; background: linear-gradient(90deg, rgba(55, 195, 214, 0.16), rgba(55, 195, 214, 0.04)); border: 1px solid rgba(55, 195, 214, 0.45); color: #d8f6ff; font-size: 14px; }
+.run-sum { margin: 0 0 8px; font-size: 15px; color: #e6dcff; }
+/* 第十一期：創作桌上的靈感物件像小丑牌一樣直接寫出效果 */
+.ct-obj .od { display: none; }
+@media (min-width: 960px) {
+  .ct-kit { grid-template-areas: "o o o" "t a s" "i i i"; }
+  .ct-kit .ct-objs { grid-auto-columns: 150px; }
+  .ct-obj { align-content: start; padding: 8px 8px 9px; }
+  .ct-obj .od { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; line-height: 1.35; color: #c9bde3; text-align: center; }
+}

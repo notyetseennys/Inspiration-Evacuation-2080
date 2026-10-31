@@ -422,6 +422,7 @@ function mulberry(seed) {
 }
 
 function runOne(strat, bg, season, seed) {
+  const reviewLog = [];
   const rng = mulberry(seed * 7 + 13);
   const S = STRATEGIES[strat];
   const s = R.newRun({ bg, season, seed, mode: MODE });
@@ -446,6 +447,11 @@ function runOne(strat, bg, season, seed) {
       if (careful && D.OUTDOOR.includes(choice) && R.outdoorRisk(s) >= 0.03) choice = R.isNight(s) ? 'rest' : (['label', 'smile', 'farm', 'clinic', 'chat', 'rest'].find((id) => enabled(s, id)) || 'rest');
       if (process.env.TRACE) console.log('D' + s.day + '/' + slot, choice, '$' + s.cr, 'need', moneyNeed(s), 'body', s.body, 'spark', s.spark.toFixed(1));
       act(s, choice, rng, S.moral);
+      // 第十一期：關卡之夜之後逛遺物攤，留夠交租的錢才買
+      if (stg && R.isNight(s) && s.stageDone && s.stageDone[s.day] && R.stallOpen) {
+        R.stallOpen(s, stg.kind === 'boss');
+        for (const id of s.stall.items.slice()) if (s.cr - R.stallPrice(s, id) > moneyNeed(s) + 120) R.stallBuy(s, id);
+      }
       R.lastStand(s, null);
       if (R.slotFree(s)) slot--;
       if (process.env.CHECK) { const bad = s.cards.find((c) => !c.tags); if (bad) { console.log('BAD CARD after', choice, JSON.stringify(bad)); process.exit(1); } }
@@ -455,12 +461,13 @@ function runOne(strat, bg, season, seed) {
     if ([10, 30, 60, 90].includes(s.day)) crAt[s.day] = s.cr;
     const rep = R.endDay(s);
     if (rep.review && rep.review.overweight && rep.review.signalOk) overweightFails++;
+    if (rep.review) reviewLog[rep.review.quarter] = rep.review.pass ? 1 : 0;
     if (rep.ending) break;
     if (rep.interview) R.applyInterview(s, simInterview(s, rng, S.moral));
   }
   const kind = { recruited: 'agent' }[s.ended.type] || s.ended.type;
   const dos = DS.evaluate(s, kind);
-  return { ending: s.ended.type, death: s.ended.deathId, day: s.ended.day, signals, works: s.works.length, soul: s.soul,
+  return { ending: s.ended.type, death: s.ended.deathId, day: s.ended.day, passed: s.reviewsPassed || 0, reviewLog, signals, works: s.works.length, soul: s.soul,
     conscience: s.conscience, sparkMax: R.sparkMax(s), overweightFails, type: dos.archetype.id, worlds: Object.keys(s.eventsSeen).length,
     crAt, raws: s.works.map((w) => w.raw), crEarned: s.stats.crEarned, trips: s.stats.trips, rares: Object.keys(s.rares).length,
     sales: s.stats.sales, decor: Object.keys(s.decor).length, stageLog: s.stageLog || [] };
@@ -524,7 +531,7 @@ for (const strat of (process.env.BGS ? [] : only)) {
   const rec = res.filter((r) => r.ending === 'recruited');
   console.log(strat.padEnd(11) + '（' + STRATEGIES[strat].moral.padEnd(10) + '）'
     + ' 被選中' + pct(rec.length, RUNS)
-    + '（' + REVIEWS.map((d) => 'D' + d + pct(count((r) => r.ending === 'recruited' && r.day === d), RUNS)).join(' ') + '）'
+    + '（各輪通過 ' + [0, 1, 2, 3, 4].map((q) => { const a = res.filter((r) => r.reviewLog[q] != null); return a.length ? Math.round(100 * a.filter((r) => r.reviewLog[q]).length / a.length) + '%' : '-'; }).join('/') + '・平均通過 ' + avg(res.map((r) => r.passed)).toFixed(1) + ' 輪・人才庫' + pct(count((r) => r.ending === 'archived'), RUNS) + '・平均 ' + Math.round(avg(res.map((r) => r.day))) + ' 天）'
     + ' 良知太重' + pct(count((r) => r.ending === 'heavy'), RUNS)
     + ' 平凡人' + pct(count((r) => r.ending === 'ordinary'), RUNS)
     + ' 死亡' + pct(count((r) => r.ending === 'death'), RUNS)

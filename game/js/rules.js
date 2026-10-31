@@ -309,7 +309,7 @@
       premiumUntil: 0, realFoodDay: 0,
       // 創作：作品形式等級、AI 對你風格的記憶、靈感物件
       forms: {}, formsSeen: {}, style: {}, session: null, handBonus: 0, studio: 0,
-      objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 3, objStash: [], objSeen: {},
+      objects: [D.START_OBJECT[opts.bg]].filter(Boolean), objSlots: 5, chances: 3, reviewsPassed: 0, objStash: [], objSeen: {},
       // 小遊戲的最高評級（決定「照舊做」的評級）與這一局實際玩了多久（毫秒）
       microBest: Object.assign({}, (opts.meta && opts.meta.microBest) || {}), playMs: 0,
       // 這一局賺到的扭蛋券（局後存入；第八期）與每週挑戰
@@ -436,6 +436,45 @@
     else { s.cr += Math.round(D.OBJ_PRICE[o.rarity] / 2); if (rep) rep.line('物件欄已滿，把「' + o.name + '」賣給了天空區收藏家', ''); return false; }
     s.stats.maxObjects = Math.max(s.stats.maxObjects || 0, s.objects.length);
     if (rep) { rep.line('獲得靈感物件：「' + o.name + '」' + (s.objects.includes(id) ? '' : '（物件欄已滿，先放進儲物箱）'), 'good'); rep.obj(id); }
+    return true;
+  }
+  // ---------- 遺物攤（第十一期）：每個關卡之夜之後，三件靈感物件任選購買 ----------
+  // 同流派的物件出現得多；外星評審之夜之後可以免費拿一件；可以付錢重抽
+  function pickObjects(s, n, exclude) {
+    const mine = new Set(s.objects.concat(s.objStash).map((id) => D.OBJ[id] && D.OBJ[id].school).filter(Boolean));
+    const pool = D.OBJECTS.filter((o) => !o.npc && !o.start && !o.souvenir && objectAvailable(s, o) && !ownsObject(s, o.id) && !(exclude || []).includes(o.id))
+      .map((o) => ({ id: o.id, w: (RARITY_W[o.rarity] || 1) * (o.school && mine.has(o.school) ? 3 : 1) }));
+    const out = [];
+    while (out.length < n && pool.length) {
+      let r = rand(s) * pool.reduce((a, x) => a + x.w, 0), i = 0;
+      while (i < pool.length - 1 && (r -= pool[i].w) > 0) i++;
+      out.push(pool.splice(i, 1)[0].id);
+    }
+    return out;
+  }
+  function stallOpen(s, boss) {
+    if (!s.stall || s.stall.day !== s.day) s.stall = { day: s.day, items: pickObjects(s, 3), rerolls: 0, free: !!boss, done: false };
+    return s.stall;
+  }
+  const stallRerollCost = (s) => 25 + 25 * ((s.stall && s.stall.rerolls) || 0);
+  const stallPrice = (s, id) => (s.stall && s.stall.free ? 0 : D.OBJ_PRICE[D.OBJ[id].rarity]);
+  function stallBuy(s, id) {
+    const st = s.stall;
+    if (!st || !st.items.includes(id)) return false;
+    const price = stallPrice(s, id);
+    if (s.cr < price || !gainObject(s, id, null)) return false;
+    s.cr -= price;
+    st.items = st.items.filter((x) => x !== id);
+    if (st.free) st.free = false;
+    s.stats.stallBuys = (s.stats.stallBuys || 0) + 1;
+    return true;
+  }
+  function stallReroll(s) {
+    const st = s.stall, cost = stallRerollCost(s);
+    if (!st || s.cr < cost) return false;
+    s.cr -= cost;
+    st.items = pickObjects(s, 3, st.items);
+    st.rerolls++;
     return true;
   }
   function randomObject(s, ids) {
@@ -1623,8 +1662,24 @@
     lastStand(s, rep);
     if (s.body <= 0) rep.ending = endingFor(s, 'death');
     else if (s.numbStreak >= 4) rep.ending = endingFor(s, 'grey');
-    else if (rep.review && rep.review.pass) rep.ending = endingFor(s, 'recruited');
-    else if (rep.review && s.day >= days(s)) rep.ending = endingFor(s, rep.review.overweight && rep.review.signalOk ? 'heavy' : 'ordinary');
+    else if (rep.review) {
+      // 第十一期：篩選日是每一期的關口。通過就進入下一期；最後一次篩選通過才是被選中。
+      // 落選用掉一次機會（三次），用完就被歸入人才庫，提早結束。
+      const final = s.day >= days(s), heavy = rep.review.overweight && rep.review.signalOk;
+      s.chances = s.chances == null ? 3 : s.chances;
+      if (rep.review.pass) {
+        s.reviewsPassed = (s.reviewsPassed || 0) + 1;
+        rep.review.round = s.reviewsPassed;
+        if (final) rep.ending = endingFor(s, 'recruited');
+        else gainTicket(s, 'gold', 1, '通過第 ' + (s.quarter + 1) + ' 輪篩選', rep);
+      } else {
+        s.chances--;
+        rep.review.chancesLeft = s.chances;
+        if (s.chances <= 0) rep.ending = endingFor(s, heavy ? 'heavy' : 'archived');
+        else if (final) rep.ending = endingFor(s, heavy ? 'heavy' : 'ordinary');
+      }
+      rep.review.final = final;
+    }
     if (rep.ending) { s.ended = rep.ending; rep.interview = false; }
     else {
       s.day++; s.slot = 0; s.quarter = quarterOf(s.day, s);
@@ -1702,7 +1757,11 @@
             + (n ? '你留下了 ' + n + ' 件作品，它們會沉入舊城，等待下一個人把它們打撈上來。' : '你沒有留下任何作品，但你撐過來了。') };
       case 'recruited':
         return { type, day: s.day, title: '被選中',
-          text: '第 ' + s.day + ' 天，探射燈停在你的窗外。' + (s.day === modeOf(s).period ? '破格錄取。' : '') };
+          text: '第 ' + s.day + ' 天，最後一次篩選。探射燈停在你的窗外。你通過了 ' + (s.reviewsPassed || 1) + ' 輪篩選' + ((s.chances == null ? 3 : s.chances) >= 3 ? '，一次都沒有落選。' : '。') };
+      case 'archived':
+        return { type, day: s.day, title: '人才庫',
+          text: '第 ' + s.day + ' 天。你第三次落選。星際人才發展局把你的檔案歸入人才庫，「保留十二個月」。探射燈不會再經過你的窗外。'
+            + '水位升到 ' + Math.floor(s.water) + ' 樓。你還在浮城，只是不再被看見。' };
       case 'heavy':
         return { type, day: s.day, title: '良知太重',
           text: '第 ' + days(s) + ' 天。探射燈停在你的窗外，光束嘗試把你拉起來，卻拉不動。你的靈魂重 ' + s.soul.toFixed(1)
@@ -1819,6 +1878,7 @@
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
+    stallOpen, stallBuy, stallReroll, stallRerollCost, stallPrice,
     modeOf, days, age, hiding, weatherOf, rollWeather, weatherTag, encounter, applyEncounter, favorReady, useFavor, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,

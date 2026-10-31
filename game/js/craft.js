@@ -49,7 +49,7 @@
     const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
     const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
     return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '') + (fl ? ' ' + fl : '')) + '">'
-      + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span>'
+      + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span><span class="od">' + esc(o.desc) + '</span>'
       + (sc ? '<span class="osc" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(o.school, 12) : '') + esc(sc.name.replace('流', '')) + '</span>' : '') + '</button>';
   }
   // 流派加成：裝備中每個流派的件數，兩件觸發、三件更強

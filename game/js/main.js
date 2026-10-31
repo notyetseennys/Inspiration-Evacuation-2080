@@ -316,6 +316,12 @@
 
   function doAction(id) {
     const s = Game.state;
+    // 試玩紀錄（第十一期）：每個行動記下日子、時段和距離上一個行動的秒數
+    s.trace = s.trace || [];
+    const now = Date.now();
+    s.trace.push({ d: s.day, sl: s.slot, a: id, sec: Game.lastActAt ? Math.round((now - Game.lastActAt) / 1000) : 0, cr: Math.round(s.cr), sp: Math.round(s.spark * 10) / 10 });
+    if (s.trace.length > 600) s.trace.shift();
+    Game.lastActAt = now;
     switch (id) {
       case 'label': case 'ot': case 'smile': case 'dive': case 'delivery': case 'farm': case 'busk': case 'clinic':
       case 'garden': case 'salvage': case 'haggle':
@@ -446,12 +452,29 @@
     IE.Craft.open(s, (res) => {
       UI.renderHud(s); A.setSpark(s.spark); save();
       if (!res) { showHub(); return; }
+      // 第十一期：關卡之夜之後到遺物攤
+      const g = IE.Stages && IE.Stages.today(s);
+      if (g && s.stageDone && s.stageDone[s.day] && R.stallOpen) return openStall(g.kind === 'boss', afterSlot);
       afterSlot();
     });
   }
-  // 靈感物件：裝備、卸下、排列（碎鏡會複製右邊的物件）、賣給天空區
-  function openObjects() {
+  function openStall(boss, next) {
     const s = Game.state;
+    R.stallOpen(s, boss);
+    music('shop');
+    const render = () => UI.modal(UI.stallModal(s), {
+      buy(el) { if (R.stallBuy(s, el.dataset.id)) { A.sfx('coin'); UI.renderHud(s); save(); } render(); },
+      reroll() { if (R.stallReroll(s)) { A.sfx('click'); UI.renderHud(s); save(); } render(); },
+      objs() { UI.closeModal(); openObjects(() => render()); },
+      close() { UI.closeModal(); save(); next(); },
+    });
+    render();
+  }
+  // 靈感物件：裝備、卸下、排列（碎鏡會複製右邊的物件）、賣給天空區
+  // back：關掉之後回到哪裡（預設回到浮城）
+  function openObjects(back) {
+    const s = Game.state;
+    const leave = () => (back ? back() : showHub());
     music('shop');
     const render = () => UI.pushModal(UI.objectsModal(s), {
       equip(el) { R.equipObject(s, el.dataset.id); UI.closeModal(); render(); save(); },
@@ -459,8 +482,8 @@
       left(el) { R.moveObject(s, el.dataset.id, -1); UI.closeModal(); render(); save(); },
       right(el) { R.moveObject(s, el.dataset.id, 1); UI.closeModal(); render(); save(); },
       sell(el) { const p = R.sellObject(s, el.dataset.id); UI.toast('賣給天空區收藏家：+$' + p, 'good'); A.sfx('coin'); UI.closeModal(); render(); UI.renderHud(s); save(); },
-      close() { UI.closeModal(); showHub(); },
-    }, { dismiss: () => showHub() });
+      close() { UI.closeModal(); leave(); },
+    }, { dismiss: () => leave() });
     render();
   }
 
@@ -700,8 +723,16 @@
     A.setMode(kind === 'agent' ? 'alien' : 'city');
     A.setSpark(kind === 'grey' ? 0 : s.spark);
     UI.renderHud(s);
-    UI.setPanel('<div class="btn-row"><button class="btn primary" type="button" data-do="again">再玩一局</button><button class="btn" type="button" data-do="title">返回標題</button></div>',
-      { again: () => { UI.closeModal(); showSetup(); }, title: () => showTitle() });
+    // 第十一期：結局之後一鍵用同一角色再來；顯示差多少；可以匯出試玩紀錄
+    const same = { bg: s.bg, season: s.season, mode: s.mode || 'standard', stake: s.stake || 1 };
+    const best = Math.round(((s.stats && s.stats.bestRatio) || 0) * 100);
+    const summary = '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪篩選・最接近門檻 ' + best + '%・活到第 ' + s.day + ' 天' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '');
+    const exportLog = () => {
+      const data = JSON.stringify({ v: 1, bg: s.bg, mode: same.mode, stake: same.stake, ending: kind, day: s.day, passed: s.reviewsPassed || 0, best, playMs: s.playMs || 0, trace: s.trace || [] });
+      try { navigator.clipboard.writeText(data).then(() => UI.toast('試玩紀錄已複製，可以貼給開發者', 'good'), () => UI.toast('複製失敗', 'bad')); } catch (e) { UI.toast('複製失敗', 'bad'); }
+    };
+    UI.setPanel('<p class="run-sum">' + UI.esc(summary) + '</p><div class="btn-row"><button class="btn primary" type="button" data-do="retry">同一角色再來</button><button class="btn" type="button" data-do="again">換角色</button><button class="btn" type="button" data-do="log">匯出試玩紀錄</button><button class="btn" type="button" data-do="title">返回標題</button></div>',
+      { retry: () => { UI.closeModal(); newGame(same.bg, same.season, { mode: same.mode, stake: same.stake }); }, again: () => { UI.closeModal(); showSetup(); }, log: exportLog, title: () => showTitle() });
     UI.modal(UI.dossierModal(ending, s, dossier, Game.meta), {
       copy() {
         const text = UI.dossierText(ending, s, dossier);

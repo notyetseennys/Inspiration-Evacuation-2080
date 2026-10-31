@@ -88,7 +88,8 @@
     const bmax = R().bodyMax(s);
     // 下一件要準備的事：關卡、篩選日、交租之中最近的一件（全部列在提示和「狀態」裡）
     const ns = IE.Stages && IE.Stages.nextStage(s);
-    const next = [{ d: toReview, t: '篩選日' }];
+    const fin = R().reviewDay(s) >= R().days(s);
+    const next = [{ d: toReview, t: fin ? '最終篩選' : '第 ' + (s.quarter + 1) + ' 輪篩選' }];
     if (ns) next.push({ d: ns.day - s.day, t: '第 ' + ns.index + ' 關・' + ns.name + '・目標 ' + kfmt(ns.target), c: ns.color });
     if (s.floor > 0) next.push({ d: toRent, t: '交租 $' + fmt(rent) });
     next.sort((a, b) => a.d - b.d);
@@ -101,6 +102,7 @@
     hud.innerHTML = ''
       + '<div class="hud-top">'
       + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + R().days(s) + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
+      + '<span class="chip lives" title="篩選落選三次，就會被歸入人才庫。已通過 ' + (s.reviewsPassed || 0) + ' / 5 輪。">機會 <b>' + '●'.repeat(Math.max(0, s.chances == null ? 3 : s.chances)) + '<i>' + '○'.repeat(Math.max(0, 3 - (s.chances == null ? 3 : s.chances))) + '</i></b></span>'
       + wxChip + rentChip
       + danger
       + '<div class="hud-btns">'
@@ -207,6 +209,17 @@
     chat: 'cup', volunteer: 'bowl', rest: 'd_bed', create: 'brush', allnighter: 'lamp', garden: 'd_plant', salvage: 'helmet', haggle: 'gift', tripback: 'paper' };
   const actIcon = (id) => IE.Icons.item(ACT_ICON[id] || (id.startsWith('site:') ? 'map' : 'card'), 30);
   const GROUPS = { work: '工作', life: '生活', night: '晚上', trip: '旅行' };
+  // 第一局的指引（第十一期）：只在第一局的頭幾天出現，告訴新玩家下一步做甚麼
+  function coachLine(s) {
+    const m = (IE.Game && IE.Game.meta) || {};
+    if ((m.runs || 0) > 0 || s.trip || s.day > 8) return '';
+    const g = IE.Stages && IE.Stages.today(s), ns = IE.Stages && IE.Stages.nextStage(s);
+    if (R().isNight(s)) return g ? '今晚是第 ' + g.index + ' 關：按「創作」，用「這手牌可以」的建議湊出關卡目標。' : '晚上：按「創作」畫一張速寫，練習湊出同一標籤的素材。';
+    if (s.day === 1 && s.slot === 0) return '第一局建議：先做一份工作賺錢。不想玩小遊戲，可以按卡上的「跳過」。';
+    if (s.day === 1) return '下午：做「生活」類的行動收集素材，晚上創作要用。卡上的色點是會得到的素材標籤。';
+    if (ns && ns.day - s.day <= 2) return '第 ' + ns.index + ' 關在 ' + (ns.day - s.day ? ns.day - s.day + ' 天後' : '今晚') + '：多收集同一種標籤的素材，晚上更容易湊出高分。標着「今晚加成」的行動最划算。';
+    return '每一期最後一天是篩選日：訊號夠高就通過。落選三次會被歸入人才庫，狀態列的「機會」就是剩下的次數。';
+  }
   // 行動卡只顯示關鍵數字；素材的標籤縮成色點，詳細說明放在滑過時的提示
   const KEY_FX = ['cr', 'body', 'spark', 'sig', 'soul', 'danger', 'rare'];
   function tagDots(text) {
@@ -220,7 +233,12 @@
     const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方。' : '';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
-    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2>' + (hint ? '<p>' + hint + '</p>' : '') + IE.UI.abilityStrip(s)
+    // 白天連繫晚上（第十一期）：今天的天氣或本季 KPI 加成哪種標籤，會給這種素材的行動就標上「今晚加成」
+    const wd = R().weatherOf ? R().weatherOf(s) : null, kp = R().kpi(s);
+    const boosts = [wd && wd.tag ? { t: wd.tag.t, why: wd.name + ' ×' + wd.tag.x } : null, kp && kp.tag ? { t: kp.tag, why: 'KPI ×' + kp.mod } : null].filter(Boolean);
+    const boostOf = (a) => { const txt = a.fx.filter(([k]) => k === 'card').map(([, v]) => v).join('・'); return boosts.find((b) => txt.indexOf(D().TAGS[b.t].name) >= 0); };
+    const coach = coachLine(s);
+    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2>' + (hint ? '<p>' + hint + '</p>' : '') + (coach ? '<p class="coach">' + coach + '</p>' : '') + IE.UI.abilityStrip(s)
       + '<div class="btn-row left">' + (s.trip ? '<button class="btn mini" type="button" data-do="souvenir">紀念品店</button>' : '<button class="btn mini" type="button" data-do="store">浮城百貨</button>') + '</div></div>'
       + groups.map((g) => (groups.length > 1 ? '<h3 class="act-group">' + GROUPS[g] + '</h3>' : '')
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
@@ -231,6 +249,7 @@
           return '<div class="act-wrap' + (auto ? ' has-auto' : '') + '"><button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled')
             + ' title="' + esc(a.name + '（' + (i % 10) + '）：' + a.sub + '\n' + fxText(a.fx)) + '">'
             + '<span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span>'
+            + (boostOf(a) ? '<span class="act-boost" title="' + esc(boostOf(a).why) + '">★ 今晚加成：「' + D().TAGS[boostOf(a).t].name + '」</span>' : '')
             + '<span class="fx">' + fxHtml(a.fx.filter(([k]) => KEY_FX.includes(k))) + (mats ? '<span class="fx-mats" aria-label="素材">' + mats + '</span>' : '') + '</span>'
             + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
             + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="跳過小遊戲，直接以 ' + auto + ' 級結算。親手玩才拿得到 S、SS 和特別成就；親手玩出好成績之後，跳過的評級也會提升。">跳過<b>' + auto + '</b></button>' : '') + '</div>';
@@ -246,6 +265,23 @@
       + (Object.keys(s.contacts || {}).some((id) => R().favorReady(s, id)) ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</b></button>'
       + '</div>';
+  }
+  // 遺物攤（第十一期）：關卡之夜之後
+  function stallModal(s) {
+    const st = s.stall || { items: [] }, D_ = D();
+    const full = s.objects.length >= R().slotsOf(s) && s.objStash.length >= 4;
+    const cards = st.items.map((id) => {
+      const o = D_.OBJ[id], sc = o.school && D_.SCHOOLS[o.school], price = R().stallPrice(s, id);
+      const ok = !full && s.cr >= price;
+      return '<div class="stall-item r-' + o.rarity + '">' + IE.Icons.obj(id, 56)
+        + '<div class="si-txt"><span class="si-meta">' + D_.RARITY[o.rarity] + (sc ? '・<i style="color:' + sc.color + '">' + esc(sc.name) + '</i>' : '') + '</span><b>' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span></div>'
+        + '<button class="btn' + (ok ? ' primary' : '') + '" type="button" data-do="buy" data-id="' + id + '"' + (ok ? '' : ' disabled') + '>' + (price ? '$' + fmt(price) : '免費拿走') + '</button></div>';
+    }).join('');
+    return '<div class="modal wide stall"><span class="eyebrow">關卡之夜之後・遺物攤</span><h2>靈感物件 ' + s.objects.length + ' / ' + R().slotsOf(s) + '</h2>'
+      + '<p class="mute" style="font-size:13px">' + (st.free ? '外星評審之夜的獎勵：這一次可以免費拿一件。' : '物件是你的引擎：同流派集齊兩件、三件有額外加成。') + '你有 $' + fmt(s.cr) + '。</p>'
+      + '<div class="stall-items">' + (cards || '<p class="mute">都賣光了。</p>') + '</div>'
+      + '<div class="btn-row"><button class="btn" type="button" data-do="reroll"' + (s.cr >= R().stallRerollCost(s) ? '' : ' disabled') + '>重抽（$' + R().stallRerollCost(s) + '）</button>'
+      + '<button class="btn" type="button" data-do="objs">管理物件</button><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
   }
   // 街頭奇遇與人脈（第十期）
   function streetFxText(fx) {
@@ -411,16 +447,16 @@
   // ---------- 外星考績 ----------
   function reviewModal(rv) {
     return '<div class="modal"><div class="review">'
-      + '<div class="r-head"><span>星際人才發展局・天賦對齊流程</span><span>第 ' + (rv.quarter + 1) + ' 季考績</span></div>'
-      + '<h2>候選人季度表現評估</h2>'
+      + '<div class="r-head"><span>星際人才發展局・天賦對齊流程</span><span>' + (rv.final ? '最終篩選' : '第 ' + (rv.quarter + 1) + ' 輪篩選（共 5 輪）') + '</span></div>'
+      + '<h2>' + (rv.final ? '最終審判' : '候選人季度表現評估') + '</h2>'
       + '<table>' + rv.grades.map((g) => '<tr><td>' + g.k + '</td><td class="g">' + g.g + '</td><td class="n">' + esc(g.note) + '</td></tr>').join('') + '</table>'
-      + '<p class="verdict">' + (rv.pass ? '恭喜！你已通過天賦對齊流程。請保持窗戶打開。'
-        : rv.overweight && rv.signalOk ? '你的訊號已經達標，但靈魂重量超出牽引光束的負載上限。為保護本局神經網絡，暫不錄取。'
-          : '感謝你的申請。你已被納入人才庫，我們會保留你的資料十二個月。') + '</p>'
+      + '<p class="verdict">' + (rv.pass ? (rv.final ? '恭喜！你已通過天賦對齊流程。請保持窗戶打開。' : '你通過了這一輪篩選。請繼續保持，最後一輪通過才會被選中。')
+        : (rv.overweight && rv.signalOk ? '你的訊號已經達標，但靈魂重量超出牽引光束的負載上限。暫不錄取。' : '你的訊號未達門檻。')
+          + (rv.chancesLeft > 0 && !rv.final ? '你已被列入候補名單，剩餘機會：' + rv.chancesLeft + ' 次。' : '你已被納入人才庫，我們會保留你的資料十二個月。')) + '</p>'
       + (rv.taken ? '<p>同區候選人「' + esc(rv.taken) + '」已獲錄取，並完成人才優化遷移。</p>' : '')
       + '<p style="font-size:12px;color:#5b6b90">本季 KPI：' + esc(rv.kpi) + '。我們不是一個組織，我們是一個宇宙大家庭。</p>'
-      + '<span class="stamp ' + (rv.pass ? 'pass' : 'fail') + '">' + (rv.pass ? '錄取' : rv.overweight && rv.signalOk ? '超重' : '人才庫') + '</span>'
-      + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (rv.pass ? '……' : '繼續生活') + '</button></div></div>';
+      + '<span class="stamp ' + (rv.pass ? 'pass' : 'fail') + '">' + (rv.pass ? (rv.final ? '錄取' : '通過') : rv.overweight && rv.signalOk ? '超重' : rv.chancesLeft > 0 && !rv.final ? '候補' : '人才庫') + '</span>'
+      + '</div><div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (rv.pass && rv.final ? '……' : '繼續生活') + '</button></div></div>';
   }
 
   // ---------- 標題、開局、結局 ----------
@@ -615,7 +651,7 @@
   function statusHtml(s) {
     const ns = IE.Stages && IE.Stages.nextStage(s);
     const when = (d) => (d === 0 ? '今晚' : d + ' 天後');
-    const plan = [{ d: R().reviewDay(s) - s.day, t: '篩選日（門檻 ' + kfmt(R().threshold(s)) + '）' }];
+    const plan = [{ d: R().reviewDay(s) - s.day, t: (R().reviewDay(s) >= R().days(s) ? '最終篩選' : '第 ' + (s.quarter + 1) + ' 輪篩選') + '（門檻 ' + kfmt(R().threshold(s)) + '）' }];
     if (ns) plan.push({ d: ns.day - s.day, t: '第 ' + ns.index + ' 關・' + ns.name + '（目標 ' + kfmt(ns.target) + '）' });
     if (s.floor > 0) plan.push({ d: R().nextRentDay(s) - s.day, t: '交租 $' + fmt(R().rentAmount(s) + s.debt) });
     plan.sort((a, b) => a.d - b.d);
@@ -655,7 +691,7 @@
       + (top.length ? '<p class="mute" style="font-size:13px">你最常做的事：' + top.map((k) => (names[k] || k) + ' ' + acts[k] + ' 次').join('、') + '</p>' : '')
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
   }
-  const ENDING_KIND = { death: 'DEATH', grey: 'GREYED OUT', ordinary: 'ORDINARY', agent: 'RECRUITED', returned: 'RETURNED', heavy: 'TOO HEAVY', guardian: 'STAYED' };
+  const ENDING_KIND = { death: 'DEATH', grey: 'GREYED OUT', archived: 'ARCHIVED', ordinary: 'ORDINARY', agent: 'RECRUITED', returned: 'RETURNED', heavy: 'TOO HEAVY', guardian: 'STAYED' };
   const ENDING_COUNT = Object.keys(ENDING_KIND).length;
   // 人類樣本檔案：外星人視角的結局
   function dossierModal(e, s, dos, meta) {
@@ -905,7 +941,7 @@
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
-    actionsPanel, invHtml, deckModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
+    actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };
