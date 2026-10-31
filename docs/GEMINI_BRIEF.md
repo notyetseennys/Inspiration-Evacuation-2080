@@ -210,7 +210,17 @@ Claude 在第八期新增了以下介面。它們的**功能與結構**由 Claud
 | 創作桌的招牌能力欄 | `js/craft.js` 的 `renderAbility` | `.ct-abil`、`.ab-btn` |
 | 行動卡的「照舊做」按鈕 | `js/ui.js` 的 `actionsPanel` | `.act-wrap`、`.act-auto` |
 
-新的煙霧測試會用到：`.su-grid .ch`、`.su-detail .sd-abil b`、`[data-do="mode"]`、`[data-do="pull"][data-id="rainbow"]`、`.gacha-result`、`[data-do="history"]`、`#modal .h-row`。
+第九期（v1.4）的創作桌指引也由 Claude 負責結構：
+
+| 介面 | 位置 | 主要 class |
+|---|---|---|
+| 創作桌兩欄版面 | `js/craft.js` 的 `open` | `.ct-body`、`.ct-side`、`.ct-main`、`.ct-kit` |
+| 這手牌可以（建議） | `js/craft.js` 的 `renderGuide` | `.ct-sugg`、`.sg`、`.sg.top`、`.sg-est` |
+| 手上的標籤、改稿追 | `js/craft.js` 的 `renderGuide`、`chaseHtml` | `.ct-suits`、`.suit`、`.suit.chase` |
+| 牌型表 | `js/craft.js` 的 `renderGuide` | `.ct-forms`、`.ct-flist .fr`（`.can`、`.on`） |
+| 手牌提示 | `js/craft.js` 的 `renderPreview`、`onHover` | `.cc.kin`、`.cc.near`、`.cc.guide-on` |
+
+新的煙霧測試會用到：`.su-grid .ch`、`.su-detail .sd-abil b`、`[data-do="mode"]`、`[data-do="pull"][data-id="rainbow"]`、`.gacha-result`、`[data-do="history"]`、`#modal .h-row`、`.ct-sugg .sg`、`.sg.top .sg-est`、`.ct-est b`、`.ct-flist .fr.can`、`.ct-suits .suit`。
 
 適合你的新任務：
 - **任務 6（角色立繪）** 現在最有價值：選角畫面的 `.sd-por` 和 `.ch-por` 正在用 8×12 的小像素人，換成 24×32 的立繪會大大提升質感。角色精通 Lv.4 有「金色外框」（`.gold`），Lv.5 有「大師」稱號。

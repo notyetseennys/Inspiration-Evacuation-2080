@@ -207,6 +207,18 @@ const URL = 'http://localhost:' + PORT + '/';
     const est = await page.textContent('#ctable .ct-est');
     if (!/預計/.test(est)) await fail('沒有預計得分');
     await page.click('#ctable .ct-hand .cc[data-uid="' + u0 + '"]');
+    // 第九期：「這手牌可以」的建議、手上的標籤、牌型表；按建議後預計得分和建議一致
+    const sgN = await page.$$eval('#ctable .ct-sugg .sg', (els) => els.length);
+    if (!sgN) await fail('沒有「這手牌可以」的建議');
+    const sgEst = (await page.textContent('#ctable .sg.top .sg-est')).replace(/[^0-9]/g, '');
+    await page.click('#ctable .sg.top');
+    const selEst = (await page.textContent('#ctable .ct-est b')).replace(/[^0-9]/g, '');
+    if (sgEst !== selEst) await fail('建議的分數（' + sgEst + '）和選好後的預計（' + selEst + '）不一致');
+    const canN = await page.$$eval('#ctable .ct-flist .fr.can', (els) => els.length);
+    const suitN = await page.$$eval('#ctable .ct-suits .suit', (els) => els.length);
+    if (!canN || !suitN) await fail('牌型表或手上的標籤沒有顯示');
+    while (await page.$('#ctable .ct-hand .cc.sel')) await page.click('#ctable .ct-hand .cc.sel');
+    ok('第九期：' + sgN + ' 個建議，最高預計 ' + Number(sgEst).toLocaleString() + ' 分（選好後一致）；牌型表亮起 ' + canN + ' 種形式；標籤 ' + suitN + ' 種');
     // 第七期：每張手牌都有媒材標記；兩件水淹流物件觸發流派加成；轉檔令選中的素材變成同一媒材
     const meds = await page.$$eval('#ctable .ct-hand .cc-med', (els) => els.map((e) => e.textContent));
     const handN = await page.evaluate(() => window.__IE.Game.state.session.hand.length);

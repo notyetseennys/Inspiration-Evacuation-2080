@@ -70,17 +70,17 @@
       id: 'pick',
       short: '選牌',
       title: '步驟 1/6：選牌（挑選 1 至 5 張素材）',
-      desc: '點選手牌中的素材卡（或按數字鍵 1–9）。相同標籤出現得越多，作品形式越高級；湊齊特定標籤還能觸發「具名組合」。',
-      action: '試著點選 1 張手牌，或按「下一步」',
-      target: '.ct-hand',
+      desc: '手牌上方的「這手牌可以」列出這手牌組得出的作品形式和預計分數，按一下就會選好；也可以自己點選素材卡（或按數字鍵 1–9）。相同標籤出現得越多，作品形式越高級；湊齊特定標籤還能觸發「具名組合」。',
+      action: '試著按「這手牌可以」的第一個建議，或按「下一步」',
+      target: '.ct-sugg, .ct-hand',
     },
     {
       id: 'est',
       short: '看預計分數',
       title: '步驟 2/6：看預計分數（籌碼 × 倍率 × 火花）',
-      desc: '選牌後，計分板會即時預覽作品形式、籌碼與倍率，下方亦會顯示「預計得分」及「只差一張」的組合提示。',
-      action: '檢視中央計分板與預計得分，再按「下一步」',
-      target: '.ct-score, .ct-est',
+      desc: '選牌後，計分板顯示作品形式的基本籌碼與倍率，下面是連同素材、物件和加成的「預計得分」，以及「只差一張」的提示。牌型表列出所有作品形式，● 表示這手牌組得出。',
+      action: '看看計分板、預計得分和牌型表，再按「下一步」',
+      target: '.ct-score, .ct-est, .ct-forms',
     },
     {
       id: 'play',
@@ -94,7 +94,7 @@
       id: 'discard',
       short: '改稿',
       title: '步驟 4/6：改稿（換掉不合用的素材）',
-      desc: '手牌不順時，選中不要的素材再按「改稿」，即可棄掉重抽（每晚預設 2 次）。改稿前可按右上角「牌庫」查看剩餘素材。',
+      desc: '手牌不順時，選中不要的素材再按「改稿」，即可棄掉重抽（每晚預設 2 次）。「改稿追」會告訴你保留哪種標籤、換走哪幾張，以及抽中的機會；按一下就會選好要換走的素材。',
       action: '可選牌試試「改稿」，或按「下一步」',
       target: '.ct-discard',
     },
@@ -162,6 +162,9 @@
     st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
       fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0,
       tutStep: needTut ? 0 : -1 };
+    // 計分演出期間，建議和標籤列淡出（手牌已經變了）
+    let busy = false;
+    Object.defineProperty(st, 'busy', { get: () => busy, set: (v) => { busy = v; if (root) root.classList.toggle('ct-busy', !!v); } });
     root = document.createElement('div');
     root.id = 'ctable';
     root.className = 'ctable';
@@ -171,24 +174,31 @@
       + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
       + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
       + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
+      // 版面參考《小丑牌》：左欄是關卡、計分板和牌型表；主欄上方是物件和工具，下面是舞台、建議和手牌
+      + '<div class="ct-body"><aside class="ct-side">'
       + '<div class="ct-stagebar" hidden></div>'
-      + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
-      + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p>'
       + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
-      + '<div class="ct-tags"></div>'
-      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
       + '<p class="ct-hint"></p>'
+      + '<details class="ct-forms"' + (window.innerWidth >= 960 ? ' open' : '') + '><summary>牌型表<small>作品形式由高至低・● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
+      + '</aside><div class="ct-main">'
+      + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
+      + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
+      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-tags"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+      + '<div class="ct-sugg" aria-live="polite"></div>'
+      + '<div class="ct-suits"></div>'
       + '<section class="ct-hand"></section>'
       + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
       + '<button type="button" class="btn ct-discard" data-ct="discard">改稿</button>'
       + '<button type="button" class="btn primary big ct-play" data-ct="play">下筆</button></footer>'
-      + '<p class="ct-counts"></p></div>';
+      + '<p class="ct-counts"></p></div></div></div>';
     document.body.appendChild(root);
     document.body.classList.add('ct-open');
     root.addEventListener('click', onClick);
+    root.addEventListener('mouseover', onHover);
+    root.addEventListener('mouseout', onHover);
     root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
     fxInit();
     const stg = s.session && s.session.stage;
@@ -196,6 +206,11 @@
     else if (stg) A().setMode('stage', 84);
     else A().setMode('alien', 80);
     render();
+    // 窄畫面：直接捲到計分板，讓建議和手牌在第一屏出現（物件和關卡資料在上面，向上捲就看到）
+    if (window.innerWidth < 960 && st.tutStep < 0) requestAnimationFrame(() => {
+      const sc = root && $('.ct-score');
+      if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
+    });
     if (stg) showStageIntro(stg);
   }
   function close(result) {
@@ -339,6 +354,7 @@
     db.textContent = '改稿（' + ses.discards + '）';
     pb.disabled = st.busy || (ses.plays > 0 && !st.sel.length);
     db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length);
+    renderGuide();
     renderPreview();
     renderTutorial();
   }
@@ -531,16 +547,126 @@
     $('.ct-chips').classList.toggle('preview', cls === 'preview');
     $('.ct-mult').classList.toggle('preview', cls === 'preview');
   }
+  // ---------- 指引（第九期）：這手牌可以組成甚麼、手上有甚麼標籤、牌型表 ----------
+  const FORM_AT = { 2: 'poem', 3: 'song', 4: 'mural', 5: 'epic' };
+  const handCards = () => st.s.session.hand.map((u) => st.s.cards.find((c) => c.uid === u)).filter(Boolean);
+  // 建議只在手牌、物件或火花改變時重新計算
+  function suggestions() {
+    const s = st.s, ses = s.session;
+    const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
+      + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
+    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 4) : []; }
+    return st.sg;
+  }
+  function sgKeyText(x) {
+    const s = st.s, D_ = D();
+    const sel = x.uids.map((u) => s.cards.find((c) => c.uid === u));
+    if (x.keys) return x.keys.map((t) => '<span class="sg-t" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + ' ×' + sel.filter((c) => c.tags.includes(t)).length + '</span>').join('');
+    if (x.form === 'series') return '<span class="sg-t" style="--c:' + D_.MEDIA[x.media].color + '">' + D_.MEDIA[x.media].full + ' ×' + sel.filter((c) => D_.mediumOf(c) === x.media).length + '</span>';
+    if (x.form === 'crossover') return '<span class="sg-t">五種媒材各一</span>';
+    if (x.form === 'collage') return '<span class="sg-t">' + Object.keys(C().tagCounts(sel)).length + ' 種標籤</span>';
+    return '<span class="sg-t">最高分的一張</span>';
+  }
+  function renderGuide() {
+    const s = st.s, ses = s.session, D_ = D();
+    // 外星評審「停電」：手牌看不見，所以也沒有建議和標籤統計
+    if (ses.stage && ses.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout')) {
+      $('.ct-sugg').innerHTML = '<span class="sg-lbl">停電：看不見手牌，今晚沒有建議</span>';
+      $('.ct-suits').innerHTML = '';
+      st.sg = []; st.sgKey = null; st.chase = [];
+      renderForms(new Set());
+      return;
+    }
+    const sg = suggestions();
+    const g = ses.stage;
+    const need = g ? Math.max(0, g.target - IE.Stages.stageScore(ses)) : 0;
+    const cur = st.sel.slice().sort((a, b) => a - b).join(',');
+    $('.ct-sugg').innerHTML = sg.length ? '<span class="sg-lbl">這手牌可以</span>' + sg.map((x, i) => {
+      const rc = x.recipes.map((r) => '<span class="sg-rc' + (r.legend ? ' lg' : '') + '">' + (r.known ? '《' + esc(r.name) + '》' : r.legend ? '★ ？？？' : '？？？') + '</span>').slice(0, 2).join('');
+      const on = x.uids.slice().sort((a, b) => a - b).join(',') === cur;
+      return '<button type="button" class="sg' + (i === 0 ? ' top' : '') + (on ? ' on' : '') + (g && need > 0 && x.est >= need ? ' clear' : '') + '" data-sg="' + i + '" title="按一下選好這 ' + x.uids.length + ' 張素材">'
+        + '<span class="sg-form">' + (i === 0 ? '★ ' : '') + esc(x.name) + '<small>Lv.' + x.level + '</small></span>'
+        + '<span class="sg-keys">' + sgKeyText(x) + rc + '</span>'
+        + '<b class="sg-est num">≈ ' + fmt(x.est) + '</b>'
+        + (g && need > 0 && x.est >= need ? '<span class="sg-ok">夠過關</span>' : '') + '</button>';
+    }).join('') : '';
+    // 手上的標籤和媒材：相當於撲克牌的花色
+    const cards = handCards();
+    const tc = C().tagCounts(cards), mc = C().mediaCounts(cards);
+    const order = Object.keys(D_.TAGS);
+    const tags = Object.keys(tc).sort((a, b) => tc[b] - tc[a] || order.indexOf(a) - order.indexOf(b));
+    const fname = (n) => (FORM_AT[Math.min(5, n)] ? C().FORM[FORM_AT[Math.min(5, n)]].name : '');
+    $('.ct-suits').innerHTML = cards.length ? '<span class="su-lbl">手上的標籤</span>'
+      + tags.map((t) => '<button type="button" class="suit' + (tc[t] >= 2 ? ' pair' : '') + (tc[t] >= 3 ? ' hot' : '') + '" data-suit="' + t + '" style="--c:' + D_.TAGS[t].color + '" title="按一下選出所有「' + D_.TAGS[t].name + '」素材">'
+        + '<i></i>' + D_.TAGS[t].name + '<b class="num">' + tc[t] + '</b>' + (tc[t] >= 2 ? '<small>' + fname(tc[t]) + '</small>' : '') + '</button>').join('')
+      + '<span class="su-sep"></span>'
+      + Object.keys(mc).sort((a, b) => mc[b] - mc[a]).map((m) => '<button type="button" class="suit med' + (mc[m] >= 4 ? ' hot' : '') + '" data-medsel="' + m + '" style="--c:' + D_.MEDIA[m].color + '" title="按一下選出所有「' + D_.MEDIA[m].full + '」素材（四張同一媒材是連作）">'
+        + D_.MEDIA[m].name + '<b class="num">' + mc[m] + '</b>' + (mc[m] >= 4 ? '<small>連作</small>' : mc[m] === 3 ? '<small>差一張連作</small>' : '') + '</button>').join('')
+      + chaseHtml() : '';
+    renderForms(new Set(sg.map((x) => x.form)));
+  }
+  // 牌型表：由高至低；這手牌組得出的形式會亮起
+  function renderForms(can) {
+    const s = st.s;
+    const meta = IE.Game.meta || {};
+    $('.ct-flist').innerHTML = C().RANK.slice().reverse().map((id) => {
+      const f = C().FORM[id], fs = C().formStats(s, id);
+      const hide = f.secret && fs.level <= 1 && !(meta.forms && meta.forms[id]) && !(s.formsSeen && s.formsSeen[id]);
+      return '<li class="fr' + (can.has(id) ? ' can' : '') + '" data-form="' + id + '" title="' + esc(hide ? '隱藏的作品形式' : f.desc + '。升級：' + f.teach) + '">'
+        + '<b>' + (hide ? '？？？' : esc(f.name)) + '</b><small>Lv.' + fs.level + '</small><span class="num">' + fs.chips + ' × ' + fs.mult + '</span>'
+        + '<em>' + (hide ? '隱藏的作品形式' : esc(f.desc)) + '</em></li>';
+    }).join('');
+  }
+  // 改稿方向：保留最多的標籤或媒材，換走其他，追更高的作品形式
+  function chaseHtml() {
+    const D_ = D();
+    st.chase = C().chase(st.s, 2);
+    if (!st.chase.length) return '';
+    return '<span class="su-sep"></span><span class="su-lbl">改稿追</span>' + st.chase.map((x, i) => {
+      const what = x.label.tag ? D_.TAGS[x.label.tag] : D_.MEDIA[x.label.medium];
+      return '<button type="button" class="suit chase" data-chase="' + i + '" style="--c:' + what.color + '" title="保留 ' + x.keep + ' 張「' + (what.full || what.name) + '」，選好要換走的 ' + x.uids.length + ' 張，再按「改稿」：抽中一張「' + (what.full || what.name) + '」的機會約 ' + x.odds + '%">'
+        + '「' + esc(x.name) + '」<i></i>' + esc(what.name) + ' +1<small>換 ' + x.uids.length + ' 張・' + x.odds + '%</small></button>';
+    }).join('');
+  }
+  // 滑過建議或標籤時，在手牌上標出對應的素材
+  function onHover(e) {
+    if (!st || st.busy) return;
+    const t = e.type === 'mouseover' ? e.target.closest('[data-sg], [data-suit], [data-medsel], [data-chase]') : null;
+    root.querySelectorAll('.ct-hand .cc.guide-on').forEach((b) => b.classList.remove('guide-on'));
+    if (!t) return;
+    const ids = guideUids(t);
+    root.querySelectorAll('.ct-hand .cc').forEach((b) => { if (ids.includes(Number(b.dataset.uid))) b.classList.add('guide-on'); });
+  }
+  function guideUids(el) {
+    const s = st.s, max = C().maxCards(s);
+    if (el.dataset.sg != null) return (st.sg[Number(el.dataset.sg)] || { uids: [] }).uids;
+    if (el.dataset.chase != null) return ((st.chase || [])[Number(el.dataset.chase)] || { uids: [] }).uids;
+    const ok = (c) => !C().forbidden(s, c);
+    const pick = el.dataset.suit ? (c) => c.tags.includes(el.dataset.suit) : (c) => D().mediumOf(c) === el.dataset.medsel;
+    return handCards().filter((c) => ok(c) && pick(c)).sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a)).slice(0, max).map((c) => c.uid);
+  }
+  function applyGuide(el) {
+    const ids = guideUids(el);
+    if (!ids.length) return;
+    st.sel = ids.slice();
+    st.chasing = el.dataset.chase != null ? ids.join(',') : null;
+    if (st.tutStep === 0) st.tutStep = 1;
+    A().fx('card', st.sel.length * 2);
+    render();
+    root.querySelectorAll('.ct-hand .cc.sel').forEach((b, i) => b.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)' }, { transform: 'translateY(-16px)' }], { duration: 220, delay: i * 35 }));
+  }
   function renderPreview() {
     const s = st.s;
     const pv = st.sel.length ? C().preview(s, st.sel) : null;
+    root.querySelectorAll('.ct-flist .fr').forEach((li) => li.classList.toggle('on', !!pv && li.dataset.form === pv.form));
     if (!pv) {
       $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
       $('.ct-form .fl').textContent = '';
       setBoxes(0, 0, 'preview');
-      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤出現得越多，作品形式越高級；四張同一媒材是「連作」，五種媒材各一是「跨界」。具名組合要「純」：每一張都要有組合要求的標籤。';
+      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤越多，作品形式越高級；不知道選甚麼，就按下面「這手牌可以」的建議。';
       $('.ct-est').innerHTML = '';
-      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring'));
+      $('.ct-discard').classList.remove('ready');
+      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
       return;
     }
     $('.ct-form .fn').textContent = pv.name;
@@ -552,13 +678,32 @@
     if (pv.blocked) bits.push('<span class="rc ai">' + pv.blocked + ' 張素材被評審判為不計分</span>');
     // 「差一張」提示
     pv.hints.forEach((h) => bits.push('<span class="rc near">加入「' + esc(h.card) + '」→' + (h.form ? '形式「' + esc(h.name) + '」' : '《' + esc(h.name) + '》') + '</span>'));
-    $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">沒有具名組合</span>';
+    const chasing = st.chasing === st.sel.join(',');
+    if (chasing) bits.unshift('<span class="rc near">已選好要換走的 ' + st.sel.length + ' 張：按「改稿」換牌</span>');
+    $('.ct-discard').classList.toggle('ready', chasing);
+    $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">' + (pv.form === 'sketch' ? '「隨筆」只計最高分的一張。再選一張有相同標籤的素材，就會變成「短詩」。' : '沒有具名組合（組合要每一張素材都有它要求的標籤；看「圖鑑」）') + '</span>';
     // 預計得分
     const g = st.s.session.stage;
     const need = g ? Math.max(0, g.target - IE.Stages.stageScore(st.s.session)) : 0;
-    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分（' + fmt(pv.estChips) + ' × ' + (Math.round(pv.estMult * 10) / 10) + ' × 火花）'
-      + (g && need > 0 ? '<span class="' + (pv.est >= need ? 'ok' : 'short') + '">　關卡還差 ' + fmt(need) + (pv.est >= need ? '：這一筆足夠！' : '') + '</span>' : '');
-    root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.toggle('scoring', pv.scoring.includes(Number(b.dataset.uid))));
+    const ch = chasing && (st.chase || []).find((x) => x.uids.join(',') === st.sel.join(','));
+    if (ch) {
+      const what = ch.label.tag ? D().TAGS[ch.label.tag].name : D().MEDIA[ch.label.medium].full;
+      $('.ct-est').innerHTML = '改稿：換走這 ' + ch.uids.length + ' 張，抽中一張「' + esc(what) + '」就可以組成「' + esc(ch.name) + '」<b class="num">' + ch.odds + '%</b>';
+      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
+      return;
+    }
+    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分<small>（籌碼 ' + fmt(pv.estChips) + ' × 倍率 ' + (Math.round(pv.estMult * 10) / 10) + '，再乘火花和其他加成）</small>'
+      + (g && need > 0 ? '<span class="' + (pv.est >= need ? 'ok' : 'short') + '">關卡還差 ' + fmt(need) + (pv.est >= need ? '：這一筆足夠！' : '') + '</span>' : '');
+    // 手上和已選素材有相同標籤的會微亮；再加一張就有組合或升級形式的會更亮
+    const selTags = new Set();
+    st.sel.forEach((u) => { const c = s.cards.find((x) => x.uid === u); if (c) c.tags.forEach((t) => selTags.add(t)); });
+    const near = new Set(pv.hints.map((h) => h.uid));
+    root.querySelectorAll('.ct-hand .cc').forEach((b) => {
+      const u = Number(b.dataset.uid), c = s.cards.find((x) => x.uid === u);
+      b.classList.toggle('scoring', pv.scoring.includes(u));
+      b.classList.toggle('near', !st.sel.includes(u) && near.has(u));
+      b.classList.toggle('kin', !st.sel.includes(u) && !near.has(u) && !!c && c.tags.some((t) => selTags.has(t)));
+    });
   }
 
   // ---------- 輸入 ----------
@@ -583,6 +728,8 @@
     }
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
+    const gd = e.target.closest('[data-sg], [data-suit], [data-medsel], [data-chase]');
+    if (gd && !st.busy) { A().sfx('click'); applyGuide(gd); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
     if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
     const ab = e.target.closest('[data-ab]');

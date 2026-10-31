@@ -281,6 +281,70 @@
   }
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
 
+  // ---------- 手牌建議（第九期：創作桌的指引） ----------
+  // 試遍手牌裡所有可以下筆的組合，每種作品形式留下預計得分最高的一組。
+  // 用的是真正的計分（物件、流派、KPI、評審規則都計在內），所以建議的分數和下筆後的分數一致。
+  function suggest(s, uids, limit) {
+    const cards = uids.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
+    const k = Math.min(maxCards(s), cards.length);
+    const best = {};
+    const pick = [];
+    let n = 0;
+    const visit = (i) => {
+      if (pick.length) {
+        const ids = pick.map((c) => c.uid);
+        const F = detectForm(pick);
+        const total = scorePlay(s, ids, { roll: 0.5 }).total;
+        const cur = best[F.id];
+        // 同分時用較少的素材（陪襯不計分，留在手上更有用）
+        if (!cur || total > cur.est || (total === cur.est && ids.length < cur.uids.length)) best[F.id] = { form: F.id, uids: ids, est: total, keys: F.keys, media: F.id === 'series' ? med(F.scoring[0]) : null };
+      }
+      if (pick.length >= k || ++n > 4000) return;
+      for (let j = i; j < cards.length; j++) { pick.push(cards[j]); visit(j + 1); pick.pop(); }
+    };
+    visit(0);
+    return Object.values(best).filter((x) => x.est > 0).sort((a, b) => b.est - a.est).slice(0, limit || 4).map((x) => {
+      const sel = x.uids.map((u) => cardOf(s, u));
+      const fs = formStats(s, x.form);
+      const recipes = topRecipes(matchRecipes(s, sel)).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+      return Object.assign(x, { name: FORM[x.form].name, level: fs.level, chips: fs.chips, mult: fs.mult, recipes });
+    });
+  }
+  // 改稿方向：保留手上最多的一種標籤（或媒材），換走其他素材，追更高一級的作品形式。
+  // 機會率按牌庫裡還有多少張計算（牌庫不夠時，用過的素材會洗回去）。
+  const TAG_FORM = { 3: 'song', 4: 'mural', 5: 'epic' };
+  function chase(s, limit) {
+    const ses = s.session;
+    if (!ses || ses.discards <= 0 || ses.plays <= 0 || (perkOf(s).noEarlyDiscard && !ses.log.length)) return [];
+    const hand = ses.hand.map((u) => cardOf(s, u)).filter(Boolean);
+    const maxDisc = Math.max(5, maxCards(s));
+    const comb = (n, r) => { if (r < 0 || r > n) return 0; let v = 1; for (let i = 0; i < r; i++) v = v * (n - i) / (i + 1); return v; };
+    // 抽 k 張，至少有一張是目標的機會
+    const odds = (match, k) => {
+      const deck = ses.deck.map((u) => cardOf(s, u)).filter(Boolean);
+      const hit = (pool) => pool.filter(match).length;
+      if (deck.length >= k) return 1 - comb(deck.length - hit(deck), k) / comb(deck.length, k);
+      if (hit(deck)) return 1;
+      const rest = ses.used.map((u) => cardOf(s, u)).filter(Boolean), r = k - deck.length;
+      return rest.length ? 1 - comb(rest.length - hit(rest), Math.min(r, rest.length)) / comb(rest.length, Math.min(r, rest.length)) : 0;
+    };
+    const out = [];
+    const plan = (goal, match, label) => {
+      const keep = hand.filter(match);
+      const toss = hand.filter((c) => !match(c)).sort((a, b) => cardValue(s, a) - cardValue(s, b)).slice(0, maxDisc);
+      if (!toss.length || keep.length + toss.length < 4) return;
+      const p = odds(match, toss.length);
+      if (p < 0.12) return;
+      const fs = formStats(s, goal);
+      out.push({ goal, name: FORM[goal].name, label, keep: keep.length, uids: toss.map((c) => c.uid), odds: Math.round(p * 100), value: p * fs.chips * fs.mult });
+    };
+    const tc = tagCounts(hand);
+    Object.keys(tc).forEach((t) => { if (TAG_FORM[tc[t] + 1]) plan(TAG_FORM[tc[t] + 1], (c) => has(c, t), { tag: t }); });
+    const mc = mediaCounts(hand);
+    Object.keys(mc).forEach((m) => { if (mc[m] === 3) plan('series', (c) => med(c) === m, { medium: m }); });
+    return out.sort((a, b) => b.value - a.value).slice(0, limit || 2);
+  }
+
   // ---------- 一晚的創作 ----------
   // 標準模式（60 天）：不是關卡之夜的晚上，「創作」是只下筆一次的速寫，令一局保持在一小時左右
   const stageTonight = (s) => !!(IE.Stages && IE.Stages.today(s) && !(s.stageDone && s.stageDone[s.day]));
@@ -658,6 +722,6 @@
 
   IE.Create = {
     FORM, RANK, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
-    isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
+    isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
