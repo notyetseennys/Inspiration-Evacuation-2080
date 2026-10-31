@@ -547,7 +547,7 @@
       if (e.sin) notes.push(name + '：靈魂 +' + RL.sin(s, e.sin, null) + ' 克');
       if (e.spark) { RL.addSpark(s, e.spark, true); notes.push(name + '：火花 ' + e.spark); }
       if (e.cr) { s.cr += e.cr; notes.push(name + '：+$' + e.cr); }
-      if (e.body) { s.body = Math.max(1, s.body + e.body); notes.push(name + '：身體 ' + e.body); }
+      if (e.body && !(IE.Rounds && IE.Rounds.on(s))) { s.body = Math.max(1, s.body + e.body); notes.push(name + '：身體 ' + e.body); }
     };
     objs.forEach((o) => { if (o.def.after) cost(D.OBJ[o.id].name, o.def.after({ s })); });
     activeSchools(s, objs).forEach((x) => { if (x.def.after) cost(x.def.name, x.def.after({ s }, x.n)); });

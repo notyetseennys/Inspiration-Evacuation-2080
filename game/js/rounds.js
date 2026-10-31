@@ -637,9 +637,12 @@
     return { ok: true, msg: '已取消工作室服務' };
   }
 
-  // 到下一晚的白天（WO-15-04 簡單版本，WO-15-05 擴充為完整版本）
+  // 到下一晚的白天（總規格 §10）
   function advance(s) {
     if (!s || !on(s)) return;
+    const prevDay = s.day || 4;
+    const S = D.SEASONS[s.season];
+    if (S) s.water = Math.min(8.5, s.water + S.water * 4);
     s.night = (s.night || 1) + 1;
     s.day = dayOfNight(s.night);
     s.slot = 0;
@@ -649,6 +652,25 @@
     s.shop = null;
     s.pack = null;
     s.pick = null;
+    const seasonLen = R.modeOf(s).season || 20;
+    if (Math.floor((s.day - 1) / seasonLen) > Math.floor((prevDay - 1) / seasonLen)) {
+      const i = D.SEASON_ORDER.indexOf(s.season);
+      s.season = D.SEASON_ORDER[(i + 1) % D.SEASON_ORDER.length];
+    }
+    if (Array.isArray(s.events)) {
+      if (s.events.some((e) => s.day >= e.until)) {
+        s.eventNext = Math.max(s.eventNext || 0, s.day + 2 + Math.floor(R.rand(s) * 4));
+      }
+      s.events = s.events.filter((e) => s.day < e.until);
+    }
+    if (IE.Create && IE.Create.newDay) {
+      for (let k = 0; k < 4; k++) IE.Create.newDay(s);
+    }
+    if (Array.isArray(s.cards)) {
+      s.cards.forEach((c) => {
+        if (c && c.wear > 0) c.wear = Math.max(0, c.wear - 1);
+      });
+    }
   }
 
   function leaveShop(s) {
@@ -661,6 +683,65 @@
     }
     advance(s);
     return { ok: true, phase: s.phase };
+  }
+
+  // ---------- 篩選日（總規格 §9） ----------
+  function review(s) {
+    if (!s || !on(s) || s.phase !== 'review') return null;
+    const round = roundOf(s);
+    const rent = rentOf(s, round);
+    const lost = [];
+    const lines = [];
+    let paid = false;
+    if (s.cr >= rent) {
+      s.cr -= rent;
+      paid = true;
+      lines.push(D.ROUND_TEXT.rentOk.replace('{rent}', String(rent)));
+    } else {
+      s.cr = 0;
+      paid = false;
+      lost.push('rent');
+      loseChance(s, 'rent');
+      lines.push(D.ROUND_TEXT.rentFail.replace('{rent}', String(rent)));
+    }
+    const soul = s.soul;
+    const soulStr = (soul || 0).toFixed(1);
+    const soulOk = soul <= R.SOUL_LIMIT;
+    if (soulOk) {
+      lines.push(D.ROUND_TEXT.soulOk.replace('{soul}', soulStr));
+    } else {
+      lost.push('soul');
+      loseChance(s, 'soul');
+      lines.push(D.ROUND_TEXT.soulFail.replace('{soul}', soulStr));
+    }
+    const passed = lost.length === 0;
+    if (passed) {
+      s.reviewsPassed = (s.reviewsPassed || 0) + 1;
+      R.gainTicket(s, 'gold', 1, '通過第 ' + round + ' 輪篩選');
+    }
+    s.roundLog = s.roundLog || [];
+    s.roundLog.push({ round, rent, paid, soul, soulOk, lost });
+    if (!s.ended) {
+      if (round >= 5 && s.chances > 0) {
+        s.ended = R.endingFor(s, 'recruited');
+        s.phase = 'ended';
+      } else {
+        advance(s);
+      }
+    }
+    return {
+      round,
+      rent,
+      paid,
+      cr: s.cr,
+      soul,
+      soulOk,
+      lost,
+      chances: s.chances,
+      passed,
+      ending: s.ended || null,
+      lines,
+    };
   }
 
   IE.Rounds = {
@@ -693,5 +774,6 @@
     cancelPick,
     leaveShop,
     advance,
+    review,
   };
 });
