@@ -83,27 +83,26 @@
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
       + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
-      + (() => { const ns = IE.Stages && IE.Stages.nextStage(s); if (!ns) return ''; const d = ns.day - s.day;
-        return '<span class="chip stage" style="--c:' + ns.color + '" title="' + esc(ns.rules.map((b) => b.name + '：' + b.desc).join('；')) + '">第 ' + ns.index + ' 關・' + ns.name + '：' + (d === 0 ? '今晚' : d + ' 天後') + '・目標 ' + kfmt(ns.target) + '</span>'; })()
-      + (s.stake > 1 ? '<span class="chip warn">外星評級 ' + s.stake + '</span>' : '')
-      + (s.runTickets && (s.runTickets.silver + s.runTickets.gold + s.runTickets.rainbow) ? '<span class="chip tk" title="這一局賺到的扭蛋券（局後存入）">扭蛋券 ' + ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '彩' })[k] + s.runTickets[k]).join(' ') + '</span>' : '')
-      + (s.weekly ? '<span class="chip daily">每週挑戰・' + IE.Meta.WEEKLY_MODS[s.weekly.mod].name + '</span>' : '')
-      + (s.daily ? '<span class="chip passport">每日挑戰</span>' : '')
-      + (IE.World && IE.World.stamps(s) ? '<span class="chip passport" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
       + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
-      + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
+      + (flooded ? '<span class="chip warn">家裡正在淹水</span>' : '');
     const bmax = R().bodyMax(s);
-    const rentChip = s.floor > 0
-      ? '<span class="chip' + (toRent <= 1 && s.cr < rent ? ' warn' : '') + '">交租 ' + (toRent === 0 ? '今晚' : toRent + ' 天後') + ' · $' + fmt(rent) + '</span>'
-      : '<span class="chip warn">露宿天橋下</span>';
+    // 下一件要準備的事：關卡、篩選日、交租之中最近的一件（全部列在提示和「狀態」裡）
+    const ns = IE.Stages && IE.Stages.nextStage(s);
+    const next = [{ d: toReview, t: '篩選日' }];
+    if (ns) next.push({ d: ns.day - s.day, t: '第 ' + ns.index + ' 關・' + ns.name + '・目標 ' + kfmt(ns.target), c: ns.color });
+    if (s.floor > 0) next.push({ d: toRent, t: '交租 $' + fmt(rent) });
+    next.sort((a, b) => a.d - b.d);
+    const when = (d) => (d === 0 ? '今晚' : d + ' 天後');
+    const n0 = next[0];
+    const rentChip = '<span class="chip next' + (n0.d === 0 ? ' warn' : '') + '"' + (n0.c ? ' style="--c:' + n0.c + '"' : '') + ' title="' + esc(season.name + '\n' + next.map((x) => when(x.d) + '：' + x.t).join('\n')) + '">' + when(n0.d) + '・' + esc(n0.t) + '</span>'
+      + (s.floor <= 0 ? '<span class="chip warn">露宿天橋下</span>' : toRent <= 1 && s.cr < rent && n0.t.indexOf('交租') < 0 ? '<span class="chip warn">' + when(toRent) + '交租 $' + fmt(rent) + '・錢不夠</span>' : '');
     hud.innerHTML = ''
       + '<div class="hud-top">'
       + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + R().days(s) + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
-      + '<span class="chip season">' + season.name + '</span>' + rentChip
-      + '<span class="chip' + (toReview === 0 ? ' warn' : '') + '">' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後') + '</span>'
+      + rentChip
       + danger
       + '<div class="hud-btns">'
-      + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
+      + '<button class="icon-btn" type="button" data-hud="stats">狀態</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
       + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
@@ -115,14 +114,7 @@
       + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + '<small>克</small></b></div>'
       + '<div class="meter m-signal"><span class="lbl">訊號</span><div class="bar"><i style="width:' + Math.min(100, sig / th * 100) + '%"></i></div><b class="num">' + kfmt(sig) + '/' + kfmt(th) + '</b></div>'
       + '</div>'
-      + '<div class="hud-sub">'
-      + '<span>良知 <b class="pips">' + pips(s.conscience) + '</b> <b>' + Math.round(s.conscience * 100) + '%</b>・火花上限 <b>×' + R().sparkMax(s).toFixed(1) + '</b></span>'
-      + '<span>平台評分 <b>★' + s.rating.toFixed(1) + '</b></span>'
-      + '<span>全城自動化 <b>' + s.auto.toFixed(0) + '%</b></span>'
-      + '<span class="' + (s.paranoia >= 60 ? 'bad' : '') + '">偏執 <b>' + Math.round(s.paranoia) + '%</b></span>'
-      + '<span class="' + (flooded ? 'bad' : '') + '">水位 <b>' + s.water.toFixed(1) + ' 樓</b> · 你住在 <b>' + (s.floor ? s.floor + ' 樓' : '天橋下') + '</b>' + (flooded ? '（正在淹水）' : '') + '</span>'
-      + '<span>本季 KPI <b>' + esc(R().kpi(s).name) + '</b></span>'
-      + '</div>';
+      ;
       hudFlash(s);
   }
 
@@ -212,38 +204,51 @@
   const ACT_ICON = { label: 'monitor', ot: 'clock', smile: 'mask', delivery: 'backpack', farm: 'phone', clinic: 'medkit', dive: 'tank', busk: 'guitar',
     chat: 'cup', volunteer: 'bowl', rest: 'd_bed', create: 'brush', allnighter: 'lamp', garden: 'd_plant', salvage: 'helmet', haggle: 'gift', tripback: 'paper' };
   const actIcon = (id) => IE.Icons.item(ACT_ICON[id] || (id.startsWith('site:') ? 'map' : 'card'), 30);
-  const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上', trip: '旅行：探索、找素材' };
+  const GROUPS = { work: '工作', life: '生活', night: '晚上', trip: '旅行' };
+  // 行動卡只顯示關鍵數字；素材的標籤縮成色點，詳細說明放在滑過時的提示
+  const KEY_FX = ['cr', 'body', 'spark', 'sig', 'soul', 'danger', 'rare'];
+  function tagDots(text) {
+    const T = D().TAGS, byName = {};
+    Object.keys(T).forEach((k) => { byName[T[k].name] = k; });
+    return String(text).split(/[・、，\s]+/).map((n) => byName[n]).filter(Boolean).map((k) => '<i style="--c:' + T[k].color + '"></i>').join('');
+  }
+  const fxText = (fx) => fx.map(([k, v]) => ({ cr: '$', body: '身體', spark: '火花', card: '素材', soul: '靈魂', danger: '⚠', rare: '★' }[k] || '') + ' ' + v).join('・');
   function actionsPanel(s, list) {
     const night = R().isNight(s);
-    const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方；極稀有素材只在特定時機出現。'
-      : night ? '晚上可以創作：作品分 = 素材籌碼 × 組合倍率 × 火花 × KPI。'
-        : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。也可以直接在上面的地圖點選地點。';
+    const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方。' : '';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
-    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p>' + IE.UI.abilityStrip(s)
+    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2>' + (hint ? '<p>' + hint + '</p>' : '') + IE.UI.abilityStrip(s)
       + '<div class="btn-row left">' + (s.trip ? '<button class="btn mini" type="button" data-do="souvenir">紀念品店</button>' : '<button class="btn mini" type="button" data-do="store">浮城百貨</button>') + '</div></div>'
       + groups.map((g) => (groups.length > 1 ? '<h3 class="act-group">' + GROUPS[g] + '</h3>' : '')
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
           i++;
           // 熟手自動完成：親手玩過的小遊戲可以「照舊做」（第八期）
           const auto = a.enabled && IE.Auto && IE.Auto.can(s, a.id) ? IE.Auto.target(s, a.id) : null;
-          return '<div class="act-wrap' + (auto ? ' has-auto' : '') + '"><button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled') + '>'
-            + '<span class="act-key">' + (i % 10) + '</span><span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
-            + '<span class="fx">' + fxHtml(a.fx) + '</span>' + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
+          const mats = a.fx.filter(([k]) => k === 'card').map(([, v]) => tagDots(v)).join('');
+          return '<div class="act-wrap' + (auto ? ' has-auto' : '') + '"><button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled')
+            + ' title="' + esc(a.name + '（' + (i % 10) + '）：' + a.sub + '\n' + fxText(a.fx)) + '">'
+            + '<span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span>'
+            + '<span class="fx">' + fxHtml(a.fx.filter(([k]) => KEY_FX.includes(k))) + (mats ? '<span class="fx-mats" aria-label="素材">' + mats + '</span>' : '') + '</span>'
+            + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
             + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="照舊做：不用玩小遊戲，直接以 ' + auto + ' 級結算（拿不到 S、SS 和特別成就）">照舊做<b>' + auto + '</b></button>' : '') + '</div>';
         }).join('') + '</div>').join('')
       + invHtml(s);
   }
   function invHtml(s) {
-    const objs = s.objects.map((id) => {
-      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
-      return '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc + (fl ? ' ' + fl : '')) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>';
-    }).join('');
-    return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + R().slotsOf(s) + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
-      + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
-      + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
-      + '<div class="inv-head"><span>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</span><span>晚上用來創作・用得越多次越殘・滿了會丟掉最殘的一張</span></div>'
-      + '<div class="inv">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute" style="font-size:13px">還沒有素材。先去生活吧。</span>') + '</div></div>';
+    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 28) + '</span>').join('');
+    const empty = Math.max(0, R().slotsOf(s) - s.objects.length);
+    return '<div class="inv-line">'
+      + '<button class="inv-btn" type="button" data-do="objs" title="管理靈感物件"><span class="lbl">靈感物件</span>' + objs + '<span class="inv-empty">' + '<i></i>'.repeat(empty) + '</span><b class="num">' + s.objects.length + '/' + R().slotsOf(s) + '</b></button>'
+      + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</b></button>'
+      + '</div>';
+  }
+  // 素材庫（在浮城查看；創作桌上另有牌庫）
+  function deckModal(s) {
+    return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</h2>'
+      + '<p class="mute" style="font-size:13px">晚上用來創作。用得越多次越殘；滿了會丟掉最殘的一張。</p>'
+      + '<div class="inv wrap">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute">還沒有素材。先去生活吧。</span>') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
   }
   function objectsModal(s) {
     const D_ = D();
@@ -342,15 +347,16 @@
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
     const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
-    const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
+    // 網民的帖子只留一則（其餘是同一類的閒話）
+    let posts = 0;
+    const feed = m.feed.filter((p) => p.kind !== 'post' || posts++ < 1).map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
-    // 今日推介：有需要的保命用品優先，其次是二手市集的靈感物件
-    const urgent = shopItems.filter((it) => it.enabled && (it.id === 'medicine' || (it.cat === 'safe' && IE.Rules.outdoorRisk(s) > 0 && (it.id === 'helmet' || it.id === 'gasmask'))));
-    const picks = urgent.concat(shopItems.filter((it) => it.enabled && it.obj)).slice(0, 2);
-    const shop = '<h3>浮城百貨</h3><div class="shop">' + picks.map((it) => '<div class="shop-item has-icon">' + (it.obj ? IE.Icons.obj(it.obj, 36) : IE.Icons.item(it.icon, 36)) + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
+    // 只在急需保命用品時推介（平時在浮城的「浮城百貨」按鈕購物）
+    const picks = shopItems.filter((it) => it.enabled && (it.id === 'medicine' || (it.cat === 'safe' && IE.Rules.outdoorRisk(s) > 0 && (it.id === 'helmet' || it.id === 'gasmask')))).slice(0, 2);
+    const shop = !picks.length ? '' : '<h3>急需</h3><div class="shop">' + picks.map((it) => '<div class="shop-item has-icon">' + (it.obj ? IE.Icons.obj(it.obj, 36) : IE.Icons.item(it.icon, 36)) + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
       + '<button class="btn sea" type="button" data-do="buy" data-id="' + it.id + '">$' + fmt(it.cost) + '</button></div>').join('')
-      + '<button class="btn store-open" type="button" data-do="store">打開浮城百貨（' + shopItems.length + ' 件貨品）</button></div>';
+      + '</div>';
     return '<div class="phone" role="dialog" aria-label="手機">'
       + '<div class="phone-bar"><span>' + (opts.morning ? '07:00' : '··:··') + '</span><span>浮聲 5G</span><span class="' + (battery < 10 ? 'low' : '') + '">電量 ' + battery + '%</span></div>'
       + '<h2>第 ' + s.day + ' 天' + (opts.morning ? '・早上' : '') + '</h2>'
@@ -561,6 +567,29 @@
       + IE.Roster.list(meta).map((c) => '<div class="recipe obj-card r-' + c.rarity + (c.open ? '' : ' unknown') + '">' + IE.Chars.img(c.id, 3, !c.open)
         + '<b><span class="rar r-' + c.rarity + '">' + c.rarity + '</span>' + (c.open ? esc(c.name) : '？？？') + '</b><span>' + (c.open ? esc(c.perkText) : '解鎖：' + esc(c.unlock.text)) + '</span></div>').join('') + '</div>';
   }
+  // 「狀態」視窗的現況：狀態列只留最重要的數值，其餘都在這裡
+  function statusHtml(s) {
+    const ns = IE.Stages && IE.Stages.nextStage(s);
+    const when = (d) => (d === 0 ? '今晚' : d + ' 天後');
+    const plan = [{ d: R().reviewDay(s) - s.day, t: '篩選日（門檻 ' + kfmt(R().threshold(s)) + '）' }];
+    if (ns) plan.push({ d: ns.day - s.day, t: '第 ' + ns.index + ' 關・' + ns.name + '（目標 ' + kfmt(ns.target) + '）' });
+    if (s.floor > 0) plan.push({ d: R().nextRentDay(s) - s.day, t: '交租 $' + fmt(R().rentAmount(s) + s.debt) });
+    plan.sort((a, b) => a.d - b.d);
+    const tk = s.runTickets ? ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '外星' }[k]) + ' ' + s.runTickets[k]).join('・') : '';
+    const items = [
+      ['季節', D().SEASONS[s.season].name], ['本季 KPI', R().kpi(s).name],
+      ['火花上限', '×' + R().sparkMax(s).toFixed(1)], ['平台評分', '★' + s.rating.toFixed(1)], ['全城自動化', s.auto.toFixed(0) + '%'],
+      ['水位', s.water.toFixed(1) + ' 樓'], ['住處', s.floor ? s.floor + ' 樓' : '天橋下'],
+    ];
+    if (s.stake > 1) items.push(['外星評級', String(s.stake)]);
+    if (tk) items.push(['本局扭蛋券', tk]);
+    if (IE.World && IE.World.stamps(s)) items.push(['護照印章', '×' + IE.World.stamps(s)]);
+    if (IE.World && !s.trip && IE.World.tripMult(s) > 1) items.push(['旅行的餘韻', '×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天']);
+    if (s.weekly) items.push(['每週挑戰', IE.Meta.WEEKLY_MODS[s.weekly.mod].name]);
+    if (s.daily) items.push(['每日挑戰', '進行中']);
+    return '<div class="status"><ul class="st-plan">' + plan.map((x) => '<li><b>' + when(x.d) + '</b>' + esc(x.t) + '</li>').join('') + '</ul>'
+      + '<dl class="st-grid">' + items.map((x) => '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>').join('') + '</dl></div>';
+  }
   function statsModal(s) {
     const bg = D().BACKGROUNDS[s.bg];
     const delta = {};
@@ -568,7 +597,8 @@
     const acts = s.stats.actions || {};
     const names = { label: '標註', ot: '加班', smile: '陪伴', delivery: '外送', farm: '內容農場', clinic: '診所', dive: '潛水', busk: '表演', chat: '聊天', volunteer: '義工', rest: '休息', create: '創作' };
     const top = Object.keys(acts).sort((a, b) => acts[b] - acts[a]).slice(0, 5);
-    return '<div class="modal wide"><h2>能力值</h2><p class="mute" style="font-size:13px">' + esc(bg.name) + '・第 ' + s.day + ' 天。小字是與開局相比的變化。外星人最後會根據這些數字，把你歸類為一種人類模組。</p>'
+    return '<div class="modal wide"><h2>狀態</h2>' + statusHtml(s)
+      + '<h3 class="st-h">能力值</h3><p class="mute" style="font-size:13px">' + esc(bg.name) + '・第 ' + s.day + ' 天。小字是與開局相比的變化。外星人最後會根據這些數字，把你歸類為一種人類模組。</p>'
       + statBars(s.attr, { delta })
       + '<div class="e-stats" style="margin-top:12px">'
       + '<div class="e-stat"><span class="k">靈魂</span><span class="num">' + s.soul.toFixed(1) + '<small>克</small></span></div>'
@@ -829,7 +859,7 @@
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
-    actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
+    actionsPanel, invHtml, deckModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };

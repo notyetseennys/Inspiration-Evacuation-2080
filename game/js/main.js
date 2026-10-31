@@ -295,6 +295,7 @@
         startDay();
       },
       objs() { openObjects(); },
+      deck() { UI.modal(UI.deckModal(s), { close: UI.closeModal }); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
     });

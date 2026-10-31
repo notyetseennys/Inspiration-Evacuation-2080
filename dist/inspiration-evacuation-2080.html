@@ -136,6 +136,17 @@ button { font: inherit; color: inherit; }
 .m-soul.over .bar > i { background: var(--danger); }
 .m-soul.over .num { color: #ffb3bd; }
 .hud-sub .pips { letter-spacing: 1px; color: #e9dcc4; }
+/* 「狀態」視窗：日程與現況 */
+.status { display: grid; gap: 10px; margin-bottom: 6px; }
+.st-plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.st-plan li { display: flex; gap: 10px; align-items: baseline; font-size: 14px; }
+.st-plan b { min-width: 64px; color: var(--spark); font-weight: 700; }
+.st-grid { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.st-grid div { padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+.st-grid dt { font-size: 11px; color: var(--mute); }
+.st-grid dd { margin: 0; font-size: 14px; }
+.st-h { margin: 8px 0 0; font-size: 16px; }
+.chip.next { border-color: var(--c, var(--line)); }
 .m-signal .num { font-size: 18px; color: #ffd6ef; }
 .hud-sub { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mute); }
 .hud-sub b { color: var(--fg); font-weight: 500; }
@@ -524,6 +535,12 @@ body.ct-open { overflow: hidden; }
 .ct-hand .cc.sel.guide-on { transform: translateY(-16px); }
 .ct-kit { display: grid; gap: 8px; min-width: 0; }
 .ct-busy .ct-sugg, .ct-busy .ct-suits { opacity: 0.25; pointer-events: none; transition: opacity 0.2s; }
+/* 做減法：創作桌 */
+.ctable .ct-audio-badge, .ctable .sc-caption > span:first-child { display: none; }
+.ct-obj.empty { font-size: 0; }
+.ctable.has-stage .ct-goal { display: none; }
+.ct-tools:empty, .ct-abil:empty, .ct-schools:empty, .ct-hint:empty, .ct-est:empty { display: none; }
+.ct-schools .sch { white-space: nowrap; }
 .ct-stage .ct-tags { position: absolute; top: 6px; left: 8px; right: 8px; z-index: 2; min-height: 0; pointer-events: none; }
 /* 窄畫面：左欄和主欄拆開，按次序排成一列 */
 @media (max-width: 959px) {
@@ -1157,6 +1174,26 @@ body.ct-open { overflow: hidden; }
 .act-auto b { font-family: var(--font-pixel); font-size: 11px; color: var(--fg); background: var(--sea); color: #06121a; padding: 1px 5px; border-radius: 4px; }
 .act-auto:hover { background: #163250; transform: translateY(-1px); }
 .act-auto:focus-visible { outline: 2px solid var(--sea); outline-offset: 2px; }
+/* 做減法：精簡的行動卡、物件和素材庫一行 */
+.acts { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 6px; }
+.act { gap: 6px; padding: 10px 44px 10px 12px; }
+.act-icon { top: 50%; transform: translateY(-50%); }
+.act-name { padding-right: 0; font-size: 15px; }
+.act .fx span { background: transparent; padding: 0; font-size: 12px; box-shadow: none; }
+.act .fx { gap: 4px 10px; align-items: center; }
+.act .fx .neg { box-shadow: none; }
+.fx-mats { display: inline-flex; gap: 3px; }
+.fx-mats i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+.act-group { margin: 6px 0 -2px; font-size: 12px; letter-spacing: 0.08em; }
+.inv-line { display: flex; flex-wrap: wrap; gap: 8px; }
+.inv-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; border-radius: var(--r); background: var(--deck); border: 1px solid var(--line); color: var(--fg); cursor: pointer; }
+.inv-btn:hover { border-color: var(--sea); }
+.inv-btn .lbl { font-size: 13px; color: var(--mute); }
+.inv-btn .num { font-size: 18px; }
+.inv-line .inv-obj { width: auto; padding: 0; background: none; border: 0; }
+.inv-empty { display: inline-flex; gap: 4px; }
+.inv-empty i { width: 24px; height: 24px; border-radius: 6px; border: 1px dashed #3a2c50; }
+.inv.wrap { flex-wrap: wrap; overflow: visible; }
 .chip.tk { border-color: #ffd36b; color: #ffd36b; }
 .weekly-btn small, .daily-btn small { display: block; }
 
@@ -21764,27 +21801,26 @@ button:focus-visible,
       + (s.noRest >= 3 ? '<span class="chip ' + (s.noRest >= 4 ? 'warn' : 'cond') + '">連續 ' + s.noRest + ' 天沒有休息' + (s.noRest >= 4 ? '・猝死危險' : '') + '</span>' : '')
       + (orisk > 0 ? '<span class="chip warn">外出致命 ' + Math.round(orisk * 1000) / 10 + '%</span>' : '')
       + (hrisk > 0 && !s.trip ? '<span class="chip warn">今晚在家致命 ' + Math.round(hrisk * 1000) / 10 + '%</span>' : '')
-      + (() => { const ns = IE.Stages && IE.Stages.nextStage(s); if (!ns) return ''; const d = ns.day - s.day;
-        return '<span class="chip stage" style="--c:' + ns.color + '" title="' + esc(ns.rules.map((b) => b.name + '：' + b.desc).join('；')) + '">第 ' + ns.index + ' 關・' + ns.name + '：' + (d === 0 ? '今晚' : d + ' 天後') + '・目標 ' + kfmt(ns.target) + '</span>'; })()
-      + (s.stake > 1 ? '<span class="chip warn">外星評級 ' + s.stake + '</span>' : '')
-      + (s.runTickets && (s.runTickets.silver + s.runTickets.gold + s.runTickets.rainbow) ? '<span class="chip tk" title="這一局賺到的扭蛋券（局後存入）">扭蛋券 ' + ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '彩' })[k] + s.runTickets[k]).join(' ') + '</span>' : '')
-      + (s.weekly ? '<span class="chip daily">每週挑戰・' + IE.Meta.WEEKLY_MODS[s.weekly.mod].name + '</span>' : '')
-      + (s.daily ? '<span class="chip passport">每日挑戰</span>' : '')
-      + (IE.World && IE.World.stamps(s) ? '<span class="chip passport" title="護照印章：3 個手牌 +1、6 個物件欄 +1、10 個每晚多一次下筆">護照印章 ×' + IE.World.stamps(s) + '</span>' : '')
       + (s.trip ? '<span class="chip trip">旅行中：' + esc(D().DEST[s.trip.dest].name) + '・第 ' + s.trip.until + ' 天晚上回程</span>' : '')
-      + (IE.World && !s.trip && IE.World.tripMult(s) > 1 ? '<span class="chip glow">旅行的餘韻 ×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天</span>' : '');
+      + (flooded ? '<span class="chip warn">家裡正在淹水</span>' : '');
     const bmax = R().bodyMax(s);
-    const rentChip = s.floor > 0
-      ? '<span class="chip' + (toRent <= 1 && s.cr < rent ? ' warn' : '') + '">交租 ' + (toRent === 0 ? '今晚' : toRent + ' 天後') + ' · $' + fmt(rent) + '</span>'
-      : '<span class="chip warn">露宿天橋下</span>';
+    // 下一件要準備的事：關卡、篩選日、交租之中最近的一件（全部列在提示和「狀態」裡）
+    const ns = IE.Stages && IE.Stages.nextStage(s);
+    const next = [{ d: toReview, t: '篩選日' }];
+    if (ns) next.push({ d: ns.day - s.day, t: '第 ' + ns.index + ' 關・' + ns.name + '・目標 ' + kfmt(ns.target), c: ns.color });
+    if (s.floor > 0) next.push({ d: toRent, t: '交租 $' + fmt(rent) });
+    next.sort((a, b) => a.d - b.d);
+    const when = (d) => (d === 0 ? '今晚' : d + ' 天後');
+    const n0 = next[0];
+    const rentChip = '<span class="chip next' + (n0.d === 0 ? ' warn' : '') + '"' + (n0.c ? ' style="--c:' + n0.c + '"' : '') + ' title="' + esc(season.name + '\n' + next.map((x) => when(x.d) + '：' + x.t).join('\n')) + '">' + when(n0.d) + '・' + esc(n0.t) + '</span>'
+      + (s.floor <= 0 ? '<span class="chip warn">露宿天橋下</span>' : toRent <= 1 && s.cr < rent && n0.t.indexOf('交租') < 0 ? '<span class="chip warn">' + when(toRent) + '交租 $' + fmt(rent) + '・錢不夠</span>' : '');
     hud.innerHTML = ''
       + '<div class="hud-top">'
       + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + R().days(s) + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
-      + '<span class="chip season">' + season.name + '</span>' + rentChip
-      + '<span class="chip' + (toReview === 0 ? ' warn' : '') + '">' + (toReview === 0 ? '今晚是篩選日' : '篩選日在 ' + toReview + ' 天後') + '</span>'
+      + rentChip
       + danger
       + '<div class="hud-btns">'
-      + '<button class="icon-btn" type="button" data-hud="stats">能力</button>'
+      + '<button class="icon-btn" type="button" data-hud="stats">狀態</button>'
       + '<button class="icon-btn" type="button" data-hud="phone">手機' + (s.morning && s.morning.day === s.day && D().ASTAR[s.day] ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
       + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
@@ -21796,14 +21832,7 @@ button:focus-visible,
       + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + '<small>克</small></b></div>'
       + '<div class="meter m-signal"><span class="lbl">訊號</span><div class="bar"><i style="width:' + Math.min(100, sig / th * 100) + '%"></i></div><b class="num">' + kfmt(sig) + '/' + kfmt(th) + '</b></div>'
       + '</div>'
-      + '<div class="hud-sub">'
-      + '<span>良知 <b class="pips">' + pips(s.conscience) + '</b> <b>' + Math.round(s.conscience * 100) + '%</b>・火花上限 <b>×' + R().sparkMax(s).toFixed(1) + '</b></span>'
-      + '<span>平台評分 <b>★' + s.rating.toFixed(1) + '</b></span>'
-      + '<span>全城自動化 <b>' + s.auto.toFixed(0) + '%</b></span>'
-      + '<span class="' + (s.paranoia >= 60 ? 'bad' : '') + '">偏執 <b>' + Math.round(s.paranoia) + '%</b></span>'
-      + '<span class="' + (flooded ? 'bad' : '') + '">水位 <b>' + s.water.toFixed(1) + ' 樓</b> · 你住在 <b>' + (s.floor ? s.floor + ' 樓' : '天橋下') + '</b>' + (flooded ? '（正在淹水）' : '') + '</span>'
-      + '<span>本季 KPI <b>' + esc(R().kpi(s).name) + '</b></span>'
-      + '</div>';
+      ;
       hudFlash(s);
   }
 
@@ -21893,38 +21922,51 @@ button:focus-visible,
   const ACT_ICON = { label: 'monitor', ot: 'clock', smile: 'mask', delivery: 'backpack', farm: 'phone', clinic: 'medkit', dive: 'tank', busk: 'guitar',
     chat: 'cup', volunteer: 'bowl', rest: 'd_bed', create: 'brush', allnighter: 'lamp', garden: 'd_plant', salvage: 'helmet', haggle: 'gift', tripback: 'paper' };
   const actIcon = (id) => IE.Icons.item(ACT_ICON[id] || (id.startsWith('site:') ? 'map' : 'card'), 30);
-  const GROUPS = { work: '工作：賺錢，但會消耗火花', life: '生活：收集素材、恢復火花', night: '晚上', trip: '旅行：探索、找素材' };
+  const GROUPS = { work: '工作', life: '生活', night: '晚上', trip: '旅行' };
+  // 行動卡只顯示關鍵數字；素材的標籤縮成色點，詳細說明放在滑過時的提示
+  const KEY_FX = ['cr', 'body', 'spark', 'sig', 'soul', 'danger', 'rare'];
+  function tagDots(text) {
+    const T = D().TAGS, byName = {};
+    Object.keys(T).forEach((k) => { byName[T[k].name] = k; });
+    return String(text).split(/[・、，\s]+/).map((n) => byName[n]).filter(Boolean).map((k) => '<i style="--c:' + T[k].color + '"></i>').join('');
+  }
+  const fxText = (fx) => fx.map(([k, v]) => ({ cr: '$', body: '身體', spark: '火花', card: '素材', soul: '靈魂', danger: '⚠', rare: '★' }[k] || '') + ' ' + v).join('・');
   function actionsPanel(s, list) {
     const night = R().isNight(s);
-    const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方；極稀有素材只在特定時機出現。'
-      : night ? '晚上可以創作：作品分 = 素材籌碼 × 組合倍率 × 火花 × KPI。'
-        : '工作賺錢會消耗火花；潛水、表演和聊天可以收集素材；沒錢就沒有地方住。也可以直接在上面的地圖點選地點。';
+    const hint = s.trip && !night ? '你在' + D().DEST[s.trip.dest].name + '。每個時段探索一個地方。' : '';
     let i = 0;
     const groups = [...new Set(list.map((a) => a.group))];
-    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2><p>' + hint + '</p>' + IE.UI.abilityStrip(s)
+    return '<div class="panel-head"><h2>' + D().SLOTS[s.slot] + '：要做什麼？</h2>' + (hint ? '<p>' + hint + '</p>' : '') + IE.UI.abilityStrip(s)
       + '<div class="btn-row left">' + (s.trip ? '<button class="btn mini" type="button" data-do="souvenir">紀念品店</button>' : '<button class="btn mini" type="button" data-do="store">浮城百貨</button>') + '</div></div>'
       + groups.map((g) => (groups.length > 1 ? '<h3 class="act-group">' + GROUPS[g] + '</h3>' : '')
         + '<div class="acts">' + list.filter((a) => a.group === g).map((a) => {
           i++;
           // 熟手自動完成：親手玩過的小遊戲可以「照舊做」（第八期）
           const auto = a.enabled && IE.Auto && IE.Auto.can(s, a.id) ? IE.Auto.target(s, a.id) : null;
-          return '<div class="act-wrap' + (auto ? ' has-auto' : '') + '"><button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled') + '>'
-            + '<span class="act-key">' + (i % 10) + '</span><span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span><span class="act-sub">' + esc(a.sub) + '</span>'
-            + '<span class="fx">' + fxHtml(a.fx) + '</span>' + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
+          const mats = a.fx.filter(([k]) => k === 'card').map(([, v]) => tagDots(v)).join('');
+          return '<div class="act-wrap' + (auto ? ' has-auto' : '') + '"><button class="act" type="button" data-do="act" data-id="' + a.id + '"' + (a.enabled ? '' : ' disabled')
+            + ' title="' + esc(a.name + '（' + (i % 10) + '）：' + a.sub + '\n' + fxText(a.fx)) + '">'
+            + '<span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span>'
+            + '<span class="fx">' + fxHtml(a.fx.filter(([k]) => KEY_FX.includes(k))) + (mats ? '<span class="fx-mats" aria-label="素材">' + mats + '</span>' : '') + '</span>'
+            + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
             + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="照舊做：不用玩小遊戲，直接以 ' + auto + ' 級結算（拿不到 S、SS 和特別成就）">照舊做<b>' + auto + '</b></button>' : '') + '</div>';
         }).join('') + '</div>').join('')
       + invHtml(s);
   }
   function invHtml(s) {
-    const objs = s.objects.map((id) => {
-      const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
-      return '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc + (fl ? ' ' + fl : '')) + '">' + IE.Icons.obj(id, 32) + '<small>' + esc(D().OBJ[id].name) + '</small></span>';
-    }).join('');
-    return '<div class="inv-wrap"><div class="inv-head"><span>靈感物件 ' + s.objects.length + ' / ' + R().slotsOf(s) + (s.objStash.length ? '・儲物箱 ' + s.objStash.length : '') + '</span>'
-      + '<button class="btn mini" type="button" data-do="objs">管理物件</button></div>'
-      + '<div class="inv-objs">' + (objs || '<span class="mute" style="font-size:13px">還沒有靈感物件。朋友、潛水、事件和二手市集都可以找到。</span>') + '</div>'
-      + '<div class="inv-head"><span>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</span><span>晚上用來創作・用得越多次越殘・滿了會丟掉最殘的一張</span></div>'
-      + '<div class="inv">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute" style="font-size:13px">還沒有素材。先去生活吧。</span>') + '</div></div>';
+    const objs = s.objects.map((id) => '<span class="inv-obj" title="' + esc(D().OBJ[id].name + '：' + D().OBJ[id].desc) + '">' + IE.Icons.obj(id, 28) + '</span>').join('');
+    const empty = Math.max(0, R().slotsOf(s) - s.objects.length);
+    return '<div class="inv-line">'
+      + '<button class="inv-btn" type="button" data-do="objs" title="管理靈感物件"><span class="lbl">靈感物件</span>' + objs + '<span class="inv-empty">' + '<i></i>'.repeat(empty) + '</span><b class="num">' + s.objects.length + '/' + R().slotsOf(s) + '</b></button>'
+      + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</b></button>'
+      + '</div>';
+  }
+  // 素材庫（在浮城查看；創作桌上另有牌庫）
+  function deckModal(s) {
+    return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</h2>'
+      + '<p class="mute" style="font-size:13px">晚上用來創作。用得越多次越殘；滿了會丟掉最殘的一張。</p>'
+      + '<div class="inv wrap">' + (s.cards.length ? s.cards.map((c) => cardHtml(c)).join('') : '<span class="mute">還沒有素材。先去生活吧。</span>') + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
   }
   function objectsModal(s) {
     const D_ = D();
@@ -22023,15 +22065,16 @@ button:focus-visible,
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
     const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
-    const feed = m.feed.map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
+    // 網民的帖子只留一則（其餘是同一類的閒話）
+    let posts = 0;
+    const feed = m.feed.filter((p) => p.kind !== 'post' || posts++ < 1).map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
     const astar = m.astar ? '<span class="msg-head">阿星（神秘頻道）</span><div class="msg ' + m.astar.style + '">' + esc(m.astar.text) + '</div>' : '';
     const battery = Math.max(1, 100 - s.day);
-    // 今日推介：有需要的保命用品優先，其次是二手市集的靈感物件
-    const urgent = shopItems.filter((it) => it.enabled && (it.id === 'medicine' || (it.cat === 'safe' && IE.Rules.outdoorRisk(s) > 0 && (it.id === 'helmet' || it.id === 'gasmask'))));
-    const picks = urgent.concat(shopItems.filter((it) => it.enabled && it.obj)).slice(0, 2);
-    const shop = '<h3>浮城百貨</h3><div class="shop">' + picks.map((it) => '<div class="shop-item has-icon">' + (it.obj ? IE.Icons.obj(it.obj, 36) : IE.Icons.item(it.icon, 36)) + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
+    // 只在急需保命用品時推介（平時在浮城的「浮城百貨」按鈕購物）
+    const picks = shopItems.filter((it) => it.enabled && (it.id === 'medicine' || (it.cat === 'safe' && IE.Rules.outdoorRisk(s) > 0 && (it.id === 'helmet' || it.id === 'gasmask')))).slice(0, 2);
+    const shop = !picks.length ? '' : '<h3>急需</h3><div class="shop">' + picks.map((it) => '<div class="shop-item has-icon">' + (it.obj ? IE.Icons.obj(it.obj, 36) : IE.Icons.item(it.icon, 36)) + '<div><div class="n">' + esc(it.name) + '</div><div class="d">' + esc(it.note || it.desc) + '</div></div>'
       + '<button class="btn sea" type="button" data-do="buy" data-id="' + it.id + '">$' + fmt(it.cost) + '</button></div>').join('')
-      + '<button class="btn store-open" type="button" data-do="store">打開浮城百貨（' + shopItems.length + ' 件貨品）</button></div>';
+      + '</div>';
     return '<div class="phone" role="dialog" aria-label="手機">'
       + '<div class="phone-bar"><span>' + (opts.morning ? '07:00' : '··:··') + '</span><span>浮聲 5G</span><span class="' + (battery < 10 ? 'low' : '') + '">電量 ' + battery + '%</span></div>'
       + '<h2>第 ' + s.day + ' 天' + (opts.morning ? '・早上' : '') + '</h2>'
@@ -22242,6 +22285,29 @@ button:focus-visible,
       + IE.Roster.list(meta).map((c) => '<div class="recipe obj-card r-' + c.rarity + (c.open ? '' : ' unknown') + '">' + IE.Chars.img(c.id, 3, !c.open)
         + '<b><span class="rar r-' + c.rarity + '">' + c.rarity + '</span>' + (c.open ? esc(c.name) : '？？？') + '</b><span>' + (c.open ? esc(c.perkText) : '解鎖：' + esc(c.unlock.text)) + '</span></div>').join('') + '</div>';
   }
+  // 「狀態」視窗的現況：狀態列只留最重要的數值，其餘都在這裡
+  function statusHtml(s) {
+    const ns = IE.Stages && IE.Stages.nextStage(s);
+    const when = (d) => (d === 0 ? '今晚' : d + ' 天後');
+    const plan = [{ d: R().reviewDay(s) - s.day, t: '篩選日（門檻 ' + kfmt(R().threshold(s)) + '）' }];
+    if (ns) plan.push({ d: ns.day - s.day, t: '第 ' + ns.index + ' 關・' + ns.name + '（目標 ' + kfmt(ns.target) + '）' });
+    if (s.floor > 0) plan.push({ d: R().nextRentDay(s) - s.day, t: '交租 $' + fmt(R().rentAmount(s) + s.debt) });
+    plan.sort((a, b) => a.d - b.d);
+    const tk = s.runTickets ? ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '外星' }[k]) + ' ' + s.runTickets[k]).join('・') : '';
+    const items = [
+      ['季節', D().SEASONS[s.season].name], ['本季 KPI', R().kpi(s).name],
+      ['火花上限', '×' + R().sparkMax(s).toFixed(1)], ['平台評分', '★' + s.rating.toFixed(1)], ['全城自動化', s.auto.toFixed(0) + '%'],
+      ['水位', s.water.toFixed(1) + ' 樓'], ['住處', s.floor ? s.floor + ' 樓' : '天橋下'],
+    ];
+    if (s.stake > 1) items.push(['外星評級', String(s.stake)]);
+    if (tk) items.push(['本局扭蛋券', tk]);
+    if (IE.World && IE.World.stamps(s)) items.push(['護照印章', '×' + IE.World.stamps(s)]);
+    if (IE.World && !s.trip && IE.World.tripMult(s) > 1) items.push(['旅行的餘韻', '×' + IE.World.tripMult(s) + '・至第 ' + s.glow.until + ' 天']);
+    if (s.weekly) items.push(['每週挑戰', IE.Meta.WEEKLY_MODS[s.weekly.mod].name]);
+    if (s.daily) items.push(['每日挑戰', '進行中']);
+    return '<div class="status"><ul class="st-plan">' + plan.map((x) => '<li><b>' + when(x.d) + '</b>' + esc(x.t) + '</li>').join('') + '</ul>'
+      + '<dl class="st-grid">' + items.map((x) => '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>').join('') + '</dl></div>';
+  }
   function statsModal(s) {
     const bg = D().BACKGROUNDS[s.bg];
     const delta = {};
@@ -22249,7 +22315,8 @@ button:focus-visible,
     const acts = s.stats.actions || {};
     const names = { label: '標註', ot: '加班', smile: '陪伴', delivery: '外送', farm: '內容農場', clinic: '診所', dive: '潛水', busk: '表演', chat: '聊天', volunteer: '義工', rest: '休息', create: '創作' };
     const top = Object.keys(acts).sort((a, b) => acts[b] - acts[a]).slice(0, 5);
-    return '<div class="modal wide"><h2>能力值</h2><p class="mute" style="font-size:13px">' + esc(bg.name) + '・第 ' + s.day + ' 天。小字是與開局相比的變化。外星人最後會根據這些數字，把你歸類為一種人類模組。</p>'
+    return '<div class="modal wide"><h2>狀態</h2>' + statusHtml(s)
+      + '<h3 class="st-h">能力值</h3><p class="mute" style="font-size:13px">' + esc(bg.name) + '・第 ' + s.day + ' 天。小字是與開局相比的變化。外星人最後會根據這些數字，把你歸類為一種人類模組。</p>'
       + statBars(s.attr, { delta })
       + '<div class="e-stats" style="margin-top:12px">'
       + '<div class="e-stat"><span class="k">靈魂</span><span class="num">' + s.soul.toFixed(1) + '<small>克</small></span></div>'
@@ -22510,7 +22577,7 @@ button:focus-visible,
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
-    actionsPanel, invHtml, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
+    actionsPanel, invHtml, deckModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };
@@ -22744,7 +22811,7 @@ button:focus-visible,
     return ids.map((id) => {
       const sc = D().SCHOOLS[id], k = n[id];
       const txt = k >= 3 ? sc.b2 + '；' + sc.b3 : k >= 2 ? sc.b2 + '（三件：' + sc.b3 + '）' : '再多一件：' + sc.b2;
-      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
+      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '" title="' + esc(txt) + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + '</span>';
     }).join('');
   }
 
@@ -22866,7 +22933,7 @@ button:focus-visible,
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
       + '<p class="ct-hint"></p>'
-      + '<details class="ct-forms"' + (window.innerWidth >= 960 ? ' open' : '') + '><summary>牌型表<small>作品形式由高至低・● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
+      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>牌型表<small>● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
       + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
@@ -22881,6 +22948,7 @@ button:focus-visible,
     document.body.appendChild(root);
     document.body.classList.add('ct-open');
     root.addEventListener('click', onClick);
+    root.querySelector('.ct-forms').addEventListener('toggle', (e) => store.set('ie2080.forms', e.target.open ? 'open' : 'closed'));
     root.addEventListener('mouseover', onHover);
     root.addEventListener('mouseout', onHover);
     root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
@@ -23016,7 +23084,8 @@ button:focus-visible,
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
-    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : ses.mode === 'sketch' ? '・速寫（只下筆一次）' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    root.classList.toggle('has-stage', !!ses.stage);
     $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
     updateAudioBadge(st.lastNote);
     renderScene(false);
@@ -23031,7 +23100,7 @@ button:focus-visible,
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
     $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
-    $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
+    $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
     pb.textContent = ses.plays > 0 ? '下筆（' + ses.plays + '）' : '完成今晚';
@@ -23050,7 +23119,7 @@ button:focus-visible,
     const out = [];
     for (let i = 0; i < n; i++) {
       const id = tools[i];
-      if (!id) { out.push('<div class="ct-tool empty">工具卡</div>'); continue; }
+      if (!id) continue;
       const T = S.TOOL[id];
       out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + T.desc) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
     }
@@ -23199,15 +23268,10 @@ button:focus-visible,
             + '<div class="sb-jbody">'
             + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
             + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
-            + (j ? '<p class="sb-jquote">' + esc(j.intro) + '</p>' : '')
             + '</div></div>';
         }).join('') + '</div>';
       } else {
-        const v = J.venue(g.kind);
-        if (v) {
-          extra = '<div class="sb-venue">' + J.img(g.kind, 36)
-            + '<div class="sb-vtxt"><b>' + esc(v.venue) + '</b><span>' + esc(v.intro) + '</span></div></div>';
-        }
+        extra = '';
       }
     }
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
@@ -23232,14 +23296,13 @@ button:focus-visible,
     $('.ct-mult').classList.toggle('preview', cls === 'preview');
   }
   // ---------- 指引（第九期）：這手牌可以組成甚麼、手上有甚麼標籤、牌型表 ----------
-  const FORM_AT = { 2: 'poem', 3: 'song', 4: 'mural', 5: 'epic' };
   const handCards = () => st.s.session.hand.map((u) => st.s.cards.find((c) => c.uid === u)).filter(Boolean);
   // 建議只在手牌、物件或火花改變時重新計算
   function suggestions() {
     const s = st.s, ses = s.session;
     const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
       + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
-    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 4) : []; }
+    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 3) : []; }
     return st.sg;
   }
   function sgKeyText(x) {
@@ -23266,27 +23329,17 @@ button:focus-visible,
     const need = g ? Math.max(0, g.target - IE.Stages.stageScore(ses)) : 0;
     const cur = st.sel.slice().sort((a, b) => a - b).join(',');
     $('.ct-sugg').innerHTML = sg.length ? '<span class="sg-lbl">這手牌可以</span>' + sg.map((x, i) => {
-      const rc = x.recipes.map((r) => '<span class="sg-rc' + (r.legend ? ' lg' : '') + '">' + (r.known ? '《' + esc(r.name) + '》' : r.legend ? '★ ？？？' : '？？？') + '</span>').slice(0, 2).join('');
+      const rc = x.recipes.length ? '<span class="sg-rc' + (x.recipes.some((r) => r.legend) ? ' lg' : '') + '" title="' + esc(x.recipes.map((r) => (r.known ? r.name : '未知組合')).join('、')) + '">＋組合</span>' : '';
       const on = x.uids.slice().sort((a, b) => a - b).join(',') === cur;
       return '<button type="button" class="sg' + (i === 0 ? ' top' : '') + (on ? ' on' : '') + (g && need > 0 && x.est >= need ? ' clear' : '') + '" data-sg="' + i + '" title="按一下選好這 ' + x.uids.length + ' 張素材">'
-        + '<span class="sg-form">' + (i === 0 ? '★ ' : '') + esc(x.name) + '<small>Lv.' + x.level + '</small></span>'
+        + '<span class="sg-form">' + (i === 0 ? '★ ' : '') + esc(x.name) + '</span>'
         + '<span class="sg-keys">' + sgKeyText(x) + rc + '</span>'
         + '<b class="sg-est num">≈ ' + fmt(x.est) + '</b>'
         + (g && need > 0 && x.est >= need ? '<span class="sg-ok">夠過關</span>' : '') + '</button>';
     }).join('') : '';
-    // 手上的標籤和媒材：相當於撲克牌的花色
-    const cards = handCards();
-    const tc = C().tagCounts(cards), mc = C().mediaCounts(cards);
-    const order = Object.keys(D_.TAGS);
-    const tags = Object.keys(tc).sort((a, b) => tc[b] - tc[a] || order.indexOf(a) - order.indexOf(b));
-    const fname = (n) => (FORM_AT[Math.min(5, n)] ? C().FORM[FORM_AT[Math.min(5, n)]].name : '');
-    $('.ct-suits').innerHTML = cards.length ? '<span class="su-lbl">手上的標籤</span>'
-      + tags.map((t) => '<button type="button" class="suit' + (tc[t] >= 2 ? ' pair' : '') + (tc[t] >= 3 ? ' hot' : '') + '" data-suit="' + t + '" style="--c:' + D_.TAGS[t].color + '" title="按一下選出所有「' + D_.TAGS[t].name + '」素材">'
-        + '<i></i>' + D_.TAGS[t].name + '<b class="num">' + tc[t] + '</b>' + (tc[t] >= 2 ? '<small>' + fname(tc[t]) + '</small>' : '') + '</button>').join('')
-      + '<span class="su-sep"></span>'
-      + Object.keys(mc).sort((a, b) => mc[b] - mc[a]).map((m) => '<button type="button" class="suit med' + (mc[m] >= 4 ? ' hot' : '') + '" data-medsel="' + m + '" style="--c:' + D_.MEDIA[m].color + '" title="按一下選出所有「' + D_.MEDIA[m].full + '」素材（四張同一媒材是連作）">'
-        + D_.MEDIA[m].name + '<b class="num">' + mc[m] + '</b>' + (mc[m] >= 4 ? '<small>連作</small>' : mc[m] === 3 ? '<small>差一張連作</small>' : '') + '</button>').join('')
-      + chaseHtml() : '';
+    // 「改稿追」接在建議後面（以前的「手上的標籤」列已取消：卡上的標籤和排序已經夠用）
+    $('.ct-suits').innerHTML = '';
+    if (handCards().length) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
     renderForms(new Set(sg.map((x) => x.form)));
   }
   // 牌型表：由高至低；這手牌組得出的形式會亮起
@@ -23306,28 +23359,24 @@ button:focus-visible,
     const D_ = D();
     st.chase = C().chase(st.s, 2);
     if (!st.chase.length) return '';
-    return '<span class="su-sep"></span><span class="su-lbl">改稿追</span>' + st.chase.map((x, i) => {
+    return '<span class="su-sep"></span>' + st.chase.slice(0, 1).map((x, i) => {
       const what = x.label.tag ? D_.TAGS[x.label.tag] : D_.MEDIA[x.label.medium];
       return '<button type="button" class="suit chase" data-chase="' + i + '" style="--c:' + what.color + '" title="保留 ' + x.keep + ' 張「' + (what.full || what.name) + '」，選好要換走的 ' + x.uids.length + ' 張，再按「改稿」：抽中一張「' + (what.full || what.name) + '」的機會約 ' + x.odds + '%">'
-        + '「' + esc(x.name) + '」<i></i>' + esc(what.name) + ' +1<small>換 ' + x.uids.length + ' 張・' + x.odds + '%</small></button>';
+        + '改稿追「' + esc(x.name) + '」<small>' + x.odds + '%</small></button>';
     }).join('');
   }
   // 滑過建議或標籤時，在手牌上標出對應的素材
   function onHover(e) {
     if (!st || st.busy) return;
-    const t = e.type === 'mouseover' ? e.target.closest('[data-sg], [data-suit], [data-medsel], [data-chase]') : null;
+    const t = e.type === 'mouseover' ? e.target.closest('[data-sg], [data-chase]') : null;
     root.querySelectorAll('.ct-hand .cc.guide-on').forEach((b) => b.classList.remove('guide-on'));
     if (!t) return;
     const ids = guideUids(t);
     root.querySelectorAll('.ct-hand .cc').forEach((b) => { if (ids.includes(Number(b.dataset.uid))) b.classList.add('guide-on'); });
   }
   function guideUids(el) {
-    const s = st.s, max = C().maxCards(s);
     if (el.dataset.sg != null) return (st.sg[Number(el.dataset.sg)] || { uids: [] }).uids;
-    if (el.dataset.chase != null) return ((st.chase || [])[Number(el.dataset.chase)] || { uids: [] }).uids;
-    const ok = (c) => !C().forbidden(s, c);
-    const pick = el.dataset.suit ? (c) => c.tags.includes(el.dataset.suit) : (c) => D().mediumOf(c) === el.dataset.medsel;
-    return handCards().filter((c) => ok(c) && pick(c)).sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a)).slice(0, max).map((c) => c.uid);
+    return ((st.chase || [])[Number(el.dataset.chase)] || { uids: [] }).uids;
   }
   function applyGuide(el) {
     const ids = guideUids(el);
@@ -23347,7 +23396,7 @@ button:focus-visible,
       $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
       $('.ct-form .fl').textContent = '';
       setBoxes(0, 0, 'preview');
-      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤越多，作品形式越高級；不知道選甚麼，就按下面「這手牌可以」的建議。';
+      $('.ct-hint').innerHTML = '';
       $('.ct-est').innerHTML = '';
       $('.ct-discard').classList.remove('ready');
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
@@ -23365,7 +23414,7 @@ button:focus-visible,
     const chasing = st.chasing === st.sel.join(',');
     if (chasing) bits.unshift('<span class="rc near">已選好要換走的 ' + st.sel.length + ' 張：按「改稿」換牌</span>');
     $('.ct-discard').classList.toggle('ready', chasing);
-    $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">' + (pv.form === 'sketch' ? '「隨筆」只計最高分的一張。再選一張有相同標籤的素材，就會變成「短詩」。' : '沒有具名組合（組合要每一張素材都有它要求的標籤；看「圖鑑」）') + '</span>';
+    $('.ct-hint').innerHTML = bits.join('') || (pv.form === 'sketch' ? '<span class="mute">隨筆只計最高的一張</span>' : '');
     // 預計得分
     const g = st.s.session.stage;
     const need = g ? Math.max(0, g.target - IE.Stages.stageScore(st.s.session)) : 0;
@@ -23376,7 +23425,7 @@ button:focus-visible,
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
       return;
     }
-    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分<small>（籌碼 ' + fmt(pv.estChips) + ' × 倍率 ' + (Math.round(pv.estMult * 10) / 10) + '，再乘火花和其他加成）</small>'
+    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分'
       + (g && need > 0 ? '<span class="' + (pv.est >= need ? 'ok' : 'short') + '">關卡還差 ' + fmt(need) + (pv.est >= need ? '：這一筆足夠！' : '') + '</span>' : '');
     // 手上和已選素材有相同標籤的會微亮；再加一張就有組合或升級形式的會更亮
     const selTags = new Set();
@@ -23412,7 +23461,7 @@ button:focus-visible,
     }
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
-    const gd = e.target.closest('[data-sg], [data-suit], [data-medsel], [data-chase]');
+    const gd = e.target.closest('[data-sg], [data-chase]');
     if (gd && !st.busy) { A().sfx('click'); applyGuide(gd); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
     if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
@@ -24443,6 +24492,7 @@ button:focus-visible,
         startDay();
       },
       objs() { openObjects(); },
+      deck() { UI.modal(UI.deckModal(s), { close: UI.closeModal }); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
     });

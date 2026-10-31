@@ -124,6 +124,17 @@ button { font: inherit; color: inherit; }
 .m-soul.over .bar > i { background: var(--danger); }
 .m-soul.over .num { color: #ffb3bd; }
 .hud-sub .pips { letter-spacing: 1px; color: #e9dcc4; }
+/* 「狀態」視窗：日程與現況 */
+.status { display: grid; gap: 10px; margin-bottom: 6px; }
+.st-plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.st-plan li { display: flex; gap: 10px; align-items: baseline; font-size: 14px; }
+.st-plan b { min-width: 64px; color: var(--spark); font-weight: 700; }
+.st-grid { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.st-grid div { padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+.st-grid dt { font-size: 11px; color: var(--mute); }
+.st-grid dd { margin: 0; font-size: 14px; }
+.st-h { margin: 8px 0 0; font-size: 16px; }
+.chip.next { border-color: var(--c, var(--line)); }
 .m-signal .num { font-size: 18px; color: #ffd6ef; }
 .hud-sub { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mute); }
 .hud-sub b { color: var(--fg); font-weight: 500; }
@@ -512,6 +523,12 @@ body.ct-open { overflow: hidden; }
 .ct-hand .cc.sel.guide-on { transform: translateY(-16px); }
 .ct-kit { display: grid; gap: 8px; min-width: 0; }
 .ct-busy .ct-sugg, .ct-busy .ct-suits { opacity: 0.25; pointer-events: none; transition: opacity 0.2s; }
+/* 做減法：創作桌 */
+.ctable .ct-audio-badge, .ctable .sc-caption > span:first-child { display: none; }
+.ct-obj.empty { font-size: 0; }
+.ctable.has-stage .ct-goal { display: none; }
+.ct-tools:empty, .ct-abil:empty, .ct-schools:empty, .ct-hint:empty, .ct-est:empty { display: none; }
+.ct-schools .sch { white-space: nowrap; }
 .ct-stage .ct-tags { position: absolute; top: 6px; left: 8px; right: 8px; z-index: 2; min-height: 0; pointer-events: none; }
 /* 窄畫面：左欄和主欄拆開，按次序排成一列 */
 @media (max-width: 959px) {
@@ -1145,6 +1162,26 @@ body.ct-open { overflow: hidden; }
 .act-auto b { font-family: var(--font-pixel); font-size: 11px; color: var(--fg); background: var(--sea); color: #06121a; padding: 1px 5px; border-radius: 4px; }
 .act-auto:hover { background: #163250; transform: translateY(-1px); }
 .act-auto:focus-visible { outline: 2px solid var(--sea); outline-offset: 2px; }
+/* 做減法：精簡的行動卡、物件和素材庫一行 */
+.acts { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 6px; }
+.act { gap: 6px; padding: 10px 44px 10px 12px; }
+.act-icon { top: 50%; transform: translateY(-50%); }
+.act-name { padding-right: 0; font-size: 15px; }
+.act .fx span { background: transparent; padding: 0; font-size: 12px; box-shadow: none; }
+.act .fx { gap: 4px 10px; align-items: center; }
+.act .fx .neg { box-shadow: none; }
+.fx-mats { display: inline-flex; gap: 3px; }
+.fx-mats i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+.act-group { margin: 6px 0 -2px; font-size: 12px; letter-spacing: 0.08em; }
+.inv-line { display: flex; flex-wrap: wrap; gap: 8px; }
+.inv-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; border-radius: var(--r); background: var(--deck); border: 1px solid var(--line); color: var(--fg); cursor: pointer; }
+.inv-btn:hover { border-color: var(--sea); }
+.inv-btn .lbl { font-size: 13px; color: var(--mute); }
+.inv-btn .num { font-size: 18px; }
+.inv-line .inv-obj { width: auto; padding: 0; background: none; border: 0; }
+.inv-empty { display: inline-flex; gap: 4px; }
+.inv-empty i { width: 24px; height: 24px; border-radius: 6px; border: 1px dashed #3a2c50; }
+.inv.wrap { flex-wrap: wrap; overflow: visible; }
 .chip.tk { border-color: #ffd36b; color: #ffd36b; }
 .weekly-btn small, .daily-btn small { display: block; }
 

@@ -60,7 +60,7 @@
     return ids.map((id) => {
       const sc = D().SCHOOLS[id], k = n[id];
       const txt = k >= 3 ? sc.b2 + '；' + sc.b3 : k >= 2 ? sc.b2 + '（三件：' + sc.b3 + '）' : '再多一件：' + sc.b2;
-      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + esc(txt) + '</span>';
+      return '<span class="sch' + (k >= 2 ? ' on' : '') + (k >= 3 ? ' max' : '') + '" data-school="' + id + '" style="--c:' + sc.color + '" title="' + esc(txt) + '">' + (IE.Icons.school ? IE.Icons.school(id, 14) : '') + '<b>' + esc(sc.name) + ' ' + Math.min(k, 3) + '/3</b>' + '</span>';
     }).join('');
   }
 
@@ -182,7 +182,7 @@
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
       + '<p class="ct-hint"></p>'
-      + '<details class="ct-forms"' + (window.innerWidth >= 960 ? ' open' : '') + '><summary>牌型表<small>作品形式由高至低・● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
+      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>牌型表<small>● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
       + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
@@ -197,6 +197,7 @@
     document.body.appendChild(root);
     document.body.classList.add('ct-open');
     root.addEventListener('click', onClick);
+    root.querySelector('.ct-forms').addEventListener('toggle', (e) => store.set('ie2080.forms', e.target.open ? 'open' : 'closed'));
     root.addEventListener('mouseover', onHover);
     root.addEventListener('mouseout', onHover);
     root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
@@ -332,7 +333,8 @@
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
-    $('.ct-sub').textContent = '第 ' + s.day + ' 天' + (ses.mode === 'allnighter' ? '・通宵' : ses.mode === 'sketch' ? '・速寫（只下筆一次）' : '') + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    root.classList.toggle('has-stage', !!ses.stage);
     $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
     updateAudioBadge(st.lastNote);
     renderScene(false);
@@ -347,7 +349,7 @@
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
     $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
-    $('.ct-counts').textContent = '素材庫 ' + s.cards.length + ' 張・未抽 ' + ses.deck.length + ' 張' + (ses.reshuffled ? '・已洗牌 ' + ses.reshuffled + ' 次' : '') + '・最佳一筆 ' + fmt(st.best);
+    $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
     pb.textContent = ses.plays > 0 ? '下筆（' + ses.plays + '）' : '完成今晚';
@@ -366,7 +368,7 @@
     const out = [];
     for (let i = 0; i < n; i++) {
       const id = tools[i];
-      if (!id) { out.push('<div class="ct-tool empty">工具卡</div>'); continue; }
+      if (!id) continue;
       const T = S.TOOL[id];
       out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + T.desc) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
     }
@@ -515,15 +517,10 @@
             + '<div class="sb-jbody">'
             + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
             + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
-            + (j ? '<p class="sb-jquote">' + esc(j.intro) + '</p>' : '')
             + '</div></div>';
         }).join('') + '</div>';
       } else {
-        const v = J.venue(g.kind);
-        if (v) {
-          extra = '<div class="sb-venue">' + J.img(g.kind, 36)
-            + '<div class="sb-vtxt"><b>' + esc(v.venue) + '</b><span>' + esc(v.intro) + '</span></div></div>';
-        }
+        extra = '';
       }
     }
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
@@ -548,14 +545,13 @@
     $('.ct-mult').classList.toggle('preview', cls === 'preview');
   }
   // ---------- 指引（第九期）：這手牌可以組成甚麼、手上有甚麼標籤、牌型表 ----------
-  const FORM_AT = { 2: 'poem', 3: 'song', 4: 'mural', 5: 'epic' };
   const handCards = () => st.s.session.hand.map((u) => st.s.cards.find((c) => c.uid === u)).filter(Boolean);
   // 建議只在手牌、物件或火花改變時重新計算
   function suggestions() {
     const s = st.s, ses = s.session;
     const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
       + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
-    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 4) : []; }
+    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 3) : []; }
     return st.sg;
   }
   function sgKeyText(x) {
@@ -582,27 +578,17 @@
     const need = g ? Math.max(0, g.target - IE.Stages.stageScore(ses)) : 0;
     const cur = st.sel.slice().sort((a, b) => a - b).join(',');
     $('.ct-sugg').innerHTML = sg.length ? '<span class="sg-lbl">這手牌可以</span>' + sg.map((x, i) => {
-      const rc = x.recipes.map((r) => '<span class="sg-rc' + (r.legend ? ' lg' : '') + '">' + (r.known ? '《' + esc(r.name) + '》' : r.legend ? '★ ？？？' : '？？？') + '</span>').slice(0, 2).join('');
+      const rc = x.recipes.length ? '<span class="sg-rc' + (x.recipes.some((r) => r.legend) ? ' lg' : '') + '" title="' + esc(x.recipes.map((r) => (r.known ? r.name : '未知組合')).join('、')) + '">＋組合</span>' : '';
       const on = x.uids.slice().sort((a, b) => a - b).join(',') === cur;
       return '<button type="button" class="sg' + (i === 0 ? ' top' : '') + (on ? ' on' : '') + (g && need > 0 && x.est >= need ? ' clear' : '') + '" data-sg="' + i + '" title="按一下選好這 ' + x.uids.length + ' 張素材">'
-        + '<span class="sg-form">' + (i === 0 ? '★ ' : '') + esc(x.name) + '<small>Lv.' + x.level + '</small></span>'
+        + '<span class="sg-form">' + (i === 0 ? '★ ' : '') + esc(x.name) + '</span>'
         + '<span class="sg-keys">' + sgKeyText(x) + rc + '</span>'
         + '<b class="sg-est num">≈ ' + fmt(x.est) + '</b>'
         + (g && need > 0 && x.est >= need ? '<span class="sg-ok">夠過關</span>' : '') + '</button>';
     }).join('') : '';
-    // 手上的標籤和媒材：相當於撲克牌的花色
-    const cards = handCards();
-    const tc = C().tagCounts(cards), mc = C().mediaCounts(cards);
-    const order = Object.keys(D_.TAGS);
-    const tags = Object.keys(tc).sort((a, b) => tc[b] - tc[a] || order.indexOf(a) - order.indexOf(b));
-    const fname = (n) => (FORM_AT[Math.min(5, n)] ? C().FORM[FORM_AT[Math.min(5, n)]].name : '');
-    $('.ct-suits').innerHTML = cards.length ? '<span class="su-lbl">手上的標籤</span>'
-      + tags.map((t) => '<button type="button" class="suit' + (tc[t] >= 2 ? ' pair' : '') + (tc[t] >= 3 ? ' hot' : '') + '" data-suit="' + t + '" style="--c:' + D_.TAGS[t].color + '" title="按一下選出所有「' + D_.TAGS[t].name + '」素材">'
-        + '<i></i>' + D_.TAGS[t].name + '<b class="num">' + tc[t] + '</b>' + (tc[t] >= 2 ? '<small>' + fname(tc[t]) + '</small>' : '') + '</button>').join('')
-      + '<span class="su-sep"></span>'
-      + Object.keys(mc).sort((a, b) => mc[b] - mc[a]).map((m) => '<button type="button" class="suit med' + (mc[m] >= 4 ? ' hot' : '') + '" data-medsel="' + m + '" style="--c:' + D_.MEDIA[m].color + '" title="按一下選出所有「' + D_.MEDIA[m].full + '」素材（四張同一媒材是連作）">'
-        + D_.MEDIA[m].name + '<b class="num">' + mc[m] + '</b>' + (mc[m] >= 4 ? '<small>連作</small>' : mc[m] === 3 ? '<small>差一張連作</small>' : '') + '</button>').join('')
-      + chaseHtml() : '';
+    // 「改稿追」接在建議後面（以前的「手上的標籤」列已取消：卡上的標籤和排序已經夠用）
+    $('.ct-suits').innerHTML = '';
+    if (handCards().length) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
     renderForms(new Set(sg.map((x) => x.form)));
   }
   // 牌型表：由高至低；這手牌組得出的形式會亮起
@@ -622,28 +608,24 @@
     const D_ = D();
     st.chase = C().chase(st.s, 2);
     if (!st.chase.length) return '';
-    return '<span class="su-sep"></span><span class="su-lbl">改稿追</span>' + st.chase.map((x, i) => {
+    return '<span class="su-sep"></span>' + st.chase.slice(0, 1).map((x, i) => {
       const what = x.label.tag ? D_.TAGS[x.label.tag] : D_.MEDIA[x.label.medium];
       return '<button type="button" class="suit chase" data-chase="' + i + '" style="--c:' + what.color + '" title="保留 ' + x.keep + ' 張「' + (what.full || what.name) + '」，選好要換走的 ' + x.uids.length + ' 張，再按「改稿」：抽中一張「' + (what.full || what.name) + '」的機會約 ' + x.odds + '%">'
-        + '「' + esc(x.name) + '」<i></i>' + esc(what.name) + ' +1<small>換 ' + x.uids.length + ' 張・' + x.odds + '%</small></button>';
+        + '改稿追「' + esc(x.name) + '」<small>' + x.odds + '%</small></button>';
     }).join('');
   }
   // 滑過建議或標籤時，在手牌上標出對應的素材
   function onHover(e) {
     if (!st || st.busy) return;
-    const t = e.type === 'mouseover' ? e.target.closest('[data-sg], [data-suit], [data-medsel], [data-chase]') : null;
+    const t = e.type === 'mouseover' ? e.target.closest('[data-sg], [data-chase]') : null;
     root.querySelectorAll('.ct-hand .cc.guide-on').forEach((b) => b.classList.remove('guide-on'));
     if (!t) return;
     const ids = guideUids(t);
     root.querySelectorAll('.ct-hand .cc').forEach((b) => { if (ids.includes(Number(b.dataset.uid))) b.classList.add('guide-on'); });
   }
   function guideUids(el) {
-    const s = st.s, max = C().maxCards(s);
     if (el.dataset.sg != null) return (st.sg[Number(el.dataset.sg)] || { uids: [] }).uids;
-    if (el.dataset.chase != null) return ((st.chase || [])[Number(el.dataset.chase)] || { uids: [] }).uids;
-    const ok = (c) => !C().forbidden(s, c);
-    const pick = el.dataset.suit ? (c) => c.tags.includes(el.dataset.suit) : (c) => D().mediumOf(c) === el.dataset.medsel;
-    return handCards().filter((c) => ok(c) && pick(c)).sort((a, b) => C().cardValue(s, b) - C().cardValue(s, a)).slice(0, max).map((c) => c.uid);
+    return ((st.chase || [])[Number(el.dataset.chase)] || { uids: [] }).uids;
   }
   function applyGuide(el) {
     const ids = guideUids(el);
@@ -663,7 +645,7 @@
       $('.ct-form .fn').textContent = st.s.session.log.length ? '再下一筆？' : '選擇素材';
       $('.ct-form .fl').textContent = '';
       setBoxes(0, 0, 'preview');
-      $('.ct-hint').innerHTML = st.s.session.log.length ? '' : '選 1 至 5 張素材下筆。同一標籤越多，作品形式越高級；不知道選甚麼，就按下面「這手牌可以」的建議。';
+      $('.ct-hint').innerHTML = '';
       $('.ct-est').innerHTML = '';
       $('.ct-discard').classList.remove('ready');
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
@@ -681,7 +663,7 @@
     const chasing = st.chasing === st.sel.join(',');
     if (chasing) bits.unshift('<span class="rc near">已選好要換走的 ' + st.sel.length + ' 張：按「改稿」換牌</span>');
     $('.ct-discard').classList.toggle('ready', chasing);
-    $('.ct-hint').innerHTML = bits.join('') || '<span class="mute">' + (pv.form === 'sketch' ? '「隨筆」只計最高分的一張。再選一張有相同標籤的素材，就會變成「短詩」。' : '沒有具名組合（組合要每一張素材都有它要求的標籤；看「圖鑑」）') + '</span>';
+    $('.ct-hint').innerHTML = bits.join('') || (pv.form === 'sketch' ? '<span class="mute">隨筆只計最高的一張</span>' : '');
     // 預計得分
     const g = st.s.session.stage;
     const need = g ? Math.max(0, g.target - IE.Stages.stageScore(st.s.session)) : 0;
@@ -692,7 +674,7 @@
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
       return;
     }
-    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分<small>（籌碼 ' + fmt(pv.estChips) + ' × 倍率 ' + (Math.round(pv.estMult * 10) / 10) + '，再乘火花和其他加成）</small>'
+    $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分'
       + (g && need > 0 ? '<span class="' + (pv.est >= need ? 'ok' : 'short') + '">關卡還差 ' + fmt(need) + (pv.est >= need ? '：這一筆足夠！' : '') + '</span>' : '');
     // 手上和已選素材有相同標籤的會微亮；再加一張就有組合或升級形式的會更亮
     const selTags = new Set();
@@ -728,7 +710,7 @@
     }
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
-    const gd = e.target.closest('[data-sg], [data-suit], [data-medsel], [data-chase]');
+    const gd = e.target.closest('[data-sg], [data-chase]');
     if (gd && !st.busy) { A().sfx('click'); applyGuide(gd); return; }
     const tb = e.target.closest('.ct-tool[data-tool]');
     if (tb && !st.busy) { useTool(Number(tb.dataset.tool)); return; }
