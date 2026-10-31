@@ -4393,6 +4393,29 @@ body {
 .hq-foot { margin: 0; font-size: 13px; }
 .help-more { margin-top: 6px; border-top: 1px solid #26334d; padding-top: 8px; }
 .help-more summary { cursor: pointer; color: var(--mute); font-size: 13px; }
+/* 第十三期：起承轉合 */
+.cc .cc-pos { position: absolute; left: auto; top: auto; right: 6px; bottom: 6px; z-index: 2; width: 22px; height: 22px; min-width: 0; padding: 0; margin: 0; display: grid; place-items: center; border-radius: 50%; line-height: 1; font-size: 11px; font-weight: 900; color: #0b0f1a; background: #ffc247; box-shadow: 0 0 0 2px #1a1028, 0 0 8px rgba(255, 194, 71, 0.8); }
+.cc .cc-pos.p1 { background: #9be36b; } .cc .cc-pos.p2 { background: #ff8fd1; } .cc .cc-pos.p3 { background: #7fe3ff; } .cc .cc-pos.p4 { background: #c38bff; }
+.ct-struct { border-radius: 12px; padding: 10px 12px; background: var(--surface), #120a1c; border: 1px solid #2c1f40; box-shadow: inset 0 1px 0 var(--edge); }
+.sx-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.sx-head b { font-size: 15px; letter-spacing: 0.1em; color: #ffe2a0; }
+.sx-head small { font-size: 11px; color: var(--mute); }
+.sx-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.sx { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 8px; font-size: 12px; color: #8d7fa8; background: rgba(255, 255, 255, 0.02); }
+.sx b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #2a1d3d; color: #c9bde3; font-size: 12px; }
+.sx span { min-width: 0; line-height: 1.35; }
+.sx span small { display: block; font-size: 10px; color: var(--mute); }
+.sx i { font-style: normal; font-size: 11px; white-space: nowrap; }
+.sx.done, .sx.ok { color: #f1e6ff; background: rgba(155, 227, 107, 0.08); }
+.sx.ok b, .sx.done b { background: #ffc247; color: #0b0f1a; }
+.sx.ok i { color: var(--alien); }
+.sx.miss { color: #e6dcff; background: rgba(255, 77, 94, 0.07); }
+.sx.miss i { color: #ff9aa6; }
+.sx.next { color: #d8f6ff; background: rgba(55, 195, 214, 0.12); box-shadow: inset 2px 0 0 #37c3d6; }
+.sx.next b { background: #37c3d6; color: #04161f; }
+.sx-series { margin: 6px 0 0; font-size: 12px; color: var(--mute); }
+.sx-series.on { color: #ffe2a0; }
+@media (max-width: 959px) { .ct-struct { order: 10; } }
 </style>
 </head>
 <body>
@@ -4622,12 +4645,12 @@ body {
   const SOUL_LIMIT = 21;
 
   // 累積訊號門檻（第 20、40、60、80、100 天）
-  const THRESHOLDS = [575000, 2130000, 7200000, 13300000, 25200000];
+  const THRESHOLDS = [1150000, 4260000, 14400000, 26600000, 50400000];
   // 一局的長度（第八期）：標準 60 天約一小時；長篇 100 天是以前的玩法。
   // period：一個篩選期的天數；stageDays：每期的三個關卡之夜；season：季節長度；sketch：平常晚上只可以速寫。
   const MODES = {
     standard: { id: 'standard', name: '標準', desc: '60 天，約一小時', days: 60, period: 12, stageDays: [4, 8, 12], season: 20, shopEvery: 2, sketch: true,
-      thresholds: [280000, 900000, 2750000, 5200000, 9600000] },
+      thresholds: [560000, 1800000, 5500000, 10400000, 19200000] },
     long: { id: 'long', name: '長篇', desc: '100 天，以前的玩法', days: 100, period: 20, stageDays: [7, 14, 20], season: 25, shopEvery: 3, sketch: false,
       thresholds: THRESHOLDS },
   };
@@ -9406,6 +9429,41 @@ body {
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
+  // ---------- 起承轉合（第十三期）：下筆的次序就是作品的結構 ----------
+  // 起：定下主題。承：和起有相同標籤 → 呼應。轉：和前兩張完全不同 → 反轉。
+  // 合：和起有相同標籤 → 首尾呼應；同時接回轉的標籤 → 收束。尾：和合有相同標籤 → 餘韻。
+  // 系列作：這一筆的起延續上一筆的主題，同一晚越連越強。
+  const POS = ['起', '承', '轉', '合', '尾'];
+  const shares = (a, b) => !!a && !!b && a.tags.some((t) => b.tags.includes(t));
+  function structure(s, sel) {
+    const [a, b, c, d, e] = sel;
+    const ses = (s && s.session) || {};
+    const out = [];
+    const twist = !!c && !shares(c, a) && !shares(c, b);
+    if (b) out.push({ id: 'echo', name: '呼應', pos: 1, mult: 2, ok: shares(a, b), need: '「承」要和「起」有相同標籤' });
+    if (c) out.push({ id: 'twist', name: '反轉', pos: 2, xmult: 1.5, ok: twist, need: '「轉」要和前兩張完全沒有相同標籤' });
+    if (d) {
+      out.push({ id: 'callback', name: '首尾呼應', pos: 3, xmult: 1.5, ok: shares(d, a), need: '「合」要和「起」有相同標籤' });
+      out.push({ id: 'resolve', name: '收束', pos: 3, xmult: 1.5, ok: twist && shares(d, a) && shares(d, c), need: '「合」同時要有「轉」的標籤（雙標籤素材最合用）' });
+    }
+    if (e) out.push({ id: 'coda', name: '餘韻', pos: 4, mult: 3, ok: shares(e, d), need: '「尾」要和「合」有相同標籤' });
+    if (a && ses.lastTheme && a.tags.some((t) => ses.lastTheme.includes(t))) out.push({ id: 'series', name: '系列作', pos: 0, xmult: r2(1 + 0.25 * (ses.themeStreak || 1)), ok: true, need: '' });
+    return out;
+  }
+  // 自動排列（模擬機械人用）：主題最多的做起，同主題做承，完全不同的做轉，能接回兩邊的做合
+  function arrange(cards) {
+    if (cards.length < 3) return cards.slice();
+    const cnt = tagCounts(cards);
+    const theme = Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x])[0];
+    const pool = cards.slice().sort((x, y) => y.value - x.value);
+    const take = (f) => { const i = pool.findIndex(f); return i >= 0 ? pool.splice(i, 1)[0] : null; };
+    const a = take((c) => c.tags.includes(theme)) || pool.shift();
+    const b = take((c) => shares(c, a)) || pool.shift();
+    const c = take((x) => !shares(x, a) && !shares(x, b)) || pool.shift();
+    const d = take((x) => shares(x, a) && shares(x, c)) || take((x) => shares(x, a)) || pool.shift();
+    return [a, b, c, d].concat(pool).filter(Boolean);
+  }
+
   // ---------- 作品形式 ----------
   function tagCounts(cards) {
     const counts = {};
@@ -9596,6 +9654,12 @@ body {
       if (!x.def.play) return;
       const e = x.def.play(ctx, x.n);
       if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id }, e))); }
+    });
+    // 起承轉合：按次序判斷結構技巧
+    const struct = structure(s, sel);
+    struct.filter((x) => x.ok).forEach((x) => {
+      apply({ mult: x.mult, xmult: x.xmult });
+      steps.push(snap({ t: 'struct', id: x.id, name: x.name, pos: x.pos, mult: x.mult || 0, xmult: x.xmult || 0, uid: sel[x.pos] && sel[x.pos].uid }));
     });
     mult = Math.max(0, mult);
     const ai = aiFactor(s, F.id, objs, schools);
@@ -9862,6 +9926,10 @@ body {
     ses.total += res.total; ses.raw += res.raw;
     ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
     ses.lastUids = uids.slice();
+    const first = cardOf(s, uids[0]);
+    const cont = !!(first && ses.lastTheme && first.tags.some((t) => ses.lastTheme.includes(t)));
+    ses.themeStreak = cont ? (ses.themeStreak || 1) + 1 : 1;
+    ses.lastTheme = first ? first.tags.slice() : null;
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
     ses.used.push(...uids.filter((u) => cardOf(s, u)));
@@ -10084,8 +10152,17 @@ body {
       need.forEach((t) => byVal.filter((c) => c.tags.includes(t) && !pick.includes(c)).slice(0, r.need[t]).forEach((c) => pick.push(c)));
       if (pick.length <= 5) add(pick);
     });
+    // 起承轉合：主題兩張、一張反轉、一張能接回兩邊的雙標籤素材
+    tags.forEach((a) => tags.forEach((b) => {
+      if (a === b) return;
+      const pick = byVal.filter((c) => c.tags.includes(a) && !c.tags.includes(b)).slice(0, 2);
+      const tw = byVal.find((c) => c.tags.includes(b) && !c.tags.includes(a) && !pick.includes(c));
+      const br = byVal.find((c) => c.tags.includes(a) && c.tags.includes(b));
+      if (pick.length === 2 && tw && br) add(pick.concat([tw, br]));
+    }));
     let best = null;
-    cands.forEach((uids) => {
+    cands.forEach((raw) => {
+      const uids = arrange(raw.map((u) => cardOf(s, u))).map((c) => c.uid);
       const sc = scorePlay(s, uids);
       if (!best || sc.total > best.total) best = { uids, total: sc.total, form: sc.form };
     });
@@ -10093,7 +10170,7 @@ body {
   }
 
   IE.Create = {
-    FORM, RANK, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    FORM, RANK, POS, structure, arrange, cardValue, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
     isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
@@ -10960,7 +11037,7 @@ body {
     big: { name: '畫廊聯展', short: '聯展', mult: 1.1, color: '#c38bff', reward: { cr: 120, tools: 1, tickets: 1 }, fail: { rating: -0.3, spark: -0.3 } },
     boss: { name: '外星評審', short: '評審', mult: 1.45, color: '#ff4d5e', reward: { cr: 200, tools: 2, tickets: 2, obj: 0.5 }, fail: { signalPct: -0.08, spark: -0.4 } },
   };
-  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 17000);
+  const STAGE_K = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_K) || 36000);
   // 一晚的目標分數：隨日子以每天約 4% 增長（與創作分數的增長曲線相若）
   const STAGE_G = Number((typeof process !== 'undefined' && process.env && process.env.STAGE_G) || 1.032);
   // 用「進度日」計算：60 天的一局，目標也會走完整條增長曲線
@@ -23476,7 +23553,7 @@ body {
     return '<div class="modal wide"><h2>玩法</h2><div class="help help-quick">'
       + '<p class="hq-goal"><b>目標</b>：撐過 60 天、五輪篩選。最後一輪通過，外星人就會帶你走。落選三次，你會被歸入人才庫。</p>'
       + '<div class="hq-pillars">'
-      + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆：同一標籤越多，作品形式越高；分數 = 籌碼 × 倍率 × 火花。不知道怎樣打，就按「這手牌可以」。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
+      + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆，點選的次序就是「起承轉合」：承呼應起、轉要完全不同、合要接回起（最好也接回轉）。排得好，分數可以差幾倍。同一晚每一筆延續主題就是系列作。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
       + '<div class="hq-p"><span class="hq-n">2</span><b>靈魂</b><p>外星人只要又亮又輕的人：靈魂超過 21 克就不會被選中。做虧心事會變重，做好事會變輕；良知越高，虧心事越重。</p></div>'
       + '<div class="hq-p"><span class="hq-n">3</span><b>浮城</b><p>白天工作賺錢、生活收集素材、找朋友聊天。標着「今晚加成」的行動最划算；小遊戲不想玩可以按「跳過」。每天的天氣都會改變一些規則。</p></div>'
       + '</div>'
@@ -23891,6 +23968,7 @@ body {
       + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
+      + (o.sel && o.pos >= 0 ? '<span class="cc-pos p' + o.pos + '">' + C().POS[o.pos] + '</span>' : '')
       + '<span class="cc-name">' + esc(c.name) + '</span>'
       + (c.rarity === 'legend' ? '<span class="cc-rar">極稀有</span>' : c.origin && c.origin !== 'home' && D_.REGIONS ? '<span class="cc-rar origin">' + esc(D_.REGIONS[c.origin]) + '</span>' : '')
       + '<span class="cc-tags">' + tags + '</span>'
@@ -23929,10 +24007,10 @@ body {
     {
       id: 'pick',
       short: '選牌',
-      title: '步驟 1/6：選牌（挑選 1 至 5 張素材）',
-      desc: '手牌上方的「這手牌可以」列出這手牌組得出的作品形式和預計分數，按一下就會選好；也可以自己點選素材卡（或按數字鍵 1–9）。相同標籤出現得越多，作品形式越高級；湊齊特定標籤還能觸發「具名組合」。',
-      action: '試著按「這手牌可以」的第一個建議，或按「下一步」',
-      target: '.ct-sugg, .ct-hand',
+      title: '步驟 1/6：起承轉合（點選的次序就是結構）',
+      desc: '依次點選素材，它們會成為「起、承、轉、合」。承和起同標籤是呼應；轉和前兩張完全不同是反轉；合接回起是首尾呼應，同時接回轉更是收束。次序排得好，分數可以差幾倍。左邊的「起承轉合」會告訴你每一步做到沒有。',
+      action: '試著依次點選四張素材，看看左邊的結構追蹤',
+      target: '.ct-hand, .ct-struct',
     },
     {
       id: 'est',
@@ -24041,6 +24119,7 @@ body {
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
+      + '<div class="ct-struct" aria-live="polite"></div>'
       + '<p class="ct-hint"></p>'
       + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>牌型表<small>● 這手牌組得出</small></summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
@@ -24208,7 +24287,7 @@ body {
     renderStage();
     renderGoal();
     $('.ct-night b').textContent = fmt(ses.total);
-    $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid) })).join('');
+    $('.ct-hand').innerHTML = sortedHand().map((c) => cardEl(s, c, { sel: st.sel.includes(c.uid), pos: st.sel.indexOf(c.uid) })).join('');
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
@@ -24411,7 +24490,7 @@ body {
     const s = st.s, ses = s.session;
     const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
       + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
-    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 ? C().suggest(s, ses.hand, 3) : []; }
+    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 && s.firstRun ? C().suggest(s, ses.hand, 3) : []; }
     return st.sg;
   }
   function sgKeyText(x) {
@@ -24497,7 +24576,35 @@ body {
     render();
     root.querySelectorAll('.ct-hand .cc.sel').forEach((b, i) => b.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)' }, { transform: 'translateY(-16px)' }], { duration: 220, delay: i * 35 }));
   }
+  // 起承轉合的結構追蹤（第十三期）：每一格放了甚麼、技巧有沒有達成、下一張要選怎樣的素材
+  const STRUCT_RULE = ['定下主題', '和「起」有相同標籤 → 呼應 +2 倍率', '和前兩張完全不同 → 反轉 ×1.5', '接回「起」→ 首尾呼應 ×1.5；同時接回「轉」→ 收束 ×1.5', '和「合」有相同標籤 → 餘韻 +3 倍率'];
+  function renderStruct() {
+    const s = st.s, ses = s.session, el = $('.ct-struct');
+    if (!el) return;
+    const sel = st.sel.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const techs = C().structure(s, sel);
+    const POS = C().POS, max = C().maxCards(s);
+    const n = Math.min(max, sel.length >= 4 && max >= 5 ? 5 : 4);
+    const tagNames = (c) => c.tags.map((t) => D().TAGS[t].name).join('・');
+    const rows = [];
+    for (let i = 0; i < n; i++) {
+      const c = sel[i];
+      if (c) {
+        const mine = techs.filter((x) => x.pos === i && x.id !== 'series');
+        const okAny = mine.some((x) => x.ok);
+        rows.push('<li class="sx ' + (i === 0 ? 'done' : okAny ? 'ok' : 'miss') + '"><b>' + POS[i] + '</b><span>' + esc(c.name) + '<small>' + esc(tagNames(c)) + '</small></span>'
+          + '<i>' + (i === 0 ? '主題' : mine.map((x) => (x.ok ? '✓ ' : '✗ ') + x.name).join(' ')) + '</i></li>');
+      } else {
+        rows.push('<li class="sx ' + (i === sel.length ? 'next' : 'todo') + '"><b>' + POS[i] + '</b><span>' + STRUCT_RULE[i] + '</span></li>');
+      }
+    }
+    const series = techs.find((x) => x.id === 'series');
+    const theme = ses.lastTheme ? ses.lastTheme.map((t) => D().TAGS[t].name).join('・') : '';
+    el.innerHTML = '<div class="sx-head"><b>起承轉合</b><small>下筆的次序就是作品的結構</small></div><ol class="sx-list">' + rows.join('') + '</ol>'
+      + (theme ? '<p class="sx-series' + (series ? ' on' : '') + '">' + (series ? '✓ 系列作 ×' + series.xmult : '系列作') + '：「起」延續上一筆的主題（' + esc(theme) + '）</p>' : '');
+  }
   function renderPreview() {
+    renderStruct();
     const s = st.s;
     const pv = st.sel.length ? C().preview(s, st.sel) : null;
     root.querySelectorAll('.ct-flist .fr').forEach((li) => li.classList.toggle('on', !!pv && li.dataset.form === pv.form));
@@ -25055,6 +25162,17 @@ body {
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
+        case 'struct': {
+          // 起承轉合的技巧：在那張牌上方彈出，並蓋印
+          const el = x.uid != null ? stageCard(x.uid) : null;
+          if (el) { bump(el, 1.18); floatText(el, x.name, 'xmult'); }
+          tag(x.name + (x.xmult ? ' ×' + x.xmult : ' +' + x.mult + ' 倍率'), x.id === 'resolve' || x.id === 'series' ? 'legend' : 'kpi-good');
+          setBoxes(x.C, x.M);
+          A().fx('mult', x.xmult ? 4 : 2);
+          if (x.id === 'resolve') shake(4);
+          await wait(x.id === 'resolve' ? 520 : 360);
+          break;
+        }
         case 'weather':
           tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
           A().fx('mult', 2);
