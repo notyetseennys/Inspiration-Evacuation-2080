@@ -1,4 +1,4 @@
-// 《靈感撤離 2080》第十五期：五輪模式的數值常數、白日卡目錄、素材包、服務與固定文案。
+// 《靈感撤離 2080》第十五期：五輪模式的數值常數、生活卡目錄、素材包、服務與固定文案。
 // 純資料檔，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 (function (factory) {
   const root = typeof window !== 'undefined' ? window : globalThis;
@@ -10,50 +10,63 @@
 
   // 五輪模式的經濟與數值常數
   const ECON = {
-    t1: 4000,
-    growth: 1.5,
-    firstRunEase: 0.65,
-    reward: { small: 80, big: 140, boss: 220 },
-    interestStep: 50,
-    interestCap: 25,
-    rent: [220, 340, 480, 640, 820],
-    rerollBase: 40,
-    rerollStep: 20,
-    packCost: 65,
-    packPick: 1,
-    packShow: 3,
-    toolCost: 50,
-    serviceCost: { polish: 70, burn: 50, copy: 110 },
-    sparkDecay: 0.15,
-    sparkFloor: 0.6,
+    // 目標
+    t1: 4000,             // 第 1 晚的目標
+    growth: 1.45,         // 之後每晚 ×1.45
+    firstRunEase: 0.7,    // 第一局的第 1、2 晚目標 ×0.7
+    // 創作桌
+    hand: 8, plays: 4, discards: 3,
+    // 收入
+    nightPay: { small: 60, big: 90, boss: 140 },
+    payGrowth: 0.25,      // 每多一輪，獎金 +25%
+    earlyBonus: 10,       // 每次沒有用的下筆
+    overkillSpark: 0.2,   // 分數達到目標兩倍：火花 +0.2
+    failSpark: -0.3,      // 一晚失敗：火花 −0.3
+    // 篩選日
+    rent: [120, 180, 260, 360, 480],
+    // 白天
+    offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
+    skipSpark: 0.2,                 // 睡懶覺
+    tripCost: 120, tripPick: 2,     // 出國：五選二
+    // 市集
+    objReroll: [20, 30, 40, 50],    // 重抽物件
+    pack: 40, packFar: 70,          // 素材包
+    packStars: [0.55, 0.27, 0.12, 0.05, 0.01],  // 素材包的星級機會（★1 至 ★5）
+    polish: [0, 30, 60, 100, 160],  // 打磨：★1→2 是 polish[1]……★4→5 是 polish[4]
+    burn: 20, copy: 50, minDeck: 8,  // 起始素材庫約 11 張
+    tech: 50, techStep: 25,         // 技法課：50 + 25 ×（現在等級 − 1）
+    toolMult: 1,                    // 工具卡價錢 × toolMult
+    sparkFloor: 1,
   };
 
   // 五輪模式的固定文案
   const ROUND_TEXT = {
-    modeName: '五輪',
-    modeDesc: '十五晚，約四十分鐘',
-    dayPickTitle: '今天白天做甚麼？',
-    dayPickSub: '選一張白日卡（小遊戲或一鍵結算），做完就入夜創作',
-    nightSmall: '社區小展',
-    nightBig: '畫廊聯展',
-    nightBoss: '外星評審',
-    passHeadline: '過關',
-    failHeadline: '未達標',
-    interestLine: (n) => '存款利息 +$' + n,
-    chanceLost: (left) => '失去一盞機會燈（剩餘 ' + left + ' 盞）',
-    shopTitle: '晚間市集',
-    shopSub: '買靈感物件、拆素材包、做一次服務，準備好就去下一晚',
-    shopSkip: '收工，去下一晚',
-    packTitle: '選一張帶走',
-    packSkip: '都不拿',
-    servicePickTitle: (name) => name + '：選一張素材',
-    roundEndTitle: (r) => '第 ' + r + ' 輪結束・篩選與交租',
-    rentPaid: (v) => '交租 −$' + v,
-    rentShort: (v) => '不夠錢交租（差 $' + v + '）：搬到天橋底，火花 −0.6，失去一件最貴的靈感物件',
-    npcTaken: (name, card) => name + ' 今晚被探射燈帶走了，臨走塞給你「' + card + '」',
+    kinds: { work: '工作', shady: '虧心', life: '生活', friend: '朋友', volunteer: '義工', trip: '出國' },
+    nightKinds: { small: '社區小展', big: '畫廊聯展', boss: '外星評審' },
+    dayTitle: '第 {round} 輪・第 {night}／15 晚',
+    dayAsk: '今天做甚麼？',
+    reroll: '換一批（${cost}）',
+    skip: '睡懶覺（火花 +{v}）',
+    byHand: '親手做',
+    byAuto: '照舊做（{rank} 級）',
+    tonight: '今晚：{kind}・目標 {target} 分',
+    rentLine: '本輪租金 ${rent}（第 {day} 天到期）',
+    cleared: '收工！',
+    early: '提早收工：還有 {n} 次下筆，每次 +${v}',
+    failed: '今晚沒有達到目標。失去一次機會。',
+    toShop: '前往市集',
+    shopTitle: '二手市集',
+    leave: '離開市集',
+    relic: '遺物：三選一（免費）',
+    rentOk: '交租 −${rent}',
+    rentFail: '交不起租：房東收走了你身上全部的錢。失去一次機會。',
+    soulOk: '靈魂 {soul} 克：光束拉得動你。',
+    soulFail: '靈魂 {soul} 克，超過 21 克：光束拉不動你。失去一次機會。',
+    nextRound: '進入第 {round} 輪',
+    chances: '機會',
   };
 
-  // 十三張白日卡目錄
+  // 十三張生活卡目錄
   const DAYCARDS = [
     { id: 'label', kind: 'work', micro: 'label' },
     { id: 'delivery', kind: 'work', micro: 'delivery' },
@@ -79,7 +92,7 @@
     { id: 'far', name: '遠方包', foreign: true },
   ];
 
-  // 晚間市集的三種服務
+  // 市集的工作室服務
   const SERVICES = [
     { id: 'polish', name: '打磨', desc: '一張素材升一星' },
     { id: 'burn', name: '燒掉', desc: '從素材庫刪除一張素材' },
