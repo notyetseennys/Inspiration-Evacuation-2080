@@ -278,6 +278,46 @@
     return res;
   }
 
+  // ---------- 夜晚：創作桌、獎金與機會 ----------
+  // 總規格 §6 的獎金公式（不乘外星評級的價錢修正）
+  function nightReward(s, kind, playsLeft) {
+    const k = kind || kindOf(s ? s.night : 1);
+    const base = D.ECON.nightPay[k] || 0;
+    const r = roundOf(s);
+    const pl = Math.max(0, playsLeft || 0);
+    return Math.round(base * (1 + D.ECON.payGrowth * (r - 1))) + D.ECON.earlyBonus * pl;
+  }
+
+  // 這一晚是否已達標（可以提早收工）
+  function cleared(s) {
+    if (!s || !s.session || !s.session.stage || !IE.Stages) return false;
+    return IE.Stages.stageScore(s.session) >= s.session.stage.target;
+  }
+
+  // 失去一次機會；機會用完即進入結局
+  function loseChance(s, cause, rep) {
+    if (!s || !on(s)) return;
+    s.chances = Math.max(0, (s.chances == null ? 3 : s.chances) - 1);
+    s.lost = s.lost || [];
+    s.lost.push(cause);
+    if (rep && rep.line) {
+      const msg = cause === 'rent' ? D.ROUND_TEXT.rentFail
+        : cause === 'soul' ? D.ROUND_TEXT.soulFail.replace('{soul}', (s.soul || 0).toFixed(1))
+        : D.ROUND_TEXT.failed;
+      rep.line(msg, 'bad');
+    }
+    if (s.chances <= 0) {
+      s.ended = R.endingFor(s, cause === 'soul' ? 'heavy' : 'archived');
+      s.phase = 'ended';
+    }
+  }
+
+  // 開始夜晚創作（s.phase 必須是 'night'，否則回傳 null）
+  function startNight(s) {
+    if (!s || !on(s) || s.phase !== 'night') return null;
+    return IE.Create.start(s, 'normal');
+  }
+
   IE.Rounds = {
     on,
     roundOf,
@@ -295,5 +335,9 @@
     afterDay,
     skipDay,
     tripPick,
+    nightReward,
+    cleared,
+    loseChance,
+    startNight,
   };
 });

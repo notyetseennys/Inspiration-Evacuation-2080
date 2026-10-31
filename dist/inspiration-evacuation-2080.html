@@ -9957,6 +9957,11 @@ body {
   const stageTonight = (s) => !!(IE.Stages && IE.Stages.today(s) && !(s.stageDone && s.stageDone[s.day]));
   const isSketch = (s, mode) => mode === 'normal' && RL.modeOf(s).sketch && !stageTonight(s);
   function canStart(s, mode) {
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (mode !== 'normal') return '五輪模式只接受正常創作';
+      if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
+      return null;
+    }
     const cost = mode === 'allnighter' ? C.allnighterCost : isSketch(s, mode) ? C.sketchCost : C.cost;
     if (s.spark < 1) return '火花不足 ×1.0，你甚麼都想不出來';
     if (s.cards.length < 3) return '素材庫最少要有 3 張素材';
@@ -9970,6 +9975,27 @@ body {
     return a;
   }
   function start(s, mode) {
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const m = objMods(s);
+      const perk = D.BACKGROUNDS[s.bg].perk;
+      const E = D.ECON;
+      const refund = { cr: 0, body: 0, spark: s.spark };
+      s.session = {
+        mode: 'normal', day: s.day,
+        deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
+        handSize: E.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
+        plays: (perk.playsSet || E.plays) + m.plays + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0),
+        discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
+        discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
+      };
+      s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
+      s.session.abil = { used: 0, bought: 0 };
+      s.phase = 'night';
+      s.slot = 2;
+      if (IE.Stages) IE.Stages.onStart(s, s.session);
+      draw(s);
+      return s.session;
+    }
     const all = mode === 'allnighter', sketch = isSketch(s, mode);
     const m = objMods(s);
     const perk = D.BACKGROUNDS[s.bg].perk;
@@ -10138,7 +10164,14 @@ body {
     const ses = s.session;
     if (!ses) return null;
     s.session = null;
-    if (!ses.log.length) return { work: null, session: ses };
+    if (!ses.log.length) {
+      if (IE.Rounds && IE.Rounds.on(s)) {
+        const stage = IE.Stages ? IE.Stages.settle(s, ses, ses.plays) : null;
+        s.phase = s.ended ? 'ended' : 'shop';
+        return { work: null, session: ses, paid: [], stage, spore: null };
+      }
+      return { work: null, session: ses };
+    }
     const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
     // 蘑菇星交換生的「菌絲」：一張用過的素材長出孢子
     let spore = null;
@@ -10159,6 +10192,12 @@ body {
     if (!s.stats.bestWork || work.raw > s.stats.bestWork.raw) s.stats.bestWork = work;
     s.saturation = Math.min(1.15, s.saturation + 0.02);
     RL.train(s, { craft: 1.2, imag: 0.5 }, null);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const paid = [];
+      const stage = IE.Stages ? IE.Stages.settle(s, ses, ses.plays) : null;
+      s.phase = s.ended ? 'ended' : 'shop';
+      return { work, session: ses, paid, stage, spore };
+    }
     const paid = IE.World ? IE.World.settleCommissions(s, ses) : [];
     const stage = IE.Stages ? IE.Stages.settle(s, ses) : null;
     return { work, session: ses, paid, stage, spore };
@@ -11259,6 +11298,10 @@ body {
     const kind = d === M.stageDays[0] ? 'small' : d === M.stageDays[1] ? 'big' : d === M.stageDays[2] ? 'boss' : null;
     if (!kind) return null;
     const K = KINDS[kind];
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const target = IE.Rounds.target(s, day / 4);
+      return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
+    }
     // 第一局的頭兩關目標較低（第十二期），讓新玩家先嘗到過關的滋味
     const easy = s.firstRun && q === 0 && kind !== 'boss' ? 0.6 : 1;
     const target = Math.round(baseTarget(s, day) * K.mult * stakeMod(s, 'stageTarget') * easy / 1000) * 1000;
@@ -11303,12 +11346,41 @@ body {
     return ses.total;
   }
   // 創作完成時結算關卡
-  function settle(s, ses) {
+  function settle(s, ses, playsLeft) {
     if (!ses || !ses.stage || (s.stageDone && s.stageDone[s.day])) return null;
     const score = stageScore(ses);
-    return resolve(s, ses.stage, score);
+    return resolve(s, ses.stage, score, playsLeft);
   }
-  function resolve(s, stage, score) {
+  function resolve(s, stage, score, playsLeft) {
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      s.stageDone = s.stageDone || {};
+      const pass = score >= stage.target;
+      const pl = playsLeft || 0;
+      const reward = pass ? IE.Rounds.nightReward(s, stage.kind, pl) : 0;
+      const out = { kind: stage.kind, name: stage.name, target: stage.target, score, pass, index: stage.index, reward, playsLeft: pl, lines: [], tools: [], objs: [], tickets: 0 };
+      s.stageDone[s.day] = pass ? 'pass' : 'fail';
+      s.stats.stages = s.stats.stages || { pass: 0, fail: 0 };
+      if (pass) {
+        s.stats.stages.pass++;
+        const sc = IE.Create.schoolCounts(s);
+        Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
+        s.cr += reward; s.stats.crEarned += reward; out.cr = reward;
+        out.lines.push('獎金 $' + reward);
+        if (score >= stage.target * 2) {
+          s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, D.ECON.overkillSpark, true);
+          if (stage.kind !== 'small') { R.gainTicket(s, 'gold', 1, '驚為天人'); out.lines.push('金色扭蛋券 +1'); }
+        }
+        if (stage.rules && stage.rules.length) { s.stats.judges = s.stats.judges || {}; stage.rules.forEach((id) => { s.stats.judges[id] = true; }); }
+      } else {
+        s.stats.stages.fail++;
+        R.addSpark(s, D.ECON.failSpark, true); out.lines.push('火花 ' + D.ECON.failSpark);
+        IE.Rounds.loseChance(s, 'night', { line: (t) => out.lines.push(t) });
+      }
+      s.nightLog = s.nightLog || [];
+      s.nightLog.push({ night: s.night, kind: stage.kind, target: stage.target, score, pass, reward, playsLeft: pl });
+      s.stageLog = (s.stageLog || []).concat({ day: s.day, kind: stage.kind, pass, score, target: stage.target });
+      return out;
+    }
     s.stageDone = s.stageDone || {};
     const pass = score >= stage.target;
     const K = KINDS[stage.kind];
@@ -12245,6 +12317,46 @@ body {
     return res;
   }
 
+  // ---------- 夜晚：創作桌、獎金與機會 ----------
+  // 總規格 §6 的獎金公式（不乘外星評級的價錢修正）
+  function nightReward(s, kind, playsLeft) {
+    const k = kind || kindOf(s ? s.night : 1);
+    const base = D.ECON.nightPay[k] || 0;
+    const r = roundOf(s);
+    const pl = Math.max(0, playsLeft || 0);
+    return Math.round(base * (1 + D.ECON.payGrowth * (r - 1))) + D.ECON.earlyBonus * pl;
+  }
+
+  // 這一晚是否已達標（可以提早收工）
+  function cleared(s) {
+    if (!s || !s.session || !s.session.stage || !IE.Stages) return false;
+    return IE.Stages.stageScore(s.session) >= s.session.stage.target;
+  }
+
+  // 失去一次機會；機會用完即進入結局
+  function loseChance(s, cause, rep) {
+    if (!s || !on(s)) return;
+    s.chances = Math.max(0, (s.chances == null ? 3 : s.chances) - 1);
+    s.lost = s.lost || [];
+    s.lost.push(cause);
+    if (rep && rep.line) {
+      const msg = cause === 'rent' ? D.ROUND_TEXT.rentFail
+        : cause === 'soul' ? D.ROUND_TEXT.soulFail.replace('{soul}', (s.soul || 0).toFixed(1))
+        : D.ROUND_TEXT.failed;
+      rep.line(msg, 'bad');
+    }
+    if (s.chances <= 0) {
+      s.ended = R.endingFor(s, cause === 'soul' ? 'heavy' : 'archived');
+      s.phase = 'ended';
+    }
+  }
+
+  // 開始夜晚創作（s.phase 必須是 'night'，否則回傳 null）
+  function startNight(s) {
+    if (!s || !on(s) || s.phase !== 'night') return null;
+    return IE.Create.start(s, 'normal');
+  }
+
   IE.Rounds = {
     on,
     roundOf,
@@ -12262,6 +12374,10 @@ body {
     afterDay,
     skipDay,
     tripPick,
+    nightReward,
+    cleared,
+    loseChance,
+    startNight,
   };
 });
 
