@@ -5,7 +5,7 @@
 ## 1. 分支與提交
 
 - 整合分支：`claude/serene-dirac-xqu6dg`（不是 `main`）。每張工單從它的最新 commit 開分支，名稱照工單表頭，例如 `gemini/wo-15-01-rounds-core`。
-- 一張工單一個 PR，目標分支是 `claude/serene-dirac-xqu6dg`。
+- 一張工單一條分支。完成後推送，告訴製作人；也可以開 PR 到 `claude/serene-dirac-xqu6dg`（兩種都可以）。
 - 提交訊息以工單編號開頭，例如 `WO-15-01：加入五輪模式的資料`。可以有多個 commit。
 - 不要 force push、不要改寫已推送的歷史、不要直接推送到 `claude/` 或 `main` 分支。
 - 開 PR 之前，把整合分支的最新內容合併進你的分支（`git merge`，不要 rebase），並解決衝突。

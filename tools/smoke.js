@@ -15,6 +15,19 @@ const URL = 'http://localhost:' + PORT + '/';
   await new Promise((r) => setTimeout(r, 600));
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1000, height: 900 } });
+  // 固定瀏覽器的隨機數（SEED 環境變數可以換一個），令每次測試走同一條路：
+  // 新遊戲的種子、世界事件、天氣都一樣，不會因為隨機事件（例如外送被停工、意外死亡）而偶爾失敗
+  const SEED = Number(process.env.SEED || 20801031) >>> 0;
+  await page.addInitScript((seed) => {
+    let a = seed;
+    Math.random = () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }, SEED);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push(m.text()); });
@@ -258,7 +271,8 @@ const URL = 'http://localhost:' + PORT + '/';
     if (!wheel.stars) await fail('手牌沒有星級');
     const pol = await page.evaluate(() => {
       const s = window.__IE.Game.state, C = window.__IE.Create;
-      const c = s.cards.find((x) => !x.guilt && C.starOf(x) < 5);
+      // 打磨手牌以外的素材：打磨本來就在創作桌以外進行，這樣不會令畫面上的建議過時
+      const c = s.cards.find((x) => !x.guilt && C.starOf(x) < 5 && !s.session.hand.includes(x.uid));
       const st0 = C.starOf(c), cr0 = s.cr, cost = C.polishCost(s, c);
       s.cr = Math.max(s.cr, cost);
       const crA = s.cr;
