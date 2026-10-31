@@ -189,7 +189,9 @@ s.shop = {
 - 水位：`s.water = min(8.5, s.water + 季節的 water × 4)`。
 - 季節：如果 `floor((day − 1) / 20)` 比上一晚大，按 `D.SEASON_ORDER` 換季（照 `R.endDay` 的寫法）。
 - 世界事件：`s.events` 中 `until ≤ day` 的移除（照 `R.endDay` 的寫法）；新事件由 `R.morning(s)` 照舊安排。
-- AI 對風格的記憶：呼叫一次 `IE.Create.newDay(s)`。
+- AI 對風格的記憶：兩晚之間相隔四天，所以呼叫**四次** `IE.Create.newDay(s)`（與舊模式每天消退一次一致）。
+- 素材休息了四天：每張素材的磨損 `wear` 減 1（不低於 0）。
+- （WO-15-03 審核時的實驗：沒有這兩項時，即使火花不變，第 3 晚之後每一筆的分數也比第 1 晚低約三成；加上之後差距減半。）
 - 一晚失敗或交不起租都不影響 `advance`；機會用完的話不會呼叫 `advance`。
 
 ## §11 介面文字 `D.ROUND_TEXT`（介面一律從這裡取字）
