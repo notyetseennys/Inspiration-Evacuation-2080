@@ -141,7 +141,7 @@ ECON: {
 | `trip:<origin>` | `trip` | 付 `ECON.tripCost`，從 `origin` 相同的素材中抽 5 張，選 `ECON.tripPick` 張加入素材庫；火花 +0.4 | 第 2 輪起；每次出牌有 15% 機會出現在第三張；`origin` 只用 asia、europe、america、africa、arctic、ocean |
 
 - 卡名和說明沿用 `R.actions(s)` 對應行動的 `name`、`sub`；朋友卡用「找 X 聊天」、出國卡用「出國：X」（X 用 `D.REGIONS`）。
-- **出牌規則** `IE.Rounds.offer(s)`：三張不同的卡。第一張從 `work`／`shady` 抽，第二張從 `life`／`friend` 抽，第三張從全部可用的卡（包括 `volunteer`，第 2 輪起有 15% 機會是 `trip`）抽。被世界事件關閉（`worldClosed`）或被 AI 取代（`s.removed`）的工作不出現。同一晚重複呼叫回傳同一組（存在 `s.offer`）。
+- **出牌規則** `IE.Rounds.offer(s)`：三張不同的卡。第一張從 `work`／`shady` 抽，第二張從 `life`／`friend` 抽，第三張從全部可用的卡（包括 `volunteer`，第 2 輪起有 15% 機會是 `trip`）抽。被世界事件關閉（`worldClosed`）或被 AI 取代（`s.removed`）的工作不出現。某一格的種類沒有可用的卡時（例如全部工作停工），改從其餘可用的卡抽，三張仍然不同。同一晚重複呼叫回傳同一組（存在 `s.offer`）。
 - **小遊戲卡**：玩家可以「親手做」（開小遊戲）或「照舊做」（`IE.Auto.apply`，評級規則照舊：沒玩過是 B，最高 A）。結果經 `R.applyMicro` 套用，收入照舊（不另外縮放）。
 - **睡懶覺**：不選卡，火花 +`ECON.skipSpark`。
 

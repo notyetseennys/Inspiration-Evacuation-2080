@@ -12047,20 +12047,22 @@ body {
   function drawOfferIds(s) {
     const all = cardList(s);
     const kOf = (id) => { const d = cardDef(id); return d ? d.kind : ''; };
+    // 某一格的種類沒有可用的卡（例如世界事件令全部工作停工）：改從其餘可用的卡抽，三張仍然不同
+    const others = (used) => all.filter((id) => !id.startsWith('trip:') && !used.includes(id));
     const p1 = all.filter((id) => { const k = kOf(id); return k === 'work' || k === 'shady'; });
-    const c1 = R.pick(s, p1);
+    const c1 = R.pick(s, p1.length ? p1 : others([]));
     const p2 = all.filter((id) => { const k = kOf(id); return (k === 'life' || k === 'friend') && id !== c1; });
-    const c2 = R.pick(s, p2);
+    const c2 = R.pick(s, p2.length ? p2 : others([c1]));
     const tripDef = D.DAYCARDS.find((c) => c.id === 'trip');
     const trips = all.filter((id) => id.startsWith('trip:'));
-    const rest = all.filter((id) => !id.startsWith('trip:') && id !== c1 && id !== c2);
-    const c3 = trips.length && R.rand(s) < (tripDef ? tripDef.chance : 0.15) ? R.pick(s, trips) : R.pick(s, rest);
-    return [c1, c2, c3];
+    const rest = others([c1, c2]);
+    const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !rest.length) ? R.pick(s, trips) : R.pick(s, rest);
+    return [c1, c2, c3].filter(Boolean);
   }
 
   // 回傳 s.offer；這一晚還沒有就按總規格 §7 的出牌規則產生
   function offer(s) {
-    if (s.offer && s.offer.night === s.night && Array.isArray(s.offer.ids) && s.offer.ids.length === 3) return s.offer;
+    if (s.offer && s.offer.night === s.night && Array.isArray(s.offer.ids) && s.offer.ids.length) return s.offer;
     s.offer = { night: s.night, ids: drawOfferIds(s), rerolls: 0, chosen: null };
     return s.offer;
   }
@@ -12167,6 +12169,7 @@ body {
 
   // 睡懶覺：不選卡，恢復火花並進入晚上
   function skipDay(s) {
+    if (!s || s.phase !== 'day') return null;
     const rep = R.report(s, '睡懶覺');
     const sp = R.addSpark(s, D.ECON.skipSpark, true);
     rep.line('今天甚麼都不做，睡了一整天', 'good', sp, 'spark');
@@ -12230,11 +12233,9 @@ body {
     if (!s || !s.trip5 || !Array.isArray(s.trip5.ids)) return null;
     const t5 = s.trip5;
     t5.picked = t5.picked || [];
-    let i = typeof idx === 'string' ? t5.ids.indexOf(idx) : idx;
-    if (i == null || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) {
-      i = t5.ids.findIndex((_, k) => !t5.picked.includes(k));
-    }
-    if (i < 0) return null;
+    // 無效或已選過的卡：甚麼都不做（不要靜靜地改選另一張，否則介面的錯誤會被掩蓋）
+    const i = typeof idx === 'string' ? t5.ids.indexOf(idx) : idx;
+    if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
     const res = R.addCard(s, t5.ids[i]);
     if (t5.picked.length >= D.ECON.tripPick) {
