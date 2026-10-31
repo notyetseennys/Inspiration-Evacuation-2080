@@ -15,19 +15,9 @@ const URL = 'http://localhost:' + PORT + '/';
   await new Promise((r) => setTimeout(r, 600));
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1000, height: 900 } });
-  // 固定瀏覽器的隨機數（SEED 環境變數可以換一個），令每次測試走同一條路：
-  // 新遊戲的種子、世界事件、天氣都一樣，不會因為隨機事件（例如外送被停工、意外死亡）而偶爾失敗
-  const SEED = Number(process.env.SEED || 20801031) >>> 0;
-  await page.addInitScript((seed) => {
-    let a = seed;
-    Math.random = () => {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }, SEED);
+  // 固定新局的種子（SEED 環境變數可以換一個），令每次測試走同一條路：
+  // 世界事件、天氣、道德抉擇都一樣，不會因為隨機事件（例如工作被停工、意外死亡）而偶爾失敗
+  const SEED = Number(process.env.SEED || 20801031);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push(m.text()); });
@@ -67,7 +57,7 @@ const URL = 'http://localhost:' + PORT + '/';
   const ok = (msg) => console.log('✓ ' + msg);
   try {
     await page.goto(URL);
-    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ie2080.speed', '4'); localStorage.setItem('ie2080.noEncounter', '1'); });
+    await page.evaluate((seed) => { localStorage.clear(); localStorage.setItem('ie2080.speed', '4'); localStorage.setItem('ie2080.noEncounter', '1'); localStorage.setItem('ie2080.seed', String(seed)); }, SEED);
     await page.reload();
     await page.click('[data-do="new"]');
     await page.click('[data-do="start"]');
@@ -263,7 +253,8 @@ const URL = 'http://localhost:' + PORT + '/';
     for (const u of two14) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
     const wheel = await page.evaluate((us) => {
       const s = window.__IE.Game.state, cs = us.map((u) => s.cards.find((c) => c.uid === u));
-      const pal = new Set(cs.flatMap((c) => c.tags));
+      // 只計色輪上的情緒（旅行帶回的「遠古」「星辰」不在色輪上）
+      const pal = new Set(cs.flatMap((c) => c.tags).filter((t) => window.__IE.DATA.WHEEL.includes(t)));
       return { on: document.querySelectorAll('#ctable .ct-wheel .ws.on').length, pal: pal.size, segs: document.querySelectorAll('#ctable .ct-wheel .ws').length, info: document.querySelector('#ctable .cw-info').textContent, stars: document.querySelectorAll('#ctable .ct-hand .cc-star').length };
     }, two14);
     for (const u of two14) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
