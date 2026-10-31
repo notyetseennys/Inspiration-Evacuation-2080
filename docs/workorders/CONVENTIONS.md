@@ -10,6 +10,7 @@
 - 不要 force push、不要改寫已推送的歷史、不要直接推送到 `claude/` 或 `main` 分支。
 - 開 PR 之前，把整合分支的最新內容合併進你的分支（`git merge`，不要 rebase），並解決衝突。
 - **只改工單列明的檔案**。順手的重構、改名、格式化，一律不做。
+- 換行一律用 LF：倉庫的 `.gitattributes` 已經設定好；在 Windows 合併整合分支之後，如果仍然看到大量換行差異，執行 `git add --renormalize .`。
 
 ## 2. 程式
 
@@ -31,6 +32,7 @@
   - 不可以用 `document`、`window`、`localStorage`、`setTimeout`。
   - **隨機數只用 `R.rand(s)`、`R.pick(s, arr)`**，不可以用 `Math.random()`（否則模擬器的結果不能重現）。
   - 數值一律放在資料檔（例如 `D.ECON`），不要寫死在函數裡。
+- 工單寫「**逐字照抄**」的地方（例如總規格 §6 的 `ECON`、§11 的 `ROUND_TEXT`）：把程式碼區塊原封不動地複製。不改鍵名、不增減欄位、不改數值、不把字串改成函數、不加入規格沒有的規則。
 - **介面檔案**（`ui.js`、`ui-roster.js`、`craft.js`、`main.js`、`micro*.js` 等）：不計算遊戲規則，只呼叫邏輯層的函數並顯示結果。
 - 註解用繁體中文書面語，說明「為甚麼」，不重複程式在做甚麼。
 - 不留下 `console.log`、除錯用的程式和註解掉的舊程式。
@@ -78,6 +80,7 @@ diff /tmp/sim-before.txt /tmp/sim-after.txt && echo "舊模式沒有改變"
 - 測試的寫法照 `tools/tests/wheel.test.js`：`module.exports = (t) => { t.test('名稱', () => { t.assert.equal(…) }); };`。
 - 測試名稱用工單規定的名稱。測試裡的數值盡量從 `D.ECON` 等資料取，不寫死（除非工單要求）。
 - **不可以為了令測試通過而修改測試或刪除舊測試**（工單要求的除外）。
+- `tools/tests/spec.test.js` 是**規格測試**，由 Claude 維護：它檢查資料檔是否與總規格逐字一致。實作工單時不可以修改它；只有 WO-15-09 校準數值時，在同一個 PR 更新 `ECON` 的期望值並說明。
 - 有介面改動的工單：附上桌面 1280×800 和手機 390×844 的截圖，存在 `docs/shots/`，檔名以工單編號開頭。
 
 ## 7. 遇到問題

@@ -1,0 +1,8 @@
+# 所有文字檔一律用 LF 換行（Windows 也一樣），避免換行符號造成大量無意義的差異
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.mp3 binary
+*.pdf binary
+*.zip binary
+*.7z binary
