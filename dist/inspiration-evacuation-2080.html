@@ -147,6 +147,29 @@ button { font: inherit; color: inherit; }
 .st-grid dd { margin: 0; font-size: 14px; }
 .st-h { margin: 8px 0 0; font-size: 16px; }
 .chip.next { border-color: var(--c, var(--line)); }
+.chip.wx { display: inline-flex; align-items: center; gap: 4px; }
+.chip.wx i { font-style: normal; font-size: 13px; line-height: 1; }
+.chip.wx.odd { border-color: #c38bff; color: #f1e6ff; background: linear-gradient(90deg, rgba(195,139,255,0.18), rgba(255,79,180,0.12)); box-shadow: 0 0 10px -2px rgba(195,139,255,0.7); }
+/* 人脈 */
+.ct-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
+.ct-card { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: #141c30; border: 1px solid #26334d; }
+.ct-card p { margin: 0; font-size: 13px; color: #b9c4dc; }
+.ct-who { display: flex; align-items: baseline; gap: 8px; }
+.ct-who b { font-size: 16px; } .ct-who span { font-size: 12px; color: var(--spark); }
+.inv-btn { position: relative; }
+.inv-btn .dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--spark); box-shadow: 0 0 6px var(--spark); }
+.modal.encounter .eyebrow { color: #c38bff; }
+/* 和朋友聊天 */
+.modal.talk { max-width: 520px; }
+.talk-lines { display: grid; gap: 8px; margin: 10px 0 14px; }
+.bubble { margin: 0; padding: 10px 14px; border-radius: 4px 14px 14px 14px; background: #1c2540; border: 1px solid #2c3a60; font-size: 15px; line-height: 1.6; opacity: 0; animation: bubble-in 0.35s ease forwards; animation-delay: var(--d); }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.talk-replies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.btn.talk-reply { display: flex; flex-direction: column; gap: 2px; min-height: 58px; padding: 6px 8px; text-align: center; }
+.btn.talk-reply b { white-space: nowrap; }
+.btn.talk-reply small { font-size: 11px; line-height: 1.3; color: var(--mute); font-weight: 400; }
+@media (prefers-reduced-motion: reduce) { .bubble { animation: none; opacity: 1; } }
+.post.odd { border: 1px solid #c38bff; background: linear-gradient(135deg, rgba(195,139,255,0.16), rgba(255,79,180,0.08)); }
 .m-signal .num { font-size: 18px; color: #ffd6ef; }
 .hud-sub { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mute); }
 .hud-sub b { color: var(--fg); font-weight: 500; }
@@ -4275,6 +4298,61 @@ button:focus-visible,
 
 
 
+
+/* 第十期：質感。統一表面、深度和光澤；最後載入，只調整外觀，不改版面。 */
+:root {
+  --surface: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  --edge: rgba(255, 255, 255, 0.07);
+  --lift: 0 3px 10px rgba(0, 0, 0, 0.32);
+}
+body {
+  background:
+    radial-gradient(1100px 520px at 50% -180px, #1a2544 0%, transparent 70%),
+    radial-gradient(700px 480px at 105% 110%, rgba(255, 79, 180, 0.07), transparent 60%),
+    radial-gradient(600px 420px at -10% 60%, rgba(55, 195, 214, 0.05), transparent 60%),
+    var(--ink);
+  background-attachment: fixed;
+}
+/* 畫面框 */
+.stage {
+  border-radius: 14px; border-color: #2a3a5c;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(55, 195, 214, 0.07), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+/* 數值 */
+.meter { background: var(--surface), var(--deck); border-color: #212d48; border-radius: 12px; box-shadow: inset 0 1px 0 var(--edge), var(--lift); }
+.bar { height: 7px; background: #121a2d; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); }
+.bar > i { background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 65%); }
+.chip { background: rgba(255, 255, 255, 0.045); border-color: #2a3756; }
+/* 按鈕 */
+.btn, .icon-btn, .inv-btn, .view-tab {
+  background: var(--surface), var(--deck-2); border-color: #2a3756; border-radius: 12px;
+  box-shadow: inset 0 1px 0 var(--edge), var(--lift);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.btn:hover:not(:disabled), .icon-btn:hover, .inv-btn:hover, .view-tab:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 var(--edge), 0 8px 18px rgba(0, 0, 0, 0.38); }
+.btn:active:not(:disabled), .icon-btn:active, .inv-btn:active, .view-tab:active { transform: translateY(1px); box-shadow: inset 0 1px 0 var(--edge); }
+.btn.primary { background: linear-gradient(180deg, #ff74c7, #ff3fa8); border-color: #ff8fd1; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 18px rgba(255, 79, 180, 0.35); }
+.btn.primary:hover:not(:disabled) { background: linear-gradient(180deg, #ff8bd1, #ff52b2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 10px 24px rgba(255, 79, 180, 0.45); }
+.btn.sea { background: linear-gradient(180deg, #5fd8e8, #2fb4c7); border-color: #7fe3ff; }
+.view-tab.on { background: linear-gradient(180deg, rgba(255, 194, 71, 0.16), rgba(255, 194, 71, 0.04)), var(--deck-2); }
+/* 行動卡 */
+.act { background: var(--surface), var(--deck); border-color: #212d48; border-radius: 14px; box-shadow: inset 0 1px 0 var(--edge), var(--lift); }
+.act:hover:not(:disabled) { box-shadow: inset 0 1px 0 var(--edge), 0 10px 22px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(55, 195, 214, 0.4); }
+.act-icon .px-icon { filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }
+.act-group { display: flex; align-items: center; gap: 10px; color: #7f8db0; }
+.act-group::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #26334d, transparent); }
+.act-auto { border-radius: 10px; }
+/* 對話框與提示 */
+.modal-wrap { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.modal { background: linear-gradient(180deg, #161f37, #0f1628); border-color: #2a3a5c; border-radius: 16px; box-shadow: 0 28px 70px rgba(0, 0, 0, 0.62), inset 0 1px 0 var(--edge); }
+.toast { border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--edge); }
+.panel-head h2 { letter-spacing: 0.02em; }
+/* 小遊戲的跳過 */
+.micro-skip { justify-self: end; margin-top: 10px; min-height: 36px; font-size: 13px; opacity: 0.9; }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .icon-btn, .inv-btn, .view-tab, .act { transition: none; }
+  .btn:hover:not(:disabled), .icon-btn:hover, .inv-btn:hover, .view-tab:hover { transform: none; }
+}
 </style>
 </head>
 <body>
@@ -7010,6 +7088,342 @@ button:focus-visible,
   };
 });
 
+// ---- js/data-weather.js ----
+// 《靈感撤離 2080》每日天氣與奇怪狀態（第十期）。
+// 每天早上擲一次：一般天氣跟季節走；奇怪狀態越到後期越常見。
+// mods 與世界事件相同（pay：工作收入倍數、closed：停業、sparkDaily／bodyDaily／paranoiaDaily：當晚結算、foodMult：飯錢倍數）。
+// tag：下筆的素材有這個標籤時，作品分 ×x。vis：浮城畫面的天氣效果（weather-fx.js）。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const W = (id, name, glyph, o) => Object.assign({ id, name, glyph, kind: 'normal', w: 1, mods: {} }, o);
+  const WEATHER = [
+    // ---------- 風暴季 ----------
+    W('drizzle', '毛毛雨', '☂', { seasons: ['storm', 'acid'], w: 3, vis: 'drizzle', forecast: '毛毛雨，全日不停。傘子是浮城最常見的遺物。' }),
+    W('downpour', '暴雨', '☔', { seasons: ['storm'], w: 3, vis: 'storm', mods: { pay: { delivery: 1.3 } }, tag: { t: 'water', x: 1.2 },
+      forecast: '黑色暴雨警告。外送平台把「準時」重新定義為「今天之內」，小費加三成。' }),
+    W('typhoon', '八號風球', '🌀', { seasons: ['storm'], w: 1, vis: 'typhoon', mods: { closed: ['delivery', 'busk', 'garden'], pay: { farm: 1.5 } }, tag: { t: 'water', x: 1.3 },
+      forecast: '八號烈風信號。外送、街頭表演、天台菜園暫停；全城困在家裡刷手機，內容農場收入 ×1.5。' }),
+    W('fog', '濃霧', '🌫', { seasons: ['storm', 'acid'], w: 2, vis: 'fog', mods: { pay: { delivery: 0.8 } }, tag: { t: 'memory', x: 1.25 },
+      forecast: '濃霧。能見度十米，舊城的輪廓像回憶一樣模糊。適合寫「記憶」。' }),
+    W('thunder', '雷暴', '⚡', { seasons: ['storm', 'heat'], w: 2, vis: 'thunder', tag: { t: 'anger', x: 1.25 },
+      forecast: '雷暴。天空區的避雷針全部亮着，像一排生氣的手指。' }),
+    // ---------- 熱浪季 ----------
+    W('scorch', '烈日', '☀', { seasons: ['heat'], w: 3, vis: 'heat', forecast: '烈日當空。體感溫度 52 度，天空區的冷氣排向下層。' }),
+    W('heatdome', '熱穹頂', '♨', { seasons: ['heat'], w: 1, vis: 'heatdome', mods: { bodyDaily: -3, pay: { garden: 0.7 } }, tag: { t: 'hunger', x: 1.25 },
+      forecast: '熱穹頂籠罩浮城。晚上身體 −3；菜都曬乾了。' }),
+    W('sandstorm', '沙塵暴', '🏜', { seasons: ['heat'], w: 2, vis: 'sand', mods: { pay: { dive: 0.85 } }, tag: { t: 'rebel', x: 1.2 },
+      forecast: '沙塵從乾涸的內陸吹來。天空變成橙色，所有人的牙縫都有沙。' }),
+    W('drythunder', '乾雷', '🌩', { seasons: ['heat'], w: 1, vis: 'drythunder', tag: { t: 'anger', x: 1.2 },
+      forecast: '只打雷不下雨。氣象局說這是「情緒化的天氣」。' }),
+    // ---------- 酸雨季 ----------
+    W('acidrain', '酸雨', '☣', { seasons: ['acid'], w: 3, vis: 'acid', forecast: '酸雨。請勿用舌頭試雨。雨傘半價促銷。' }),
+    W('acidfog', '酸霧', '☁', { seasons: ['acid'], w: 1, vis: 'acidfog', mods: { sparkDaily: -0.05 }, tag: { t: 'guilt', x: 1.3 },
+      forecast: '酸霧。空氣有種內疚的味道。晚上火花 −0.05。' }),
+    W('neonsmog', '霓虹煙霞', '🌆', { seasons: ['acid', 'heat'], w: 2, vis: 'neonsmog', mods: { pay: { smile: 1.2 } }, tag: { t: 'neon', x: 1.3 },
+      forecast: '霓虹燈的光被煙霞困住，整個城市粉紅一片。天空區的派對特別多，陪伴收入 ×1.2。' }),
+    // ---------- 任何季節 ----------
+    W('clear', '放晴', '🌤', { w: 2, vis: 'clear', mods: { sparkDaily: 0.05 }, forecast: '難得放晴。看得見遠處淹沒的舊山頂。晚上火花 +0.05。' }),
+    W('rainbow', '彩虹', '🌈', { w: 1, vis: 'rainbow', tag: { t: 'hope', x: 1.3 }, forecast: '雨後彩虹。天空區有人申請了專利。' }),
+    W('overcast', '陰天', '☁', { w: 3, vis: 'overcast', forecast: '陰天。沒有雨，沒有太陽，沒有特別的事。這本身就很特別。' }),
+    W('hail', '冰雹', '🧊', { w: 1, vis: 'hail', mods: { pay: { delivery: 1.4 } }, forecast: '冰雹。外送員加錢出動；天空區的玻璃屋頂受到保險保障，你沒有。' }),
+    // ---------- 奇怪狀態 ----------
+    W('snow', '熱帶落雪', '❄', { kind: 'odd', vis: 'snow', mods: { sparkDaily: 0.1 }, tag: { t: 'memory', x: 1.4 },
+      forecast: '【異常】浮城一百年來第一場雪。老人在哭，小孩不知道這是甚麼。晚上火花 +0.1。' }),
+    W('fishrain', '魚雨', '🐟', { kind: 'odd', vis: 'fishrain', mods: { foodMult: 0.4, pay: { haggle: 1.5 } }, tag: { t: 'hunger', x: 1.3 },
+      forecast: '【異常】天上掉下沙甸魚。今晚的飯錢 ×0.4；夜市收入 ×1.5。' }),
+    W('jellysky', '天空水母', '🪼', { kind: 'odd', vis: 'jellysky', tag: { t: 'water', x: 1.35 },
+      forecast: '【異常】發光水母從海面升上天空，慢慢飄過大廈之間。專家說「不要摸」。' }),
+    W('aurora', '赤道極光', '🌌', { kind: 'odd', vis: 'aurora', mods: { sparkDaily: 0.1 }, tag: { t: 'hope', x: 1.4 },
+      forecast: '【異常】赤道上空出現極光。磁場紊亂，所有指南針都指向天空區。晚上火花 +0.1。' }),
+    W('meteor', '流星雨', '☄', { kind: 'odd', vis: 'meteor', tag: { t: 'hope', x: 1.25 },
+      forecast: '【異常】今晚有流星雨。外星人說那是他們的垃圾。' }),
+    W('doublemoon', '兩個月亮', '🌗', { kind: 'odd', vis: 'doublemoon', mods: { paranoiaDaily: 3 }, tag: { t: 'rebel', x: 1.3 },
+      forecast: '【異常】天上有兩個月亮。官方說其中一個是廣告。偏執 +3。' }),
+    W('blackout', '全城停電', '🕯', { kind: 'odd', vis: 'blackout', mods: { closed: ['label', 'ot', 'farm'], pay: { busk: 1.5 } }, tag: { t: 'warmth', x: 1.3 },
+      forecast: '【異常】全城停電。AI 標註和內容農場停工；人們走到街上，街頭表演收入 ×1.5。' }),
+    W('adsky', '天空廣告', '📺', { kind: 'odd', vis: 'adsky', mods: { sparkDaily: -0.05, pay: { farm: 1.3 } }, tag: { t: 'neon', x: 1.2 },
+      forecast: '【異常】雲層被租了出去，整個天空在播廣告。晚上火花 −0.05。' }),
+    W('gravity', '重力異常', '🪨', { kind: 'odd', vis: 'gravity', mods: { pay: { salvage: 1.5 } }, tag: { t: 'machine', x: 1.25 },
+      forecast: '【異常】局部重力減弱，碎石和舊招牌慢慢浮起來。拆樓打撈收入 ×1.5。' }),
+    W('uprain', '雨倒着下', '🔼', { kind: 'odd', vis: 'uprain', mods: { paranoiaDaily: 2 }, tag: { t: 'rebel', x: 1.25 },
+      forecast: '【異常】雨從海面往天上落。氣象局拒絕解釋。偏執 +2。' }),
+    W('redtide', '紅潮', '🩸', { kind: 'odd', vis: 'redtide', mods: { pay: { dive: 0.7 } }, tag: { t: 'anger', x: 1.3 },
+      forecast: '【異常】海水變紅。潛水的漁獲 ×0.7；新聞說這是「季節性的」。' }),
+    W('glitch', '現實延遲', '▦', { kind: 'odd', vis: 'glitch', mods: { paranoiaDaily: 2 }, tag: { t: 'machine', x: 1.4 },
+      forecast: '【異常】城市在「緩衝」。有人看見同一隻雀鳥飛過三次。偏執 +2。' }),
+    W('paperstorm', '文件風暴', '📄', { kind: 'odd', vis: 'paper', mods: { pay: { label: 1.3, farm: 1.2 } }, tag: { t: 'guilt', x: 1.2 },
+      forecast: '【異常】天空區的碎紙機壞了，十年的機密文件從天而降。' }),
+    W('bubbles', '肥皂泡天', '🫧', { kind: 'odd', vis: 'bubbles', mods: { sparkDaily: 0.1 }, tag: { t: 'hope', x: 1.2 },
+      forecast: '【異常】海面不停冒出彩色泡泡，全城的小孩都在追。晚上火花 +0.1。' }),
+    W('eclipse', '日蝕', '🌑', { kind: 'odd', vis: 'eclipse', mods: { paranoiaDaily: 2 }, tag: { t: 'guilt', x: 1.35 },
+      forecast: '【異常】日全蝕。外星人選這個時候「調整天線」。偏執 +2。' }),
+    W('skywhale', '天空鯨魚', '🐋', { kind: 'odd', vis: 'whale', mods: { sparkDaily: 0.05 }, tag: { t: 'water', x: 1.25 },
+      forecast: '【異常】一條鯨魚在雲層中游過浮城。沒有人知道牠怎樣上去。' }),
+    W('freeze', '雨停在半空', '⏸', { kind: 'odd', vis: 'freeze', tag: { t: 'memory', x: 1.3 },
+      forecast: '【異常】雨點停在半空，一動不動。時間局說會在「工作天內」處理。' }),
+    W('ufofleet', '飛碟艦隊', '🛸', { kind: 'odd', vis: 'ufos', mods: { paranoiaDaily: 4, signalMult: 1.1 },
+      forecast: '【異常】幾十艘飛碟停在雲層下面。外星人今天看得特別仔細：訊號 ×1.1，偏執 +4。' }),
+    W('drones', '無人機螢火', '✦', { kind: 'odd', vis: 'drones', mods: { pay: { delivery: 1.2 } }, tag: { t: 'machine', x: 1.2 },
+      forecast: '【異常】幾千架送貨無人機失去訊號，在空中閃着燈打轉，像螢火蟲。' }),
+    W('glowsea', '夜光海', '✨', { kind: 'odd', vis: 'glowsea', mods: { sparkDaily: 0.05 }, tag: { t: 'water', x: 1.3 },
+      forecast: '【異常】海水在發光。每一個浪都是藍色的。晚上火花 +0.05。' }),
+  ];
+  const WEATHER_BY = {};
+  WEATHER.forEach((w) => { WEATHER_BY[w.id] = w; });
+  // 效果的簡短說明（狀態列提示、手機）
+  const PAY_NAME = { label: 'AI 標註', ot: '加班', smile: '陪伴', delivery: '外送', farm: '內容農場', clinic: '診所', dive: '潛水', busk: '表演', garden: '菜園', salvage: '拆樓', haggle: '夜市' };
+  function weatherNote(w) {
+    const m = w.mods || {}, out = [];
+    if (w.tag) out.push('「' + D.TAGS[w.tag.t].name + '」素材 ×' + w.tag.x);
+    Object.keys(m.pay || {}).forEach((j) => out.push((PAY_NAME[j] || j) + '收入 ×' + m.pay[j]));
+    if (m.closed) out.push(m.closed.map((j) => PAY_NAME[j] || j).join('、') + '暫停');
+    if (m.sparkDaily) out.push('晚上火花 ' + (m.sparkDaily > 0 ? '+' : '−') + Math.abs(m.sparkDaily));
+    if (m.bodyDaily) out.push('晚上身體 ' + m.bodyDaily);
+    if (m.paranoiaDaily) out.push('偏執 +' + m.paranoiaDaily);
+    if (m.foodMult) out.push('飯錢 ×' + m.foodMult);
+    if (m.signalMult) out.push('訊號 ×' + m.signalMult);
+    return out.join('・');
+  }
+  Object.assign(D, { WEATHER, WEATHER_BY, weatherNote });
+});
+
+// ---- js/data-talk.js ----
+// 《靈感撤離 2080》朋友的對話（第十期）。
+// 每次聊天由 talk.js 按情況組合三句：開場（按熟絡度）、近況（天氣、靈魂、錢、身體、關卡……）、話題。
+// 佔位符：{w} 今天的天氣、{other} 另一位朋友、{taken} 被帶走的朋友、{day} 第幾天。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const SHORT = { ken: '阿 Ken', dj: '小妹', ho: '何伯', miu: 'Miu', fong: '芳姐', chan: '老陳', yu: '小雨', mary: 'Mary 姐' };
+  const TALK = {
+    ken: {
+      new: ['「又是你？牆上那幅鯨魚是我畫的，你有沒有看見？」', '「借個位，我要量一量這面牆。」', '「你看起來像一個還沒有放棄的人。」'],
+      mid: ['「來得正好，幫我扶住梯子。」', '「我昨晚又被天空區的保安追，跑得比外送員還快。」', '「你的眼神比上次亮。是好事。」'],
+      close: ['「兄弟，今天我請。」', '「我在你家樓下畫了一隻貓，別告訴業主。」', '「如果我被帶走，記得替我把這面牆畫完。」'],
+      topics: ['「牆是最誠實的畫布，它不會給你點讚。」', '「天空區想買我的畫，條件是把『淹水』兩個字塗掉。」', '「噴漆越來越貴，聽說是 AI 也開始用實體噴漆練習。」',
+        '「我小時候這裡是球場，現在是魚塘。我把球場畫回去了。」', '「有人說我的畫是破壞公物。我說公物早就被水破壞了。」', '「最好的顏色是生鏽的顏色，你試試。」',
+        '「我打算在水位線上面畫一條新的水位線，看看誰先到。」', '「外星人如果看得見我的畫，就讓他們看清楚我們有多生氣。」'],
+      heavy: ['「你背着甚麼？看你走路，像背着一袋濕水泥。」', '「心裡有事就畫出來，畫爛了也好過悶住。」'],
+      tired: ['「你的火花快熄了。來，噴一筆，甚麼都好。」', '「累就坐下，牆不會走。」'],
+      broke: ['「沒錢？我也沒有。我們窮得很有風格。」'],
+      rich: ['「發財了？記得窮的時候是怎樣畫的。」'],
+      hurt: ['「你這個樣子，應該去看醫生，不是來看壁畫。」'],
+      stage: ['「今晚有展？把最兇的那張放在最前面。」'],
+      review: ['「篩選日快到了。別為了外星人改掉你的筆觸。」'],
+      missing: ['「我把 {taken} 畫在牆上了。每天經過都打個招呼。」', '「{taken} 走了以後，這條街安靜得可怕。」'],
+    },
+    dj: {
+      new: ['「嘿，新面孔！天台的派對你要來嗎？入場費是一首歌。」', '「我叫小妹，喇叭比我還大聲。」', '「你喜歡低音嗎？不喜歡也會喜歡的。」'],
+      mid: ['「我今晚要試一首新歌，你做我第一個聽眾。」', '「房東又來投訴，我把喇叭轉向天空區，問題解決。」', '「你上次跳舞的樣子我錄了下來，放心，只有我看。」'],
+      close: ['「你是我的固定嘉賓了，名單上寫的是『最重要的人』。」', '「今晚天台只有我們兩個也照樣開派對。」', '「如果世界末日，我會放你最喜歡那首。」'],
+      topics: ['「節拍是心跳的外掛。」', '「天空區的派對用 AI DJ，連失誤都很完美，所以很悶。」', '「我在混一首用雨聲做鼓的歌。」',
+        '「低音喇叭吵醒了樓下的魚。真的，牠們跳出水面。」', '「有個外星人來過我的派對，只站着，沒有跳。可能他們的膝蓋不一樣。」', '「我想把整個浮城的聲音錄下來，給一百年後的人聽。」',
+        '「每次停電，就是全城最好聽的時候。」', '「我媽說 DJ 不是工作。我說那世界上已經沒有工作了。」'],
+      heavy: ['「你的頻率很低，像一首悲傷的慢歌。要不要我調快一點？」', '「把煩惱丟進喇叭，讓低音震碎它。」'],
+      tired: ['「你的電量好像只剩百分之一。」', '「休息一首歌的時間吧。」'],
+      broke: ['「錢不夠？派對入場免費，飲品自備。」'],
+      rich: ['「你請客？那我要點最貴的那杯水。」'],
+      hurt: ['「你受傷了？今晚只放慢歌。」'],
+      stage: ['「今晚有展？我給你放一首出場音樂。」'],
+      review: ['「篩選日？我要開一個『沒有被選中』派對，你一定要來。」'],
+      missing: ['「我把 {taken} 最喜歡的歌設成鬧鐘了。」', '「{taken} 走了，天台少了一把聲音。」'],
+    },
+    ho: {
+      new: ['「年輕人，坐。茶是涼的，詩是暖的。」', '「你有沒有讀過一首被水泡過的詩？字會游走。」', '「我叫何伯，寫了五十年詩，沒有人讀。」'],
+      mid: ['「我昨晚寫了兩行，今早刪了一行。剩下的那一行送給你。」', '「坐近一點，我的耳朵不比從前。」', '「你的字寫得比上次好，可惜現在人人用語音。」'],
+      close: ['「孩子，我這本舊詩集，將來給你。」', '「你來了，茶就不涼了。」', '「我老了，但你讓我記得年輕是甚麼滋味。」'],
+      topics: ['「詩不是用來被讀的，是用來被記得的。」', '「AI 寫的詩每一句都押韻，所以沒有一句是真的。」', '「從前這裡有一間書店，現在是潛水用品店。書店老闆也去潛水，找自己的書。」',
+        '「好的句子像漲潮，你看不見它來，它已經在你腳下。」', '「我年輕時寫情詩，現在寫水位報告。其實是同一回事。」', '「外星人要輕的靈魂。詩是重的，所以他們不要詩人。」',
+        '「每一個字都是一件小小的遺物。」', '「我在學寫短一點的詩。年紀大了，怕寫不完。」'],
+      heavy: ['「你心裡壓着石頭。寫下來，石頭就變成字，字比石頭輕。」', '「愧疚是一首未寫完的詩。」'],
+      tired: ['「累了就看看窗外，雲也是在慢慢寫字。」', '「火花小了不要緊，餘燼也能點燈。」'],
+      broke: ['「窮？詩人一向窮。你現在很像詩人了。」'],
+      rich: ['「錢多了，記得買書。如果還有書的話。」'],
+      hurt: ['「身體是詩的硯台，不要把它摔壞。」'],
+      stage: ['「今晚有展？記住，最好的那一句要放在最後。」'],
+      review: ['「篩選日？他們篩的是人，不是心。」'],
+      missing: ['「{taken} 走了。我寫了一首詩送行，還沒有寫完。」', '「我每天替 {taken} 留一杯茶。」'],
+    },
+    miu: {
+      new: ['「別碰那個，它會咬人。是機械貓，不是真貓。」', '「你的手機型號很舊，我可以幫你改。」', '「我叫 Miu，我和機械說話比和人說話多。」'],
+      mid: ['「我把掃地機改成會唱歌，它現在唱得比小雨好。別告訴她。」', '「你來了正好，幫我拿着這根電線。不會觸電的，大概。」', '「我給機械貓裝了夢境模組，它昨晚夢見魚。」'],
+      close: ['「我做了一個小東西給你，按一下它會說『你做得很好』。」', '「你是我少數不想拆開看看裡面的人。」', '「如果你被帶走，我會造一個你的機械人。開玩笑的。一半。」'],
+      topics: ['「機械不會說謊，只會壞掉。人兩樣都會。」', '「天空區的機械人有獨立廁所，我們沒有。」', '「我在研究怎樣讓 AI 犯錯，因為犯錯才像人。」',
+        '「舊城潛水撈上來的電路板是寶，比金還值錢。」', '「有一部回收機器人愛上了一個郵筒。我沒有阻止它。」', '「外星人的飛碟用的是我們五十年前的晶片，我拆過一塊。」',
+        '「我想造一部專門陪人發呆的機械人。」', '「零件會生鏽，回憶也會。我兩樣都在修。」'],
+      heavy: ['「你的系統負載太高。要不要重新開機？」', '「靈魂重量超標，建議清理暫存檔。」'],
+      tired: ['「你的電池格數很低，先充電吧。」', '「低電量模式啟動中，請勿做重大決定。」'],
+      broke: ['「沒錢就學修東西，修東西的人永遠餓不死。」'],
+      rich: ['「有錢的話，贊助我買一顆新的伺服馬達。」'],
+      hurt: ['「你需要的是醫生，我只會修鐵皮。」'],
+      stage: ['「今晚有展？我給你的作品裝一盞會呼吸的燈。」'],
+      review: ['「篩選日？我寫了一個程式預測結果，它說『看你自己』。」'],
+      missing: ['「{taken} 的聲音我錄了，存在機械貓裡。」', '「我造了一個 {taken} 形狀的檯燈。很醜，但我每晚都開。」'],
+    },
+    fong: {
+      new: ['「這位朋友，坐下聽一段？唱完才收錢。」', '「這把聲音，從前在戲棚可以傳到對岸。」', '「我是芳姐，唱了一輩子戲，觀眾越來越少，魚越來越多。」'],
+      mid: ['「今天唱《帝女花》，你會不會？不會就學。」', '「你走路有台步，可惜不夠穩。」', '「上次你拍掌拍得好，今天繼續。」'],
+      close: ['「你是我最後一個徒弟。」', '「戲服我留了一件給你，紅色那件。」', '「人生如戲，你演得很好。」'],
+      topics: ['「戲是唱給神聽的，觀眾是附送的。」', '「天空區請我去唱，要我唱英文版。我唱了，唱到他們哭。」', '「水浸到戲棚那一年，我們在船上演。浮起來的那一場最好。」',
+        '「唱戲要有一口氣，做人也是。」', '「AI 學唱粵劇，九聲六調全部唱錯，我笑到肚痛。」', '「外星人如果聽得懂粵劇，就知道我們有多慘，又有多倔強。」',
+        '「水袖要甩得出去，也要收得回來。錢也是。」', '「我想在水上搭一個戲台，潮漲時演，潮退時散。」'],
+      heavy: ['「你的心很重，像背着一副盔甲。放下吧。」', '「做錯事不要緊，最要緊是不要唱錯詞。」'],
+      tired: ['「沒有氣就唱不了戲。先喝口茶。」', '「火要添柴，人要休息。」'],
+      broke: ['「沒錢？我教你在街頭唱，一晚也有幾十塊。」'],
+      rich: ['「有錢就請芳姐吃燒鵝。」'],
+      hurt: ['「受了傷就不要站那麼久，坐下聽戲。」'],
+      stage: ['「今晚上台？記住：開口之前，先深呼吸。」'],
+      review: ['「篩選日？當它是一場考試，唱好自己那一段就夠了。」'],
+      missing: ['「{taken} 走了，我唱一段《再世紅梅記》送給 {taken}。」', '「戲棚少了 {taken}，連鑼鼓都沒那麼響。」'],
+    },
+    chan: {
+      new: ['「借過。這艘船比你還老。」', '「修船的，不聊天。好吧，聊一下。」', '「你會游水嗎？在浮城，這是唯一要學的東西。」'],
+      mid: ['「今日風大，船都不想出海。」', '「這根桅杆我換了三次，它還是歪的。像我。」', '「你上次幫我拉纜，手勢不錯。」'],
+      close: ['「如果有天要逃，我這艘船留一個位給你。」', '「坐下吧，今天不修船了。」', '「你是這碼頭上唯一一個我不收錢的人。」'],
+      topics: ['「水會退的。我等了三十年，還在等。」', '「天空區的遊艇不用帆，所以他們不懂風。」', '「我年輕時在這裡捕魚，現在在這裡捕垃圾。」',
+        '「船底的貝殼要刮，心裡的貝殼也要。」', '「我撈到過一塊舊路牌，寫着『小心海浪』。那時候根本沒有海。」', '「外星人的飛碟沒有槳。我不相信沒有槳的東西。」',
+        '「每一道裂縫都有故事。補好它，故事還在。」', '「我不怕水，我怕安靜。」'],
+      heavy: ['「你吃水太深了，再多一點就沉。」', '「卸貨吧，船輕了才走得遠。」'],
+      tired: ['「你像一艘沒有帆的船。先休息，等風。」', '「累了就靠岸。」'],
+      broke: ['「沒錢？幫我刮船底，一天五十。」'],
+      rich: ['「有錢就買一件救生衣。認真的。」'],
+      hurt: ['「受了傷就別逞強，海不會等你，但我會。」'],
+      stage: ['「今晚有展？去吧，船我幫你看着。」'],
+      review: ['「篩選日？我只知道潮汐表，不知道外星人的表。」'],
+      missing: ['「{taken} 的名字我刻在船尾了。」', '「{taken} 走的那晚，海特別平靜。我不喜歡。」'],
+    },
+    yu: {
+      new: ['「噢……你好。我在寫歌，寫不出來。」', '「你聽到嗎？這段旋律我想了三天。」', '「我叫小雨，名字很適合這個城市。」'],
+      mid: ['「我把你上次說的話寫進歌裡了，你不介意吧？」', '「今天的和弦很憂鬱，像今天的天氣。」', '「你來了，我就不用對着牆唱歌。」'],
+      close: ['「這首歌是寫給你的，還沒有名字。」', '「如果我紅了，第一張簽名給你。」', '「你是我唯一一個不會說『可以再快樂一點嗎』的聽眾。」'],
+      topics: ['「悲傷的歌比較容易寫，所以這個城市很多歌手。」', '「串流平台說我的歌『情緒太重』，不推薦。」', '「我想寫一首關於水位的情歌。」',
+        '「AI 一分鐘可以寫一百首歌，但它不知道哪一首是真的。」', '「我在雨中錄了一首歌，雨是免費的伴奏。」', '「外星人如果聽到我的歌，會不會覺得我太重了？」',
+        '「有一句歌詞我改了一百次：『我們都在等水退』。」', '「歌是寫給一個人的，然後一萬個人以為是寫給他們的。」'],
+      heavy: ['「你好像很重。要不要我唱一首輕一點的？」', '「把難過的事交給歌，歌會替你記住。」'],
+      tired: ['「你的聲音好累。今天不要唱了。」', '「休息一下吧，我替你哼。」'],
+      broke: ['「沒錢……我也沒有。我們可以一起在天橋底唱。」'],
+      rich: ['「你有錢了？可以借我錄音室的租金嗎？開玩笑的。」'],
+      hurt: ['「你受傷了。我不唱歌了，陪你坐一下。」'],
+      stage: ['「今晚有展？我寫了一句祝福，你出場的時候在心裡唱。」'],
+      review: ['「篩選日……我怕被選中，又怕沒有被選中。」'],
+      missing: ['「{taken} 是我第一首歌的聽眾。」', '「我把 {taken} 寫進副歌了。每次唱都會哭。」'],
+    },
+    mary: {
+      new: ['「歡迎光臨！今日有楊枝甘露，芒果是天空區淘汰的。」', '「你很瘦，要多吃糖水。」', '「我叫 Mary 姐，這間舖開了三代，水浸了兩次。」'],
+      mid: ['「你又來了？老位子留給你。」', '「今日的豆腐花特別滑，你運氣好。」', '「你上次欠我一碗，今次不計。」'],
+      close: ['「你是自己人了，入廚房坐。」', '「這碗算我的。不准拒絕。」', '「如果你要走，記得回來吃一碗再走。」'],
+      topics: ['「糖水是最便宜的安慰。」', '「天空區的甜品店用合成糖，甜得很假。」', '「水浸那年，我在屋頂煮了一鍋紅豆沙，整條街的人都來了。」',
+        '「人心情不好，就要吃熱的、甜的、慢慢吃。」', '「我女兒去了天空區工作，三年沒有回來吃糖水。」', '「外星人一定沒有吃過糖水，所以他們那麼冷靜。」',
+        '「我把芋圓搓成星星的形狀，賣得特別好。」', '「舖子小，但是每一張櫈都有故事。」'],
+      heavy: ['「你心裡有事。吃完這碗再講。」', '「做錯事就去補救，補救不了就先吃飽。」'],
+      tired: ['「你看起來很累。來，薑汁湯圓。」', '「休息一下，糖水會等你。」'],
+      broke: ['「沒錢？先吃，下次再算。」'],
+      rich: ['「有錢了？那就多叫一碗給隔壁的老人家。」'],
+      hurt: ['「受了傷還出來？坐下，我給你煲湯。」'],
+      stage: ['「今晚有展？吃飽才有力氣。」'],
+      review: ['「篩選日？不管怎樣，回來吃糖水。」'],
+      missing: ['「{taken} 最喜歡芝麻糊。我每晚都多煮一碗。」', '「{taken} 的位子我還留着。」'],
+    },
+  };
+  // 對天氣的反應（不分角色，用朋友自己的口吻說出來）
+  const WEATHER_TALK = {
+    drizzle: '「毛毛雨，最適合發呆。」', downpour: '「這場雨大得像天空在清喉嚨。」', typhoon: '「八號風球都出來見我？你真是瘋的。」',
+    fog: '「霧太大，我剛才差點跟一條燈柱打招呼。」', thunder: '「打雷了，我數到三，雷就到。一、二——」', scorch: '「熱得連影子都想躲起來。」',
+    heatdome: '「熱穹頂……我的冰箱都在出汗。」', sandstorm: '「我的牙縫全是沙，笑起來沙沙聲。」', drythunder: '「只打雷不下雨，像一個只會罵人不會哭的人。」',
+    acidrain: '「酸雨又來了，我的傘只剩傘骨。」', acidfog: '「酸霧有一種內疚的味道，你聞到嗎？」', neonsmog: '「全城都是粉紅色，像活在廣告裡。」',
+    clear: '「難得放晴！你看，遠處那個是舊山頂。」', rainbow: '「有彩虹！天空區應該會收費吧。」', overcast: '「陰天，甚麼都沒有發生。我反而有點緊張。」',
+    hail: '「冰雹打在鐵皮屋頂上，像一萬個人在拍手。」', snow: '「下雪了！我活了這麼久，第一次看見雪。」', fishrain: '「天上掉魚！晚飯有着落了。」',
+    jellysky: '「水母在天上飄，好像海搬到了天空。」', aurora: '「赤道有極光，地球是不是在跟我們說甚麼？」', meteor: '「今晚有流星雨，記得許願。願望不要太重。」',
+    doublemoon: '「兩個月亮……其中一個在眨眼，你看到嗎？」', blackout: '「停電了，大家終於抬起頭看對方。」', adsky: '「連天空都在賣東西，我不敢抬頭。」',
+    gravity: '「我的拖鞋飄走了。重力今天放假。」', uprain: '「雨往天上落，我的眼淚是不是也會？」', redtide: '「海水是紅的，好像城市受了傷。」',
+    glitch: '「剛才那隻雀我好像看過三次。是我累，還是世界累？」', paperstorm: '「天上掉下來的文件，有一張寫着我的名字。」', bubbles: '「肥皂泡！我追了一條街，像個小孩。」',
+    eclipse: '「日蝕的時候，外星人在調天線。我們在調心情。」', skywhale: '「一條鯨魚在天上游！牠知道自己在天上嗎？」', freeze: '「雨停在半空，我伸手去摸，是冷的。」',
+    ufofleet: '「那麼多飛碟……他們今天特別認真看我們。」', drones: '「無人機像螢火蟲，好美，又好可怕。」', glowsea: '「海在發光，每一個浪都像在說話。」',
+  };
+  // 提起其他朋友
+  const GOSSIP = ['「{other} 最近好像在搞甚麼大計劃。」', '「我昨天碰見 {other}，問起你呢。」', '「{other} 說要請大家吃飯，我看是說說而已。」',
+    '「你有空也去看看 {other}，最近好像很悶。」', '「{other} 和我吵了一架，為了一首歌。」', '「聽說 {other} 撈到一件很奇怪的東西。」'];
+  // 你的回應：三種，效果不同
+  const REPLIES = [
+    { id: 'listen', name: '傾聽', desc: '火花 +0.1・同理心' },
+    { id: 'confide', name: '傾訴', desc: '靈魂輕一點・社交' },
+    { id: 'jam', name: '一起創作', desc: '多一張素材・身體 −3' },
+  ];
+  Object.assign(D, { TALK, WEATHER_TALK, TALK_GOSSIP: GOSSIP, TALK_REPLIES: REPLIES, NPC_SHORT: SHORT });
+});
+
+// ---- js/data-contacts.js ----
+// 《靈感撤離 2080》街頭奇遇與人脈（第十期）。
+// 奇遇：在浮城做完一件事之後，有機會碰到一件小事，二選一。有些只在某種天氣出現。
+// fx：cr 錢、spark 火花、body 身體、soul 靈魂（正數是虧心、負數是放下）、paranoia 偏執、tag 得到一張該標籤的素材、contact 認識一位人脈。
+// 人脈：認識之後可以請對方幫忙，每隔 cd 天一次，不用花時段。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const CONTACTS = [
+    { id: 'vivian', name: 'Vivian', title: '天空區收藏家', desc: '只買「有故事」的東西，價錢從不還價。', favor: '收購你的速寫：+$180', cd: 6, fx: { cr: 180 } },
+    { id: 'zero', name: '零醫生', title: '黑市義體醫生', desc: '診所在舊地鐵站，招牌是一隻發光的手。', favor: '免費檢查：身體 +30', cd: 6, fx: { body: 30 } },
+    { id: 'ching', name: '阿晴', title: '天文台實習生', desc: '負責寫天氣預報，經常寫錯，但寫得很好看。', favor: '「改寫」今天的天氣（重新擲一次）', cd: 8, fx: { weather: true } },
+    { id: 'hoi', name: '海叔', title: '舊城潛水教練', desc: '說自己在水底住過三年。', favor: '帶你撈兩件「水」的素材', cd: 6, fx: { tag: 'water', n: 2 } },
+    { id: 'r07', name: 'R-07', title: '垃圾回收機械人', desc: '把撿到的東西分類成「有用」和「有感情」。', favor: '送你兩件「機械」素材', cd: 6, fx: { tag: 'machine', n: 2 } },
+    { id: 'zed', name: '佐德', title: '外星推廣員', desc: '笑容的角度永遠是三十度。', favor: '一張銀色扭蛋券', cd: 12, fx: { ticket: 'silver' } },
+    { id: 'boss', name: '肥龍', title: '內容農場老闆', desc: '手下有一百部手機，每部都在生氣。', favor: '外判稿費：+$120・偏執 +5', cd: 4, fx: { cr: 120, paranoia: 5 } },
+    { id: 'lib', name: '書蟲', title: '地下圖書館館員', desc: '把書藏在冷氣機槽裡，借書要對暗號。', favor: '借你一本舊書：「記憶」素材・創作 +1', cd: 6, fx: { tag: 'memory', n: 1, train: { craft: 1 } } },
+    { id: 'monk', name: '淨水師父', title: '浮城的和尚', desc: '寺廟淹了，在一艘船上唸經。', favor: '聽經：靈魂 −1.5 克', cd: 8, fx: { soul: -1.5 } },
+    { id: 'kid', name: '阿仔', title: '送報童', desc: '浮城最後一個送實體報紙的人，報紙是自己寫的。', favor: '一份「號外」：火花 +0.3', cd: 4, fx: { spark: 0.3 } },
+  ];
+  const E = (id, text, opts, o) => Object.assign({ id, text, opts }, o || {});
+  const O = (label, fx, note) => ({ label, fx, note });
+  const ENCOUNTERS = [
+    E('lottery', '一個穿西裝的人塞給你一張刮刮卡：「天空區福利彩票，頭獎是一個窗口位。」', [O('刮開', { cr: 30, spark: 0.1 }, '中了 $30'), O('還給對方', { spark: 0.05 })]),
+    E('lostdog', '一隻機械狗跟着你走了三條街，頸圈寫着「如拾獲，請送回第 9 層」。', [O('送牠回家', { body: -4, spark: 0.2, contact: 'r07' }, '主人是一部回收機械人'), O('摸摸頭就走', { spark: 0.05 })]),
+    E('collector', '一個戴金色口罩的女人看着你手上的素材：「這個，有故事嗎？」', [O('講給她聽', { cr: 60, contact: 'vivian' }, '她留下了名片'), O('說沒有', {})]),
+    E('clinic', '你在舊地鐵站門口看見一隻發光的手，招牌下有人在排隊。', [O('排隊看看', { body: 10, cr: -20, contact: 'zero' }, '醫生替你止了舊患'), O('不排了', {})]),
+    E('forecast', '天文台的實習生在街上派傳單：「明天的天氣，你想要怎樣？」', [O('「想要彩虹」', { spark: 0.1, contact: 'ching' }, '她在本子上記了下來'), O('「隨便」', {})]),
+    E('diver', '一個濕淋淋的大叔從水裡冒出來，手上拿着一個舊鬧鐘。', [O('拉大叔上岸', { body: -3, tag: 'water', contact: 'hoi' }, '大叔把鬧鐘送了給你'), O('拍照', { spark: 0.05 })]),
+    E('promoter', '一個笑容角度很準確的人遞上傳單：「加入星際人才發展局，名額有限！」', [O('收下傳單', { paranoia: 3, contact: 'zed' }, '傳單背面有聯絡方法'), O('搖頭', { paranoia: -2 })]),
+    E('farmboss', '一個胖子攔住你：「你會不會寫標題？越假越好。」', [O('留下電話', { cr: 40, soul: 0.4, contact: 'boss' }, '對方先付了訂金'), O('走開', { soul: -0.2 })]),
+    E('library', '冷氣機槽裡傳出聲音：「暗號？」', [O('「水退之後」', { tag: 'memory', contact: 'lib' }, '一本書從縫裡遞了出來'), O('「沒有暗號」', { paranoia: 2 })]),
+    E('monk', '一艘小船上有人在唸經，經文被雨聲蓋住。', [O('坐下聽一會', { soul: -0.6, contact: 'monk' }, '師父說：「重的不是靈魂，是放不下」'), O('繼續趕路', {})]),
+    E('paperboy', '一個小孩塞給你一份報紙：「號外！號外！今天一切正常！」', [O('買一份', { cr: -5, spark: 0.15, contact: 'kid' }, '報紙的頭條是你的名字'), O('不用了', {})]),
+    E('busker', '天橋底有人在拉二胡，前面的鐵罐只有一個硬幣。', [O('放 $10', { cr: -10, spark: 0.15, soul: -0.2 }), O('站着聽完', { spark: 0.1 })]),
+    E('drowned', '水面浮着一本相簿，封面寫着「1997」。', [O('撈起來', { body: -2, tag: 'memory' }), O('讓它漂走', { spark: -0.05 })]),
+    E('aiad', '一部廣告機器人跟着你說：「根據你的步速，你今天不快樂。」', [O('承認', { spark: 0.05, paranoia: 2 }), O('跑開', { body: -2, paranoia: -1 })]),
+    E('neighbor', '樓下的婆婆在窗口叫你：「後生仔，幫我拿一下這包米。」', [O('幫她拿上樓', { body: -4, spark: 0.15, soul: -0.3 }), O('說趕時間', { soul: 0.2 })]),
+    E('wallet', '地上有一個銀包，裡面有 $200 和一張天空區通行證。', [O('交給警察', { soul: -0.5 }), O('拿走現金', { cr: 200, soul: 1.2 })]),
+    E('graffiti', '你看見有人在天空區的電梯門上噴字：「我們也在這裡」。', [O('替對方把風', { paranoia: 3, tag: 'rebel' }), O('裝作看不見', {})]),
+    E('vending', '一部自動販賣機出錯，一直掉罐裝咖啡出來。', [O('拿兩罐', { body: 4, soul: 0.2 }), O('按「報告故障」', { soul: -0.2 })]),
+    E('protest', '一小群人舉着牌：「水位不是我們的錯」。', [O('加入一會', { body: -3, tag: 'anger', paranoia: 2 }), O('拍照轉發', { spark: 0.05 })]),
+    E('street', '一個天空區的遊客問你：「這裡的人怎麼還笑得出來？」', [O('「因為不笑會哭」', { spark: 0.1, tag: 'hope' }), O('不回答', {})]),
+    // 天氣限定
+    E('snowkid', '一群小孩在天台堆雪人，雪人只有一尺高，已經在融化。', [O('幫忙堆', { body: -2, spark: 0.25, tag: 'memory' }), O('拍下來', { spark: 0.1 })], { weather: ['snow'] }),
+    E('fishseller', '一個小孩在賣從天上掉下來的魚：「新鮮，從天上空運！」', [O('買一條', { cr: -8, body: 6 }), O('問魚從哪裡來', { tag: 'hunger', paranoia: 1 })], { weather: ['fishrain'] }),
+    E('jelly', '一隻發光水母飄到你面前，停住了。', [O('伸手碰一下', { body: -5, spark: 0.3, tag: 'water' }), O('慢慢退後', { spark: 0.05 })], { weather: ['jellysky', 'glowsea'] }),
+    E('blackoutsong', '停電的街上，有人點起蠟燭開始唱歌，越來越多人加入。', [O('一起唱', { spark: 0.25, tag: 'warmth' }), O('靜靜聽', { spark: 0.15 })], { weather: ['blackout'] }),
+    E('adglitch', '天空的廣告螢幕出錯，打出一行字：「救命，我是被困在雲裡的實習生」。', [O('打電話給天文台', { contact: 'ching', paranoia: 2 }), O('截圖發上網', { cr: 20, paranoia: 3 })], { weather: ['adsky', 'glitch'] }),
+    E('floater', '重力異常，一個舊招牌浮到你面前，上面寫着「永遠營業」。', [O('抓住它', { body: -3, tag: 'machine', contact: 'r07' }), O('讓它飄走', { spark: 0.1 })], { weather: ['gravity'] }),
+    E('whalewatch', '整條街的人都停下來看天上的鯨魚，沒有人說話。', [O('一起看', { spark: 0.2, soul: -0.3 }), O('趁機去排隊買便宜貨', { cr: 15 })], { weather: ['skywhale'] }),
+    E('ufowave', '一艘飛碟降低高度，舷窗裡有人向你揮手。', [O('揮手回應', { paranoia: 4, spark: 0.1, contact: 'zed' }), O('躲進騎樓', { paranoia: -1 })], { weather: ['ufofleet', 'doublemoon'] }),
+    E('typhoonroof', '風球下，有人在天台追一塊被吹走的鐵皮。', [O('幫忙抓住', { body: -6, soul: -0.4 }), O('叫對方回去', { spark: 0.05 })], { weather: ['typhoon', 'downpour'] }),
+    E('paperfall', '一張從天而降的文件落在你腳邊，蓋着「絕密」的印章。', [O('讀一下', { paranoia: 4, tag: 'rebel' }), O('撕掉', { paranoia: -1 })], { weather: ['paperstorm'] }),
+    E('rainbowbet', '有人在彩虹下開賭：「彩虹會不會在十分鐘內消失？」', [O('押「會」', { cr: 25 }), O('押「不會」', { cr: -15, spark: 0.1 })], { weather: ['rainbow', 'clear'] }),
+  ];
+  Object.assign(D, { CONTACTS, CONTACT_BY: Object.fromEntries(CONTACTS.map((c) => [c.id, c])), ENCOUNTERS });
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -7045,9 +7459,12 @@ button:focus-visible,
   const activeEvents = (s) => (s.events || []).map((e) => Object.assign({ def: evDef(e.id) }, e)).filter((e) => e.def);
   const eventActive = (s, id) => (s.events || []).some((e) => e.id === id);
   // 合併所有進行中事件的修正：乘數相乘、數值相加、停業清單合併、致命危險列成清單
+  // 今天的天氣（第十期）：旅行時不計浮城的天氣
+  const weatherOf = (s) => (s.weather && s.weather.day === s.day && !s.trip && D.WEATHER_BY ? D.WEATHER_BY[s.weather.id] || null : null);
   function worldMods(s) {
     const out = { pay: {} };
-    activeEvents(s).forEach(({ def }) => {
+    const w = weatherOf(s);
+    activeEvents(s).concat(w ? [{ def: w }] : []).forEach(({ def }) => {
       const m = def.mods || {};
       Object.keys(m).forEach((k) => {
         const v = m[k];
@@ -7064,8 +7481,28 @@ button:focus-visible,
   const worldPay = (s, job) => (worldMods(s).pay[job] || 1);
   const worldClosed = (s, job) => {
     const e = activeEvents(s).find(({ def }) => def.mods && def.mods.closed && def.mods.closed.includes(job));
-    return e ? '事件：' + e.def.name : null;
+    if (e) return '事件：' + e.def.name;
+    const w = weatherOf(s);
+    return w && w.mods.closed && w.mods.closed.includes(job) ? '天氣：' + w.name : null;
   };
+  // 每天早上擲天氣：一般天氣跟季節走；奇怪狀態由一成多開始，越到後期越常見；不會連續兩天一樣
+  function rollWeather(s) {
+    if (!D.WEATHER || s.trip || (s.weather && s.weather.day === s.day)) return;
+    const odd = rand(s) < 0.14 + 0.16 * age(s) / 100;
+    const prev = s.weather && s.weather.id;
+    const pool = D.WEATHER.filter((w) => w.id !== prev && (odd ? w.kind === 'odd' : w.kind === 'normal' && (!w.seasons || w.seasons.includes(s.season))));
+    const total = pool.reduce((a, w) => a + w.w, 0);
+    let r = rand(s) * total, pickW = pool[0];
+    for (const w of pool) { r -= w.w; if (r <= 0) { pickW = w; break; } }
+    s.weather = { id: pickW.id, day: s.day };
+    s.weatherSeen = s.weatherSeen || {};
+    s.weatherSeen[pickW.id] = true;
+  }
+  // 天氣對作品的影響：下筆的素材有指定標籤時的乘數
+  function weatherTag(s, sel) {
+    const w = weatherOf(s);
+    return w && w.tag && sel.some((c) => c.tags.includes(w.tag.t)) ? { x: w.tag.x, name: w.name } : null;
+  }
   function eventsInfo(s) {
     return activeEvents(s).map(({ def, until }) => ({ id: def.id, name: def.name, grade: def.grade, scope: def.scope, visual: def.visual,
       left: until - s.day + 1, news: def.news }));
@@ -7911,7 +8348,8 @@ button:focus-visible,
   // ---------- 聊天、義工、休息 ----------
   function chatCost(s) { return perk(s).freeChat ? 0 : 15; }
   function aliveNpcs(s) { return s.npcs.filter((n) => n.alive); }
-  function applyChat(s, npcId) {
+  // reply（第十期）：傾聽、傾訴、一起創作；不給就是以前的聊天
+  function applyChat(s, npcId, reply) {
     const n = s.npcs.find((x) => x.id === npcId);
     const def = D.NPCS.find((x) => x.id === npcId);
     const rep = report(s, '與' + def.name + '聊天');
@@ -7934,6 +8372,64 @@ button:focus-visible,
     teach(s, npcId, n.friend === 2 || n.friend === 4 ? 1 : 0.25, rep);
     if (n.friend === 3) { const o = D.OBJECTS.find((x) => x.npc === npcId); if (o) gainObject(s, o.id, rep); }
     if (rand(s) < 0.3 + 0.002 * A(s, 'social')) polishCard(s, rep, def.name);
+    if (reply === 'listen') { rep.line('你一直聽着', 'good', addSpark(s, 0.1, true), 'spark'); train(s, { empathy: 0.8 }, rep); }
+    else if (reply === 'confide') { atone(s, 0.4, rep, '你說出了心裡話'); train(s, { social: 0.8 }, rep); }
+    else if (reply === 'jam') { hurt(s, 3, 'chat'); rep.delta('body', -3); rep.gain(nth(n.friend + 1)); train(s, { craft: 0.6 }, rep); }
+    return rep.done();
+  }
+  // ---------- 街頭奇遇與人脈（第十期） ----------
+  // 白天在浮城做完一件事之後，約三成機會碰到一件小事；每天最多一次；天氣限定的奇遇優先，見過少的優先
+  function encounter(s) {
+    if (!D.ENCOUNTERS || s.trip || isNight(s) || s.encDay === s.day || rand(s) > 0.3) return null;
+    const w = weatherOf(s), seen = s.encSeen || {};
+    const pool = D.ENCOUNTERS.filter((e) => !e.weather || (w && e.weather.includes(w.id)));
+    const special = pool.filter((e) => e.weather);
+    const list = special.length && rand(s) < 0.6 ? special : pool;
+    const low = Math.min(...list.map((e) => seen[e.id] || 0));
+    s.encDay = s.day;
+    return pick(s, list.filter((e) => (seen[e.id] || 0) === low));
+  }
+  function cardWithTag(s, t) {
+    const ids = Object.keys(D.CARDS).filter((id) => (D.CARDS[id].tags || []).includes(t) && !D.CARDS[id].rarity);
+    return ids.length ? pick(s, ids) : null;
+  }
+  function applyStreetFx(s, fx, rep, why) {
+    if (fx.cr) { s.cr += fx.cr; rep.delta('cr', fx.cr); }
+    if (fx.body) { if (fx.body > 0) heal(s, fx.body); else hurt(s, -fx.body, 'street'); rep.delta('body', fx.body); }
+    if (fx.spark) rep.delta('spark', addSpark(s, fx.spark, true));
+    if (fx.soul > 0) sin(s, fx.soul, rep, why); else if (fx.soul < 0) atone(s, -fx.soul, rep, why);
+    if (fx.paranoia) addParanoia(s, fx.paranoia);
+    for (let i = 0; i < (fx.n || (fx.tag ? 1 : 0)); i++) { const id = cardWithTag(s, fx.tag); if (id) rep.gain(id); }
+    if (fx.train) train(s, fx.train, rep);
+    if (fx.ticket) gainTicket(s, fx.ticket, 1, '人脈', rep);
+    if (fx.weather) { const old = s.weather; s.weather = null; rollWeather(s); const nw = weatherOf(s); if (nw) rep.line('天氣改成了「' + nw.name + '」' + (D.weatherNote(nw) ? '：' + D.weatherNote(nw) : ''), 'good'); else s.weather = old; }
+    if (fx.contact && D.CONTACT_BY[fx.contact] && !(s.contacts && s.contacts[fx.contact])) {
+      s.contacts = s.contacts || {};
+      s.contacts[fx.contact] = { met: s.day, used: -99 };
+      const C = D.CONTACT_BY[fx.contact];
+      rep.line('認識了新人脈：' + C.title + '・' + C.name + '（' + C.favor + '）', 'legend');
+    }
+  }
+  function applyEncounter(s, id, k) {
+    const e = D.ENCOUNTERS.find((x) => x.id === id), o = e && e.opts[k];
+    const rep = report(s, '街頭奇遇');
+    if (!o) return rep.done();
+    s.encSeen = s.encSeen || {};
+    s.encSeen[id] = (s.encSeen[id] || 0) + 1;
+    rep.line(o.label + (o.note ? '：' + o.note : ''), '');
+    applyStreetFx(s, o.fx, rep, o.label);
+    return rep.done();
+  }
+  // 人脈幫忙：每隔幾天一次，不用花時段
+  const favorReady = (s, id) => { const c = s.contacts && s.contacts[id]; return !!c && !!D.CONTACT_BY[id] && s.day - c.used >= D.CONTACT_BY[id].cd; };
+  function useFavor(s, id) {
+    if (!favorReady(s, id)) return null;
+    const C = D.CONTACT_BY[id];
+    const rep = report(s, C.title + '・' + C.name);
+    s.contacts[id].used = s.day;
+    s.stats.favors = (s.stats.favors || 0) + 1;
+    rep.line(C.favor, 'good');
+    applyStreetFx(s, C.fx, rep, C.favor);
     return rep.done();
   }
   function applyVolunteer(s) {
@@ -8313,7 +8809,10 @@ button:focus-visible,
   function morning(s) {
     if (s.morning && s.morning.day === s.day) return s.morning;
     const S = seasonOf(s);
-    const feed = [{ kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
+    rollWeather(s);
+    const w = weatherOf(s);
+    const feed = [w ? { kind: w.kind === 'odd' ? 'odd' : 'weather', text: '【' + w.name + '】' + w.forecast + (D.weatherNote(w) ? '（' + D.weatherNote(w) + '）' : '') }
+      : { kind: 'weather', text: pick(s, D.FEED.weather[s.season]) }];
     abilityMorning(s, feed);
     // 事件：大部分會先出現預兆，少數 S 級無預警爆發
     scheduleEvents(s, feed);
@@ -8436,11 +8935,11 @@ button:focus-visible,
     if (perk(s).paranoiaDaily) addParanoia(s, perk(s).paranoiaDaily);
     // 事件的每日影響
     if (M.bodyDaily) {
-      const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily);
+      const src = activeEvents(s).find(({ def }) => def.mods && def.mods.bodyDaily) || { def: weatherOf(s) || { id: 'weather', name: '天氣' } };
       const b = Math.round(M.bodyDaily * calmMult(s));
-      if (b < 0) { hurt(s, -b, 'daily:' + src.def.id); rep.line('事件：' + src.def.name, 'bad', b, 'body'); }
+      if (b < 0) { hurt(s, -b, 'daily:' + src.def.id); rep.line((activeEvents(s).some(({ def }) => def === src.def) ? '事件：' : '天氣：') + src.def.name, 'bad', b, 'body'); }
     }
-    if (M.sparkDaily) rep.line('事件的影響', M.sparkDaily > 0 ? 'good' : 'bad', addSpark(s, M.sparkDaily, true), 'spark');
+    if (M.sparkDaily) rep.line(weatherOf(s) && weatherOf(s).mods.sparkDaily && !activeEvents(s).some(({ def }) => def.mods && def.mods.sparkDaily) ? '天氣：' + weatherOf(s).name : '事件的影響', M.sparkDaily > 0 ? 'good' : 'bad', addSpark(s, M.sparkDaily, true), 'spark');
     // 病痛
     condsInfo(s).forEach((c) => {
       const def = D.CONDS[c.id];
@@ -8747,7 +9246,7 @@ button:focus-visible,
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
-    modeOf, days, age, hiding, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
+    modeOf, days, age, hiding, weatherOf, rollWeather, weatherTag, encounter, applyEncounter, favorReady, useFavor, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
     diveConfig, diveBodyCost, applyDive,
@@ -8994,15 +9493,17 @@ button:focus-visible,
     const ai = aiFactor(s, F.id, objs, schools);
     const wm = (RL.worldMods(s).signalMult) || 1;
     const tm = IE.World ? IE.World.tripMult(s) : 1;
+    const wt = RL.weatherTag ? RL.weatherTag(s, sel) : null, wx = wt ? wt.x : 1;
     const sm = SR ? SR.mult(F.id, ctx.kpiMod, sel) : 1;
     const sp = s.spark * (SR ? SR.sparkMult : 1);
     if (ai !== 1) steps.push({ t: 'ai', x: ai });
     if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
     if (wm !== 1) steps.push({ t: 'world', x: wm });
     if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
+    if (wt) steps.push({ t: 'weather', x: wx, name: wt.name });
     if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
     steps.push({ t: 'spark', x: sp });
-    const raw = Math.round(chips * mult * sp * ai * wm * tm * sm);
+    const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx);
     const total = Math.round(raw * ctx.kpiMod);
     const relief = r1(F.scoring.reduce((a, c) => a + (c.grams || 0), 0));
     return { form: F.id, level: fs.level, keys: F.keys, scoring: F.scoring.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
@@ -10142,13 +10643,13 @@ button:focus-visible,
   // 每局開始時從局外紀錄複製，親手玩出更好的評級時更新
   const best = (s, kind) => (s.microBest && s.microBest[kind === 'ot' ? 'label' : kind]) || null;
   const cap = (s) => (perk(s).scriptS ? 'S' : 'A');
-  // 自動完成的目標評級：最高評級減一級，不超過上限
+  // 跳過的評級：沒有親手玩過是 B 級；玩過之後是最高評級減一級，不超過上限
   function target(s, kind) {
     const b = best(s, kind);
-    if (!b) return null;
+    if (!b) return 'B';
     return ORDER[Math.max(0, Math.min(ORDER.indexOf(b) - 1, ORDER.indexOf(cap(s))))];
   }
-  const can = (s, kind) => KINDS.includes(kind) && !!best(s, kind);
+  const can = (s, kind) => KINDS.includes(kind);
   function record(s, kind, rank) {
     if (!rank) return;
     const k = kind === 'ot' ? 'label' : kind;
@@ -15890,8 +16391,10 @@ button:focus-visible,
       }
     },
     drawWeather(c, s) {
-      const w = IE.DATA.SEASONS[s.season].weather;
       const wy = waterY(s.water);
+      // 第十期：每日天氣與奇怪狀態；回傳的基本天氣（風暴、酸雨、熱浪）沿用下面的畫法
+      const wd = IE.Rules && IE.Rules.weatherOf ? IE.Rules.weatherOf(s) : null;
+      const w = wd && IE.WeatherFX ? IE.WeatherFX.draw(c, wd.vis, { t: this.t, wy, night: s.slot === 2 }) : IE.DATA.SEASONS[s.season].weather;
       if (w === 'storm') {
         // 風暴季：強風斜雨與水面濺花
         c.strokeStyle = 'rgba(175,218,255,0.52)';
@@ -16061,6 +16564,373 @@ button:focus-visible,
   };
 
   IE.Scenes = { City, Office, floorTop, waterY };
+})(window.IE = window.IE || {});
+
+// ---- js/weather-fx.js ----
+// 浮城的天氣效果（第十期）：每種天氣和奇怪狀態各有自己的像素動畫。
+// draw(c, vis, env) 畫在 320×180 的低解像度畫布上；回傳要由 scene.js 疊加的基本天氣（storm／acid／heat），沒有則回傳 null。
+// env：{ t（秒）, wy（水面 y）, night }
+(function (IE) {
+  'use strict';
+  const W = 320, H = 180;
+  const fr = (c, col, x, y, w, h) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h); };
+  const mod = (v, m) => ((v % m) + m) % m;
+  // 由上而下落的粒子
+  function fall(c, t, n, o) {
+    for (let i = 0; i < n; i++) {
+      const sway = o.sway ? Math.sin(t * o.sway + i) * 3 : 0;
+      const x = mod(i * 97 + t * (o.dx || 0) + sway, W + 10) - 5;
+      const y = mod(i * 61 + t * o.speed, H + 10) - 5;
+      o.draw(x, y, i);
+    }
+  }
+  // 由下而上升的粒子
+  function rise(c, t, n, o) {
+    for (let i = 0; i < n; i++) {
+      const x = mod(i * 83 + Math.sin(t * (o.sway || 0.8) + i * 1.7) * (o.amp || 4), W);
+      const y = o.top + mod(o.bottom - o.top - (i * 37 + t * o.speed), o.bottom - o.top);
+      o.draw(x, y, i);
+    }
+  }
+  function lightning(c, t, every, strong) {
+    const k = mod(t, every);
+    if (k > 0.22) return;
+    fr(c, 'rgba(235,245,255,' + (strong ? 0.35 : 0.22) * (1 - k / 0.22) + ')', 0, 0, W, H);
+    const seed = Math.floor(t / every);
+    let x = 40 + mod(seed * 131, 240), y = 0;
+    c.fillStyle = 'rgba(255,255,255,0.95)';
+    while (y < 90) {
+      const nx = x + (mod(seed * 7 + y, 9) - 4);
+      c.fillRect(Math.round(nx), y, 1, 6);
+      x = nx; y += 6;
+    }
+  }
+  function fogBands(c, t, col, n) {
+    for (let i = 0; i < n; i++) {
+      const y = 30 + i * 22 + Math.sin(t * 0.3 + i) * 4;
+      const x = mod(t * (6 + i * 2) + i * 80, W + 160) - 160;
+      fr(c, col, x, y, 220, 10 + (i % 3) * 4);
+      fr(c, col, x + 140, y + 6, 180, 8);
+    }
+  }
+
+  const FX = {
+    drizzle(c, e) {
+      c.fillStyle = 'rgba(190,220,255,0.38)';
+      fall(c, e.t, 46, { speed: 120, dx: -20, draw: (x, y) => c.fillRect(Math.round(x), Math.round(y), 1, 3) });
+      return null;
+    },
+    storm() { return 'storm'; },
+    typhoon(c, e) {
+      // 被風捲起的招牌碎片和膠袋
+      for (let i = 0; i < 14; i++) {
+        const x = mod(i * 53 + e.t * (160 + i * 9), W + 40) - 20;
+        const y = 20 + mod(i * 29, 120) + Math.sin(e.t * 6 + i) * 6;
+        fr(c, i % 3 === 0 ? 'rgba(255,79,180,0.8)' : i % 3 === 1 ? 'rgba(230,230,230,0.7)' : 'rgba(55,195,214,0.8)', x, y, 3, 1 + (i % 2));
+      }
+      fr(c, 'rgba(10,30,45,0.18)', 0, 0, W, H);
+      return 'storm';
+    },
+    fog(c, e) {
+      fr(c, 'rgba(190,200,210,0.16)', 0, 0, W, H);
+      fogBands(c, e.t, 'rgba(210,220,228,0.16)', 6);
+      return null;
+    },
+    thunder(c, e) { lightning(c, e.t, 3.4, true); return 'storm'; },
+    heat() { return 'heat'; },
+    heatdome(c, e) {
+      // 籠罩全城的熱穹頂
+      c.strokeStyle = 'rgba(255,150,60,0.35)';
+      c.lineWidth = 1;
+      c.beginPath(); c.ellipse(160, 150, 190, 135 + Math.sin(e.t) * 2, 0, Math.PI, 2 * Math.PI); c.stroke();
+      fr(c, 'rgba(255,110,40,0.10)', 0, 0, W, H);
+      return 'heat';
+    },
+    sand(c, e) {
+      fr(c, 'rgba(214,140,60,0.26)', 0, 0, W, H);
+      for (let i = 0; i < 70; i++) {
+        const x = mod(i * 71 + e.t * (140 + (i % 5) * 30), W + 20) - 10;
+        const y = mod(i * 47, H);
+        fr(c, i % 4 ? 'rgba(240,190,120,0.55)' : 'rgba(255,220,160,0.7)', x, y, 3 + (i % 3), 1);
+      }
+      return null;
+    },
+    drythunder(c, e) { fr(c, 'rgba(30,20,40,0.15)', 0, 0, W, H); lightning(c, e.t, 2.7, false); return null; },
+    acid() { return 'acid'; },
+    acidfog(c, e) {
+      fr(c, 'rgba(150,190,60,0.14)', 0, 0, W, H);
+      fogBands(c, e.t, 'rgba(196,224,74,0.14)', 6);
+      return null;
+    },
+    neonsmog(c, e) {
+      for (let y = 0; y < H; y += 6) fr(c, 'rgba(255,79,180,' + (0.05 + 0.04 * Math.sin(y * 0.08 + e.t)) + ')', 0, y, W, 6);
+      fogBands(c, e.t, 'rgba(195,139,255,0.10)', 5);
+      for (let i = 0; i < 24; i++) {
+        const on = mod(Math.floor(e.t * 3) + i, 5) > 0;
+        if (on) fr(c, i % 2 ? 'rgba(255,140,220,0.8)' : 'rgba(120,230,255,0.8)', mod(i * 59, W), 20 + mod(i * 37, 110), 1, 1);
+      }
+      return null;
+    },
+    clear(c, e) {
+      if (e.night) {
+        for (let i = 0; i < 60; i++) if (mod(Math.floor(e.t * 2) + i, 7)) fr(c, 'rgba(255,255,255,0.75)', mod(i * 53, W), mod(i * 29, 70), 1, 1);
+      } else {
+        fr(c, 'rgba(255,240,200,0.10)', 0, 0, W, H);
+        for (let i = 0; i < 5; i++) {
+          // 海鳥：小小的 V 字
+          const x = mod(i * 70 + e.t * (12 + i * 3), W + 20) - 10, y = 26 + i * 9 + Math.sin(e.t * 2 + i) * 2;
+          const f = mod(Math.floor(e.t * 4) + i, 2);
+          fr(c, '#1d2433', x, y + f, 1, 1); fr(c, '#1d2433', x + 1, y + 1 - f, 1, 1); fr(c, '#1d2433', x + 2, y + f, 1, 1);
+        }
+      }
+      return null;
+    },
+    rainbow(c, e) {
+      const cols = ['255,90,90', '255,170,70', '255,230,90', '120,220,120', '90,170,255', '170,120,255'];
+      const a = e.night ? 0.12 : 0.3;
+      cols.forEach((col, i) => {
+        c.strokeStyle = 'rgba(' + col + ',' + a + ')';
+        c.lineWidth = 2;
+        c.beginPath(); c.arc(170, 150, 120 - i * 2.2, Math.PI * 1.06, Math.PI * 1.94); c.stroke();
+      });
+      return null;
+    },
+    overcast(c, e) {
+      fr(c, 'rgba(120,130,145,0.18)', 0, 0, W, H);
+      for (let i = 0; i < 7; i++) {
+        const x = mod(i * 60 + e.t * 4, W + 80) - 80;
+        fr(c, 'rgba(150,160,175,0.22)', x, 4 + (i % 3) * 7, 70, 8);
+        fr(c, 'rgba(150,160,175,0.18)', x + 12, 0 + (i % 3) * 7, 44, 6);
+      }
+      return null;
+    },
+    hail(c, e) {
+      fall(c, e.t, 40, { speed: 260, dx: -10, draw: (x, y) => fr(c, 'rgba(235,245,255,0.9)', x, y, 2, 2) });
+      for (let i = 0; i < 10; i++) if (mod(Math.floor(e.t * 10) + i, 4) === 0) fr(c, 'rgba(255,255,255,0.8)', mod(i * 37 + e.t * 50, W), e.wy - 2, 1, 1);
+      return null;
+    },
+    snow(c, e) {
+      fall(c, e.t, 70, { speed: 18, dx: 6, sway: 1.3, draw: (x, y, i) => fr(c, i % 4 ? 'rgba(255,255,255,0.85)' : 'rgba(220,235,255,0.9)', x, y, i % 5 ? 1 : 2, i % 5 ? 1 : 2) });
+      fr(c, 'rgba(220,235,255,0.08)', 0, 0, W, H);
+      return null;
+    },
+    fishrain(c, e) {
+      fall(c, e.t, 26, { speed: 90, dx: -8, sway: 2, draw: (x, y, i) => {
+        const col = i % 3 ? '#c8d6e5' : '#ff9a4d';
+        fr(c, col, x, y, 1, 3); fr(c, col, x - 1, y + 3, 3, 1); fr(c, '#0b0f1a', x, y, 1, 1);
+      } });
+      return 'storm';
+    },
+    jellysky(c, e) {
+      rise(c, e.t, 10, { speed: 6, top: 8, bottom: e.wy, amp: 6, sway: 0.6, draw: (x, y, i) => {
+        const col = i % 2 ? '255,143,209' : '127,227,255';
+        const pulse = 0.55 + 0.3 * Math.sin(e.t * 2 + i);
+        c.fillStyle = 'rgba(' + col + ',0.18)'; c.beginPath(); c.arc(x, y + 2, 9, 0, Math.PI * 2); c.fill();
+        fr(c, 'rgba(' + col + ',' + pulse + ')', x - 5, y, 11, 3);
+        fr(c, 'rgba(' + col + ',' + pulse * 0.85 + ')', x - 4, y - 2, 9, 2);
+        fr(c, 'rgba(' + col + ',' + pulse * 0.7 + ')', x - 2, y - 3, 5, 1);
+        for (let k = 0; k < 4; k++) fr(c, 'rgba(' + col + ',0.45)', x - 4 + k * 3, y + 3, 1, 4 + mod(Math.floor(e.t * 3) + k + i, 4));
+      } });
+      return null;
+    },
+    aurora(c, e) {
+      for (let x = 0; x < W; x += 2) {
+        const h = 22 + Math.sin(x * 0.03 + e.t * 0.7) * 10 + Math.sin(x * 0.011 - e.t * 0.4) * 8;
+        const y0 = 6 + Math.sin(x * 0.02 + e.t * 0.5) * 6;
+        fr(c, 'rgba(90,255,170,' + (e.night ? 0.22 : 0.12) + ')', x, y0, 2, h);
+        fr(c, 'rgba(190,110,255,' + (e.night ? 0.18 : 0.09) + ')', x, y0 + h, 2, 8);
+      }
+      return null;
+    },
+    meteor(c, e) {
+      for (let i = 0; i < 4; i++) {
+        const per = 2.4 + i * 0.7, k = mod(e.t + i * 1.3, per) / per;
+        if (k > 0.35) continue;
+        const p = k / 0.35, x0 = 60 + mod(i * 97 + Math.floor((e.t + i * 1.3) / per) * 53, 220), y0 = 6 + i * 6;
+        for (let j = 0; j < 10; j++) fr(c, 'rgba(255,240,200,' + (1 - j / 10) * 0.9 + ')', x0 - p * 80 + j * 2, y0 + p * 40 - j, 1, 1);
+      }
+      if (!e.night) fr(c, 'rgba(10,10,40,0.12)', 0, 0, W, H);
+      return null;
+    },
+    doublemoon(c, e) {
+      const y = 22 + Math.sin(e.t * 0.3) * 1;
+      c.fillStyle = 'rgba(255,190,220,0.9)'; c.beginPath(); c.arc(262, y, 8, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(40,20,60,0.55)'; c.beginPath(); c.arc(266, y - 2, 7, 0, Math.PI * 2); c.fill();
+      fr(c, 'rgba(255,79,180,0.6)', 254, y + 11, 16, 1);
+      return null;
+    },
+    blackout(c, e) {
+      fr(c, 'rgba(2,4,12,' + (e.night ? 0.6 : 0.35) + ')', 0, 0, W, H);
+      for (let i = 0; i < 26; i++) {
+        const fl = 0.5 + 0.5 * Math.sin(e.t * 9 + i * 2.3);
+        fr(c, 'rgba(255,200,110,' + (0.4 + fl * 0.5) + ')', mod(i * 61, W), 40 + mod(i * 43, Math.max(10, e.wy - 50)), 1, 1);
+      }
+      return null;
+    },
+    adsky(c, e) {
+      // 雲層變成了廣告螢幕
+      const x = 70, y = 10, w = 180, h = 34;
+      fr(c, 'rgba(10,8,20,0.75)', x - 2, y - 2, w + 4, h + 4);
+      for (let i = 0; i < h; i += 2) fr(c, 'hsla(' + mod(e.t * 60 + i * 6, 360) + ',90%,60%,0.55)', x, y + i, w, 1);
+      const k = mod(Math.floor(e.t * 1.5), 3);
+      fr(c, 'rgba(255,255,255,0.9)', x + 20 + k * 40, y + 10, 30, 4);
+      fr(c, 'rgba(255,255,255,0.7)', x + 20 + k * 40, y + 18, 50, 3);
+      fr(c, 'rgba(255,79,180,0.9)', x + w - 26, y + 6, 18, 18);
+      fr(c, 'rgba(255,255,255,0.12)', 0, 0, W, H);
+      return null;
+    },
+    gravity(c, e) {
+      rise(c, e.t, 30, { speed: 8, top: 6, bottom: e.wy + 4, amp: 3, sway: 0.5, draw: (x, y, i) => {
+        const col = ['#6b6254', '#4a5870', '#ff4fb4', '#37c3d6', '#8a7f6a'][i % 5];
+        const w = 3 + (i % 4), h = 2 + (i % 3);
+        fr(c, col, x, y, w, h);
+        fr(c, 'rgba(255,255,255,0.25)', x, y, w, 1);
+        if (i % 5 === 2) fr(c, 'rgba(255,255,255,0.8)', x + 1, y + 1, w - 2, 1);
+      } });
+      fr(c, 'rgba(120,90,200,0.08)', 0, 0, W, H);
+      return null;
+    },
+    uprain(c, e) {
+      c.fillStyle = 'rgba(175,218,255,0.5)';
+      for (let i = 0; i < 70; i++) {
+        const x = mod(i * 97, W), y = H - mod(i * 61 + e.t * 160, H + 10);
+        c.fillRect(Math.round(x), Math.round(y), 1, 4);
+      }
+      return null;
+    },
+    redtide(c, e) {
+      fr(c, 'rgba(190,20,40,0.45)', 0, e.wy, W, H - e.wy);
+      for (let i = 0; i < 12; i++) fr(c, 'rgba(255,90,90,0.5)', mod(i * 41 + e.t * 10, W), e.wy + 3 + (i % 5) * 4, 10, 1);
+      fr(c, 'rgba(120,10,20,0.12)', 0, 0, W, e.wy);
+      return null;
+    },
+    glitch(c, e) {
+      const k = Math.floor(e.t * 8);
+      for (let i = 0; i < 3; i++) {
+        if (mod(k + i * 5, 7) > 1) continue;
+        const y = mod(k * 37 + i * 53, H - 12), h = 3 + mod(k + i, 8), dx = mod(k * 13 + i, 15) - 7;
+        try { c.drawImage(c.canvas, 0, y, W, h, dx, y, W, h); } catch (err) { /* 有些環境不能自我複製 */ }
+        fr(c, i % 2 ? 'rgba(255,0,90,0.25)' : 'rgba(0,255,230,0.25)', 0, y, W, 1);
+      }
+      return null;
+    },
+    paper(c, e) {
+      fall(c, e.t, 30, { speed: 22, dx: 14, sway: 1.6, draw: (x, y, i) => {
+        const w = i % 2 ? 3 : 4;
+        fr(c, 'rgba(240,240,232,0.92)', x, y, w, 4);
+        fr(c, 'rgba(120,120,140,0.7)', x + 1, y + 1, w - 2, 1);
+      } });
+      return null;
+    },
+    bubbles(c, e) {
+      rise(c, e.t, 24, { speed: 14, top: 0, bottom: e.wy, amp: 5, sway: 1.1, draw: (x, y, i) => {
+        c.strokeStyle = 'hsla(' + mod(i * 47 + e.t * 40, 360) + ',90%,75%,0.75)';
+        c.lineWidth = 1;
+        c.beginPath(); c.arc(x, y, 2 + (i % 3), 0, Math.PI * 2); c.stroke();
+      } });
+      return null;
+    },
+    eclipse(c, e) {
+      fr(c, 'rgba(5,5,15,0.45)', 0, 0, W, H);
+      c.fillStyle = 'rgba(255,240,200,0.35)'; c.beginPath(); c.arc(240, 34, 13 + Math.sin(e.t * 2) * 0.6, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#05060c'; c.beginPath(); c.arc(240, 34, 10, 0, Math.PI * 2); c.fill();
+      return null;
+    },
+    whale(c, e) {
+      const x = mod(e.t * 9, W + 160) - 120, y = 30 + Math.sin(e.t * 0.5) * 4;
+      c.fillStyle = 'rgba(30,50,90,0.75)';
+      c.beginPath(); c.ellipse(x + 40, y, 40, 11, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x - 14, y - 8); c.lineTo(x - 12, y + 8); c.closePath(); c.fill();
+      fr(c, 'rgba(160,200,255,0.55)', x + 50, y + 3, 26, 2);
+      fr(c, '#d9fbff', x + 66, y - 3, 1, 1);
+      if (mod(e.t, 5) < 1) for (let k = 0; k < 5; k++) fr(c, 'rgba(210,240,255,0.7)', x + 56 + k - 2, y - 14 - k * 2 + mod(e.t * 10, 3), 1, 2);
+      return null;
+    },
+    freeze(c) {
+      c.fillStyle = 'rgba(190,225,255,0.55)';
+      for (let i = 0; i < 90; i++) c.fillRect(mod(i * 97, W), mod(i * 61, H), 1, 3);
+      fr(c, 'rgba(160,200,255,0.10)', 0, 0, W, H);
+      return null;
+    },
+    ufos(c, e) {
+      for (let i = 0; i < 9; i++) {
+        const x = 20 + i * 34 + Math.sin(e.t * 0.8 + i) * 5, y = 12 + (i % 3) * 10 + Math.sin(e.t * 1.3 + i * 2) * 2;
+        fr(c, 'rgba(160,170,190,0.9)', x - 5, y, 11, 2);
+        fr(c, 'rgba(155,227,107,0.85)', x - 2, y - 2, 5, 2);
+        if (mod(Math.floor(e.t * 4) + i, 3) === 0) fr(c, 'rgba(255,79,180,1)', x - 4 + mod(Math.floor(e.t * 6), 9), y + 1, 1, 1);
+      }
+      return null;
+    },
+    drones(c, e) {
+      for (let i = 0; i < 80; i++) {
+        const a = e.t * (0.6 + (i % 5) * 0.15) + i;
+        const x = mod(i * 41 + Math.cos(a) * 18, W), y = 10 + mod(i * 23, 110) + Math.sin(a * 1.3) * 8;
+        if (!mod(Math.floor(e.t * 5) + i, 4)) continue;
+        const col = i % 2 ? '255,211,107' : '127,227,255';
+        fr(c, 'rgba(' + col + ',0.25)', x - 1, y - 1, 3, 3);
+        fr(c, 'rgba(' + col + ',1)', x, y, 1, 1);
+      }
+      return null;
+    },
+    glowsea(c, e) {
+      fr(c, 'rgba(40,200,230,0.22)', 0, e.wy, W, H - e.wy);
+      for (let i = 0; i < 48; i++) {
+        const x = mod(i * 29 + e.t * (8 + i % 4), W + 20) - 10, y = e.wy + 1 + (i % 8) * 2;
+        fr(c, 'rgba(120,250,255,' + (0.5 + 0.4 * Math.sin(e.t * 3 + i)) + ')', x, y, 8 + (i % 4) * 4, 1);
+      }
+      for (let i = 0; i < 16; i++) if (mod(Math.floor(e.t * 6) + i, 5) === 0) fr(c, 'rgba(200,255,255,0.95)', mod(i * 53, W), e.wy + mod(i * 7, 16), 1, 1);
+      return null;
+    },
+  };
+  IE.WeatherFX = {
+    has: (vis) => !!FX[vis],
+    draw(c, vis, env) { const f = FX[vis]; return f ? f(c, env) : vis; },
+  };
+})(window.IE = window.IE || {});
+
+// ---- js/talk.js ----
+// 朋友的對話（第十期）：按熟絡度、近況和天氣，從 data-talk.js 組合三句。
+// 只影響文字，所以用 Math.random，不動遊戲的亂數（每日挑戰的結果不受影響）。
+(function (IE) {
+  'use strict';
+  const D = () => IE.DATA, R = () => IE.Rules;
+  const one = (a) => a[Math.floor(Math.random() * a.length)];
+  const recent = [];
+  // 盡量不重複最近說過的話
+  function fresh(arr) {
+    for (let k = 0; k < 6; k++) { const t = one(arr); if (!recent.includes(t)) return t; }
+    return one(arr);
+  }
+  function lines(s, id) {
+    const T = D().TALK && D().TALK[id];
+    if (!T) return [];
+    const SH = D().NPC_SHORT;
+    const n = s.npcs.find((x) => x.id === id) || { friend: 0 };
+    const others = s.npcs.filter((x) => x.alive && x.id !== id).map((x) => SH[x.id]);
+    const gone = s.npcs.filter((x) => !x.alive).map((x) => SH[x.id]);
+    const w = R().weatherOf ? R().weatherOf(s) : null;
+    const taken = gone.length ? one(gone) : '';
+    const fill = (t) => t.replace(/\{other\}/g, others.length ? one(others) : '大家').replace(/\{taken\}/g, taken).replace(/\{w\}/g, w ? w.name : '天氣').replace(/\{day\}/g, s.day);
+    const out = [fresh(n.friend >= 4 ? T.close : n.friend >= 2 ? T.mid : T.new)];
+    // 近況：挑最要緊的一件；沒有就談天氣
+    const sit = [];
+    if (gone.length && Math.random() < 0.5) sit.push(T.missing);
+    if (s.body < 30) sit.push(T.hurt);
+    if (s.spark < 1.3) sit.push(T.tired);
+    if (s.soul > 17) sit.push(T.heavy);
+    if (s.cr < 40) sit.push(T.broke);
+    if (s.cr > 900) sit.push(T.rich);
+    if (IE.Stages && IE.Stages.today && IE.Stages.today(s)) sit.push(T.stage);
+    if (R().reviewDay(s) - s.day <= 2) sit.push(T.review);
+    const wl = w && D().WEATHER_TALK[w.id];
+    if (sit.length && Math.random() < 0.75) out.push(fill(fresh(one(sit))));
+    else if (wl) out.push(wl);
+    // 話題或八卦
+    out.push(fill(others.length && Math.random() < 0.3 ? fresh(D().TALK_GOSSIP) : fresh(T.topics)));
+    out.forEach((t) => { recent.push(t); if (recent.length > 40) recent.shift(); });
+    return out;
+  }
+  IE.Talk = { lines };
 })(window.IE = window.IE || {});
 
 // ---- js/maps.js ----
@@ -21814,10 +22684,12 @@ button:focus-visible,
     const n0 = next[0];
     const rentChip = '<span class="chip next' + (n0.d === 0 ? ' warn' : '') + '"' + (n0.c ? ' style="--c:' + n0.c + '"' : '') + ' title="' + esc(season.name + '\n' + next.map((x) => when(x.d) + '：' + x.t).join('\n')) + '">' + when(n0.d) + '・' + esc(n0.t) + '</span>'
       + (s.floor <= 0 ? '<span class="chip warn">露宿天橋下</span>' : toRent <= 1 && s.cr < rent && n0.t.indexOf('交租') < 0 ? '<span class="chip warn">' + when(toRent) + '交租 $' + fmt(rent) + '・錢不夠</span>' : '');
+    const wd = R().weatherOf ? R().weatherOf(s) : null;
+    const wxChip = wd ? '<span class="chip wx' + (wd.kind === 'odd' ? ' odd' : '') + '" title="' + esc(wd.forecast + '\n' + D().weatherNote(wd)) + '"><i aria-hidden="true">' + wd.glyph + '</i>' + esc(wd.name) + '</span>' : '';
     hud.innerHTML = ''
       + '<div class="hud-top">'
       + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="px">Day</span><span class="num">' + pad2(s.day) + '</span><span class="num mute">/' + R().days(s) + '</span><span>· ' + D().SLOTS[s.slot] + '</span></div>'
-      + rentChip
+      + wxChip + rentChip
       + danger
       + '<div class="hud-btns">'
       + '<button class="icon-btn" type="button" data-hud="stats">狀態</button>'
@@ -21949,7 +22821,7 @@ button:focus-visible,
             + '<span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span>'
             + '<span class="fx">' + fxHtml(a.fx.filter(([k]) => KEY_FX.includes(k))) + (mats ? '<span class="fx-mats" aria-label="素材">' + mats + '</span>' : '') + '</span>'
             + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
-            + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="照舊做：不用玩小遊戲，直接以 ' + auto + ' 級結算（拿不到 S、SS 和特別成就）">照舊做<b>' + auto + '</b></button>' : '') + '</div>';
+            + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="跳過小遊戲，直接以 ' + auto + ' 級結算。親手玩才拿得到 S、SS 和特別成就；親手玩出好成績之後，跳過的評級也會提升。">跳過<b>' + auto + '</b></button>' : '') + '</div>';
         }).join('') + '</div>').join('')
       + invHtml(s);
   }
@@ -21958,8 +22830,42 @@ button:focus-visible,
     const empty = Math.max(0, R().slotsOf(s) - s.objects.length);
     return '<div class="inv-line">'
       + '<button class="inv-btn" type="button" data-do="objs" title="管理靈感物件"><span class="lbl">靈感物件</span>' + objs + '<span class="inv-empty">' + '<i></i>'.repeat(empty) + '</span><b class="num">' + s.objects.length + '/' + R().slotsOf(s) + '</b></button>'
+      + '<button class="inv-btn" type="button" data-do="contacts" title="人脈：請城中的人幫忙"><span class="lbl">人脈</span><b class="num">' + Object.keys(s.contacts || {}).length + '</b>'
+      + (Object.keys(s.contacts || {}).some((id) => R().favorReady(s, id)) ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</b></button>'
       + '</div>';
+  }
+  // 街頭奇遇與人脈（第十期）
+  function streetFxText(fx) {
+    const out = [];
+    if (fx.cr) out.push('$ ' + (fx.cr > 0 ? '+' : '−') + Math.abs(fx.cr));
+    if (fx.body) out.push('身體 ' + (fx.body > 0 ? '+' : '−') + Math.abs(fx.body));
+    if (fx.spark) out.push('火花 ' + (fx.spark > 0 ? '+' : '−') + Math.abs(fx.spark));
+    if (fx.soul) out.push(fx.soul > 0 ? '靈魂變重' : '靈魂變輕');
+    if (fx.paranoia) out.push('偏執 ' + (fx.paranoia > 0 ? '+' : '−') + Math.abs(fx.paranoia));
+    if (fx.tag) out.push('「' + D().TAGS[fx.tag].name + '」素材' + (fx.n > 1 ? ' ×' + fx.n : ''));
+    if (fx.contact) out.push('？');
+    return out.join('・');
+  }
+  function encounterModal(s, e) {
+    const w = R().weatherOf ? R().weatherOf(s) : null;
+    return '<div class="modal encounter"><span class="eyebrow">街頭奇遇' + (e.weather && w ? '・' + esc(w.name) : '') + '</span>'
+      + '<p class="d-text">' + esc(e.text) + '</p>'
+      + '<div class="d-opts">' + e.opts.map((o, k) => '<button class="d-opt" type="button" data-do="pick" data-id="' + k + '"><span class="d-label">' + esc(o.label) + '</span>'
+        + (streetFxText(o.fx) ? '<span class="fx"><span class="fx-note">' + esc(streetFxText(o.fx)) + '</span></span>' : '') + '</button>').join('') + '</div></div>';
+  }
+  function contactsModal(s) {
+    const all = D().CONTACTS || [], mine = s.contacts || {};
+    const known = all.filter((c) => mine[c.id]);
+    return '<div class="modal wide contacts"><h2>人脈 ' + known.length + ' / ' + all.length + '</h2>'
+      + '<p class="mute" style="font-size:13px">在浮城做事時會碰到街頭奇遇，有些人會留下聯絡方法。請人幫忙不用花時段，但每人隔幾天才可以找一次。</p>'
+      + (known.length ? '<div class="ct-list">' + known.map((c) => {
+        const ready = R().favorReady(s, c.id), left = c.cd - (s.day - mine[c.id].used);
+        return '<div class="ct-card"><div class="ct-who"><b>' + esc(c.name) + '</b><span>' + esc(c.title) + '</span></div><p>' + esc(c.desc) + '</p>'
+          + '<button class="btn' + (ready ? ' primary' : '') + '" type="button" data-do="favor" data-id="' + c.id + '"' + (ready ? '' : ' disabled') + '>' + esc(c.favor) + (ready ? '' : '（' + left + ' 天後）') + '</button></div>';
+      }).join('') + '</div>' : '<p class="mute">還沒有認識任何人。多在浮城走動吧。</p>')
+      + (all.length > known.length ? '<p class="mute" style="font-size:12px">還有 ' + (all.length - known.length) + ' 位未認識的人。</p>' : '')
+      + '<div class="btn-row"><button class="btn" type="button" data-do="close">關閉</button></div></div>';
   }
   // 素材庫（在浮城查看；創作桌上另有牌庫）
   function deckModal(s) {
@@ -21988,6 +22894,14 @@ button:focus-visible,
       + '<h3>裝備中</h3>' + (s.objects.map((id, i) => row(id, true, i)).join('') || '<p class="mute">沒有</p>')
       + '<h3>儲物箱</h3>' + (s.objStash.map((id) => row(id, false)).join('') || '<p class="mute">沒有</p>')
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">完成</button></div></div>';
+  }
+  // 和朋友聊天（第十期）：三句對話，然後選擇怎樣回應
+  function talkModal(s, id, lines) {
+    const def = D().NPCS.find((x) => x.id === id), n = s.npcs.find((x) => x.id === id) || { friend: 0 };
+    return '<div class="modal talk"><span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span>'
+      + '<h2>' + esc(def.name) + '</h2>'
+      + '<div class="talk-lines">' + lines.map((t, i) => '<p class="bubble" style="--d:' + (i * 0.45) + 's">' + esc(t) + '</p>').join('') + '</div>'
+      + '<div class="talk-replies">' + D().TALK_REPLIES.map((r) => '<button class="btn talk-reply" type="button" data-do="reply" data-id="' + r.id + '"><b>' + r.name + '</b><small>' + r.desc + '</small></button>').join('') + '</div></div>';
   }
   function chatPanel(s) {
     const npcs = R().aliveNpcs(s);
@@ -22064,7 +22978,7 @@ button:focus-visible,
 
   // ---------- 手機 ----------
   function phoneModal(s, m, shopItems, opts) {
-    const who = { weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
+    const who = { odd: '異常天氣', weather: '天文台', news: '新聞', ad: '贊助', post: '浮聲網民', alien: '星際人才發展局', warn: '危險提示', world: '突發新聞', omen: '預兆', comm: '天空區畫廊' };
     // 網民的帖子只留一則（其餘是同一類的閒話）
     let posts = 0;
     const feed = m.feed.filter((p) => p.kind !== 'post' || posts++ < 1).map((p) => '<div class="post ' + p.kind + (p.fake ? ' fake' : '') + '"><span class="who">' + (p.grade ? '<b class="gbadge g-' + p.grade + '">' + p.grade + '</b>' : '') + (who[p.kind] || '') + '</span>' + esc(p.text) + '</div>').join('');
@@ -22294,11 +23208,13 @@ button:focus-visible,
     if (s.floor > 0) plan.push({ d: R().nextRentDay(s) - s.day, t: '交租 $' + fmt(R().rentAmount(s) + s.debt) });
     plan.sort((a, b) => a.d - b.d);
     const tk = s.runTickets ? ['silver', 'gold', 'rainbow'].filter((k) => s.runTickets[k]).map((k) => ({ silver: '銀', gold: '金', rainbow: '外星' }[k]) + ' ' + s.runTickets[k]).join('・') : '';
+    const wd = R().weatherOf ? R().weatherOf(s) : null;
     const items = [
       ['季節', D().SEASONS[s.season].name], ['本季 KPI', R().kpi(s).name],
+    ].concat(wd ? [['今天的天氣', wd.name + (D().weatherNote(wd) ? '：' + D().weatherNote(wd) : '')]] : []).concat([
       ['火花上限', '×' + R().sparkMax(s).toFixed(1)], ['平台評分', '★' + s.rating.toFixed(1)], ['全城自動化', s.auto.toFixed(0) + '%'],
       ['水位', s.water.toFixed(1) + ' 樓'], ['住處', s.floor ? s.floor + ' 樓' : '天橋下'],
-    ];
+    ]);
     if (s.stake > 1) items.push(['外星評級', String(s.stake)]);
     if (tk) items.push(['本局扭蛋券', tk]);
     if (IE.World && IE.World.stamps(s)) items.push(['護照印章', '×' + IE.World.stamps(s)]);
@@ -22577,7 +23493,7 @@ button:focus-visible,
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
-    actionsPanel, invHtml, deckModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
+    actionsPanel, invHtml, deckModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };
@@ -23946,6 +24862,11 @@ button:focus-visible,
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(260);
           break;
+        case 'weather':
+          tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
+          A().fx('mult', 2);
+          await wait(260);
+          break;
         case 'trip':
           tag((x.abroad ? '異鄉之夜' : '旅行的餘韻') + ' ×' + x.x, 'kpi-good');
           A().fx('mult', 3);
@@ -24254,7 +25175,7 @@ button:focus-visible,
   function currentView() {
     const s = Game.state;
     if (s && s.trip) return Game.view === 'world' ? 'world' : 'trip';
-    return Game.view && Game.view !== 'trip' ? Game.view : 'room';
+    return Game.view && Game.view !== 'trip' ? Game.view : 'city';
   }
   function renderViews(show) {
     const nav = document.getElementById('views');
@@ -24493,6 +25414,7 @@ button:focus-visible,
       },
       objs() { openObjects(); },
       deck() { UI.modal(UI.deckModal(s), { close: UI.closeModal }); },
+      contacts() { openContacts(); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
     });
@@ -24524,7 +25446,13 @@ button:focus-visible,
         return afterAction(R.applyVolunteer(s));
       case 'chat':
         return UI.setPanel(UI.chatPanel(s), {
-          npc(el) { afterAction(R.applyChat(s, el.dataset.id)); },
+          npc(el) {
+            const id = el.dataset.id;
+            if (!IE.Talk) return afterAction(R.applyChat(s, id));
+            UI.modal(UI.talkModal(s, id, IE.Talk.lines(s, id)), {
+              reply(b) { UI.closeModal(); afterAction(R.applyChat(s, id, b.dataset.id)); },
+            });
+          },
           back() { showHub(); },
         });
       case 'create': case 'allnighter':
@@ -24532,7 +25460,7 @@ button:focus-visible,
         save();
         return openCraft();
       case 'tripback':
-        Game.view = 'room';
+        Game.view = 'city';
         return afterAction(IE.World.leaveTrip(s));
     }
     if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
@@ -24674,6 +25602,18 @@ button:focus-visible,
     document.querySelectorAll('.day-card').forEach((el) => el.remove());
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
+    // 所有小遊戲都可以跳過：一般工作按「跳過」的評級結算；夢境面試當作沉默；外星篩選當作照指引做
+    const skipRank = IE.Auto && IE.Auto.can(Game.state, kind) ? IE.Auto.target(Game.state, kind) : null;
+    document.querySelector('#panel .controls').insertAdjacentHTML('beforeend', '<button class="btn micro-skip" type="button" data-skip>跳過' + (skipRank ? '（直接以 ' + skipRank + ' 級結算）' : '') + '</button>');
+    document.querySelector('#panel [data-skip]').addEventListener('click', () => {
+      if (Game.micro !== m) return;
+      A.sfx('click');
+      const s = Game.state;
+      if (skipRank) { const res = IE.Auto.result(s, kind); if (res) { s.stats.autoDone = (s.stats.autoDone || 0) + 1; done(res); return; } }
+      if (kind === 'interview') return done({ answers: [0, 1, 2, 3, 4].map((q) => ({ q, a: -1 })) });
+      if (kind === 'alien') return done({ correct: 18, wrong: 2, selfJudged: null, accuracy: 0.9 });
+      done({});
+    });
     // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
     document.querySelectorAll('[data-ctrl]').forEach((b) => {
       const id = b.dataset.ctrl;
@@ -24708,8 +25648,39 @@ button:focus-visible,
     UI.renderHud(s);
     A.setSpark(s.spark);
     UI.setPanel('<p class="mute">' + UI.esc(rep.title) + '</p>');
-    UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); afterSlot(); } });
+    UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); maybeEncounter(afterSlot); } });
     save();
+  }
+  // 街頭奇遇（第十期）：做完一件事之後有機會碰到
+  function maybeEncounter(next) {
+    const s = Game.state;
+    // 測試可以用 localStorage 的 ie2080.noEncounter 關掉隨機奇遇（重新載入後仍然有效）
+    const e = R.encounter && !Game.noEncounter && !store.get('ie2080.noEncounter') ? R.encounter(s) : null;
+    if (!e) return next();
+    save();
+    A.sfx('click');
+    UI.modal(UI.encounterModal(s, e), {
+      pick(b) {
+        UI.closeModal();
+        const rep = R.applyEncounter(s, e.id, Number(b.dataset.id));
+        UI.renderHud(s); save();
+        UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); next(); } });
+      },
+    });
+  }
+  function openContacts() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.contactsModal(s), {
+      favor(b) {
+        const rep = R.useFavor(s, b.dataset.id);
+        if (!rep) return;
+        UI.closeModal(); UI.renderHud(s); save();
+        setScene(viewScene(currentView()));
+        UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); showHub(); } });
+      },
+      close() { UI.closeModal(); showHub(); },
+    });
+    render();
   }
   function afterSlot() {
     const s = Game.state;

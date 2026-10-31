@@ -1,0 +1,54 @@
+/* 第十期：質感。統一表面、深度和光澤；最後載入，只調整外觀，不改版面。 */
+:root {
+  --surface: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  --edge: rgba(255, 255, 255, 0.07);
+  --lift: 0 3px 10px rgba(0, 0, 0, 0.32);
+}
+body {
+  background:
+    radial-gradient(1100px 520px at 50% -180px, #1a2544 0%, transparent 70%),
+    radial-gradient(700px 480px at 105% 110%, rgba(255, 79, 180, 0.07), transparent 60%),
+    radial-gradient(600px 420px at -10% 60%, rgba(55, 195, 214, 0.05), transparent 60%),
+    var(--ink);
+  background-attachment: fixed;
+}
+/* 畫面框 */
+.stage {
+  border-radius: 14px; border-color: #2a3a5c;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(55, 195, 214, 0.07), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+/* 數值 */
+.meter { background: var(--surface), var(--deck); border-color: #212d48; border-radius: 12px; box-shadow: inset 0 1px 0 var(--edge), var(--lift); }
+.bar { height: 7px; background: #121a2d; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); }
+.bar > i { background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 65%); }
+.chip { background: rgba(255, 255, 255, 0.045); border-color: #2a3756; }
+/* 按鈕 */
+.btn, .icon-btn, .inv-btn, .view-tab {
+  background: var(--surface), var(--deck-2); border-color: #2a3756; border-radius: 12px;
+  box-shadow: inset 0 1px 0 var(--edge), var(--lift);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.btn:hover:not(:disabled), .icon-btn:hover, .inv-btn:hover, .view-tab:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 var(--edge), 0 8px 18px rgba(0, 0, 0, 0.38); }
+.btn:active:not(:disabled), .icon-btn:active, .inv-btn:active, .view-tab:active { transform: translateY(1px); box-shadow: inset 0 1px 0 var(--edge); }
+.btn.primary { background: linear-gradient(180deg, #ff74c7, #ff3fa8); border-color: #ff8fd1; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 18px rgba(255, 79, 180, 0.35); }
+.btn.primary:hover:not(:disabled) { background: linear-gradient(180deg, #ff8bd1, #ff52b2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 10px 24px rgba(255, 79, 180, 0.45); }
+.btn.sea { background: linear-gradient(180deg, #5fd8e8, #2fb4c7); border-color: #7fe3ff; }
+.view-tab.on { background: linear-gradient(180deg, rgba(255, 194, 71, 0.16), rgba(255, 194, 71, 0.04)), var(--deck-2); }
+/* 行動卡 */
+.act { background: var(--surface), var(--deck); border-color: #212d48; border-radius: 14px; box-shadow: inset 0 1px 0 var(--edge), var(--lift); }
+.act:hover:not(:disabled) { box-shadow: inset 0 1px 0 var(--edge), 0 10px 22px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(55, 195, 214, 0.4); }
+.act-icon .px-icon { filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }
+.act-group { display: flex; align-items: center; gap: 10px; color: #7f8db0; }
+.act-group::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #26334d, transparent); }
+.act-auto { border-radius: 10px; }
+/* 對話框與提示 */
+.modal-wrap { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.modal { background: linear-gradient(180deg, #161f37, #0f1628); border-color: #2a3a5c; border-radius: 16px; box-shadow: 0 28px 70px rgba(0, 0, 0, 0.62), inset 0 1px 0 var(--edge); }
+.toast { border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--edge); }
+.panel-head h2 { letter-spacing: 0.02em; }
+/* 小遊戲的跳過 */
+.micro-skip { justify-self: end; margin-top: 10px; min-height: 36px; font-size: 13px; opacity: 0.9; }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .icon-btn, .inv-btn, .view-tab, .act { transition: none; }
+  .btn:hover:not(:disabled), .icon-btn:hover, .inv-btn:hover, .view-tab:hover { transform: none; }
+}

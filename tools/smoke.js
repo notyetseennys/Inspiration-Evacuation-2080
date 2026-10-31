@@ -53,10 +53,8 @@ const URL = 'http://localhost:' + PORT + '/';
   const ok = (msg) => console.log('✓ ' + msg);
   try {
     await page.goto(URL);
-    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ie2080.speed', '4'); });
+    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ie2080.speed', '4'); localStorage.setItem('ie2080.noEncounter', '1'); });
     await page.reload();
-    // 街頭奇遇是隨機的：測試流程中關掉，另外用一項測試檢查
-    await page.evaluate(() => { window.__IE.Game.noEncounter = true; });
     await page.click('[data-do="new"]');
     await page.click('[data-do="start"]');
     await closePhone();

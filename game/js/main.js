@@ -536,7 +536,8 @@
   // 街頭奇遇（第十期）：做完一件事之後有機會碰到
   function maybeEncounter(next) {
     const s = Game.state;
-    const e = R.encounter && !Game.noEncounter ? R.encounter(s) : null;
+    // 測試可以用 localStorage 的 ie2080.noEncounter 關掉隨機奇遇（重新載入後仍然有效）
+    const e = R.encounter && !Game.noEncounter && !store.get('ie2080.noEncounter') ? R.encounter(s) : null;
     if (!e) return next();
     save();
     A.sfx('click');
