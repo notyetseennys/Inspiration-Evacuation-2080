@@ -231,7 +231,7 @@
             + '<span class="act-icon">' + actIcon(a.id) + '</span><span class="act-name">' + a.name + '</span>'
             + '<span class="fx">' + fxHtml(a.fx.filter(([k]) => KEY_FX.includes(k))) + (mats ? '<span class="fx-mats" aria-label="素材">' + mats + '</span>' : '') + '</span>'
             + (a.reason ? '<span class="act-why">' + esc(a.reason) + '</span>' : '') + '</button>'
-            + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="照舊做：不用玩小遊戲，直接以 ' + auto + ' 級結算（拿不到 S、SS 和特別成就）">照舊做<b>' + auto + '</b></button>' : '') + '</div>';
+            + (auto ? '<button class="act-auto" type="button" data-do="auto" data-id="' + a.id + '" title="跳過小遊戲，直接以 ' + auto + ' 級結算。親手玩才拿得到 S、SS 和特別成就；親手玩出好成績之後，跳過的評級也會提升。">跳過<b>' + auto + '</b></button>' : '') + '</div>';
         }).join('') + '</div>').join('')
       + invHtml(s);
   }

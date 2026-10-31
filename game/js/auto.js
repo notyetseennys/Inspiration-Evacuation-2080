@@ -15,13 +15,13 @@
   // 每局開始時從局外紀錄複製，親手玩出更好的評級時更新
   const best = (s, kind) => (s.microBest && s.microBest[kind === 'ot' ? 'label' : kind]) || null;
   const cap = (s) => (perk(s).scriptS ? 'S' : 'A');
-  // 自動完成的目標評級：最高評級減一級，不超過上限
+  // 跳過的評級：沒有親手玩過是 B 級；玩過之後是最高評級減一級，不超過上限
   function target(s, kind) {
     const b = best(s, kind);
-    if (!b) return null;
+    if (!b) return 'B';
     return ORDER[Math.max(0, Math.min(ORDER.indexOf(b) - 1, ORDER.indexOf(cap(s))))];
   }
-  const can = (s, kind) => KINDS.includes(kind) && !!best(s, kind);
+  const can = (s, kind) => KINDS.includes(kind);
   function record(s, kind, rank) {
     if (!rank) return;
     const k = kind === 'ot' ? 'label' : kind;

@@ -57,7 +57,7 @@
   function currentView() {
     const s = Game.state;
     if (s && s.trip) return Game.view === 'world' ? 'world' : 'trip';
-    return Game.view && Game.view !== 'trip' ? Game.view : 'room';
+    return Game.view && Game.view !== 'trip' ? Game.view : 'city';
   }
   function renderViews(show) {
     const nav = document.getElementById('views');
@@ -335,7 +335,7 @@
         save();
         return openCraft();
       case 'tripback':
-        Game.view = 'room';
+        Game.view = 'city';
         return afterAction(IE.World.leaveTrip(s));
     }
     if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
@@ -477,6 +477,18 @@
     document.querySelectorAll('.day-card').forEach((el) => el.remove());
     setScene(m);
     UI.setPanel(UI.controlsPanel(m), {});
+    // 所有小遊戲都可以跳過：一般工作按「跳過」的評級結算；夢境面試當作沉默；外星篩選當作照指引做
+    const skipRank = IE.Auto && IE.Auto.can(Game.state, kind) ? IE.Auto.target(Game.state, kind) : null;
+    document.querySelector('#panel .controls').insertAdjacentHTML('beforeend', '<button class="btn micro-skip" type="button" data-skip>跳過' + (skipRank ? '（直接以 ' + skipRank + ' 級結算）' : '') + '</button>');
+    document.querySelector('#panel [data-skip]').addEventListener('click', () => {
+      if (Game.micro !== m) return;
+      A.sfx('click');
+      const s = Game.state;
+      if (skipRank) { const res = IE.Auto.result(s, kind); if (res) { s.stats.autoDone = (s.stats.autoDone || 0) + 1; done(res); return; } }
+      if (kind === 'interview') return done({ answers: [0, 1, 2, 3, 4].map((q) => ({ q, a: -1 })) });
+      if (kind === 'alien') return done({ correct: 18, wrong: 2, selfJudged: null, accuracy: 0.9 });
+      done({});
+    });
     // 按鈕支援「按住」：按下時 control(id, true)，放開時 control(id, false)
     document.querySelectorAll('[data-ctrl]').forEach((b) => {
       const id = b.dataset.ctrl;
