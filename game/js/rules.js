@@ -1903,7 +1903,7 @@
   IE.Rules = {
     newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX, sparkMax,
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
-    train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
+    train, bodyMax, worldMods, worldClosed, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
     stallOpen, stallBuy, stallReroll, stallRerollCost, stallPrice,
     modeOf, days, age, hiding, weatherOf, rollWeather, weatherTag, encounter, applyEncounter, favorReady, useFavor, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
