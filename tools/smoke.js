@@ -55,6 +55,8 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.goto(URL);
     await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ie2080.speed', '4'); });
     await page.reload();
+    // 街頭奇遇是隨機的：測試流程中關掉，另外用一項測試檢查
+    await page.evaluate(() => { window.__IE.Game.noEncounter = true; });
     await page.click('[data-do="new"]');
     await page.click('[data-do="start"]');
     await closePhone();
@@ -156,7 +158,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await closePhone();
     await page.click('.act[data-id="tripback"]');
     await page.click('#modal [data-do="ok"]');
-    const back = await page.evaluate(() => { const s = window.__IE.Game.state; return { trip: s.trip, day: s.day, scene: window.__IE.Game.scene === window.__IE.Maps.Room, glow: s.glow }; });
+    const back = await page.evaluate(() => { const s = window.__IE.Game.state; return { trip: s.trip, day: s.day, scene: window.__IE.Game.scene === window.__IE.Scenes.City, glow: s.glow }; });
     if (back.trip || !back.scene) await fail('提早回程失敗');
     ok('旅行：新東京（探索得到 ' + origin + ' 張亞洲素材，第 ' + back.day + ' 天回到浮城）');
     // 第四期：浮城百貨（分類貨架）
@@ -177,6 +179,22 @@ const URL = 'http://localhost:' + PORT + '/';
     const rank = await page.textContent('#modal .rank-stamp b');
     await page.click('#modal [data-do="ok"]');
     ok('天台菜園：評級 ' + rank);
+    // 第十期：天氣、街頭奇遇、人脈、朋友對話、跳過
+    const p10 = await page.evaluate(() => {
+      const IE = window.__IE, s = IE.Game.state, R = IE.Rules;
+      R.rollWeather(s);
+      const w = R.weatherOf(s);
+      R.applyEncounter(s, 'collector', 0);
+      const met = !!(s.contacts && s.contacts.vivian);
+      const cr0 = s.cr;
+      R.useFavor(s, 'vivian');
+      return { w: w && w.name, met, gained: s.cr - cr0, again: R.useFavor(s, 'vivian') === null, talk: IE.Talk.lines(s, 'ho'), skip: IE.Auto.target(s, 'clinic') };
+    });
+    if (!p10.w) await fail('今天沒有天氣');
+    if (!p10.met || p10.gained !== 180 || !p10.again) await fail('人脈不對：' + JSON.stringify(p10));
+    if (p10.talk.length !== 3) await fail('朋友的對話不是三句');
+    if (p10.skip !== 'B') await fail('沒有玩過的小遊戲應該可以 B 級跳過：' + p10.skip);
+    ok('第十期：天氣「' + p10.w + '」；奇遇認識 Vivian，幫忙 +$' + p10.gained + '；何伯說：' + p10.talk[0].slice(0, 14) + '…；未玩過的診所可以 ' + p10.skip + ' 級跳過');
     // 第八期：親手玩過之後可以「照舊做」（最多 A 級）
     const autoT = await page.evaluate(() => window.__IE.Auto.target(window.__IE.Game.state, 'garden'));
     if (autoT !== 'A') await fail('照舊做的評級不對：' + autoT);

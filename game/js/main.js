@@ -296,6 +296,7 @@
       },
       objs() { openObjects(); },
       deck() { UI.modal(UI.deckModal(s), { close: UI.closeModal }); },
+      contacts() { openContacts(); },
       souvenir() { openSouvenir(); },
       store() { openStore('life'); },
     });
@@ -529,8 +530,38 @@
     UI.renderHud(s);
     A.setSpark(s.spark);
     UI.setPanel('<p class="mute">' + UI.esc(rep.title) + '</p>');
-    UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); afterSlot(); } });
+    UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); maybeEncounter(afterSlot); } });
     save();
+  }
+  // 街頭奇遇（第十期）：做完一件事之後有機會碰到
+  function maybeEncounter(next) {
+    const s = Game.state;
+    const e = R.encounter && !Game.noEncounter ? R.encounter(s) : null;
+    if (!e) return next();
+    save();
+    A.sfx('click');
+    UI.modal(UI.encounterModal(s, e), {
+      pick(b) {
+        UI.closeModal();
+        const rep = R.applyEncounter(s, e.id, Number(b.dataset.id));
+        UI.renderHud(s); save();
+        UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); next(); } });
+      },
+    });
+  }
+  function openContacts() {
+    const s = Game.state;
+    const render = () => UI.modal(UI.contactsModal(s), {
+      favor(b) {
+        const rep = R.useFavor(s, b.dataset.id);
+        if (!rep) return;
+        UI.closeModal(); UI.renderHud(s); save();
+        setScene(viewScene(currentView()));
+        UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); showHub(); } });
+      },
+      close() { UI.closeModal(); showHub(); },
+    });
+    render();
   }
   function afterSlot() {
     const s = Game.state;

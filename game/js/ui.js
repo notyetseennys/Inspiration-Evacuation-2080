@@ -242,8 +242,42 @@
     const empty = Math.max(0, R().slotsOf(s) - s.objects.length);
     return '<div class="inv-line">'
       + '<button class="inv-btn" type="button" data-do="objs" title="管理靈感物件"><span class="lbl">靈感物件</span>' + objs + '<span class="inv-empty">' + '<i></i>'.repeat(empty) + '</span><b class="num">' + s.objects.length + '/' + R().slotsOf(s) + '</b></button>'
+      + '<button class="inv-btn" type="button" data-do="contacts" title="人脈：請城中的人幫忙"><span class="lbl">人脈</span><b class="num">' + Object.keys(s.contacts || {}).length + '</b>'
+      + (Object.keys(s.contacts || {}).some((id) => R().favorReady(s, id)) ? '<span class="dot"></span>' : '') + '</button>'
       + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</b></button>'
       + '</div>';
+  }
+  // 街頭奇遇與人脈（第十期）
+  function streetFxText(fx) {
+    const out = [];
+    if (fx.cr) out.push('$ ' + (fx.cr > 0 ? '+' : '−') + Math.abs(fx.cr));
+    if (fx.body) out.push('身體 ' + (fx.body > 0 ? '+' : '−') + Math.abs(fx.body));
+    if (fx.spark) out.push('火花 ' + (fx.spark > 0 ? '+' : '−') + Math.abs(fx.spark));
+    if (fx.soul) out.push(fx.soul > 0 ? '靈魂變重' : '靈魂變輕');
+    if (fx.paranoia) out.push('偏執 ' + (fx.paranoia > 0 ? '+' : '−') + Math.abs(fx.paranoia));
+    if (fx.tag) out.push('「' + D().TAGS[fx.tag].name + '」素材' + (fx.n > 1 ? ' ×' + fx.n : ''));
+    if (fx.contact) out.push('？');
+    return out.join('・');
+  }
+  function encounterModal(s, e) {
+    const w = R().weatherOf ? R().weatherOf(s) : null;
+    return '<div class="modal encounter"><span class="eyebrow">街頭奇遇' + (e.weather && w ? '・' + esc(w.name) : '') + '</span>'
+      + '<p class="d-text">' + esc(e.text) + '</p>'
+      + '<div class="d-opts">' + e.opts.map((o, k) => '<button class="d-opt" type="button" data-do="pick" data-id="' + k + '"><span class="d-label">' + esc(o.label) + '</span>'
+        + (streetFxText(o.fx) ? '<span class="fx"><span class="fx-note">' + esc(streetFxText(o.fx)) + '</span></span>' : '') + '</button>').join('') + '</div></div>';
+  }
+  function contactsModal(s) {
+    const all = D().CONTACTS || [], mine = s.contacts || {};
+    const known = all.filter((c) => mine[c.id]);
+    return '<div class="modal wide contacts"><h2>人脈 ' + known.length + ' / ' + all.length + '</h2>'
+      + '<p class="mute" style="font-size:13px">在浮城做事時會碰到街頭奇遇，有些人會留下聯絡方法。請人幫忙不用花時段，但每人隔幾天才可以找一次。</p>'
+      + (known.length ? '<div class="ct-list">' + known.map((c) => {
+        const ready = R().favorReady(s, c.id), left = c.cd - (s.day - mine[c.id].used);
+        return '<div class="ct-card"><div class="ct-who"><b>' + esc(c.name) + '</b><span>' + esc(c.title) + '</span></div><p>' + esc(c.desc) + '</p>'
+          + '<button class="btn' + (ready ? ' primary' : '') + '" type="button" data-do="favor" data-id="' + c.id + '"' + (ready ? '' : ' disabled') + '>' + esc(c.favor) + (ready ? '' : '（' + left + ' 天後）') + '</button></div>';
+      }).join('') + '</div>' : '<p class="mute">還沒有認識任何人。多在浮城走動吧。</p>')
+      + (all.length > known.length ? '<p class="mute" style="font-size:12px">還有 ' + (all.length - known.length) + ' 位未認識的人。</p>' : '')
+      + '<div class="btn-row"><button class="btn" type="button" data-do="close">關閉</button></div></div>';
   }
   // 素材庫（在浮城查看；創作桌上另有牌庫）
   function deckModal(s) {
@@ -871,7 +905,7 @@
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
-    actionsPanel, invHtml, deckModal, talkModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
+    actionsPanel, invHtml, deckModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
   };

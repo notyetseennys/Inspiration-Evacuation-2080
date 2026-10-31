@@ -138,6 +138,15 @@ button { font: inherit; color: inherit; }
 .chip.wx { display: inline-flex; align-items: center; gap: 4px; }
 .chip.wx i { font-style: normal; font-size: 13px; line-height: 1; }
 .chip.wx.odd { border-color: #c38bff; color: #f1e6ff; background: linear-gradient(90deg, rgba(195,139,255,0.18), rgba(255,79,180,0.12)); box-shadow: 0 0 10px -2px rgba(195,139,255,0.7); }
+/* 人脈 */
+.ct-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
+.ct-card { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: #141c30; border: 1px solid #26334d; }
+.ct-card p { margin: 0; font-size: 13px; color: #b9c4dc; }
+.ct-who { display: flex; align-items: baseline; gap: 8px; }
+.ct-who b { font-size: 16px; } .ct-who span { font-size: 12px; color: var(--spark); }
+.inv-btn { position: relative; }
+.inv-btn .dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--spark); box-shadow: 0 0 6px var(--spark); }
+.modal.encounter .eyebrow { color: #c38bff; }
 /* 和朋友聊天 */
 .modal.talk { max-width: 520px; }
 .talk-lines { display: grid; gap: 8px; margin: 10px 0 14px; }

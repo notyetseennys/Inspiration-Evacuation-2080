@@ -950,6 +950,61 @@
     else if (reply === 'jam') { hurt(s, 3, 'chat'); rep.delta('body', -3); rep.gain(nth(n.friend + 1)); train(s, { craft: 0.6 }, rep); }
     return rep.done();
   }
+  // ---------- 街頭奇遇與人脈（第十期） ----------
+  // 白天在浮城做完一件事之後，約三成機會碰到一件小事；每天最多一次；天氣限定的奇遇優先，見過少的優先
+  function encounter(s) {
+    if (!D.ENCOUNTERS || s.trip || isNight(s) || s.encDay === s.day || rand(s) > 0.3) return null;
+    const w = weatherOf(s), seen = s.encSeen || {};
+    const pool = D.ENCOUNTERS.filter((e) => !e.weather || (w && e.weather.includes(w.id)));
+    const special = pool.filter((e) => e.weather);
+    const list = special.length && rand(s) < 0.6 ? special : pool;
+    const low = Math.min(...list.map((e) => seen[e.id] || 0));
+    s.encDay = s.day;
+    return pick(s, list.filter((e) => (seen[e.id] || 0) === low));
+  }
+  function cardWithTag(s, t) {
+    const ids = Object.keys(D.CARDS).filter((id) => (D.CARDS[id].tags || []).includes(t) && !D.CARDS[id].rarity);
+    return ids.length ? pick(s, ids) : null;
+  }
+  function applyStreetFx(s, fx, rep, why) {
+    if (fx.cr) { s.cr += fx.cr; rep.delta('cr', fx.cr); }
+    if (fx.body) { if (fx.body > 0) heal(s, fx.body); else hurt(s, -fx.body, 'street'); rep.delta('body', fx.body); }
+    if (fx.spark) rep.delta('spark', addSpark(s, fx.spark, true));
+    if (fx.soul > 0) sin(s, fx.soul, rep, why); else if (fx.soul < 0) atone(s, -fx.soul, rep, why);
+    if (fx.paranoia) addParanoia(s, fx.paranoia);
+    for (let i = 0; i < (fx.n || (fx.tag ? 1 : 0)); i++) { const id = cardWithTag(s, fx.tag); if (id) rep.gain(id); }
+    if (fx.train) train(s, fx.train, rep);
+    if (fx.ticket) gainTicket(s, fx.ticket, 1, '人脈', rep);
+    if (fx.weather) { const old = s.weather; s.weather = null; rollWeather(s); const nw = weatherOf(s); if (nw) rep.line('天氣改成了「' + nw.name + '」' + (D.weatherNote(nw) ? '：' + D.weatherNote(nw) : ''), 'good'); else s.weather = old; }
+    if (fx.contact && D.CONTACT_BY[fx.contact] && !(s.contacts && s.contacts[fx.contact])) {
+      s.contacts = s.contacts || {};
+      s.contacts[fx.contact] = { met: s.day, used: -99 };
+      const C = D.CONTACT_BY[fx.contact];
+      rep.line('認識了新人脈：' + C.title + '・' + C.name + '（' + C.favor + '）', 'legend');
+    }
+  }
+  function applyEncounter(s, id, k) {
+    const e = D.ENCOUNTERS.find((x) => x.id === id), o = e && e.opts[k];
+    const rep = report(s, '街頭奇遇');
+    if (!o) return rep.done();
+    s.encSeen = s.encSeen || {};
+    s.encSeen[id] = (s.encSeen[id] || 0) + 1;
+    rep.line(o.label + (o.note ? '：' + o.note : ''), '');
+    applyStreetFx(s, o.fx, rep, o.label);
+    return rep.done();
+  }
+  // 人脈幫忙：每隔幾天一次，不用花時段
+  const favorReady = (s, id) => { const c = s.contacts && s.contacts[id]; return !!c && !!D.CONTACT_BY[id] && s.day - c.used >= D.CONTACT_BY[id].cd; };
+  function useFavor(s, id) {
+    if (!favorReady(s, id)) return null;
+    const C = D.CONTACT_BY[id];
+    const rep = report(s, C.title + '・' + C.name);
+    s.contacts[id].used = s.day;
+    s.stats.favors = (s.stats.favors || 0) + 1;
+    rep.line(C.favor, 'good');
+    applyStreetFx(s, C.fx, rep, C.favor);
+    return rep.done();
+  }
   function applyVolunteer(s) {
     const rep = report(s, '在避難所做義工');
     hurt(s, 6, 'volunteer');
@@ -1764,7 +1819,7 @@
     SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
-    modeOf, days, age, hiding, weatherOf, rollWeather, weatherTag, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
+    modeOf, days, age, hiding, weatherOf, rollWeather, weatherTag, encounter, applyEncounter, favorReady, useFavor, gainTicket, TICKET_NAME, canRewindDay, rewindDay, applyNightShift, slotFree, lastStand, slotsOf, canEquip, quarterOf, isNight, threshold, reviewDay, kpi, flooded, nextRentDay, rentAmount, signal,
     labelItemPay, labelItemDrain, labelConfig, applyLabel,
     smileItemPay, smileItemDrain, smileConfig, applySmile,
     diveConfig, diveBodyCost, applyDive,
