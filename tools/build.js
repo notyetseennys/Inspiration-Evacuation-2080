@@ -8,14 +8,16 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const game = path.join(root, 'game');
-const html = fs.readFileSync(path.join(game, 'index.html'), 'utf8');
+// 一律用 LF 換行（在 Windows 打包時，原始檔可能是 CRLF，令 dist/ 出現大量無意義的差異）
+const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n?/g, '\n');
+const html = read(path.join(game, 'index.html'));
 
 const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
 const body = html.match(/<!-- BUILD:BODY -->([\s\S]*?)<!-- \/BUILD:BODY -->/)[1].trim();
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
 // 依 index.html 的次序內嵌所有本機樣式表（style.css、art.css……）
-const css = [...head.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)">/g)].map((m) => fs.readFileSync(path.join(game, m[1]), 'utf8')).join('\n');
-const js = scripts.map((src) => '// ---- ' + src + ' ----\n' + fs.readFileSync(path.join(game, src), 'utf8')).join('\n');
+const css = [...head.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)">/g)].map((m) => read(path.join(game, m[1]))).join('\n');
+const js = scripts.map((src) => '// ---- ' + src + ' ----\n' + read(path.join(game, src))).join('\n');
 if (/<\/script/i.test(js)) throw new Error('JS 內含 </script>，不能直接內嵌');
 
 const title = head.match(/<title>[\s\S]*?<\/title>/)[0];

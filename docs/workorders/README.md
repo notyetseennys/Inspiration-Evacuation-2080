@@ -25,7 +25,8 @@
 | `.github/pull_request_template.md` | PR 範本（開 PR 時自動出現） |
 | `.github/ISSUE_TEMPLATE/work-order.md` | 如果想在 GitHub Issues 追蹤工單，用這個範本開 Issue |
 | `.github/workflows/ci.yml` | 每個 PR 自動跑單元測試、模擬器、打包和瀏覽器煙霧測試 |
-| `tools/test.js`、`tools/tests/*.test.js` | 邏輯單元測試（Node，不需要瀏覽器） |
+| `tools/test.js`、`tools/tests/*.test.js` | 邏輯單元測試（Node，不需要瀏覽器）；`spec.test.js` 是規格測試，由 Claude 維護 |
+| `docs/workorders/reviews/` | Claude 每一輪的審核意見（`WO-XX-XX-r1.md`、`r2.md`……） |
 
 ---
 
@@ -48,7 +49,7 @@
 
 | 工單 | 標題 | 依賴 | 狀態 |
 |---|---|---|---|
-| [WO-15-01](phase-15/WO-15-01.md) | 五輪模式的骨架（資料、狀態、時間表） | — | 待開始 |
+| [WO-15-01](phase-15/WO-15-01.md) | 五輪模式的骨架（資料、狀態、時間表） | — | 要修改（[第一輪審核](reviews/WO-15-01-r1.md)） |
 | [WO-15-02](phase-15/WO-15-02.md) | 生活卡的規則（白天） | 01 | 待開始 |
 | [WO-15-03](phase-15/WO-15-03.md) | 夜晚的規則（目標、收工、獎金、失敗） | 01 | 待開始 |
 | [WO-15-04](phase-15/WO-15-04.md) | 市集的規則 | 01、03 | 待開始 |
