@@ -4698,6 +4698,8 @@ body {
       thresholds: [100000, 380000, 1080000, 2120000, 4000000] },
     long: { id: 'long', name: '長篇', desc: '100 天，以前的玩法', days: 100, period: 20, stageDays: [7, 14, 20], season: 25, shopEvery: 3, sketch: false,
       thresholds: THRESHOLDS },
+    rounds: { id: 'rounds', name: '五輪', desc: '十五晚，約四十分鐘', days: 60, period: 12, stageDays: [4, 8, 12], season: 20,
+      shopEvery: 2, sketch: false, rounds: true, hidden: true, thresholds: [1, 1, 1, 1, 1] },
   };
 
   // ---------- 十二項能力值 ----------
@@ -7532,6 +7534,111 @@ body {
   Object.assign(D, { CONTACTS, CONTACT_BY: Object.fromEntries(CONTACTS.map((c) => [c.id, c])), ENCOUNTERS });
 });
 
+// ---- js/data-rounds.js ----
+// 《靈感撤離 2080》第十五期：五輪模式的數值常數、生活卡目錄、素材包、服務與固定文案。
+// 純資料檔，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+
+  // 五輪模式的經濟與數值常數
+  const ECON = {
+    // 目標
+    t1: 4000,             // 第 1 晚的目標
+    growth: 1.45,         // 之後每晚 ×1.45
+    firstRunEase: 0.7,    // 第一局的第 1、2 晚目標 ×0.7
+    // 創作桌
+    hand: 8, plays: 4, discards: 3,
+    // 收入
+    nightPay: { small: 60, big: 90, boss: 140 },
+    payGrowth: 0.25,      // 每多一輪，獎金 +25%
+    earlyBonus: 10,       // 每次沒有用的下筆
+    overkillSpark: 0.2,   // 分數達到目標兩倍：火花 +0.2
+    failSpark: -0.3,      // 一晚失敗：火花 −0.3
+    // 篩選日
+    rent: [120, 180, 260, 360, 480],
+    // 白天
+    offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
+    skipSpark: 0.2,                 // 睡懶覺
+    tripCost: 120, tripPick: 2,     // 出國：五選二
+    // 市集
+    objReroll: [20, 30, 40, 50],    // 重抽物件
+    pack: 40, packFar: 70,          // 素材包
+    packStars: [0.55, 0.27, 0.12, 0.05, 0.01],  // 素材包的星級機會（★1 至 ★5）
+    polish: [0, 30, 60, 100, 160],  // 打磨：★1→2 是 polish[1]……★4→5 是 polish[4]
+    burn: 20, copy: 50, minDeck: 8,  // 起始素材庫約 11 張
+    tech: 50, techStep: 25,         // 技法課：50 + 25 ×（現在等級 − 1）
+    toolMult: 1,                    // 工具卡價錢 × toolMult
+    sparkFloor: 1,
+  };
+
+  // 五輪模式的固定文案
+  const ROUND_TEXT = {
+    kinds: { work: '工作', shady: '虧心', life: '生活', friend: '朋友', volunteer: '義工', trip: '出國' },
+    nightKinds: { small: '社區小展', big: '畫廊聯展', boss: '外星評審' },
+    dayTitle: '第 {round} 輪・第 {night}／15 晚',
+    dayAsk: '今天做甚麼？',
+    reroll: '換一批（${cost}）',
+    skip: '睡懶覺（火花 +{v}）',
+    byHand: '親手做',
+    byAuto: '照舊做（{rank} 級）',
+    tonight: '今晚：{kind}・目標 {target} 分',
+    rentLine: '本輪租金 ${rent}（第 {day} 天到期）',
+    cleared: '收工！',
+    early: '提早收工：還有 {n} 次下筆，每次 +${v}',
+    failed: '今晚沒有達到目標。失去一次機會。',
+    toShop: '前往市集',
+    shopTitle: '二手市集',
+    leave: '離開市集',
+    relic: '遺物：三選一（免費）',
+    rentOk: '交租 −${rent}',
+    rentFail: '交不起租：房東收走了你身上全部的錢。失去一次機會。',
+    soulOk: '靈魂 {soul} 克：光束拉得動你。',
+    soulFail: '靈魂 {soul} 克，超過 21 克：光束拉不動你。失去一次機會。',
+    nextRound: '進入第 {round} 輪',
+    chances: '機會',
+  };
+
+  // 十三張生活卡目錄
+  const DAYCARDS = [
+    { id: 'label', kind: 'work', micro: 'label' },
+    { id: 'delivery', kind: 'work', micro: 'delivery' },
+    { id: 'clinic', kind: 'work', micro: 'clinic' },
+    { id: 'salvage', kind: 'work', micro: 'salvage' },
+    { id: 'haggle', kind: 'work', micro: 'haggle' },
+    { id: 'farm', kind: 'shady', micro: 'farm' },
+    { id: 'smile', kind: 'shady', micro: 'smile' },
+    { id: 'dive', kind: 'life', micro: 'dive' },
+    { id: 'busk', kind: 'life', micro: 'busk' },
+    { id: 'garden', kind: 'life', micro: 'garden' },
+    { id: 'friend', kind: 'friend' },
+    { id: 'volunteer', kind: 'volunteer' },
+    { id: 'trip', kind: 'trip', minRound: 2, chance: 0.15, origins: ['asia', 'europe', 'america', 'africa', 'arctic', 'ocean'] },
+  ];
+
+  // 五種素材包
+  const PACKS = [
+    { id: 'flood', name: '舊城潛水包', tags: ['water', 'memory'] },
+    { id: 'sky', name: '天空區垃圾包', tags: ['machine', 'neon'] },
+    { id: 'street', name: '街坊包', tags: ['warmth', 'hunger', 'hope'] },
+    { id: 'under', name: '地下包', tags: ['rebel', 'anger', 'guilt'] },
+    { id: 'far', name: '遠方包', foreign: true },
+  ];
+
+  // 市集的工作室服務
+  const SERVICES = [
+    { id: 'polish', name: '打磨', desc: '一張素材升一星' },
+    { id: 'burn', name: '燒掉', desc: '從素材庫刪除一張素材' },
+    { id: 'copy', name: '複印', desc: '複製一張素材' },
+  ];
+
+  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES });
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -7631,10 +7738,11 @@ body {
   }
   const A = (s, k) => s.attr[k];
   const bodyMax = (s) => Math.round((70 + 0.3 * A(s, 'fit')) * (perk(s).bodyMult || 1)) - (perk(s).bodyMinus || 0);
-  const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
+  const heal = (s, v) => { if (IE.Rounds && IE.Rounds.on(s)) return 0; s.body = Math.min(bodyMax(s), s.body + v); };
   // 身體受損：記下原因；身體歸零時用來判斷死法（見 data-deaths.js）
   // 死因按「今天傷你最重的那件事」判斷，而不是最後一下
   function hurt(s, v, cause, ctx) {
+    if (IE.Rounds && IE.Rounds.on(s)) return 0;
     if (!v || v <= 0) return 0;
     s.body -= v;
     if (!s.dmg || s.dmg.day !== s.day) s.dmg = { day: s.day, by: {} };
@@ -7687,7 +7795,7 @@ body {
     const before = s.spark;
     let next = s.spark + v;
     if (v > 0) next = Math.min(next, Math.max(sparkMax(s), s.spark));
-    s.spark = clamp(next, 0, SPARK_MAX);
+    s.spark = clamp(next, IE.Rounds && IE.Rounds.on(s) ? D.ECON.sparkFloor : 0, SPARK_MAX);
     return round1(s.spark - before);
   }
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
@@ -7831,7 +7939,7 @@ body {
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 9, seed, rngState: seed, mode: D.MODES[opts.mode] ? opts.mode : 'standard', stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
+      v: 10, seed, rngState: seed, mode: D.MODES[opts.mode] ? opts.mode : 'standard', stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -7920,6 +8028,20 @@ body {
       const st = D.OBJ[s.objects[0]];
       const mate = st && st.school && D.OBJECTS.find((o) => o.school === st.school && o.rarity === 'common' && o.id !== st.id && !o.npc && !o.start && !o.unlock && !o.souvenir);
       if (mate) s.objects.push(mate.id);
+    }
+    if (D.MODES[s.mode].rounds) {
+      s.night = 1;
+      s.phase = 'day';
+      s.day = 4;
+      s.slot = 0;
+      s.offer = null;
+      s.shop = null;
+      s.pack = null;
+      s.pick = null;
+      s.nightLog = [];
+      s.roundLog = [];
+      s.lost = [];
+      s.chances = 3;
     }
     return s;
   }
@@ -11840,6 +11962,74 @@ body {
   }
 
   IE.Dossier = { STAMPS, ARCHETYPES, STATUS, evaluate, classify, features };
+});
+
+// ---- js/rounds.js ----
+// 《靈感撤離 2080》第十五期：五輪模式的狀態機與時間表核心。
+// 純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA, R = IE.Rules;
+
+  // 是否為五輪模式
+  function on(s) {
+    return !!(s && D.MODES[s.mode] && D.MODES[s.mode].rounds);
+  }
+
+  // 第幾輪（1..5）
+  function roundOf(s, night) {
+    const n = night == null ? s.night : night;
+    return R.clamp(Math.ceil(n / 3), 1, 5);
+  }
+
+  // 這一晚的關卡種類：小展／聯展／外星評審
+  function kindOf(night) {
+    return ['small', 'big', 'boss'][(night - 1) % 3];
+  }
+
+  // 對應標準模式的關卡之夜，讓季節、進度日、評審規則與 KPI 全部沿用現有邏輯
+  function dayOfNight(night) {
+    return 4 * night;
+  }
+
+  // 把正整數四捨五入到三位有效數字
+  function sig3(v) {
+    if (!v || v <= 0) return 0;
+    const p = Math.pow(10, Math.max(0, Math.floor(Math.log10(v)) - 2));
+    return Math.round(v / p) * p;
+  }
+
+  // 第 k 晚的目標分數
+  function target(s, night) {
+    const k = night == null ? s.night : night;
+    const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'stageTarget') : 1;
+    const ease = s && s.firstRun && k <= 2 ? D.ECON.firstRunEase : 1;
+    return sig3(D.ECON.t1 * Math.pow(D.ECON.growth, k - 1) * stMod * ease);
+  }
+
+  // 第 r 輪結束時的租金
+  function rentOf(s, round) {
+    const r = round == null ? roundOf(s) : round;
+    const base = D.ECON.rent[R.clamp(r - 1, 0, D.ECON.rent.length - 1)];
+    const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'rent') : 1;
+    const wMod = (s && R.worldMods(s).rentMult) || 1;
+    const pMod = (s && D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.rentMult) || 1;
+    return Math.round(base * stMod * wMod * pMod);
+  }
+
+  IE.Rounds = {
+    on,
+    roundOf,
+    kindOf,
+    dayOfNight,
+    sig3,
+    target,
+    rentOf,
+  };
 });
 
 // ---- js/audio.js ----
@@ -24016,7 +24206,7 @@ body {
         + '<p class="mute">也可以用人才扭蛋機抽出來：' + ticketChips(meta) + '</p>';
     const modes = D().MODES;
     const opts = '<div class="su-opts">'
-      + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + Object.keys(modes).map((k) => '<button type="button" class="' + ((sel.mode || 'standard') === k ? 'sel' : '') + '" data-do="mode" data-id="' + k + '">' + modes[k].name + '<small>' + modes[k].desc + '</small></button>').join('') + '</div></div>'
+      + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + Object.keys(modes).filter((k) => !modes[k].hidden).map((k) => '<button type="button" class="' + ((sel.mode || 'standard') === k ? 'sel' : '') + '" data-do="mode" data-id="' + k + '">' + modes[k].name + '<small>' + modes[k].desc + '</small></button>').join('') + '</div></div>'
       + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + Object.keys(D().SEASONS).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
       + (open ? UI.stakeHtml(sel, meta) : '') + '</div>';
     return '<div class="setup8"><div class="panel-head"><h2>你是誰？</h2><p>R 一開始就可以用；SR 要在遊戲中做到某件事；UR 要完成艱難的挑戰。三級都可以用人才扭蛋機抽出來。</p></div>'
@@ -25664,7 +25854,7 @@ body {
   };
 
   const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && r.v === 9 ? r : null; };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && (r.v === 9 || r.v === 10) ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡

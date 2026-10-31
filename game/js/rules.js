@@ -96,10 +96,11 @@
   }
   const A = (s, k) => s.attr[k];
   const bodyMax = (s) => Math.round((70 + 0.3 * A(s, 'fit')) * (perk(s).bodyMult || 1)) - (perk(s).bodyMinus || 0);
-  const heal = (s, v) => { s.body = Math.min(bodyMax(s), s.body + v); };
+  const heal = (s, v) => { if (IE.Rounds && IE.Rounds.on(s)) return 0; s.body = Math.min(bodyMax(s), s.body + v); };
   // 身體受損：記下原因；身體歸零時用來判斷死法（見 data-deaths.js）
   // 死因按「今天傷你最重的那件事」判斷，而不是最後一下
   function hurt(s, v, cause, ctx) {
+    if (IE.Rounds && IE.Rounds.on(s)) return 0;
     if (!v || v <= 0) return 0;
     s.body -= v;
     if (!s.dmg || s.dmg.day !== s.day) s.dmg = { day: s.day, by: {} };
@@ -152,7 +153,7 @@
     const before = s.spark;
     let next = s.spark + v;
     if (v > 0) next = Math.min(next, Math.max(sparkMax(s), s.spark));
-    s.spark = clamp(next, 0, SPARK_MAX);
+    s.spark = clamp(next, IE.Rounds && IE.Rounds.on(s) ? D.ECON.sparkFloor : 0, SPARK_MAX);
     return round1(s.spark - before);
   }
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
@@ -296,7 +297,7 @@
     const bg = D.BACKGROUNDS[opts.bg];
     const seed = (opts.seed == null ? Math.floor(Math.random() * 1e9) : opts.seed) | 0;
     const s = {
-      v: 9, seed, rngState: seed, mode: D.MODES[opts.mode] ? opts.mode : 'standard', stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
+      v: 10, seed, rngState: seed, mode: D.MODES[opts.mode] ? opts.mode : 'standard', stake: opts.stake || 1, daily: opts.daily || null, metaPerks: IE.Meta ? IE.Meta.perks(opts.meta) : null, tools: [], bg: opts.bg, season: opts.season,
       day: 1, slot: 0, quarter: 0,
       cr: bg.cr, body: 0, spark: bg.spark, rating: 4.0,
       attr: Object.assign({}, bg.stats), paranoia: 15,
@@ -385,6 +386,20 @@
       const st = D.OBJ[s.objects[0]];
       const mate = st && st.school && D.OBJECTS.find((o) => o.school === st.school && o.rarity === 'common' && o.id !== st.id && !o.npc && !o.start && !o.unlock && !o.souvenir);
       if (mate) s.objects.push(mate.id);
+    }
+    if (D.MODES[s.mode].rounds) {
+      s.night = 1;
+      s.phase = 'day';
+      s.day = 4;
+      s.slot = 0;
+      s.offer = null;
+      s.shop = null;
+      s.pack = null;
+      s.pick = null;
+      s.nightLog = [];
+      s.roundLog = [];
+      s.lost = [];
+      s.chances = 3;
     }
     return s;
   }

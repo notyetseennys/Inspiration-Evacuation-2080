@@ -82,7 +82,7 @@
         + '<p class="mute">也可以用人才扭蛋機抽出來：' + ticketChips(meta) + '</p>';
     const modes = D().MODES;
     const opts = '<div class="su-opts">'
-      + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + Object.keys(modes).map((k) => '<button type="button" class="' + ((sel.mode || 'standard') === k ? 'sel' : '') + '" data-do="mode" data-id="' + k + '">' + modes[k].name + '<small>' + modes[k].desc + '</small></button>').join('') + '</div></div>'
+      + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + Object.keys(modes).filter((k) => !modes[k].hidden).map((k) => '<button type="button" class="' + ((sel.mode || 'standard') === k ? 'sel' : '') + '" data-do="mode" data-id="' + k + '">' + modes[k].name + '<small>' + modes[k].desc + '</small></button>').join('') + '</div></div>'
       + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + Object.keys(D().SEASONS).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
       + (open ? UI.stakeHtml(sel, meta) : '') + '</div>';
     return '<div class="setup8"><div class="panel-head"><h2>你是誰？</h2><p>R 一開始就可以用；SR 要在遊戲中做到某件事；UR 要完成艱難的挑戰。三級都可以用人才扭蛋機抽出來。</p></div>'

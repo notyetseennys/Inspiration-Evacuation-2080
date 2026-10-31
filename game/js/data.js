@@ -219,6 +219,8 @@
       thresholds: [100000, 380000, 1080000, 2120000, 4000000] },
     long: { id: 'long', name: '長篇', desc: '100 天，以前的玩法', days: 100, period: 20, stageDays: [7, 14, 20], season: 25, shopEvery: 3, sketch: false,
       thresholds: THRESHOLDS },
+    rounds: { id: 'rounds', name: '五輪', desc: '十五晚，約四十分鐘', days: 60, period: 12, stageDays: [4, 8, 12], season: 20,
+      shopEvery: 2, sketch: false, rounds: true, hidden: true, thresholds: [1, 1, 1, 1, 1] },
   };
 
   // ---------- 十二項能力值 ----------
