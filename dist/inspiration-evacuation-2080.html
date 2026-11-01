@@ -7616,31 +7616,31 @@ body {
   // 五輪模式的經濟與數值常數
   const ECON = {
     // 目標
-    t1: 4000,             // 第 1 晚的目標
-    growth: 1.45,         // 之後每晚 ×1.45
+    t1: 3120,             // 第 1 晚的目標
+    growth: 1.42,         // 之後每晚 ×1.42
     firstRunEase: 0.7,    // 第一局的第 1、2 晚目標 ×0.7
     // 創作桌
     hand: 8, plays: 4, discards: 3,
     // 收入
-    nightPay: { small: 60, big: 90, boss: 140 },
+    nightPay: { small: 42, big: 62, boss: 140 },
     payGrowth: 0.25,      // 每多一輪，獎金 +25%
-    earlyBonus: 10,       // 每次沒有用的下筆
-    overkillSpark: 0.2,   // 分數達到目標兩倍：火花 +0.2
+    earlyBonus: 8,        // 每次沒有用的下筆
+    overkillSpark: 0.22,  // 分數達到目標兩倍：火花 +0.22
     failSpark: -0.3,      // 一晚失敗：火花 −0.3
     // 篩選日
-    rent: [120, 180, 260, 360, 480],
+    rent: [160, 240, 305, 365, 430],
     // 白天
     offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
     skipSpark: 0.2,                 // 睡懶覺
-    tripCost: 120, tripPick: 2,     // 出國：五選二
+    tripCost: 85, tripPick: 2,      // 出國：五選二
     // 市集
     objReroll: [20, 30, 40, 50],    // 重抽物件
-    pack: 40, packFar: 70,          // 素材包
-    packStars: [0.55, 0.27, 0.12, 0.05, 0.01],  // 素材包的星級機會（★1 至 ★5）
+    pack: 35, packFar: 55,          // 素材包
+    packStars: [0.01, 0.05, 0.18, 0.36, 0.40],  // 素材包的星級機會（★1 至 ★5）
     packLegend: 0.03,               // 遠方包每張素材是極稀有（★5）的機會
-    polish: [0, 30, 60, 100, 160],  // 打磨：★1→2 是 polish[1]……★4→5 是 polish[4]
-    burn: 20, copy: 50, minDeck: 8,  // 起始素材庫約 11 張
-    tech: 50, techStep: 25,         // 技法課：50 + 25 ×（現在等級 − 1）
+    polish: [0, 10, 20, 35, 55],    // 打磨：★1→2 是 polish[1]……★4→5 是 polish[4]
+    burn: 15, copy: 35, minDeck: 8,  // 起始素材庫約 11 張
+    tech: 20, techStep: 10,         // 技法課：20 + 10 ×（現在等級 − 1）
     toolMult: 1,                    // 工具卡價錢 × toolMult
     sparkFloor: 1,
   };
