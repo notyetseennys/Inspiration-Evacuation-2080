@@ -61,6 +61,9 @@ s.nightLog = [];       // [{ night, kind, target, score, pass, reward, playsLeft
 s.roundLog = [];       // [{ round, rent, paid, soul, soulOk, lost: [原因] }]
 s.lost = [];           // 失去機會的原因次序：'night' | 'rent' | 'soul'
 s.chances = 3;         // 已有欄位
+s.bosses = { 0: [...], 1: [...], 2: [...], 3: [...], 4: [...] };
+                       // 五個外星評審之夜的規則，開局時全部選好（IE.Stages.bossesFor）；介面只讀取，可以整輪預告（WO-15-06 審核後加入）
+// 出國選到一半時才有：s.trip5 = { origin, ids: [5 個素材定義 id], picked: [已選的位置], rep: 出國的報告 }
 ```
 
 其他舊欄位照舊建立（`newRun` 不要分支太多），只是在 `rounds` 模式不使用。
@@ -139,7 +142,7 @@ ECON: {
 | `garden` | `life` | 小遊戲 `garden` | |
 | `friend:<npc>` | `friend` | 和該朋友聊天（沿用 `IE.Talk` 和 `R.applyChat`），之後**必定**令 `D.TEACH[npc]` 的配色升一級 | 每位還在浮城的朋友一張；花 `R.chatCost(s)` |
 | `volunteer` | `volunteer` | `R.applyVolunteer(s)` | 靈魂變輕 |
-| `trip:<origin>` | `trip` | 付 `ECON.tripCost`，從 `origin` 相同的素材中抽 5 張，選 `ECON.tripPick` 張加入素材庫；火花 +0.4 | 第 2 輪起；每次出牌有 15% 機會出現在第三張；`origin` 只用 asia、europe、america、africa、arctic、ocean |
+| `trip:<origin>` | `trip` | 付 `ECON.tripCost`，從 `origin` 相同的素材中抽 5 張，選 `ECON.tripPick` 張加入素材庫；火花 +0.4 | 第 2 輪起；每次出牌有 15% 機會出現在第三張；`origin` 只用 asia、europe、america、africa、arctic、ocean。報告（旅費、實際的火花、帶回的素材）由 `choose` 建立並存在 `s.trip5.rep`，`tripPick` 選滿時回傳 `rep`；選到一半重新載入，介面回到五選二（WO-15-06 審核後加入） |
 
 - 卡名和說明沿用 `R.actions(s)` 對應行動的 `name`、`sub`；朋友卡用「找 X 聊天」、出國卡用「出國：X」（X 用 `D.REGIONS`）。
 - **出牌規則** `IE.Rounds.offer(s)`：三張不同的卡。第一張從 `work`／`shady` 抽，第二張從 `life`／`friend` 抽，第三張從全部可用的卡（包括 `volunteer`，第 2 輪起有 15% 機會是 `trip`）抽。被世界事件關閉（`worldClosed`）或被 AI 取代（`s.removed`）的工作不出現。某一格的種類沒有可用的卡時（例如全部工作停工），改從其餘可用的卡抽，三張仍然不同。同一晚重複呼叫回傳同一組（存在 `s.offer`）。
@@ -224,6 +227,7 @@ ROUND_TEXT: {
   soulFail: '靈魂 {soul} 克，超過 21 克：光束拉不動你。失去一次機會。',
   nextRound: '進入第 {round} 輪',
   chances: '機會',
+  bossAhead: '本輪的外星評審：{rules}',
 }
 ```
 
@@ -231,7 +235,8 @@ ROUND_TEXT: {
 
 | 元件 | class／屬性 |
 |---|---|
-| 白天面板 | `.rd-day`；三張卡 `.rd-card[data-card="<id>"]`；種類標記 `.rd-kind.k-<kind>`；換一批 `[data-do="reroll"]`；睡懶覺 `[data-do="skip"]` |
+| 白天面板 | `.rd-day`；三張卡 `.rd-card[data-card="<id>"]`；種類標記 `.rd-kind.k-<kind>`；換一批 `[data-do="reroll"]`；睡懶覺 `[data-do="skip"]`；本輪評審預告 `.rd-boss-ahead`（WO-15-08） |
+| 出國五選二 | `.rd-trip`；每張 `.rp-card[data-do="trippick"][data-i="0..4"]` |
 | 親手做／照舊做 | `[data-do="byhand"]`、`[data-do="byauto"]` |
 | 一輪的進度 | `.rd-map`；每晚 `.rm-night.k-<kind>`，狀態 `.done`、`.fail`、`.now` |
 | 狀態列 | 機會 `.chip.chances`；第幾晚 `.chip.night`；租金 `.chip.rent` |

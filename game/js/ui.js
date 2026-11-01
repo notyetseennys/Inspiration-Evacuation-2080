@@ -989,11 +989,9 @@
     const dayTitle = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
     const nk = RD.kindOf(s.night);
     let tonightLine = T.tonight.replace('{kind}', T.nightKinds[nk]).replace('{target}', fmt(RD.target(s)));
+    // 外星評審的規則在開局時已經選好（rules.js 的 newRun），這裡只是讀取
     if (nk === 'boss' && IE.Stages && IE.Stages.today) {
-      const rng0 = s.rngState;
-      const hadBoss = !!(s.bosses && s.bosses[s.quarter]);
       const stg = IE.Stages.today(s);
-      if (!hadBoss) s.rngState = rng0;
       if (stg && stg.rules && stg.rules.length) {
         tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
       }
@@ -1057,7 +1055,7 @@
       const fake = { uid: i, id: cid, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
       return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
     }).join('');
-    return '<div class="modal wide rd-pack">'
+    return '<div class="modal wide rd-trip">'
       + '<span class="rd-kind k-trip">' + esc(T.kinds.trip) + '</span>'
       + '<h2>' + esc(info.name) + '</h2>'
       + '<p class="mute">' + esc(info.sub) + '</p>'

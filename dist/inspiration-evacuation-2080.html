@@ -7670,6 +7670,7 @@ body {
     soulFail: '靈魂 {soul} 克，超過 21 克：光束拉不動你。失去一次機會。',
     nextRound: '進入第 {round} 輪',
     chances: '機會',
+    bossAhead: '本輪的外星評審：{rules}',
   };
 
   // 十三張生活卡目錄
@@ -8113,6 +8114,8 @@ body {
       s.roundLog = [];
       s.lost = [];
       s.chances = 3;
+      // 五個外星評審之夜的規則在開局時全部選好：介面可以預告，之後讀取規則也不會動到隨機數
+      if (IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
     }
     return s;
   }
@@ -12351,11 +12354,15 @@ body {
     }
     if (id.startsWith('trip:')) {
       const origin = id.slice(5);
+      const reg = (D.REGIONS && D.REGIONS[origin]) || origin;
       const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
       const cost = Math.round(D.ECON.tripCost * stMod);
       of.chosen = id;
+      // 出國的報告跟着 s.trip5 存檔：選到一半重新載入，報告仍然完整
+      const rep = R.report(s, info.name);
       s.cr -= cost;
-      R.addSpark(s, 0.4, true);
+      rep.delta('cr', -cost);
+      rep.line('飛往' + reg + '，看見浮城以外的世界', 'good', R.addSpark(s, 0.4, true), 'spark');
       s.visited[origin] = (s.visited[origin] || 0) + 1;
       s.stats.trips = (s.stats.trips || 0) + 1;
       const pool = Object.keys(D.CARDS).filter((k) => D.CARDS[k].origin === origin && D.CARDS[k].rarity !== 'legend');
@@ -12365,13 +12372,14 @@ body {
         pool.splice(pool.indexOf(k), 1);
         ids.push(k);
       }
-      s.trip5 = { origin, ids, picked: [] };
+      s.trip5 = { origin, ids, picked: [], rep: rep.done() };
       return { trip: true };
     }
     return null;
   }
 
-  // 出國五選二：每選一張呼叫一次，選滿兩張後清除 s.trip5 並呼叫 afterDay(s)
+  // 出國五選二：每選一張呼叫一次，選滿兩張後清除 s.trip5 並呼叫 afterDay(s)；
+  // 選滿的那一次，回傳值多一個 rep（整個出國的報告：旅費、火花和帶回的素材）
   function tripPick(s, idx) {
     if (!s || !s.trip5 || !Array.isArray(s.trip5.ids)) return null;
     const t5 = s.trip5;
@@ -12381,9 +12389,14 @@ body {
     if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
     const res = R.addCard(s, t5.ids[i]);
+    if (t5.rep) {
+      t5.rep.cards.push(res.card);
+      if (res.dropped) t5.rep.dropped.push(res.dropped);
+    }
     if (t5.picked.length >= D.ECON.tripPick) {
       s.trip5 = null;
       afterDay(s);
+      res.rep = t5.rep || null;
     }
     return res;
   }
@@ -24990,11 +25003,9 @@ body {
     const dayTitle = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
     const nk = RD.kindOf(s.night);
     let tonightLine = T.tonight.replace('{kind}', T.nightKinds[nk]).replace('{target}', fmt(RD.target(s)));
+    // 外星評審的規則在開局時已經選好（rules.js 的 newRun），這裡只是讀取
     if (nk === 'boss' && IE.Stages && IE.Stages.today) {
-      const rng0 = s.rngState;
-      const hadBoss = !!(s.bosses && s.bosses[s.quarter]);
       const stg = IE.Stages.today(s);
-      if (!hadBoss) s.rngState = rng0;
       if (stg && stg.rules && stg.rules.length) {
         tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
       }
@@ -25058,7 +25069,7 @@ body {
       const fake = { uid: i, id: cid, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
       return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
     }).join('');
-    return '<div class="modal wide rd-pack">'
+    return '<div class="modal wide rd-trip">'
       + '<span class="rd-kind k-trip">' + esc(T.kinds.trip) + '</span>'
       + '<h2>' + esc(info.name) + '</h2>'
       + '<p class="mute">' + esc(info.sub) + '</p>'
@@ -27437,8 +27448,9 @@ body {
       return;
     }
     music('city');
+    // 出國選到一半（例如重新載入）：回到五選二
+    if (s.trip5) return roundsTrip();
     IE.Rounds.offer(s);
-    if (IE.Stages) IE.Stages.today(s);
     UI.setPanel(UI.dayPanel(s), {
       card(el) { roundsChoose(el.dataset.card); },
       reroll() {
@@ -27490,45 +27502,27 @@ body {
       return;
     }
     if (res.trip) {
-      const origin = id.slice(5);
-      const reg = (D.REGIONS && D.REGIONS[origin]) || origin;
-      const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
-      const cost = Math.round(D.ECON.tripCost * stMod);
-      const pickedCards = [], droppedCards = [];
       A.sfx('beam');
-      UI.renderHud(s); A.setSpark(s.spark); save();
-      const renderTrip = () => {
-        UI.modal(UI.roundTripModal(s, info), {
-          trippick(el) {
-            const r = IE.Rounds.tripPick(s, Number(el.dataset.i));
-            if (!r) return;
-            A.sfx('pickup');
-            if (r.card) pickedCards.push(r.card);
-            if (r.dropped) droppedCards.push(r.dropped);
-            save();
-            if (!s.trip5 || pickedCards.length >= D.ECON.tripPick || (s.trip5 && pickedCards.length >= s.trip5.ids.length)) {
-              s.trip5 = null;
-              IE.Rounds.afterDay(s);
-              UI.closeModal();
-              afterAction({
-                title: info.name,
-                deltas: { cr: -cost, spark: 0.4 },
-                lines: [{ text: '從' + reg + '帶回了 ' + pickedCards.length + ' 張素材', kind: 'good' }],
-                stats: {},
-                cards: pickedCards,
-                dropped: droppedCards,
-                objs: [],
-              });
-            } else {
-              renderTrip();
-            }
-          },
-        });
-      };
-      renderTrip();
-      return;
+      return roundsTrip();
     }
     afterAction(res);
+  }
+  // 出國：五選二。報告由 IE.Rounds.tripPick 在選滿時回傳（旅費、火花和帶回的素材）
+  function roundsTrip() {
+    const s = Game.state;
+    UI.renderHud(s); A.setSpark(s.spark); save();
+    const info = IE.Rounds.cardInfo(s, 'trip:' + s.trip5.origin);
+    UI.setPanel('<p class="mute">' + UI.esc(info.name) + '</p>');
+    UI.modal(UI.roundTripModal(s, info), {
+      trippick(el) {
+        const r = IE.Rounds.tripPick(s, Number(el.dataset.i));
+        if (!r) return;
+        A.sfx('pickup');
+        if (!r.rep) { save(); roundsTrip(); return; }
+        UI.closeModal();
+        afterAction(r.rep);
+      },
+    });
   }
   function roundsNight() {
     const s = Game.state;
@@ -27770,7 +27764,7 @@ body {
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && data.run.v === 9) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && !data.run.ended && (data.run.v === 9 || data.run.v === 10)) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

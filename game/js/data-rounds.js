@@ -65,6 +65,7 @@
     soulFail: '靈魂 {soul} 克，超過 21 克：光束拉不動你。失去一次機會。',
     nextRound: '進入第 {round} 輪',
     chances: '機會',
+    bossAhead: '本輪的外星評審：{rules}',
   };
 
   // 十三張生活卡目錄

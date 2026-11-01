@@ -241,11 +241,15 @@
     }
     if (id.startsWith('trip:')) {
       const origin = id.slice(5);
+      const reg = (D.REGIONS && D.REGIONS[origin]) || origin;
       const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
       const cost = Math.round(D.ECON.tripCost * stMod);
       of.chosen = id;
+      // 出國的報告跟着 s.trip5 存檔：選到一半重新載入，報告仍然完整
+      const rep = R.report(s, info.name);
       s.cr -= cost;
-      R.addSpark(s, 0.4, true);
+      rep.delta('cr', -cost);
+      rep.line('飛往' + reg + '，看見浮城以外的世界', 'good', R.addSpark(s, 0.4, true), 'spark');
       s.visited[origin] = (s.visited[origin] || 0) + 1;
       s.stats.trips = (s.stats.trips || 0) + 1;
       const pool = Object.keys(D.CARDS).filter((k) => D.CARDS[k].origin === origin && D.CARDS[k].rarity !== 'legend');
@@ -255,13 +259,14 @@
         pool.splice(pool.indexOf(k), 1);
         ids.push(k);
       }
-      s.trip5 = { origin, ids, picked: [] };
+      s.trip5 = { origin, ids, picked: [], rep: rep.done() };
       return { trip: true };
     }
     return null;
   }
 
-  // 出國五選二：每選一張呼叫一次，選滿兩張後清除 s.trip5 並呼叫 afterDay(s)
+  // 出國五選二：每選一張呼叫一次，選滿兩張後清除 s.trip5 並呼叫 afterDay(s)；
+  // 選滿的那一次，回傳值多一個 rep（整個出國的報告：旅費、火花和帶回的素材）
   function tripPick(s, idx) {
     if (!s || !s.trip5 || !Array.isArray(s.trip5.ids)) return null;
     const t5 = s.trip5;
@@ -271,9 +276,14 @@
     if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
     const res = R.addCard(s, t5.ids[i]);
+    if (t5.rep) {
+      t5.rep.cards.push(res.card);
+      if (res.dropped) t5.rep.dropped.push(res.dropped);
+    }
     if (t5.picked.length >= D.ECON.tripPick) {
       s.trip5 = null;
       afterDay(s);
+      res.rep = t5.rep || null;
     }
     return res;
   }

@@ -56,6 +56,7 @@ module.exports = (t) => {
     soulFail: '靈魂 {soul} 克，超過 21 克：光束拉不動你。失去一次機會。',
     nextRound: '進入第 {round} 輪',
     chances: '機會',
+    bossAhead: '本輪的外星評審：{rules}',
   };
 
   t.test('規格：ECON 與總規格 §6 一致（沒有多出或缺少的欄位）', () => {
