@@ -22,6 +22,7 @@
 - **舊模式不可以變**：`standard`、`long` 模式的結果必須逐字相同（見 §4 的模擬回歸）。
 - **隨機數**：遊戲邏輯只可以用 `R.rand(s)`、`R.pick(s, arr)`（存在 `s.rngState`）。介面不可以改變遊戲狀態或隨機數，只可以呼叫 `IE.Rounds` 等邏輯函數。
 - **規格測試** `tools/tests/spec.test.js` 由你維護；Gemini 不可以改（只有 WO-15-09 可以更新 `ECON` 的期望值）。總規格、`data-rounds.js`、規格測試三者必須一致。
+- **故事線的內容** `game/js/data-story.js` 和它的測試 `tools/tests/story-data.test.js` 由你撰寫和維護；Gemini 只實作邏輯和介面，不改內容。每個選項都要「有得必有失」（總規格 §14.3），測試會檢查。
 
 ## 3. 專案概覽
 
@@ -48,20 +49,23 @@
 9. **推送並確認 CI**（`.github/workflows/ci.yml`：單元測試、模擬器、打包、兩個煙霧測試）。
 10. **回覆製作人**：結論、修了甚麼、下一張工單的指令（範本在 `docs/workorders/README.md` 最後；加上這張工單特別要注意的一兩句）。
 
-## 5. 現在的狀態（WO-15-07、09 合併之後）
+## 5. 現在的狀態（WO-15-07、09 合併；故事線第一批內容之後）
 
 | 工單 | 狀態 |
 |---|---|
 | WO-15-01 至 07、09 | 已合併（審核記錄在 `docs/workorders/reviews/`） |
 | WO-15-08 篩選日介面、狀態列、隱藏舊系統 | **可以開始**（WO-15-07 審核後加了 §6：篩選日的重新載入） |
-| WO-15-10 成為預設、文件、發佈 | 等 08 |
-| WO-15-11 故事線回到五輪模式 | 工單未寫；製作人已定「朋友被收藏」用做法 B，放在哪一期未定（`docs/PILLARS.md` 第四節） |
+| WO-15-10 成為預設、文件、發佈 | 等 08、11、13（第二版：故事線要在發佈之前完成） |
+| WO-15-11 故事線（邏輯） | **可以開始**，可以和 08 同時做；規格在總規格 §14 |
+| WO-15-13 故事線（介面） | 等 08、11 |
 | WO-15-12 美術整合 | 工單未寫；51 張圖在 `main` 分支的根目錄（`docs/art-prompts/` 是 prompt 和參考圖）；「沒有外部素材」的規定已經刪除（2026-11-01），圖片可以加入 |
 | 第十六至二十期 | `docs/workorders/BACKLOG.md` 只有清單；寫成正式工單之前，先對照 `docs/WORLD.md` 和 `docs/PILLARS.md` 修訂 |
 
 `main.js` 裏的暫時版本：`roundsReview()`（直接完成篩選日）和 `roundsGo()` 的 `'ended'` 分支（直接 `finishRun`），都由 WO-15-08 取代。
 
-**製作人的決定（2026-11-01）**：目標曲線不按輪設計（維持每晚 ×1.42）；WO-15-11 故事線立即做，每個角色都要有專屬的故事線和很多人生選項；刪除「沒有外部素材」的規定。
+**製作人的決定（2026-11-01）**：目標曲線不按輪設計（維持每晚 ×1.42）；WO-15-11 故事線立即做，每個角色都要有專屬的故事線和很多人生選項；刪除「沒有外部素材」的規定（仍然不加 JavaScript 函式庫、框架和建置工具）。
+
+**故事線的內容（你負責，分批寫）**：第一批已經在 `data-story.js`：六個 R 級角色（文案、救生員、程式員、外賣潛水員、教師、護士）各五章、每章三個選項（生存、兼顧、巔峰各一）、`if`／`unless` 分支和結語（包括前後呼應的組合結語）；八位朋友的收藏文字；十個種族；阿星的對應；24 則今日快訊。下一批：九個 SR 級角色；再下一批：五個 UR 級角色（外星和 AI，角度要不同：他們是被收藏的一方，還是收藏家的同類）。之後可以把每輪一章擴展到每天一章（`day` 2、3）。每批都要通過 `story-data.test.js`，並且用 `docs/WORLD.md` 的語氣：冷面、不說教、只笑 2080 年的世界。
 
 ## 6. 審核 WO-15-08 時要特別留意
 
@@ -71,7 +75,17 @@
 - 創作桌在五輪模式每一筆之後存檔（`IE.Game.save`，WO-15-07 審核加入）：測試裏改狀態的步驟要注意，存檔之後重新載入不會回到這一晚的開頭。
 - 煙霧測試要逐項對照工單：WO-15-07 漏了兩步（見第 7 節）。
 
-## 6.1 世界觀與方向（2026-11-01 與製作人定下）
+## 6.1 審核 WO-15-11、13（故事線）時要特別留意
+
+- `data-story.js` 和 `story-data.test.js` 沒有被改（Gemini 只可以讀）。
+- 白天的次序和總規格 §14.3 完全相同：`R.morning` → `IE.Story.plan` → `IE.Story.chapter`（有章就不抽道德抉擇）→ 道德抉擇 → 生活卡；模擬器和 `main.js` 一致。
+- `IE.Story.feed` 不用隨機數（測試前後比較 `rngState`）；介面要用的函數不改變狀態（`plan`、`chapter` 同一天重複呼叫結果相同）。
+- `fx.target` 只影響下一晚、`fx.rent` 只影響本輪；`fx.chance` 令機會變成 0 時走 `loseChance` 的「人才庫」結局。
+- 重新載入：`pending` 的章、藏起來、篩選日的收藏都要經得起「選到一半重新載入」。
+- 收藏的候選都不在浮城時，改抽其他朋友，文字用 `D.STORY.species[種族]` 的通用文字；一位朋友都不在就不收藏。
+- 舊模式完全不變（`node tools/sim.js 20` 沒有差異）；`sim-rounds.js` 的勝率如果離開 WO-15-09 的範圍，由你決定，不要讓 Gemini 自行改 `ECON`。
+
+## 6.2 世界觀與方向（2026-11-01 與製作人定下）
 
 - `docs/WORLD.md` 是所有文字、美術、規則和數值的根據：越玩越深思，同時有爽感；生存與巔峰的光譜；柏拉圖空間；自然法則（能量守恆、有得必有失、陰陽、物極必反）；外星人像殖民時代的收藏家，十個種族參照《星際之門》；很多座浮城；批判整個世界、不判斷對錯；黑色幽默只笑 2080 年的世界。
 - 新規則和新數值都要先回答：代價是甚麼？走到極端會怎樣反轉？
@@ -97,11 +111,14 @@
 | `docs/workorders/README.md` | 流程、狀態表、交給 Gemini 的指令範本 |
 | `docs/workorders/CONVENTIONS.md`、`REVIEW.md` | Gemini 的工作守則、你的審核標準 |
 | `docs/workorders/phase-15/README.md` | 第十五期總規格（規則、數值、狀態欄位、文字、class 名稱的唯一來源） |
-| `docs/workorders/phase-15/WO-15-01..10.md` | 工單 |
+| `docs/workorders/phase-15/WO-15-01..13.md` | 工單（WO-15-12 美術整合未寫） |
 | `docs/workorders/reviews/` | 每一輪的審核記錄 |
 | `docs/workorders/BACKLOG.md` | 第十六至二十期的工單清單 |
 | `game/js/data-rounds.js` | `ECON`、`ROUND_TEXT`、`DAYCARDS`、`PACKS`、`SERVICES` |
 | `game/js/rounds.js` | `IE.Rounds`：時間表、白天、夜晚、市集、篩選日、推進 |
+| `game/js/data-story.js` | `D.STORY`：故事線的內容（你撰寫）：種族、收藏次序、朋友、阿星的對應、今日快訊、介面文字、角色線 |
+| `game/js/story.js` | `IE.Story`：故事線的邏輯（WO-15-11 新增） |
+| `tools/tests/story-data.test.js` | 故事內容的檢查（你維護）：有得必有失、每一條路都有五章、每一章和結語都走得到 |
 | `game/js/main.js` | 流程；五輪模式在「第十五期：五輪模式」一段（`roundsGo`、`roundsDay`、`roundsChoose`、`roundsTrip`、`roundsNight`……） |
 | `game/js/ui.js` | `dayPanel`、`roundMicroModal`、`roundTripModal` 等 |
 | `tools/test.js`、`tools/tests/` | 單元測試（`t.run(opts)` 預設 copywriter、storm、seed 1、不是第一局） |

@@ -29,6 +29,7 @@ module.exports = (t) => {
     tech: 20, techStep: 10,
     toolMult: 1,
     sparkFloor: 1,
+    hideCost: [80, 120, 160, 200],
   };
 
   // 總規格 §11

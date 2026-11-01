@@ -14,7 +14,7 @@ const FILES = ['data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js
   'data-chars.js', 'data-schools.js', 'data-abilities.js', 'data-stories.js', 'data-weather.js', 'data-contacts.js',
   'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js', 'stages.js', 'meta.js', 'dossier.js'];
 // 第十五期新增的純邏輯檔案（存在才載入，令工單可以逐步加入）
-const OPTIONAL = ['data-rounds.js', 'rounds.js'];
+const OPTIONAL = ['data-rounds.js', 'data-story.js', 'rounds.js', 'story.js'];
 FILES.forEach((f) => require(path.join(__dirname, '../game/js', f)));
 OPTIONAL.forEach((f) => { const p = path.join(__dirname, '../game/js', f); if (fs.existsSync(p)) require(p); });
 
