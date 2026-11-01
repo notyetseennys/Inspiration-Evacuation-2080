@@ -213,7 +213,9 @@
       const sc = root && $('.ct-score');
       if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
     });
-    if (stg) showStageIntro(stg);
+    const resumed = IE.Rounds && IE.Rounds.on(s) && s.session.log.length > 0;
+    if (stg && !resumed) showStageIntro(stg);
+    if (resumed && (IE.Rounds.cleared(s) || ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)))) endNight();
   }
   function close(result) {
     fxStop();
@@ -226,6 +228,9 @@
     cb(result);
   }
   const isOpen = () => !!root;
+  // 五輪模式：每個改變今晚狀態的動作之後都存檔。重新載入時接着玩下去，而不是整晚重來
+  //（否則可以重新載入、用同一手牌和抽牌次序無限重試失敗的一晚）
+  function persist() { if (st && IE.Rounds && IE.Rounds.on(st.s) && IE.Game.save) IE.Game.save(); }
 
   // ---------- 繪畫 ----------
   function sortedHand() {
@@ -421,6 +426,7 @@
   }
   function finishAbility(r) {
     $('.ct-info').innerHTML = esc(r.msg);
+    if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); burst($('.ct-abil'), 24, 0.8, '#ffd36b'); st.sel = []; } else A().sfx('wrong');
     render();
   }
@@ -441,6 +447,7 @@
     st.busy = true; st.fast = false; st.chipN = 0;
     const r = C().useAbility(s, 'encore');
     if (!r.ok) { st.busy = false; return finishAbility(r); }
+    persist();
     $('.ct-tags').innerHTML = '';
     $('.ct-played').innerHTML = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean).map((c) => cardEl(s, c, { stage: true, dim: !r.res.scoring.includes(c.uid) })).join('');
     tag('安哥！觀眾要求再唱一次', 'new');
@@ -865,6 +872,7 @@
   function useTool(idx) {
     const r = IE.Stages.useTool(st.s, idx, st.sel.slice());
     $('.ct-info').innerHTML = esc(r.msg);
+    if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); st.sel = []; burst($('.ct-tools'), 24, 0.8, '#9be36b'); }
     else A().sfx('wrong');
     render();
@@ -1165,6 +1173,7 @@
     await wait(380);
     const bestBefore = st.best, stageBefore = ses.stage ? IE.Stages.stageScore(ses) : 0;
     const res = C().play(s, uids);
+    persist();
     await animate(res);
     await showTotal(res);
     frenzy(s, res, bestBefore, stageBefore);
@@ -1205,7 +1214,7 @@
     A().sfx('combo');
     flash('#9be36b');
     burst(el, 90, 1.3, '#ffd36b');
-    await new Promise((r) => setTimeout(r, 900 / Math.min(2, speedK())));
+    await new Promise((r) => { setTimeout(r, 900 / Math.min(2, speedK())); el.addEventListener('pointerdown', r, { once: true }); });
     if (el.parentNode) el.remove();
   }
 
@@ -1460,6 +1469,7 @@
     await wait(280);
     st.sel = [];
     C().discard(s, uids);
+    persist();
     st.busy = false;
     render();
     root.querySelectorAll('.ct-hand .cc').forEach((el) => {
@@ -1518,6 +1528,7 @@
     renderScene(true);
     const before = st.sigStart;
     const res = C().finish(s);
+    persist();
     const w = res.work;
     const fresh = [...new Set(res.session.fresh)].map((id) => D().RECIPES.find((r) => r.id === id)).filter(Boolean);
     const th = R().threshold(s);

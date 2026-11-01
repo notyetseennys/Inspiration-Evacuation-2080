@@ -5,6 +5,7 @@
 //   STRAT=balanced node tools/sim-rounds.js 200
 //   ECON='{"growth":1.28,"nightPay":{"small":95,"big":150,"boss":220}}' node tools/sim-rounds.js 200
 //   BG=monk node tools/sim-rounds.js 50
+//   SEED0=5000 node tools/sim-rounds.js 200（換一段種子：第 i 局的種子是 SEED0 + i，審核時確認結果穩定）
 'use strict';
 
 const path = require('path');
@@ -631,7 +632,7 @@ function runStrategy(strat) {
   for (let i = 0; i < RUNS; i++) {
     const bg = BGS[i % BGS.length];
     const season = SEASONS[i % SEASONS.length];
-    const seed = i;
+    const seed = i + (Number(process.env.SEED0) || 0);
     results.push(runOne(bg, season, seed, strat.id));
   }
 

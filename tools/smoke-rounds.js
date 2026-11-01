@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 五輪模式瀏覽器煙霧測試：用 Playwright 開啟遊戲，固定新局種子，
-// 檢查白天面板、三張生活卡、換一批、小遊戲「照舊做」與進入創作桌，確保沒有 JS 錯誤。
+// 檢查白天面板、換一批、小遊戲、創作桌（今晚目標、收工演出、結束面板）、市集（開包、技法課、工作室服務）、重新載入，確保沒有 JS 錯誤。
 // 用法：node tools/smoke-rounds.js
 'use strict';
 const fs = require('fs');
@@ -126,6 +126,11 @@ const URL = 'http://localhost:' + PORT + '/';
     if (goalLbl !== '今晚目標' || !hasNightCls) await fail('創作桌進度列應為「今晚目標」並帶 .night');
     if (!leaveHidden) await fail('第一筆之前應隱藏 [data-ct="leave"]');
 
+    // 收工演出只出現約一秒：用 MutationObserver 記下它曾經出現（WO-15-07 審核加入）
+    await page.evaluate(() => {
+      window.__sawCleared = false;
+      new MutationObserver(() => { if (document.querySelector('#ctable .ct-cleared')) window.__sawCleared = true; }).observe(document.body, { childList: true, subtree: true });
+    });
     // 6. 選建議的第一手牌（[data-sg="0"]；如果沒有建議就選前五張 .ct-hand .cc），按 .ct-play，等 .ct-end 出現
     let clearedShotDone = false;
     for (let playTurn = 0; playTurn < 6; playTurn++) {
@@ -156,7 +161,9 @@ const URL = 'http://localhost:' + PORT + '/';
       }, { timeout: 15000 });
     }
     await page.waitForSelector('#ctable .ct-end', { timeout: 15000 });
-    ok('創作桌下筆並進入結束面板（.ct-end）');
+    const n1 = await page.evaluate(() => { const s = window.__IE.Game.state; const g = (s.nightLog || [])[s.nightLog.length - 1]; return { pass: !!(g && g.pass), saw: window.__sawCleared }; });
+    if (n1.pass && !n1.saw) await fail('第 1 晚達標，但沒有出現收工演出 .ct-cleared');
+    ok('創作桌下筆並進入結束面板（.ct-end）' + (n1.pass ? '；達標時出現過收工演出 .ct-cleared' : ''));
 
     // 7. 檢查 .ct-end 裡沒有 .ct-goal.end（本季訊號列）；按 [data-end="shop"]
     const hasEndGoal = await page.$('#ctable .ct-end .ct-goal.end');
@@ -230,6 +237,18 @@ const URL = 'http://localhost:' + PORT + '/';
     if (!techDisabled) await fail('技法課購買後按鈕應變成 disabled');
     ok('技法課升級「' + techFid + '」：Lv.' + lvBefore + ' → Lv.' + lvAfter);
 
+    // 10b. 工作室服務（第 1 晚是燒掉）：在 .rd-pick 選一張，素材庫少一張（WO-15-07 第 9 步，審核時補上）
+    const svc = await page.evaluate(() => window.__IE.Game.state.shop.service);
+    if (svc !== 'burn') await fail('第 1 晚的工作室服務應是燒掉（burn），實際是 ' + svc);
+    const cardsBurn = await page.evaluate(() => window.__IE.Game.state.cards.length);
+    await page.click('#modal .rs-item[data-slot="service"] button:not([disabled])');
+    await page.waitForSelector('#modal .rd-pick');
+    await page.click('#modal .rd-pick .cardpick:not([disabled])');
+    await page.waitForSelector('#modal .rd-shop');
+    const cardsBurned = await page.evaluate(() => window.__IE.Game.state.cards.length);
+    if (cardsBurned !== cardsBurn - 1) await fail('燒掉之後素材庫應少一張（' + cardsBurn + ' → ' + cardsBurned + '）');
+    ok('工作室服務「燒掉」（.rd-pick）：素材庫 ' + cardsBurn + ' → ' + cardsBurned + ' 張');
+
     // 11. 按 [data-do="leave"]；檢查回到 .rd-day，而且 s.night === 2
     await page.click('#modal .rd-shop [data-do="leave"]');
     await closeDilemma();
@@ -237,6 +256,40 @@ const URL = 'http://localhost:' + PORT + '/';
     const nightNow = await page.evaluate(() => window.__IE.Game.state.night);
     if (nightNow !== 2) await fail('離開市集後 s.night 應為 2，實際為 ' + nightNow);
     ok('離開市集回到白天面板（s.night === 2）');
+
+    // 11b. 重新載入頁面，按「繼續」：仍然是第 2 晚的白天（WO-15-07 第 11 步，審核時補上）
+    await page.reload();
+    await page.waitForSelector('[data-do="continue"]');
+    await page.click('[data-do="continue"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day');
+    const nightReload = await page.evaluate(() => window.__IE.Game.state.night);
+    if (nightReload !== 2) await fail('重新載入之後應仍是第 2 晚，實際是第 ' + nightReload + ' 晚');
+    ok('重新載入、按「繼續」：仍然是第 2 晚的白天');
+
+    // 11c. 創作到一半重新載入：接着玩，不會整晚重來（WO-15-07 審核加入）
+    await page.click('.rd-day [data-do="skip"]');
+    await page.waitForSelector('#modal [data-do="ok"]');
+    await page.click('#modal [data-do="ok"]');
+    await page.waitForSelector('#ctable .ct-hand .cc');
+    await page.mouse.click(640, 300);
+    await page.waitForTimeout(600);
+    const weak = await page.$$eval('#ctable .ct-hand .cc[data-uid]', (els) => els.map((e) => e.dataset.uid).slice(-1)[0]);
+    await page.click('#ctable .ct-hand .cc[data-uid="' + weak + '"]');
+    await page.click('#ctable .ct-play');
+    await page.waitForFunction(() => !!document.querySelector('#ctable .ct-end') || !(window.__IE.Craft.isBusy()), { timeout: 15000 });
+    const before = await page.evaluate(() => { const s = window.__IE.Game.state; return s.session ? s.session.log.length : -1; });
+    if (before === 1) {
+      await page.reload();
+      await page.waitForSelector('[data-do="continue"]');
+      await page.click('[data-do="continue"]');
+      await page.waitForSelector('#ctable .ct-hand .cc');
+      const after = await page.evaluate(() => window.__IE.Game.state.session.log.length);
+      if (after !== 1) await fail('創作到一半重新載入之後應接着玩（已下 1 筆），實際是 ' + after + ' 筆');
+      ok('創作到一半重新載入：接着玩，已下的 1 筆仍然在');
+    } else {
+      ok('第 2 晚第一筆已經收工，略過創作到一半重新載入的檢查');
+    }
 
     if (errors.length) await fail('有 JS 錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');

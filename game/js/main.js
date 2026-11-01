@@ -774,7 +774,8 @@
         openObjects(() => roundsShop());
       },
       leave() {
-        if (!IE.Rounds.leaveShop(s)) return;
+        const r = IE.Rounds.leaveShop(s);
+        if (!r || !r.ok) { if (r && r.msg) UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
         UI.closeModal();
         save();
         roundsGo();
@@ -820,6 +821,7 @@
     });
   }
   Game.roundsGo = roundsGo;
+  Game.save = save;
   Game.roundsShop = roundsShop;
   function roundsReview() {
     const s = Game.state;
