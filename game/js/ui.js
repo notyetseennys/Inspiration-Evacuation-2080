@@ -1062,6 +1062,203 @@
       + '<div class="rp-grid">' + cards + '</div>'
       + '</div>';
   }
+  function shopModal(s) {
+    const D_ = D(), RD = IE.Rounds, T = D_.ROUND_TEXT;
+    const sh = s.shop || { objs: [], packs: [], bought: [] };
+    const round = RD.roundOf(s);
+    const rent = RD.rentOf(s);
+    const diff = Math.max(0, rent - s.cr);
+    const isLastNight = s.night % 3 === 0;
+    const canTakeObj = (id) => R().canEquip(s, id) || (s.objStash || []).length < 4;
+
+    let relicHtml = '';
+    if (sh.relic && sh.relic.items && sh.relic.items.length) {
+      const taken = !!sh.relic.taken;
+      const rItems = sh.relic.items.map((id) => {
+        const o = D_.OBJ[id], sc = o && o.school && D_.SCHOOLS[o.school];
+        if (!o) return '';
+        const slot = 'relic:' + id;
+        const bought = sh.bought.includes(slot);
+        const owned = (s.objects || []).includes(id) || (s.objStash || []).includes(id);
+        const hasSpace = canTakeObj(id);
+        const ok = !taken && !bought && !owned && hasSpace;
+        const btnTxt = bought ? '已買' : taken ? '—' : owned ? '已擁有' : !hasSpace ? '欄已滿' : '免費領取';
+        return '<div class="rs-item r-' + o.rarity + (bought ? ' bought' : taken ? ' dim' : '') + '" data-slot="' + slot + '">'
+          + '<div class="rs-icon">' + IE.Icons.obj(id, 44) + '</div>'
+          + '<div class="rs-txt"><span class="rs-cat">' + D_.RARITY[o.rarity] + (sc ? '・<i style="color:' + sc.color + '">' + esc(sc.name) + '</i>' : '') + '</span>'
+          + '<b>' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span></div>'
+          + '<button class="btn' + (ok ? ' primary' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + esc(btnTxt) + '</button>'
+          + '</div>';
+      }).join('');
+      relicHtml = '<section class="rs-sec rs-relic">'
+        + '<div class="rs-sec-head"><h3>' + esc(T.relic) + '</h3></div>'
+        + '<div class="rs-grid rs-relic-grid">' + rItems + '</div>'
+        + '</section>';
+    }
+
+    const rawObjs = sh.objs || [];
+    const boughtObjs = (sh.bought || []).filter((x) => x.startsWith('obj:')).map((x) => x.slice(4)).filter((id) => !rawObjs.includes(id));
+    const objList = rawObjs.length >= 2 ? rawObjs : rawObjs.concat(boughtObjs).slice(0, 2);
+    const objItems = objList.map((id) => {
+      const o = D_.OBJ[id], sc = o && o.school && D_.SCHOOLS[o.school];
+      if (!o) return '';
+      const slot = 'obj:' + id;
+      const p = RD.price(s, slot);
+      const bought = sh.bought.includes(slot);
+      const owned = (s.objects || []).includes(id) || (s.objStash || []).includes(id);
+      const hasSpace = canTakeObj(id);
+      const ok = !bought && !owned && hasSpace && s.cr >= p;
+      const btnTxt = bought ? '已買' : owned ? '已擁有' : !hasSpace ? '欄已滿' : '$' + fmt(p);
+      return '<div class="rs-item r-' + o.rarity + (bought ? ' bought' : '') + '" data-slot="' + slot + '">'
+        + '<div class="rs-icon">' + IE.Icons.obj(id, 44) + '</div>'
+        + '<div class="rs-txt"><span class="rs-cat">' + D_.RARITY[o.rarity] + (sc ? '・<i style="color:' + sc.color + '">' + esc(sc.name) + '</i>' : '') + '</span>'
+        + '<b>' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span></div>'
+        + '<button class="btn' + (ok ? ' sea' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + esc(btnTxt) + '</button>'
+        + '</div>';
+    }).join('');
+    const rerollP = RD.price(s, 'objReroll');
+    const objHtml = '<section class="rs-sec">'
+      + '<div class="rs-sec-head"><h3>靈感物件 <small class="mute">' + (s.objects || []).length + '/' + R().slotsOf(s) + '</small></h3>'
+      + '<button class="btn" type="button" data-do="objreroll"' + (s.cr < rerollP ? ' disabled' : '') + '>重抽物件（$' + fmt(rerollP) + '）</button></div>'
+      + '<div class="rs-grid rs-grid-2">' + (objItems || '<p class="mute">已無可售物件</p>') + '</div>'
+      + '</section>';
+
+    const packItems = (sh.packs || []).map((pid) => {
+      const pk = D_.PACKS.find((x) => x.id === pid);
+      if (!pk) return '';
+      const slot = 'pack:' + pid;
+      const p = RD.price(s, slot);
+      const bought = sh.bought.includes(slot);
+      const ok = !bought && s.cr >= p;
+      const dots = pk.tags
+        ? pk.tags.map((t) => '<span class="rs-tag-pill"><i class="rs-dot" style="--c:' + D_.TAGS[t].color + '"></i>' + esc(D_.TAGS[t].name) + '</span>').join('')
+        : '<span class="rs-tag-pill"><i class="rs-dot" style="--c:#ffd36b"></i><i class="rs-dot" style="--c:#37c3d6"></i><i class="rs-dot" style="--c:#ff4fb4"></i>異國素材（機會出極稀有）</span>';
+      return '<div class="rs-item' + (bought ? ' bought' : '') + '" data-slot="' + slot + '">'
+        + '<div class="rs-txt"><span class="rs-cat">素材包・三選一</span><b>' + esc(pk.name) + '</b><div class="rs-dots">' + dots + '</div></div>'
+        + '<button class="btn' + (ok ? ' sea' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + (bought ? '已買' : '$' + fmt(p)) + '</button>'
+        + '</div>';
+    }).join('');
+    const packHtml = '<section class="rs-sec">'
+      + '<div class="rs-sec-head"><h3>素材包</h3></div>'
+      + '<div class="rs-grid rs-grid-2">' + packItems + '</div>'
+      + '</section>';
+
+    const sv = D_.SERVICES.find((x) => x.id === sh.service) || D_.SERVICES[0];
+    const svBought = sh.bought.includes('service');
+    const svP = RD.price(s, 'service');
+    const nonGuilt = (s.cards || []).filter((c) => !c.guilt);
+    let svOk = false, svLabel = '';
+    if (svBought) {
+      svLabel = '已買';
+    } else if (sv.id === 'polish') {
+      svOk = nonGuilt.some((c) => IE.Create.starOf(c) < 5 && s.cr >= RD.price(s, 'service', c));
+      svLabel = '$' + fmt(svP) + ' 起';
+    } else if (sv.id === 'burn') {
+      const enough = nonGuilt.length > D_.ECON.minDeck;
+      svOk = enough && s.cr >= svP;
+      svLabel = !enough ? '最少 ' + D_.ECON.minDeck + ' 張' : '$' + fmt(svP);
+    } else {
+      svOk = nonGuilt.length > 0 && s.cr >= svP;
+      svLabel = '$' + fmt(svP);
+    }
+    const serviceCell = '<div class="rs-item' + (svBought ? ' bought' : '') + '" data-slot="service">'
+      + '<div class="rs-txt"><span class="rs-cat">工作室服務</span><b>' + esc(sv.name) + '</b><span>' + esc(sv.desc) + '</span></div>'
+      + '<button class="btn' + (svOk ? ' sea' : '') + '" type="button" data-do="buy" data-slot="service"' + (svOk ? '' : ' disabled') + '>' + esc(svLabel) + '</button>'
+      + '</div>';
+
+    const fid = sh.tech;
+    const f = fid && IE.Create && IE.Create.FORM[fid];
+    const fs = f ? IE.Create.formStats(s, fid) : { level: 1, chips: 0, mult: 1 };
+    const techBought = sh.bought.includes('tech');
+    const techP = RD.price(s, 'tech');
+    const techOk = !techBought && !!f && s.cr >= techP;
+    const nextChips = f ? fs.chips + f.up[0] : fs.chips;
+    const nextMult = f ? fs.mult + f.up[1] : fs.mult;
+    const techCell = '<div class="rs-item' + (techBought ? ' bought' : '') + '" data-slot="tech">'
+      + '<div class="rs-txt"><span class="rs-cat">技法課</span>'
+      + '<b>' + esc(f ? f.name : '配色') + ' Lv.' + fs.level + (techBought ? '' : ' → Lv.' + (fs.level + 1)) + '</b>'
+      + '<span>' + (techBought ? '現在：' + fs.chips + ' 籌碼 × ' + fs.mult + ' 倍率' : '現在 ' + fs.chips + '×' + fs.mult + ' → 升級後 ' + nextChips + ' 籌碼 × ' + nextMult + ' 倍率') + '</span></div>'
+      + '<button class="btn' + (techOk ? ' sea' : '') + '" type="button" data-do="buy" data-slot="tech"' + (techOk ? '' : ' disabled') + '>' + (techBought ? '已買' : '$' + fmt(techP)) + '</button>'
+      + '</div>';
+
+    const tid = sh.tool;
+    const toolDef = tid && IE.Stages && IE.Stages.TOOL[tid];
+    const toolBought = sh.bought.includes('tool');
+    const toolP = RD.price(s, 'tool');
+    const toolCap = IE.Stages ? IE.Stages.toolSlots(s) : 2;
+    const toolFull = (s.tools || []).length >= toolCap;
+    const toolOk = !toolBought && !!toolDef && !toolFull && s.cr >= toolP;
+    const toolLabel = toolBought ? '已買' : !toolDef ? '售罄' : toolFull ? '欄已滿' : '$' + fmt(toolP);
+    const toolCell = '<div class="rs-item' + (toolBought ? ' bought' : '') + '" data-slot="tool">'
+      + '<div class="rs-txt"><span class="rs-cat">工具卡（' + (s.tools || []).length + '/' + toolCap + '）</span>'
+      + '<b>' + esc(toolDef ? toolDef.name : '無') + '</b><span>' + esc(toolDef ? toolDef.desc : '') + '</span></div>'
+      + '<button class="btn' + (toolOk ? ' sea' : '') + '" type="button" data-do="buy" data-slot="tool"' + (toolOk ? '' : ' disabled') + '>' + esc(toolLabel) + '</button>'
+      + '</div>';
+
+    const trioHtml = '<section class="rs-sec">'
+      + '<div class="rs-sec-head"><h3>服務・技法・工具</h3></div>'
+      + '<div class="rs-grid rs-grid-3">' + serviceCell + techCell + toolCell + '</div>'
+      + '</section>';
+
+    return '<div class="modal wide rd-shop">'
+      + '<div class="rs-head">'
+      + '<div><span class="eyebrow">' + esc(T.dayTitle.replace('{round}', round).replace('{night}', s.night)) + '</span><h2>' + esc(T.shopTitle) + '</h2></div>'
+      + '<div class="rs-meta' + (isLastNight ? ' due' : '') + '">'
+      + '<span class="rs-cash">現有 <b class="num">$' + fmt(s.cr) + '</b></span>'
+      + '<span class="rs-rent' + (diff > 0 ? ' short' : ' ok') + (isLastNight ? ' due' : '') + '">' + (isLastNight ? '離開後交租 ' : '本輪租金 ') + '<b class="num">$' + fmt(rent) + '</b>（<b>' + (diff > 0 ? '還差 $' + fmt(diff) : '已足夠') + '</b>）</span>'
+      + '</div></div>'
+      + relicHtml
+      + objHtml
+      + packHtml
+      + trioHtml
+      + '<div class="btn-row rs-foot">'
+      + '<button class="btn" type="button" data-do="objs">管理物件（' + (s.objects || []).length + '/' + R().slotsOf(s) + '）</button>'
+      + '<button class="btn primary" type="button" data-do="leave">' + esc(T.leave) + '</button>'
+      + '</div></div>';
+  }
+  function packModal(s) {
+    const pk = s.pack || { name: '素材包', cards: [] };
+    const cards = (pk.cards || []).map((c, i) => '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>').join('');
+    return '<div class="modal wide rd-pack">'
+      + '<span class="eyebrow">開包・三選一</span>'
+      + '<h2>' + esc(pk.name) + '</h2>'
+      + '<p class="mute" style="font-size:13px">挑一張素材收進素材庫。</p>'
+      + '<div class="rp-grid">' + cards + '</div>'
+      + '</div>';
+  }
+  function pickModal(s) {
+    const D_ = D(), C = IE.Create, RD = IE.Rounds;
+    const pk = s.pick || { service: 'polish', paid: 0 };
+    const sv = D_.SERVICES.find((x) => x.id === pk.service) || { id: pk.service, name: '工作室服務', desc: '' };
+    const cards = (s.cards || []).slice().sort((a, b) => C.starOf(b) - C.starOf(a) || (D_.WHEEL || []).indexOf(a.tags[0]) - (D_.WHEEL || []).indexOf(b.tags[0]));
+    const items = cards.map((c) => {
+      const star = C.starOf(c);
+      let disabled = !!c.guilt;
+      let label = '';
+      if (pk.service === 'polish') {
+        const cost = RD.price(s, 'service', c);
+        if (c.guilt) { disabled = true; label = '愧疚素材'; }
+        else if (star >= 5) { disabled = true; label = '已 ★5'; }
+        else if (s.cr < cost) { disabled = true; label = '打磨 ★' + (star + 1) + '・$' + fmt(cost); }
+        else { label = '打磨 ★' + (star + 1) + '・$' + fmt(cost); }
+      } else if (pk.service === 'burn') {
+        label = c.guilt ? '不能燒掉' : '燒掉';
+      } else {
+        label = c.guilt ? '不能複印' : '複印';
+      }
+      return '<button type="button" class="cardpick" data-do="pickcard" data-uid="' + c.uid + '"' + (disabled ? ' disabled' : '') + '>'
+        + cardHtml(c)
+        + '<span class="cp-act">' + esc(label) + '</span>'
+        + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-pick">'
+      + '<span class="eyebrow">工作室服務</span>'
+      + '<h2>' + esc(sv.name) + '：' + esc(sv.desc) + '</h2>'
+      + '<p class="mute" style="font-size:13px">點選一張素材。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
+      + '<div class="cp-grid">' + items + '</div>'
+      + '<div class="btn-row"><button class="btn" type="button" data-do="cancelpick">取消</button></div>'
+      + '</div>';
+  }
 
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
@@ -1069,6 +1266,6 @@
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, roundMicroModal, roundTripModal,
+    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal,
   };
 })(window.IE = window.IE || {});

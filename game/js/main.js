@@ -744,10 +744,83 @@
   }
   function roundsShop() {
     const s = Game.state;
+    if (!s || s.phase !== 'shop') return;
     IE.Rounds.shopOpen(s);
-    IE.Rounds.leaveShop(s);
-    roundsGo();
+    music('shop');
+    UI.renderHud(s);
+    A.setSpark(s.spark);
+    UI.setPanel('<p class="mute">' + UI.esc(D.ROUND_TEXT.shopTitle) + '</p>');
+    save();
+    if (s.pack) return roundsPack();
+    if (s.pick) return roundsPick();
+    UI.modal(UI.shopModal(s), {
+      buy(el) {
+        const slot = el.dataset.slot || (el.closest('[data-slot]') && el.closest('[data-slot]').dataset.slot);
+        const r = IE.Rounds.shopBuy(s, slot);
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx(slot && slot.startsWith('relic:') ? 'pickup' : 'coin');
+        save();
+        roundsShop();
+      },
+      objreroll() {
+        const r = IE.Rounds.objReroll(s);
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        save();
+        roundsShop();
+      },
+      objs() {
+        UI.closeModal();
+        openObjects(() => roundsShop());
+      },
+      leave() {
+        if (!IE.Rounds.leaveShop(s)) return;
+        UI.closeModal();
+        save();
+        roundsGo();
+      },
+    });
   }
+  function roundsPack() {
+    const s = Game.state;
+    UI.renderHud(s); save();
+    UI.modal(UI.packModal(s), {
+      packpick(el) {
+        const r = IE.Rounds.packPick(s, Number(el.dataset.i));
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('pickup');
+        save();
+        roundsShop();
+      },
+    });
+  }
+  function roundsPick() {
+    const s = Game.state;
+    UI.renderHud(s); save();
+    UI.modal(UI.pickModal(s), {
+      pickcard(el) {
+        const r = IE.Rounds.pickCard(s, Number(el.dataset.uid));
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        save();
+        roundsShop();
+      },
+      cancelpick() {
+        IE.Rounds.cancelPick(s);
+        A.sfx('click');
+        save();
+        roundsShop();
+      },
+    }, {
+      dismiss() {
+        IE.Rounds.cancelPick(s);
+        save();
+        roundsShop();
+      },
+    });
+  }
+  Game.roundsGo = roundsGo;
+  Game.roundsShop = roundsShop;
   function roundsReview() {
     const s = Game.state;
     IE.Rounds.review(s);

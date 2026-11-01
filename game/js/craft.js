@@ -334,7 +334,13 @@
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
-    $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const kindName = D().ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)];
+      $('.ct-sub').textContent = '第 ' + s.night + '／15 晚・' + kindName + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+      $('[data-ct="leave"]').hidden = !ses.log.length;
+    } else {
+      $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    }
     root.classList.toggle('has-stage', !!ses.stage);
     $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
     updateAudioBadge(st.lastNote);
@@ -444,6 +450,12 @@
     await showTotal(r.res);
     $('.ct-played').innerHTML = '';
     $('.ct-total').hidden = true;
+    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
+      await showCleared(s.session);
+      st.busy = false;
+      await endNight();
+      return;
+    }
     st.busy = false;
     render();
     if ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)) await endNight();
@@ -532,6 +544,18 @@
   }
   function renderGoal(extra) {
     const s = st.s;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const ses = s.session;
+      const t = (ses && ses.stage && ses.stage.target) || IE.Rounds.target(s, s.night) || 1;
+      const sc = (ses && IE.Stages ? IE.Stages.stageScore(ses) : 0) + (extra || 0);
+      const goalEl = $('.ct-goal');
+      goalEl.classList.add('night');
+      goalEl.querySelector('.lbl').textContent = '今晚目標';
+      $('.ct-goal i').style.width = Math.min(100, sc / t * 100) + '%';
+      $('.ct-goal em').style.display = 'none';
+      $('.ct-goal-n').textContent = fmt(sc) + ' / ' + fmt(t);
+      return;
+    }
     const th = R().threshold(s);
     const sig = R().signal(s) + (extra || 0);
     $('.ct-goal i').style.width = Math.min(100, sig / th * 100) + '%';
@@ -880,6 +904,7 @@
     if (st.busy) return;
     const s = st.s;
     if (!s.session.log.length) {
+      if (IE.Rounds && IE.Rounds.on(s)) return;
       C().cancel(s);
       close(null);
       return;
@@ -1152,11 +1177,36 @@
     fx && (fx.burn = 0);
     await showArt(res);
     $('.ct-mult').classList.remove('burning', 'inferno');
+    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
+      await showCleared(ses);
+      st.busy = false;
+      await endNight();
+      return;
+    }
     st.busy = false;
     render();
     root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 220, delay: i * 30, fill: 'backwards' }));
     if ((ses.plays <= 0 || !ses.hand.length) && !canStillAct(s)) await endNight();
+  }
+
+  // 五輪模式：一筆過關時中央彈出「收工！」與提早收工獎金明細
+  async function showCleared(ses) {
+    if (!root) return;
+    const RT = D().ROUND_TEXT, E = D().ECON;
+    const el = document.createElement('div');
+    el.className = 'ct-cleared' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    const earlyTxt = ses && ses.plays > 0 ? RT.early.replace('{n}', ses.plays).replace('{v}', E.earlyBonus) : '';
+    el.innerHTML = '<div class="ct-cleared-card">'
+      + '<b>' + esc(RT.cleared) + '</b>'
+      + (earlyTxt ? '<p>' + esc(earlyTxt) + '</p>' : '')
+      + '</div>';
+    root.appendChild(el);
+    A().sfx('combo');
+    flash('#9be36b');
+    burst(el, 90, 1.3, '#ffd36b');
+    await new Promise((r) => setTimeout(r, 900 / Math.min(2, speedK())));
+    if (el.parentNode) el.remove();
   }
 
   async function animate(res) {
@@ -1418,6 +1468,8 @@
   }
 
   function stageResultHtml(g, sesStage) {
+    const s = st && st.s;
+    const isRounds = !!(s && IE.Rounds && IE.Rounds.on(s));
     const J = IE.Judges;
     let quotes = '';
     if (J) {
@@ -1436,6 +1488,21 @@
         }
       }
     }
+    if (isRounds) {
+      const RT = D().ROUND_TEXT, E = D().ECON;
+      const earlyAmt = (g.playsLeft || 0) * E.earlyBonus;
+      const overkill = g.pass && g.score >= g.target * 2;
+      const dots = '●'.repeat(Math.max(0, s.chances)) + '<i>' + '○'.repeat(Math.max(0, 3 - s.chances)) + '</i>';
+      return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '過關' : '未達標') + '</span>'
+        + '<b>第 ' + g.index + '／15 晚・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+        + quotes
+        + (g.pass
+          ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'
+            + (overkill ? '<small class="sr-overkill">超額兩倍：火花 +' + E.overkillSpark + (g.kind !== 'small' ? '・金色扭蛋券 +1' : '') + '</small>' : '')
+          : '<p class="sr-fail-msg">' + esc(RT.failed) + '</p>'
+            + '<small class="sr-chances">' + esc(RT.chances) + '：<b class="sr-dots">' + dots + '</b>（火花 ' + E.failSpark + '）</small>')
+        + '</div>';
+    }
     return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '入選' : '落選') + '</span>'
       + '<b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
       + quotes
@@ -1446,6 +1513,7 @@
   // ---------- 今晚完成 ----------
   async function endNight() {
     const s = st.s;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     st.busy = true;
     renderScene(true);
     const before = st.sigStart;
@@ -1470,11 +1538,15 @@
       + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
       + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
-      + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
-      + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
+      + (isRounds ? '' : '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>')
+      + (isRounds
+        ? '<button type="button" class="btn primary big" data-end="shop">' + esc(s.ended ? '看結局' : D().ROUND_TEXT.toShop) + '</button>'
+        : '<button type="button" class="btn primary big" data-end="done">完成</button>')
+      + '</div>';
     root.appendChild(panel);
     let closed = false;
-    panel.querySelector('[data-end="done"]').addEventListener('click', () => {
+    const endBtn = panel.querySelector('[data-end="done"], [data-end="shop"]');
+    endBtn.addEventListener('click', () => {
       if (closed) return;
       closed = true;
       if (IE.Game.celebrate) IE.Game.celebrate(w ? w.score : 0);
@@ -1492,10 +1564,12 @@
     }
     burst(sc, 100, 1.4);
     shake(10);
-    panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
-    requestAnimationFrame(() => { panel.querySelector('.ct-goal i').style.width = Math.min(100, after / th * 100) + '%'; });
-    if (after >= th && before < th) { setTimeout(() => { A().sfx('combo'); flash('#9be36b'); }, 900); }
-    if (!closed) panel.querySelector('[data-end="done"]').focus({ preventScroll: true });
+    if (!isRounds) {
+      panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
+      requestAnimationFrame(() => { panel.querySelector('.ct-goal i').style.width = Math.min(100, after / th * 100) + '%'; });
+      if (after >= th && before < th) { setTimeout(() => { A().sfx('combo'); flash('#9be36b'); }, 900); }
+    }
+    if (!closed) endBtn.focus({ preventScroll: true });
   }
 
   // ---------- 圖鑑 ----------
