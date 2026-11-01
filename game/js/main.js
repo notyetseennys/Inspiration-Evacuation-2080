@@ -175,11 +175,19 @@
     if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
+    if (IE.Rounds && IE.Rounds.on(Game.state)) { roundsGo(); return; }
     startDay();
   }
+  Game.newGame = newGame;
   function resumeRun() {
     const s = Game.state;
     Game.ticketShown = (s.ticketLog || []).length;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      setScene(S.City);
+      if (s.session) { UI.renderHud(s); openCraft(); return; }
+      roundsGo();
+      return;
+    }
     setScene(viewScene(currentView()));
     if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
@@ -453,6 +461,7 @@
     music(ses && ses.stage && ses.stage.kind === 'boss' ? 'boss' : ses && (ses.stage || ses.mode === 'allnighter') ? 'stage' : 'create');
     IE.Craft.open(s, (res) => {
       UI.renderHud(s); A.setSpark(s.spark); save();
+      if (IE.Rounds && IE.Rounds.on(s)) { roundsGo(); return; }
       if (!res) { showHub(); return; }
       // 第十一期：關卡之夜之後到遺物攤
       const g = IE.Stages && IE.Stages.today(s);
@@ -606,6 +615,7 @@
   }
   function afterSlot() {
     const s = Game.state;
+    if (IE.Rounds && IE.Rounds.on(s)) { IE.Rounds.afterDay(s); return roundsGo(); }
     if (s.body <= 0 && R.lastStand(s, null)) UI.toast('急救：你本來會倒下，但你替自己做了急救。', 'good');
     if (s.body <= 0) return finishRun(R.endingFor(s, 'death'));
     // 外賣潛水員「趕單」：留在同一個時段
@@ -613,6 +623,152 @@
     if (R.isNight(s)) return endOfDay();
     s.slot++;
     showHub();
+  }
+
+  // ---------- 第十五期：五輪模式 ----------
+  function roundsGo() {
+    const s = Game.state;
+    if (!s || !IE.Rounds || !IE.Rounds.on(s)) return;
+    save();
+    if (s.ended || s.phase === 'ended') return finishRun(s.ended || R.endingFor(s, 'archived'));
+    if (s.phase === 'day') return roundsDay();
+    if (s.phase === 'night') return roundsNight();
+    if (s.phase === 'shop') return roundsShop();
+    if (s.phase === 'review') return roundsReview();
+  }
+  function roundsDay() {
+    const s = Game.state;
+    S.City.forceNight = false;
+    R.morning(s);
+    setScene(S.City);
+    renderViews(false);
+    UI.renderHud(s);
+    A.setMode('city');
+    A.setSpark(s.spark);
+    if (R.drawDilemma(s)) {
+      save();
+      music('dilemma');
+      UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
+      UI.modal(UI.dilemmaModal(R.dilemmaView(s), s), {
+        pick(el) {
+          const rep = R.resolveDilemma(s, Number(el.dataset.i));
+          A.sfx(rep.deltas.soul > 0 ? 'wrong' : 'pickup');
+          UI.renderHud(s); A.setSpark(s.spark); save();
+          UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+        },
+      });
+      return;
+    }
+    music('city');
+    IE.Rounds.offer(s);
+    if (IE.Stages) IE.Stages.today(s);
+    UI.setPanel(UI.dayPanel(s), {
+      card(el) { roundsChoose(el.dataset.card); },
+      reroll() {
+        const r = IE.Rounds.rerollOffer(s);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        save();
+        roundsDay();
+      },
+      skip() {
+        const rep = IE.Rounds.skipDay(s);
+        if (!rep) return;
+        afterAction(rep);
+      },
+    });
+    ticketToasts();
+    save();
+  }
+  function roundsChoose(id) {
+    const s = Game.state;
+    if (!s || s.phase !== 'day') return;
+    const info = IE.Rounds.cardInfo(s, id);
+    if (!info || !info.enabled) return;
+    if (id.startsWith('friend:')) {
+      const npcId = id.slice(7);
+      if (!IE.Talk) {
+        const rep = IE.Rounds.choose(s, id);
+        if (rep) afterAction(rep);
+        return;
+      }
+      UI.modal(UI.talkModal(s, npcId, IE.Talk.lines(s, npcId)), {
+        reply(b) {
+          UI.closeModal();
+          const rep = IE.Rounds.choose(s, id, b.dataset.id);
+          if (rep) afterAction(rep);
+        },
+      }, { dismiss: () => {} });
+      return;
+    }
+    const res = IE.Rounds.choose(s, id);
+    if (!res) return;
+    if (res.micro) {
+      const kind = res.micro;
+      const rank = IE.Auto && IE.Auto.target ? IE.Auto.target(s, kind) : 'B';
+      UI.modal(UI.roundMicroModal(info, rank), {
+        byhand() { UI.closeModal(); doAction(kind); },
+        byauto() { UI.closeModal(); doAction('auto:' + kind); },
+      }, { dismiss: () => {} });
+      return;
+    }
+    if (res.trip) {
+      const origin = id.slice(5);
+      const reg = (D.REGIONS && D.REGIONS[origin]) || origin;
+      const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
+      const cost = Math.round(D.ECON.tripCost * stMod);
+      const pickedCards = [], droppedCards = [];
+      A.sfx('beam');
+      UI.renderHud(s); A.setSpark(s.spark); save();
+      const renderTrip = () => {
+        UI.modal(UI.roundTripModal(s, info), {
+          trippick(el) {
+            const r = IE.Rounds.tripPick(s, Number(el.dataset.i));
+            if (!r) return;
+            A.sfx('pickup');
+            if (r.card) pickedCards.push(r.card);
+            if (r.dropped) droppedCards.push(r.dropped);
+            save();
+            if (!s.trip5 || pickedCards.length >= D.ECON.tripPick || (s.trip5 && pickedCards.length >= s.trip5.ids.length)) {
+              s.trip5 = null;
+              IE.Rounds.afterDay(s);
+              UI.closeModal();
+              afterAction({
+                title: info.name,
+                deltas: { cr: -cost, spark: 0.4 },
+                lines: [{ text: '從' + reg + '帶回了 ' + pickedCards.length + ' 張素材', kind: 'good' }],
+                stats: {},
+                cards: pickedCards,
+                dropped: droppedCards,
+                objs: [],
+              });
+            } else {
+              renderTrip();
+            }
+          },
+        });
+      };
+      renderTrip();
+      return;
+    }
+    afterAction(res);
+  }
+  function roundsNight() {
+    const s = Game.state;
+    if (!s.session) IE.Rounds.startNight(s);
+    save();
+    openCraft();
+  }
+  function roundsShop() {
+    const s = Game.state;
+    IE.Rounds.shopOpen(s);
+    IE.Rounds.leaveShop(s);
+    roundsGo();
+  }
+  function roundsReview() {
+    const s = Game.state;
+    IE.Rounds.review(s);
+    roundsGo();
   }
 
   // ---------- 晚上 ----------
