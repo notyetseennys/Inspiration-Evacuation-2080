@@ -61,10 +61,62 @@ const URL = 'http://localhost:' + PORT + '/';
     if (cardN !== 3) await fail('白天面板應有 3 張 .rd-card，現在有 ' + cardN + ' 張');
     const mapN = await page.$$eval('.rd-map .rm-night', (els) => els.length);
     if (mapN !== 15) await fail('.rd-map .rm-night 應有 15 個，現在有 ' + mapN + ' 個');
+
+    // 14. 狀態列：有 .chip.chances、.chip.night、.chip.rent；沒有 [data-hud="stats"]、[data-hud="phone"]，也沒有「身體」字樣
+    const hudCheck = await page.evaluate(() => {
+      const hud = document.getElementById('hud');
+      return {
+        chances: !!hud.querySelector('.chip.chances'),
+        night: !!hud.querySelector('.chip.night'),
+        rent: !!hud.querySelector('.chip.rent'),
+        statsBtn: !!hud.querySelector('[data-hud="stats"]'),
+        phoneBtn: !!hud.querySelector('[data-hud="phone"]'),
+        hasBodyText: hud.textContent.includes('身體'),
+      };
+    });
+    if (!hudCheck.chances || !hudCheck.night || !hudCheck.rent) {
+      await fail('狀態列缺少 .chip.chances / .chip.night / .chip.rent：' + JSON.stringify(hudCheck));
+    }
+    if (hudCheck.statsBtn || hudCheck.phoneBtn || hudCheck.hasBodyText) {
+      await fail('五輪模式狀態列不應顯示狀態掣、手機掣或「身體」：' + JSON.stringify(hudCheck));
+    }
+    ok('狀態列：有 .chip.chances、.chip.night、.chip.rent；無狀態掣、手機掣與身體');
+
+    // 18. 第一屏看到三張生活卡：桌面 1280×800 第 1 晚，三張 .rd-card .rd-name 的 bottom 全部 <= 800
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(100);
+    const nameBottoms = await page.$$eval('.rd-day .rd-card .rd-name', (els) => els.map((e) => Math.round(e.getBoundingClientRect().bottom)));
+    if (nameBottoms.length !== 3 || nameBottoms.some((b) => b > 800)) {
+      await fail('桌面 1280×800 第一屏應看到三張 .rd-card .rd-name（bottom <= 800），實際：' + JSON.stringify(nameBottoms));
+    }
+    ok('桌面 1280×800 第一屏看到三張生活卡（.rd-name bottom=' + nameBottoms.join(', ') + ' <= 800）');
+
+    // 19a. 外星評審預告（第 1 晚）：存在 .rd-boss-ahead，文字包含 IE.Stages.bossesFor(s, 0)[0].name；進度條外星評審圓點 title 含規則名
+    const bossAhead1 = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const b0 = window.__IE.Stages.bossesFor(s, 0)[0];
+      const el = document.querySelector('.rd-day .rd-boss-ahead');
+      const dot = document.querySelector('.rd-map .rm-night.k-boss');
+      return {
+        expected: b0 ? b0.name : '',
+        text: el ? el.textContent : null,
+        dotTitle: dot ? dot.getAttribute('title') : '',
+      };
+    });
+    if (!bossAhead1.text || !bossAhead1.text.includes(bossAhead1.expected)) {
+      await fail('第 1 晚應顯示 .rd-boss-ahead 並包含「' + bossAhead1.expected + '」，實際：' + bossAhead1.text);
+    }
+    if (!bossAhead1.dotTitle.includes(bossAhead1.expected)) {
+      await fail('.rd-map 外星評審圓點 title 應包含「' + bossAhead1.expected + '」，實際：' + bossAhead1.dotTitle);
+    }
+    ok('外星評審預告（第 1 晚）：' + bossAhead1.text);
+
     if (process.env.SHOTS) {
       fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
       await page.waitForTimeout(250);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-06-day-desktop.png'), fullPage: true });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-day-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(250);
       const mob = await page.evaluate(() => {
@@ -75,6 +127,7 @@ const URL = 'http://localhost:' + PORT + '/';
       if (mob.sw > 390) await fail('手機 390px 出現橫向捲動：scrollWidth=' + mob.sw);
       if (mob.minH < 44) await fail('手機按鈕高度不足 44px：minH=' + mob.minH);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-06-day-mobile.png'), fullPage: true });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-day-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     ok('白天面板：3 張生活卡、15 晚進度點');
@@ -290,6 +343,149 @@ const URL = 'http://localhost:' + PORT + '/';
     } else {
       ok('第 2 晚第一筆已經收工，略過創作到一半重新載入的檢查');
     }
+
+    // 19b. 完成第 2 晚與市集，進入第 3 晚（本身已是外星評審）：不重複出現 .rd-boss-ahead
+    if (!(await page.$('#ctable .ct-end'))) {
+      await page.click('#ctable [data-ct="leave"]');
+    }
+    await page.waitForSelector('#ctable .ct-end [data-end="shop"]', { timeout: 15000 });
+    await page.click('#ctable .ct-end [data-end="shop"]');
+    await page.waitForSelector('#modal .rd-shop');
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day');
+    const hasBossAheadOn3 = await page.$('.rd-day .rd-boss-ahead');
+    if (hasBossAheadOn3) await fail('第 3 晚本身已是外星評審，不應重複出現 .rd-boss-ahead');
+    ok('第 3 晚不重複出現 .rd-boss-ahead');
+
+    // 13. 第 3 晚完成創作和市集，按離開市集進入篩選日 .rd-review
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.night = 3;
+      s.day = 12;
+      s.cr = 300;
+      s.soul = 5;
+      s.chances = 3;
+      s.phase = 'shop';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-shop');
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await page.waitForSelector('#modal .rd-review');
+    const revPass = await page.evaluate(() => {
+      const m = document.querySelector('#modal .rd-review');
+      return {
+        hasRent: !!m.querySelector('.rr-rent'),
+        hasSoul: !!m.querySelector('.rr-soul'),
+        stamp: (m.querySelector('.stamp') || {}).textContent || '',
+        nextBtn: (m.querySelector('[data-do="next"]') || {}).textContent || '',
+      };
+    });
+    if (!revPass.hasRent || !revPass.hasSoul || revPass.stamp !== '通過' || !revPass.nextBtn.includes('進入第 2 輪')) {
+      await fail('第 1 輪篩選日通過顯示不正確：' + JSON.stringify(revPass));
+    }
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+    ok('第 1 輪篩選日（.rd-review）：有 .rr-rent 與 .rr-soul，顯示「通過」及「進入第 2 輪」');
+
+    // §6. 在 .rd-review 重新整理頁面再按「繼續」，仍然看到 .rd-review
+    await page.reload();
+    await page.waitForSelector('[data-do="continue"]');
+    await page.click('[data-do="continue"]');
+    await page.waitForSelector('#modal .rd-review');
+    ok('篩選日重新整理再按「繼續」：仍然顯示 .rd-review');
+
+    // 15. 按繼續：進入第 2 輪第 4 晚（第 2 輪・第 4／15 晚）
+    await page.click('#modal .rd-review [data-do="next"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day');
+    const r2Title = await page.$eval('.rd-day .rd-day-title', (el) => el.textContent);
+    if (!r2Title.includes('第 2 輪・第 4／15 晚')) {
+      await fail('應進入「第 2 輪・第 4／15 晚」，實際：' + r2Title);
+    }
+    ok('按繼續進入：' + r2Title);
+
+    // 16. 把 s.cr = 0、s.soul = 25、s.phase = 'review'，進入篩選日：同時顯示兩項失敗，s.chances === 1
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.cr = 0;
+      s.soul = 25;
+      s.chances = 3;
+      s.night = 6;
+      s.day = 24;
+      s.phase = 'review';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-review');
+    const revFail = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const T = window.__IE.DATA.ROUND_TEXT;
+      const m = document.querySelector('#modal .rd-review');
+      const rentTxt = (m.querySelector('.rr-rent') || {}).textContent || '';
+      const soulTxt = (m.querySelector('.rr-soul') || {}).textContent || '';
+      const rentExpected = T.rentFail.split('{rent}')[0];
+      const soulExpected = T.soulFail.split('{soul}')[0];
+      return {
+        chances: s.chances,
+        rentFailCls: !!m.querySelector('.rr-rent.fail'),
+        soulFailCls: !!m.querySelector('.rr-soul.fail'),
+        scaleTilt: !!m.querySelector('.rr-scale.tilt'),
+        hasRentFail: rentTxt.includes(rentExpected),
+        hasSoulFail: soulTxt.includes(soulExpected),
+        stamp: (m.querySelector('.stamp') || {}).textContent || '',
+      };
+    });
+    if (revFail.chances !== 1 || !revFail.rentFailCls || !revFail.soulFailCls || !revFail.scaleTilt || !revFail.hasRentFail || !revFail.hasSoulFail || revFail.stamp !== '失去機會') {
+      await fail('雙重失敗篩選日檢查不通過：' + JSON.stringify(revFail));
+    }
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-fail-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-fail-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+    await page.click('#modal .rd-review [data-do="next"]');
+    await closeDilemma();
+    ok('篩選日同時欠租與超重：顯示兩項失敗、天秤傾斜、s.chances === 1');
+
+    // 17. 把 s.chances = 1、s.cr = 0、s.night = 6、s.phase = 'review'，進入篩選日並按繼續：直接進入 .dossier 與 .run-sum
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.chances = 1;
+      s.cr = 0;
+      s.soul = 5;
+      s.night = 6;
+      s.day = 24;
+      s.phase = 'review';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-review');
+    await page.click('#modal .rd-review [data-do="next"]');
+    await page.waitForSelector('#modal .dossier');
+    await page.waitForSelector('#panel .run-sum');
+    const runSum = await page.$eval('#panel .run-sum', (el) => el.textContent);
+    if (!/通過 \d+ \/ 5 輪・完成 \d+ \/ 15 晚/.test(runSum)) {
+      await fail('.run-sum 格式不正確：' + runSum);
+    }
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(450);
+      await page.evaluate(() => { const t = document.getElementById('toasts'); if (t) t.innerHTML = ''; });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-ending-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.evaluate(() => { const t = document.getElementById('toasts'); if (t) t.innerHTML = ''; });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-ending-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+    ok('最後一次機會耗盡 → 進入人才檔案結局畫面（.dossier）與局摘要（' + runSum + '）');
 
     if (errors.length) await fail('有 JS 錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');

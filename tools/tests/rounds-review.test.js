@@ -121,4 +121,21 @@ module.exports = (t) => {
     assert.equal(s.events.some((e) => e.until === 18), false);
     assert.equal(s.events.some((e) => e.until === 22), true);
   });
+
+  t.test('篩選日：存檔再載入保留 s.reviewRep，ackReview 後清除', () => {
+    const s = t.run({ mode: 'rounds' });
+    s.night = 3;
+    s.day = 12;
+    s.phase = 'review';
+    s.cr = 200;
+    s.soul = 5;
+    const rep = Rounds.review(s);
+    assert.ok(s.reviewRep);
+    const saved = JSON.parse(JSON.stringify(s));
+    assert.ok(saved.reviewRep);
+    assert.equal(saved.reviewRep.round, rep.round);
+    assert.equal(saved.reviewRep.passed, true);
+    Rounds.ackReview(saved);
+    assert.equal(saved.reviewRep, null);
+  });
 };

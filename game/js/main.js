@@ -31,8 +31,8 @@
     },
   };
 
-  const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && (r.v === 9 || r.v === 10) ? r : null; };
+  const save = () => { if (Game.state && (!Game.state.ended || Game.state.reviewRep)) store.set(KEY_RUN, Game.state); };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && (!r.ended || r.reviewRep) && (r.v === 9 || r.v === 10) ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -89,6 +89,7 @@
   const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
   function showTitle() {
+    document.body.classList.remove('mode-rounds');
     music('title');
     document.getElementById('hud').hidden = true;
     document.getElementById('views').hidden = true;
@@ -148,6 +149,7 @@
     render(null, false);
   }
   function showSetup() {
+    document.body.classList.remove('mode-rounds');
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
       bg(el) {
@@ -198,6 +200,7 @@
   // 計時：只計遊戲畫面在前景的時間（用來量度一局實際玩了多久）
   setInterval(() => { const s = Game.state; if (s && !s.ended && document.visibilityState === 'visible') s.playMs = (s.playMs || 0) + 1000; }, 1000);
   function startDay() {
+    document.body.classList.remove('mode-rounds');
     const s = Game.state;
     S.City.forceNight = false;
     const m = R.morning(s);
@@ -629,8 +632,12 @@
   function roundsGo() {
     const s = Game.state;
     if (!s || !IE.Rounds || !IE.Rounds.on(s)) return;
+    document.body.classList.add('mode-rounds');
+    renderViews(false);
+    setScene(S.City);
     save();
-    if (s.ended || s.phase === 'ended') return finishRun(s.ended || R.endingFor(s, 'archived'));
+    if (s.reviewRep) return showRoundReview(s.reviewRep);
+    if (s.ended || s.phase === 'ended') return s.ended && s.ended.type === 'recruited' ? chooseToGo() : finishRun(s.ended || R.endingFor(s, 'archived'));
     if (s.phase === 'day') return roundsDay();
     if (s.phase === 'night') return roundsNight();
     if (s.phase === 'shop') return roundsShop();
@@ -823,10 +830,33 @@
   Game.roundsGo = roundsGo;
   Game.save = save;
   Game.roundsShop = roundsShop;
+  function showRoundReview(rep) {
+    const s = Game.state;
+    if (!s || !rep) return;
+    S.City.forceNight = true;
+    setScene(S.City);
+    renderViews(false);
+    UI.renderHud(s);
+    UI.setPanel('<p class="mute">' + UI.esc('第 ' + rep.round + ' 輪・篩選日') + '</p>');
+    A.sfx(rep.passed ? 'combo' : 'stamp');
+    if (rep.passed) music('victory');
+    UI.modal(UI.roundReviewModal(rep), {
+      next() {
+        IE.Rounds.ackReview(s);
+        UI.closeModal();
+        save();
+        if (rep.ending && rep.ending.type === 'recruited') chooseToGo();
+        else if (rep.ending || s.ended) finishRun(rep.ending || s.ended);
+        else roundsGo();
+      },
+    });
+  }
   function roundsReview() {
     const s = Game.state;
-    IE.Rounds.review(s);
-    roundsGo();
+    const rep = IE.Rounds.review(s);
+    if (!rep) return roundsGo();
+    save();
+    showRoundReview(rep);
   }
 
   // ---------- 晚上 ----------
@@ -939,6 +969,7 @@
   }
 
   function finishRun(ending) {
+    document.body.classList.remove('mode-rounds');
     music(ending && (ending.type === 'agent' || ending.type === 'returned' || ending.type === 'recruited') ? 'victory' : 'ending');
     const s = Game.state;
     const kind = ending.kind || ending.type;
@@ -957,7 +988,11 @@
     // 第十一期：結局之後一鍵用同一角色再來；顯示差多少；可以匯出試玩紀錄
     const same = { bg: s.bg, season: s.season, mode: s.mode || 'standard', stake: s.stake || 1 };
     const best = Math.round(((s.stats && s.stats.bestRatio) || 0) * 100);
-    const summary = '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪篩選・最接近門檻 ' + best + '%・活到第 ' + s.day + ' 天' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '');
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const nightsDone = isRounds ? (s.nightLog || []).length : 0;
+    const summary = isRounds
+      ? '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '')
+      : '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪篩選・最接近門檻 ' + best + '%・活到第 ' + s.day + ' 天' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '');
     const exportLog = () => {
       const data = JSON.stringify({ v: 1, bg: s.bg, mode: same.mode, stake: same.stake, ending: kind, day: s.day, passed: s.reviewsPassed || 0, best, playMs: s.playMs || 0, trace: s.trace || [] });
       try { navigator.clipboard.writeText(data).then(() => UI.toast('試玩紀錄已複製，可以貼給開發者', 'good'), () => UI.toast('複製失敗', 'bad')); } catch (e) { UI.toast('複製失敗', 'bad'); }
@@ -1031,8 +1066,8 @@
         UI.renderHud(Game.state);
       }
       else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
-      else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
-      else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);
+      else if (b.dataset.hud === 'stats' && !Game.micro && !(IE.Rounds && IE.Rounds.on(Game.state))) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
+      else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen() && !(IE.Rounds && IE.Rounds.on(Game.state))) openPhone(false);
     });
     document.getElementById('views').addEventListener('click', (e) => {
       const b = e.target.closest('[data-view]');
@@ -1051,7 +1086,7 @@
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && (data.run.v === 9 || data.run.v === 10)) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && (!data.run.ended || data.run.reviewRep) && (data.run.v === 9 || data.run.v === 10)) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

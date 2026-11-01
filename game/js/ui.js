@@ -72,6 +72,27 @@
   function renderHud(s) {
     const hud = $('#hud');
     hud.hidden = false;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const RD = IE.Rounds, T = D().ROUND_TEXT;
+      const chances = Math.max(0, s.chances == null ? 3 : s.chances);
+      const rent = RD.rentOf(s);
+      hud.innerHTML = ''
+        + '<div class="hud-top">'
+        + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">第 ' + s.night + '／15 晚</span></div>'
+        + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
+        + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
+        + '<div class="hud-btns">'
+        + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
+        + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
+        + '</div></div>'
+        + '<div class="hud-meters rd-meters">'
+        + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">$' + fmt(s.cr) + '</b></div>'
+        + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
+        + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
+        + '</div>';
+      hudFlash(s);
+      return;
+    }
     const season = D().SEASONS[s.season];
     const th = R().threshold(s), sig = R().signal(s);
     const rent = R().rentAmount(s) + s.debt;
@@ -715,13 +736,18 @@
     const stamps = dos.stamps.map((x, i) => '<span class="dstamp tone-' + DS.STAMPS[x.id].tone + ' n' + i + '">' + esc(DS.STAMPS[x.id].text)
       + (x.label ? '<small>' + esc(x.label) + '</small>' : '') + '</span>').join('');
     const seen = meta.archetypes ? Object.keys(meta.archetypes).length : 0;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const nightsDone = isRounds ? (s.nightLog || []).length : 0;
+    const roundSum = isRounds
+      ? '<p class="run-sum">通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '') + '</p>'
+      : '';
     return '<div class="modal wide"><div class="ending ' + e.kind + '">'
       + '<span class="e-kind">' + ENDING_KIND[e.kind] + '・DAY ' + s.day + '</span>'
       + '<h2>' + esc(e.title) + '</h2>'
-      + '<p class="epitaph">' + esc(e.text) + '</p></div>'
+      + '<p class="epitaph">' + esc(e.text) + '</p>' + roundSum + '</div>'
       + '<div class="dossier">'
       + '<div class="d-head"><span>星際人才發展局・人類樣本檔案</span><span class="num">' + esc(dos.sampleId) + '</span></div>'
-      + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status) + '</span></div>'
+      + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status || e.title) + '</span></div>'
       + '<div class="d-class d-with-por"><div class="d-por">' + IE.Chars.img(s.bg, 5) + '<small>' + esc(D().BACKGROUNDS[s.bg].name) + '</small></div>'
       + '<div class="d-ctxt"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
       + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
@@ -982,7 +1008,9 @@
         const log = (s.nightLog || []).find((x) => x.night === k);
         const sd = s.stageDone && s.stageDone[RD.dayOfNight(k)];
         const stCls = k === s.night ? ' now' : (log ? (log.pass ? ' done' : ' fail') : sd ? (sd === 'pass' ? ' done' : ' fail') : k < s.night ? ' done' : '');
-        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk]) + '"></i>');
+        const bRules = nk === 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, r) : [];
+        const bTitle = bRules.length ? '：' + bRules.map((b) => b.name).join('、') : '';
+        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk] + bTitle) + '"></i>');
       }
       groups.push('<span class="rm-round' + (r + 1 === round ? ' cur' : '') + '">' + dots.join('') + '</span>');
     }
@@ -996,6 +1024,10 @@
         tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
       }
     }
+    const curBosses = nk !== 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, round - 1) : [];
+    const bossAheadHtml = curBosses.length && T.bossAhead
+      ? '<div class="rd-boss-ahead">' + esc(T.bossAhead.replace('{rules}', curBosses.map((b) => b.name + '（' + b.desc + '）').join('、'))) + '</div>'
+      : '';
     const rentDay = RD.dayOfNight(round * 3);
     const rentLine = T.rentLine.replace('{rent}', fmt(RD.rentOf(s))).replace('{day}', rentDay);
     const wd = R().weatherOf ? R().weatherOf(s) : null;
@@ -1024,6 +1056,7 @@
       + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
       + '<span class="rd-rent">' + esc(rentLine) + '</span>'
       + '</div>'
+      + bossAheadHtml
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
@@ -1259,6 +1292,37 @@
       + '<div class="btn-row"><button class="btn" type="button" data-do="cancelpick">取消</button></div>'
       + '</div>';
   }
+  function roundReviewModal(rep) {
+    const T = D().ROUND_TEXT;
+    const chances = Math.max(0, rep.chances == null ? 3 : rep.chances);
+    const scaleSvg = '<svg class="rr-scale' + (rep.soulOk ? '' : ' tilt') + '" viewBox="0 0 48 40" width="44" height="36" aria-hidden="true">'
+      + '<path d="M16 36h16M24 8v28M20 8h8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>'
+      + '<g class="rr-beam">'
+      + '<line x1="8" y1="14" x2="40" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>'
+      + '<path d="M8 14l-5 11h10zM40 14l-5 11h10z" fill="currentColor" opacity="0.28" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
+      + '</g></svg>';
+    const nextTxt = !rep.ending
+      ? T.nextRound.replace('{round}', rep.round + 1)
+      : rep.ending.type === 'recruited'
+        ? '探射燈停在你的窗外'
+        : '看結局';
+    return '<div class="modal rd-review">'
+      + '<span class="eyebrow">星際人才發展局・天賦對齊流程</span>'
+      + '<h2>第 ' + rep.round + ' 輪・篩選日</h2>'
+      + '<div class="rr-sec rr-rent ' + (rep.paid ? 'ok' : 'fail') + '">'
+      + '<div class="rr-body"><span class="rr-k">本輪房租</span><p class="rr-line">' + esc((rep.lines && rep.lines[0]) || '') + '</p></div>'
+      + '</div>'
+      + '<div class="rr-sec rr-soul ' + (rep.soulOk ? 'ok' : 'fail') + '">'
+      + scaleSvg
+      + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().SOUL_LIMIT + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
+      + '</div>'
+      + '<div class="rr-verdict">'
+      + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'
+      + '<span class="rr-chances">' + esc(T.chances) + ' <b class="rr-dots">' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
+      + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="next">' + esc(nextTxt) + '</button></div>'
+      + '</div>';
+  }
 
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
@@ -1266,6 +1330,6 @@
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal,
+    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
   };
 })(window.IE = window.IE || {});

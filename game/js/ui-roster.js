@@ -125,7 +125,7 @@
     const H = meta.history || [];
     const rows = H.map((h) => '<div class="h-row"><span class="h-date num">' + h.date.slice(4, 6) + '/' + h.date.slice(6, 8) + '</span>'
       + '<span class="h-ch">' + IE.Chars.img(h.bg, 2) + esc(D().BACKGROUNDS[h.bg].short || D().BACKGROUNDS[h.bg].name) + '</span>'
-      + '<span class="h-mode">' + (h.mode === 'long' ? '長篇' : '標準') + '・評級 ' + h.stake + (h.daily ? '・每日' : '') + (h.weekly ? '・每週' : '') + '</span>'
+      + '<span class="h-mode">' + ((D().MODES[h.mode] && D().MODES[h.mode].name) || (h.mode === 'long' ? '長篇' : '標準')) + '・評級 ' + h.stake + (h.daily ? '・每日' : '') + (h.weekly ? '・每週' : '') + '</span>'
       + '<span class="h-end e-' + h.ending + '">' + (ENDING[h.ending] || h.ending) + '</span>'
       + '<span class="num">第 ' + h.day + ' 天</span><span class="num">' + h.stages + ' 關</span><span class="num">' + fmt(h.best) + '</span><span class="num mute">' + (h.ms ? mmss(h.ms) : '—') + '</span></div>').join('');
     const bests = Object.keys(meta.bests || {}).map((id) => { const b = meta.bests[id], M = IE.Meta.masteryOf(meta, id);

@@ -4618,6 +4618,54 @@ body {
 
 /* 第十五期 WO-15-07 審核：「離開市集」固定在視窗底部，桌面 1280×800 不用捲動也看得見 */
 .rd-shop .rs-foot { position: sticky; bottom: -18px; z-index: 2; margin: 0 -18px -18px; padding: 12px 18px 18px; background: linear-gradient(180deg, rgba(14, 19, 34, 0), var(--deck) 28%); }
+
+/* 第十五期 WO-15-08：篩選日、狀態列與第一屏舞台高度 */
+body.mode-rounds #stage:not(.playing) { max-height: 196px; display: flex; justify-content: center; background: #05070c; }
+body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: auto !important; max-width: 100%; aspect-ratio: 16 / 9; }
+.rd-boss-ahead {
+  font-size: 13px; line-height: 1.45; color: #ffc2cb;
+  padding: 5px 10px; border-radius: 8px;
+  background: rgba(255, 77, 94, 0.12); border: 1px solid rgba(255, 77, 94, 0.38);
+}
+.hud-meters.rd-meters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.chip.night { border-color: #37c3d6; color: #d8f6ff; font-weight: 700; }
+.chip.rent { border-color: #2a3756; color: #c5d1ea; }
+.chip.rent.short { border-color: #ffd36b; color: #ffd36b; background: rgba(255, 211, 107, 0.12); font-weight: 700; }
+.m-soul.over { border-color: var(--danger); }
+.m-soul.over .num { color: var(--danger); }
+.m-soul.over .bar > i { background: var(--danger); }
+.rd-review { display: grid; gap: 12px; }
+.rd-review h2 { margin: 0; }
+.rr-sec {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid #2a3756;
+}
+.rr-sec.ok { border-color: rgba(155, 227, 107, 0.45); background: rgba(155, 227, 107, 0.08); }
+.rr-sec.fail { border-color: #ff4d5e; background: rgba(255, 77, 94, 0.16); color: #ffd6da; }
+.rr-body { display: grid; gap: 3px; min-width: 0; }
+.rr-k { font-size: 12px; color: var(--mute); font-weight: 700; }
+.rr-sec.fail .rr-k { color: #ff99a3; }
+.rr-line { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.45; }
+.rr-scale { flex: 0 0 auto; color: #a89a82; }
+.rr-sec.ok .rr-scale { color: #9be36b; }
+.rr-sec.fail .rr-scale { color: #ff6b7a; }
+.rr-scale .rr-beam { transform-origin: 24px 14px; transition: transform 0.25s ease; }
+.rr-scale.tilt .rr-beam { transform: rotate(14deg); }
+.rr-verdict { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 4px 2px; }
+.rd-review .stamp {
+  position: static; display: inline-block; padding: 4px 14px; border: 3px double currentColor; border-radius: 6px;
+  font-size: 20px; font-weight: 900; letter-spacing: 0.08em; transform: rotate(-4deg); animation: none;
+}
+.rd-review .stamp.pass { color: #9be36b; background: rgba(155, 227, 107, 0.1); }
+.rd-review .stamp.fail { color: #ff4d5e; background: rgba(255, 77, 94, 0.14); }
+.rr-chances { font-size: 14px; color: #d8c6e8; }
+.rr-dots { color: #ff8fd1; letter-spacing: 2px; font-weight: 400; }
+.rr-dots i { font-style: normal; color: #5b4a6b; }
+.rd-review .btn-row .btn { min-height: 44px; flex: 1 1 160px; }
+@media (max-width: 720px) {
+  .hud-meters.rd-meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hud-meters.rd-meters .m-soul { grid-column: span 2; }
+}
 </style>
 </head>
 <body>
@@ -12941,7 +12989,7 @@ body {
         advance(s);
       }
     }
-    return {
+    const rep = {
       round,
       rent,
       paid,
@@ -12954,6 +13002,13 @@ body {
       ending: s.ended || null,
       lines,
     };
+    s.reviewRep = rep;
+    return rep;
+  }
+
+  function ackReview(s) {
+    if (!s || !on(s)) return;
+    s.reviewRep = null;
   }
 
   IE.Rounds = {
@@ -12987,6 +13042,7 @@ body {
     leaveShop,
     advance,
     review,
+    ackReview,
   };
 });
 
@@ -24175,6 +24231,27 @@ body {
   function renderHud(s) {
     const hud = $('#hud');
     hud.hidden = false;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const RD = IE.Rounds, T = D().ROUND_TEXT;
+      const chances = Math.max(0, s.chances == null ? 3 : s.chances);
+      const rent = RD.rentOf(s);
+      hud.innerHTML = ''
+        + '<div class="hud-top">'
+        + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">第 ' + s.night + '／15 晚</span></div>'
+        + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
+        + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
+        + '<div class="hud-btns">'
+        + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
+        + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
+        + '</div></div>'
+        + '<div class="hud-meters rd-meters">'
+        + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">$' + fmt(s.cr) + '</b></div>'
+        + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
+        + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
+        + '</div>';
+      hudFlash(s);
+      return;
+    }
     const season = D().SEASONS[s.season];
     const th = R().threshold(s), sig = R().signal(s);
     const rent = R().rentAmount(s) + s.debt;
@@ -24818,13 +24895,18 @@ body {
     const stamps = dos.stamps.map((x, i) => '<span class="dstamp tone-' + DS.STAMPS[x.id].tone + ' n' + i + '">' + esc(DS.STAMPS[x.id].text)
       + (x.label ? '<small>' + esc(x.label) + '</small>' : '') + '</span>').join('');
     const seen = meta.archetypes ? Object.keys(meta.archetypes).length : 0;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const nightsDone = isRounds ? (s.nightLog || []).length : 0;
+    const roundSum = isRounds
+      ? '<p class="run-sum">通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '') + '</p>'
+      : '';
     return '<div class="modal wide"><div class="ending ' + e.kind + '">'
       + '<span class="e-kind">' + ENDING_KIND[e.kind] + '・DAY ' + s.day + '</span>'
       + '<h2>' + esc(e.title) + '</h2>'
-      + '<p class="epitaph">' + esc(e.text) + '</p></div>'
+      + '<p class="epitaph">' + esc(e.text) + '</p>' + roundSum + '</div>'
       + '<div class="dossier">'
       + '<div class="d-head"><span>星際人才發展局・人類樣本檔案</span><span class="num">' + esc(dos.sampleId) + '</span></div>'
-      + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status) + '</span></div>'
+      + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status || e.title) + '</span></div>'
       + '<div class="d-class d-with-por"><div class="d-por">' + IE.Chars.img(s.bg, 5) + '<small>' + esc(D().BACKGROUNDS[s.bg].name) + '</small></div>'
       + '<div class="d-ctxt"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
       + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
@@ -25085,7 +25167,9 @@ body {
         const log = (s.nightLog || []).find((x) => x.night === k);
         const sd = s.stageDone && s.stageDone[RD.dayOfNight(k)];
         const stCls = k === s.night ? ' now' : (log ? (log.pass ? ' done' : ' fail') : sd ? (sd === 'pass' ? ' done' : ' fail') : k < s.night ? ' done' : '');
-        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk]) + '"></i>');
+        const bRules = nk === 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, r) : [];
+        const bTitle = bRules.length ? '：' + bRules.map((b) => b.name).join('、') : '';
+        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk] + bTitle) + '"></i>');
       }
       groups.push('<span class="rm-round' + (r + 1 === round ? ' cur' : '') + '">' + dots.join('') + '</span>');
     }
@@ -25099,6 +25183,10 @@ body {
         tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
       }
     }
+    const curBosses = nk !== 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, round - 1) : [];
+    const bossAheadHtml = curBosses.length && T.bossAhead
+      ? '<div class="rd-boss-ahead">' + esc(T.bossAhead.replace('{rules}', curBosses.map((b) => b.name + '（' + b.desc + '）').join('、'))) + '</div>'
+      : '';
     const rentDay = RD.dayOfNight(round * 3);
     const rentLine = T.rentLine.replace('{rent}', fmt(RD.rentOf(s))).replace('{day}', rentDay);
     const wd = R().weatherOf ? R().weatherOf(s) : null;
@@ -25127,6 +25215,7 @@ body {
       + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
       + '<span class="rd-rent">' + esc(rentLine) + '</span>'
       + '</div>'
+      + bossAheadHtml
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
@@ -25362,6 +25451,37 @@ body {
       + '<div class="btn-row"><button class="btn" type="button" data-do="cancelpick">取消</button></div>'
       + '</div>';
   }
+  function roundReviewModal(rep) {
+    const T = D().ROUND_TEXT;
+    const chances = Math.max(0, rep.chances == null ? 3 : rep.chances);
+    const scaleSvg = '<svg class="rr-scale' + (rep.soulOk ? '' : ' tilt') + '" viewBox="0 0 48 40" width="44" height="36" aria-hidden="true">'
+      + '<path d="M16 36h16M24 8v28M20 8h8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>'
+      + '<g class="rr-beam">'
+      + '<line x1="8" y1="14" x2="40" y2="14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>'
+      + '<path d="M8 14l-5 11h10zM40 14l-5 11h10z" fill="currentColor" opacity="0.28" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
+      + '</g></svg>';
+    const nextTxt = !rep.ending
+      ? T.nextRound.replace('{round}', rep.round + 1)
+      : rep.ending.type === 'recruited'
+        ? '探射燈停在你的窗外'
+        : '看結局';
+    return '<div class="modal rd-review">'
+      + '<span class="eyebrow">星際人才發展局・天賦對齊流程</span>'
+      + '<h2>第 ' + rep.round + ' 輪・篩選日</h2>'
+      + '<div class="rr-sec rr-rent ' + (rep.paid ? 'ok' : 'fail') + '">'
+      + '<div class="rr-body"><span class="rr-k">本輪房租</span><p class="rr-line">' + esc((rep.lines && rep.lines[0]) || '') + '</p></div>'
+      + '</div>'
+      + '<div class="rr-sec rr-soul ' + (rep.soulOk ? 'ok' : 'fail') + '">'
+      + scaleSvg
+      + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().SOUL_LIMIT + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
+      + '</div>'
+      + '<div class="rr-verdict">'
+      + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'
+      + '<span class="rr-chances">' + esc(T.chances) + ' <b class="rr-dots">' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
+      + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="next">' + esc(nextTxt) + '</button></div>'
+      + '</div>';
+  }
 
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
@@ -25369,7 +25489,7 @@ body {
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal,
+    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
   };
 })(window.IE = window.IE || {});
 
@@ -25501,7 +25621,7 @@ body {
     const H = meta.history || [];
     const rows = H.map((h) => '<div class="h-row"><span class="h-date num">' + h.date.slice(4, 6) + '/' + h.date.slice(6, 8) + '</span>'
       + '<span class="h-ch">' + IE.Chars.img(h.bg, 2) + esc(D().BACKGROUNDS[h.bg].short || D().BACKGROUNDS[h.bg].name) + '</span>'
-      + '<span class="h-mode">' + (h.mode === 'long' ? '長篇' : '標準') + '・評級 ' + h.stake + (h.daily ? '・每日' : '') + (h.weekly ? '・每週' : '') + '</span>'
+      + '<span class="h-mode">' + ((D().MODES[h.mode] && D().MODES[h.mode].name) || (h.mode === 'long' ? '長篇' : '標準')) + '・評級 ' + h.stake + (h.daily ? '・每日' : '') + (h.weekly ? '・每週' : '') + '</span>'
       + '<span class="h-end e-' + h.ending + '">' + (ENDING[h.ending] || h.ending) + '</span>'
       + '<span class="num">第 ' + h.day + ' 天</span><span class="num">' + h.stages + ' 關</span><span class="num">' + fmt(h.best) + '</span><span class="num mute">' + (h.ms ? mmss(h.ms) : '—') + '</span></div>').join('');
     const bests = Object.keys(meta.bests || {}).map((id) => { const b = meta.bests[id], M = IE.Meta.masteryOf(meta, id);
@@ -27190,8 +27310,8 @@ body {
     },
   };
 
-  const save = () => { if (Game.state && !Game.state.ended) store.set(KEY_RUN, Game.state); };
-  const savedRun = () => { const r = store.get(KEY_RUN); return r && !r.ended && (r.v === 9 || r.v === 10) ? r : null; };
+  const save = () => { if (Game.state && (!Game.state.ended || Game.state.reviewRep)) store.set(KEY_RUN, Game.state); };
+  const savedRun = () => { const r = store.get(KEY_RUN); return r && (!r.ended || r.reviewRep) && (r.v === 9 || r.v === 10) ? r : null; };
   const stage = () => document.getElementById('stage');
 
   // 朋友一個個被帶走，浮城（橫切面、房間、地圖）的顏色也越來越淡
@@ -27248,6 +27368,7 @@ body {
   const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
   function showTitle() {
+    document.body.classList.remove('mode-rounds');
     music('title');
     document.getElementById('hud').hidden = true;
     document.getElementById('views').hidden = true;
@@ -27307,6 +27428,7 @@ body {
     render(null, false);
   }
   function showSetup() {
+    document.body.classList.remove('mode-rounds');
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
       bg(el) {
@@ -27357,6 +27479,7 @@ body {
   // 計時：只計遊戲畫面在前景的時間（用來量度一局實際玩了多久）
   setInterval(() => { const s = Game.state; if (s && !s.ended && document.visibilityState === 'visible') s.playMs = (s.playMs || 0) + 1000; }, 1000);
   function startDay() {
+    document.body.classList.remove('mode-rounds');
     const s = Game.state;
     S.City.forceNight = false;
     const m = R.morning(s);
@@ -27788,8 +27911,12 @@ body {
   function roundsGo() {
     const s = Game.state;
     if (!s || !IE.Rounds || !IE.Rounds.on(s)) return;
+    document.body.classList.add('mode-rounds');
+    renderViews(false);
+    setScene(S.City);
     save();
-    if (s.ended || s.phase === 'ended') return finishRun(s.ended || R.endingFor(s, 'archived'));
+    if (s.reviewRep) return showRoundReview(s.reviewRep);
+    if (s.ended || s.phase === 'ended') return s.ended && s.ended.type === 'recruited' ? chooseToGo() : finishRun(s.ended || R.endingFor(s, 'archived'));
     if (s.phase === 'day') return roundsDay();
     if (s.phase === 'night') return roundsNight();
     if (s.phase === 'shop') return roundsShop();
@@ -27982,10 +28109,33 @@ body {
   Game.roundsGo = roundsGo;
   Game.save = save;
   Game.roundsShop = roundsShop;
+  function showRoundReview(rep) {
+    const s = Game.state;
+    if (!s || !rep) return;
+    S.City.forceNight = true;
+    setScene(S.City);
+    renderViews(false);
+    UI.renderHud(s);
+    UI.setPanel('<p class="mute">' + UI.esc('第 ' + rep.round + ' 輪・篩選日') + '</p>');
+    A.sfx(rep.passed ? 'combo' : 'stamp');
+    if (rep.passed) music('victory');
+    UI.modal(UI.roundReviewModal(rep), {
+      next() {
+        IE.Rounds.ackReview(s);
+        UI.closeModal();
+        save();
+        if (rep.ending && rep.ending.type === 'recruited') chooseToGo();
+        else if (rep.ending || s.ended) finishRun(rep.ending || s.ended);
+        else roundsGo();
+      },
+    });
+  }
   function roundsReview() {
     const s = Game.state;
-    IE.Rounds.review(s);
-    roundsGo();
+    const rep = IE.Rounds.review(s);
+    if (!rep) return roundsGo();
+    save();
+    showRoundReview(rep);
   }
 
   // ---------- 晚上 ----------
@@ -28098,6 +28248,7 @@ body {
   }
 
   function finishRun(ending) {
+    document.body.classList.remove('mode-rounds');
     music(ending && (ending.type === 'agent' || ending.type === 'returned' || ending.type === 'recruited') ? 'victory' : 'ending');
     const s = Game.state;
     const kind = ending.kind || ending.type;
@@ -28116,7 +28267,11 @@ body {
     // 第十一期：結局之後一鍵用同一角色再來；顯示差多少；可以匯出試玩紀錄
     const same = { bg: s.bg, season: s.season, mode: s.mode || 'standard', stake: s.stake || 1 };
     const best = Math.round(((s.stats && s.stats.bestRatio) || 0) * 100);
-    const summary = '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪篩選・最接近門檻 ' + best + '%・活到第 ' + s.day + ' 天' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '');
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const nightsDone = isRounds ? (s.nightLog || []).length : 0;
+    const summary = isRounds
+      ? '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '')
+      : '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪篩選・最接近門檻 ' + best + '%・活到第 ' + s.day + ' 天' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '');
     const exportLog = () => {
       const data = JSON.stringify({ v: 1, bg: s.bg, mode: same.mode, stake: same.stake, ending: kind, day: s.day, passed: s.reviewsPassed || 0, best, playMs: s.playMs || 0, trace: s.trace || [] });
       try { navigator.clipboard.writeText(data).then(() => UI.toast('試玩紀錄已複製，可以貼給開發者', 'good'), () => UI.toast('複製失敗', 'bad')); } catch (e) { UI.toast('複製失敗', 'bad'); }
@@ -28190,8 +28345,8 @@ body {
         UI.renderHud(Game.state);
       }
       else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
-      else if (b.dataset.hud === 'stats' && !Game.micro) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
-      else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen()) openPhone(false);
+      else if (b.dataset.hud === 'stats' && !Game.micro && !(IE.Rounds && IE.Rounds.on(Game.state))) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
+      else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen() && !(IE.Rounds && IE.Rounds.on(Game.state))) openPhone(false);
     });
     document.getElementById('views').addEventListener('click', (e) => {
       const b = e.target.closest('[data-view]');
@@ -28210,7 +28365,7 @@ body {
     S.City.forceNight = false;
     requestAnimationFrame(frame);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => P.resize());
-    if (data && data.run && !data.run.ended && (data.run.v === 9 || data.run.v === 10)) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
+    if (data && data.run && (!data.run.ended || data.run.reviewRep) && (data.run.v === 9 || data.run.v === 10)) { Game.state = data.run; S.City.enter('hub'); resumeRun(); }
     else showTitle();
   }
   const hot = window.claude && window.claude.hot;

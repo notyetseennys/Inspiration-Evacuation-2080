@@ -739,7 +739,7 @@
         advance(s);
       }
     }
-    return {
+    const rep = {
       round,
       rent,
       paid,
@@ -752,6 +752,13 @@
       ending: s.ended || null,
       lines,
     };
+    s.reviewRep = rep;
+    return rep;
+  }
+
+  function ackReview(s) {
+    if (!s || !on(s)) return;
+    s.reviewRep = null;
   }
 
   IE.Rounds = {
@@ -785,5 +792,6 @@
     leaveShop,
     advance,
     review,
+    ackReview,
   };
 });
