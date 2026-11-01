@@ -4461,6 +4461,74 @@ body {
   .cw-thumb { width: 30px; height: 20px; }
   .ct-end-art { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 }
+/* 第十五期 WO-15-06：白天面板 */
+.rd-day { display: grid; gap: 12px; }
+.rd-top { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--surface), #131b2e; border: 1px solid #263452; box-shadow: inset 0 1px 0 var(--edge); }
+.rd-map-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.rd-map { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rm-round { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 999px; background: rgba(11, 15, 26, 0.55); border: 1px solid #24314d; }
+.rm-round.cur { border-color: #5b73a8; background: rgba(55, 195, 214, 0.1); }
+.rm-night { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #26334d; border: 1px solid #3c4f76; transition: transform 0.15s ease, background 0.15s ease; }
+.rm-night.k-boss { border-radius: 2px; transform: rotate(45deg); }
+.rm-night.done { background: #9be36b; border-color: #c8f5a6; box-shadow: 0 0 6px rgba(155, 227, 107, 0.55); }
+.rm-night.fail { background: #ff4d5e; border-color: #ff99a3; }
+.rm-night.now { background: #ffd36b; border-color: #fff; box-shadow: 0 0 8px rgba(255, 211, 107, 0.85); transform: scale(1.25); }
+.rm-night.k-boss.now { transform: rotate(45deg) scale(1.22); }
+.rd-day-title { font-weight: 700; font-size: 14px; color: #e7eefc; letter-spacing: 0.02em; }
+.rd-meta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; font-size: 14px; }
+.rd-tonight { font-weight: 700; color: #ffe2a0; }
+.rd-tonight.k-boss { color: #ff8f9a; }
+.rd-rent { color: #b9c5e0; font-size: 13px; }
+.rd-wx { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: #b8c6e4; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.rd-wx-item i { font-style: normal; }
+.rd-ev-item { display: inline-flex; align-items: center; gap: 5px; color: #ffd36b; }
+.rd-ask { margin: 2px 0 0; font-size: 18px; letter-spacing: 0.02em; }
+.rd-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rd-card {
+  --kc: #37c3d6;
+  display: grid; align-content: start; gap: 8px; text-align: left; padding: 14px; min-height: 44px;
+  border-radius: 14px; background: var(--surface), var(--deck); border: 1px solid #263554;
+  border-top: 3px solid var(--kc); color: var(--fg); cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--edge), var(--lift);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.rd-card:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--kc); box-shadow: inset 0 1px 0 var(--edge), 0 10px 22px rgba(0, 0, 0, 0.42); }
+.rd-card:disabled { opacity: 0.52; cursor: not-allowed; }
+.rd-card.k-work, .rd-kind.k-work { --kc: #37c3d6; }
+.rd-card.k-shady, .rd-kind.k-shady { --kc: #ff4d5e; }
+.rd-card.k-life, .rd-kind.k-life { --kc: #9be36b; }
+.rd-card.k-friend, .rd-kind.k-friend { --kc: #ff8fd1; }
+.rd-card.k-volunteer, .rd-kind.k-volunteer { --kc: #f3e9d2; }
+.rd-card.k-trip, .rd-kind.k-trip { --kc: #ffd36b; }
+.rd-card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.rd-kind {
+  --kc: #37c3d6;
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; color: #0b0f1a; background: var(--kc); width: fit-content;
+}
+.rd-name { font-size: 17px; line-height: 1.3; color: #f4f7ff; }
+.rd-sub { margin: 0; font-size: 13px; line-height: 1.45; color: #b6c2dc; }
+.rd-fx { margin-top: 2px; display: flex; flex-wrap: wrap; gap: 5px; }
+.rd-card .fx-danger { color: #ff4d5e; font-weight: 700; background: rgba(255, 77, 94, 0.16); border-color: rgba(255, 77, 94, 0.55); }
+.rd-why { display: block; font-size: 12px; color: #ff8f9a; }
+.rd-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.rd-btns .btn { min-height: 44px; flex: 1 1 160px; }
+.rd-micro-modal { display: grid; gap: 10px; }
+.rd-micro-modal h2 { margin: 0; }
+.rd-micro-modal .btn-row .btn { min-height: 44px; flex: 1 1 140px; }
+.rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+.rp-card { padding: 0; background: none; border: none; cursor: pointer; text-align: left; border-radius: 12px; min-height: 44px; }
+.rp-card .card { width: 100%; height: 100%; }
+.rp-card:hover:not(:disabled) .card { border-color: #ffd36b; transform: translateY(-2px); }
+.rp-card.sel .card { opacity: 0.45; }
+@media (max-width: 720px) {
+  .rd-cards { grid-template-columns: 1fr; }
+  .rd-card { min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rd-card, .rm-night { transition: none; }
+  .rd-card:hover:not(:disabled) { transform: none; }
+}
 </style>
 </head>
 <body>
@@ -24323,17 +24391,18 @@ body {
   }
 
   // ---------- 報告 ----------
-  function deltasHtml(d) {
+  function deltasHtml(d, isRounds) {
     const out = [];
     if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + signed(d.cr) + '</span></div>');
-    if (d.body) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
+    if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
     if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
     return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
   }
-  function linesHtml(lines) {
-    if (!lines.length) return '';
-    return '<ul class="lines">' + lines.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
+  function linesHtml(lines, isRounds) {
+    const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body') : (lines || []);
+    if (!list.length) return '';
+    return '<ul class="lines">' + list.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
       + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
   }
   function statsDeltaHtml(st) {
@@ -24361,7 +24430,8 @@ body {
       + '</div>';
   }
   function reportModal(rep, btnLabel) {
-    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
+    const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -24900,12 +24970,109 @@ body {
       + '<button class="d-opt" type="button" data-do="stay"><span class="d-label">關上窗戶</span><span class="fx"><span class="fx-note">留下來</span></span></button></div></div>';
   }
 
+  // ---------- 第十五期：五輪模式白天面板與視窗 ----------
+  function dayPanel(s) {
+    const RD = IE.Rounds, T = D().ROUND_TEXT;
+    const round = RD.roundOf(s);
+    const groups = [];
+    for (let r = 0; r < 5; r++) {
+      const dots = [];
+      for (let j = 1; j <= 3; j++) {
+        const k = r * 3 + j;
+        const nk = RD.kindOf(k);
+        const log = (s.nightLog || []).find((x) => x.night === k);
+        const sd = s.stageDone && s.stageDone[RD.dayOfNight(k)];
+        const stCls = k === s.night ? ' now' : (log ? (log.pass ? ' done' : ' fail') : sd ? (sd === 'pass' ? ' done' : ' fail') : k < s.night ? ' done' : '');
+        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk]) + '"></i>');
+      }
+      groups.push('<span class="rm-round' + (r + 1 === round ? ' cur' : '') + '">' + dots.join('') + '</span>');
+    }
+    const dayTitle = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const nk = RD.kindOf(s.night);
+    let tonightLine = T.tonight.replace('{kind}', T.nightKinds[nk]).replace('{target}', fmt(RD.target(s)));
+    if (nk === 'boss' && IE.Stages && IE.Stages.today) {
+      const rng0 = s.rngState;
+      const hadBoss = !!(s.bosses && s.bosses[s.quarter]);
+      const stg = IE.Stages.today(s);
+      if (!hadBoss) s.rngState = rng0;
+      if (stg && stg.rules && stg.rules.length) {
+        tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
+      }
+    }
+    const rentDay = RD.dayOfNight(round * 3);
+    const rentLine = T.rentLine.replace('{rent}', fmt(RD.rentOf(s))).replace('{day}', rentDay);
+    const wd = R().weatherOf ? R().weatherOf(s) : null;
+    const wNote = wd && D().weatherNote ? D().weatherNote(wd) : '';
+    const wxHtml = wd ? '<span class="rd-wx-item">' + (wd.glyph ? '<i aria-hidden="true">' + wd.glyph + '</i> ' : '') + '<b>' + esc(wd.name) + '</b>' + (wNote ? '（' + esc(wNote) + '）' : '') + '</span>' : '';
+    const ev0 = (R().eventsInfo ? R().eventsInfo(s) : [])[0] || null;
+    const evHtml = ev0 ? '<span class="rd-ev-item"><b class="gbadge g-' + ev0.grade + '">' + ev0.grade + '</b>' + esc(ev0.name) + '・' + esc(ev0.news) + '</span>' : '';
+    const of = RD.offer(s);
+    const cardsHtml = (of.ids || []).map((id) => {
+      const c = RD.cardInfo(s, id);
+      return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span></div>'
+        + '<b class="rd-name">' + esc(c.name) + '</b>'
+        + '<p class="rd-sub">' + esc(c.sub) + '</p>'
+        + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
+        + (c.reason ? '<span class="act-why rd-why">' + esc(c.reason) + '</span>' : '')
+        + '</button>';
+    }).join('');
+    const rCost = RD.offerCost(s);
+    const rerollTxt = T.reroll.replace('{cost}', fmt(rCost));
+    const skipTxt = T.skip.replace('{v}', D().ECON.skipSpark);
+    return '<div class="rd-day">'
+      + '<div class="rd-top">'
+      + '<div class="rd-map-row"><div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div><span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
+      + '<div class="rd-meta-row">'
+      + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
+      + '<span class="rd-rent">' + esc(rentLine) + '</span>'
+      + '</div>'
+      + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
+      + '</div>'
+      + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
+      + '<div class="rd-cards">' + cardsHtml + '</div>'
+      + '<div class="rd-btns">'
+      + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
+      + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
+      + '</div>'
+      + '</div>';
+  }
+  function roundMicroModal(info, rank) {
+    const T = D().ROUND_TEXT;
+    return '<div class="modal rd-micro-modal">'
+      + '<span class="rd-kind k-' + info.kind + '">' + esc(T.kinds[info.kind]) + '</span>'
+      + '<h2>' + esc(info.name) + '</h2>'
+      + '<p class="mute">' + esc(info.sub) + '</p>'
+      + '<div class="fx big">' + fxHtml(info.fx) + '</div>'
+      + '<div class="btn-row">'
+      + '<button class="btn primary" type="button" data-do="byhand">' + esc(T.byHand) + '</button>'
+      + '<button class="btn sea" type="button" data-do="byauto">' + esc(T.byAuto.replace('{rank}', rank)) + '</button>'
+      + '</div></div>';
+  }
+  function roundTripModal(s, info) {
+    const T = D().ROUND_TEXT;
+    const t5 = s.trip5 || { ids: [], picked: [] };
+    const cards = t5.ids.map((cid, i) => {
+      const def = D().CARDS[cid];
+      const picked = (t5.picked || []).includes(i);
+      const fake = { uid: i, id: cid, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
+      return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-pack">'
+      + '<span class="rd-kind k-trip">' + esc(T.kinds.trip) + '</span>'
+      + '<h2>' + esc(info.name) + '</h2>'
+      + '<p class="mute">' + esc(info.sub) + '</p>'
+      + '<div class="rp-grid">' + cards + '</div>'
+      + '</div>';
+  }
+
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
+    dayPanel, roundMicroModal, roundTripModal,
   };
 })(window.IE = window.IE || {});
 
@@ -26785,11 +26952,19 @@ body {
     if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
     save();
+    if (IE.Rounds && IE.Rounds.on(Game.state)) { roundsGo(); return; }
     startDay();
   }
+  Game.newGame = newGame;
   function resumeRun() {
     const s = Game.state;
     Game.ticketShown = (s.ticketLog || []).length;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      setScene(S.City);
+      if (s.session) { UI.renderHud(s); openCraft(); return; }
+      roundsGo();
+      return;
+    }
     setScene(viewScene(currentView()));
     if (s.session) { UI.renderHud(s); openCraft(); return; }
     if (s.slot === 0 && (!s.morning || s.morning.day !== s.day)) startDay();
@@ -27063,6 +27238,7 @@ body {
     music(ses && ses.stage && ses.stage.kind === 'boss' ? 'boss' : ses && (ses.stage || ses.mode === 'allnighter') ? 'stage' : 'create');
     IE.Craft.open(s, (res) => {
       UI.renderHud(s); A.setSpark(s.spark); save();
+      if (IE.Rounds && IE.Rounds.on(s)) { roundsGo(); return; }
       if (!res) { showHub(); return; }
       // 第十一期：關卡之夜之後到遺物攤
       const g = IE.Stages && IE.Stages.today(s);
@@ -27216,6 +27392,7 @@ body {
   }
   function afterSlot() {
     const s = Game.state;
+    if (IE.Rounds && IE.Rounds.on(s)) { IE.Rounds.afterDay(s); return roundsGo(); }
     if (s.body <= 0 && R.lastStand(s, null)) UI.toast('急救：你本來會倒下，但你替自己做了急救。', 'good');
     if (s.body <= 0) return finishRun(R.endingFor(s, 'death'));
     // 外賣潛水員「趕單」：留在同一個時段
@@ -27223,6 +27400,152 @@ body {
     if (R.isNight(s)) return endOfDay();
     s.slot++;
     showHub();
+  }
+
+  // ---------- 第十五期：五輪模式 ----------
+  function roundsGo() {
+    const s = Game.state;
+    if (!s || !IE.Rounds || !IE.Rounds.on(s)) return;
+    save();
+    if (s.ended || s.phase === 'ended') return finishRun(s.ended || R.endingFor(s, 'archived'));
+    if (s.phase === 'day') return roundsDay();
+    if (s.phase === 'night') return roundsNight();
+    if (s.phase === 'shop') return roundsShop();
+    if (s.phase === 'review') return roundsReview();
+  }
+  function roundsDay() {
+    const s = Game.state;
+    S.City.forceNight = false;
+    R.morning(s);
+    setScene(S.City);
+    renderViews(false);
+    UI.renderHud(s);
+    A.setMode('city');
+    A.setSpark(s.spark);
+    if (R.drawDilemma(s)) {
+      save();
+      music('dilemma');
+      UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
+      UI.modal(UI.dilemmaModal(R.dilemmaView(s), s), {
+        pick(el) {
+          const rep = R.resolveDilemma(s, Number(el.dataset.i));
+          A.sfx(rep.deltas.soul > 0 ? 'wrong' : 'pickup');
+          UI.renderHud(s); A.setSpark(s.spark); save();
+          UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+        },
+      });
+      return;
+    }
+    music('city');
+    IE.Rounds.offer(s);
+    if (IE.Stages) IE.Stages.today(s);
+    UI.setPanel(UI.dayPanel(s), {
+      card(el) { roundsChoose(el.dataset.card); },
+      reroll() {
+        const r = IE.Rounds.rerollOffer(s);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        save();
+        roundsDay();
+      },
+      skip() {
+        const rep = IE.Rounds.skipDay(s);
+        if (!rep) return;
+        afterAction(rep);
+      },
+    });
+    ticketToasts();
+    save();
+  }
+  function roundsChoose(id) {
+    const s = Game.state;
+    if (!s || s.phase !== 'day') return;
+    const info = IE.Rounds.cardInfo(s, id);
+    if (!info || !info.enabled) return;
+    if (id.startsWith('friend:')) {
+      const npcId = id.slice(7);
+      if (!IE.Talk) {
+        const rep = IE.Rounds.choose(s, id);
+        if (rep) afterAction(rep);
+        return;
+      }
+      UI.modal(UI.talkModal(s, npcId, IE.Talk.lines(s, npcId)), {
+        reply(b) {
+          UI.closeModal();
+          const rep = IE.Rounds.choose(s, id, b.dataset.id);
+          if (rep) afterAction(rep);
+        },
+      }, { dismiss: () => {} });
+      return;
+    }
+    const res = IE.Rounds.choose(s, id);
+    if (!res) return;
+    if (res.micro) {
+      const kind = res.micro;
+      const rank = IE.Auto && IE.Auto.target ? IE.Auto.target(s, kind) : 'B';
+      UI.modal(UI.roundMicroModal(info, rank), {
+        byhand() { UI.closeModal(); doAction(kind); },
+        byauto() { UI.closeModal(); doAction('auto:' + kind); },
+      }, { dismiss: () => {} });
+      return;
+    }
+    if (res.trip) {
+      const origin = id.slice(5);
+      const reg = (D.REGIONS && D.REGIONS[origin]) || origin;
+      const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
+      const cost = Math.round(D.ECON.tripCost * stMod);
+      const pickedCards = [], droppedCards = [];
+      A.sfx('beam');
+      UI.renderHud(s); A.setSpark(s.spark); save();
+      const renderTrip = () => {
+        UI.modal(UI.roundTripModal(s, info), {
+          trippick(el) {
+            const r = IE.Rounds.tripPick(s, Number(el.dataset.i));
+            if (!r) return;
+            A.sfx('pickup');
+            if (r.card) pickedCards.push(r.card);
+            if (r.dropped) droppedCards.push(r.dropped);
+            save();
+            if (!s.trip5 || pickedCards.length >= D.ECON.tripPick || (s.trip5 && pickedCards.length >= s.trip5.ids.length)) {
+              s.trip5 = null;
+              IE.Rounds.afterDay(s);
+              UI.closeModal();
+              afterAction({
+                title: info.name,
+                deltas: { cr: -cost, spark: 0.4 },
+                lines: [{ text: '從' + reg + '帶回了 ' + pickedCards.length + ' 張素材', kind: 'good' }],
+                stats: {},
+                cards: pickedCards,
+                dropped: droppedCards,
+                objs: [],
+              });
+            } else {
+              renderTrip();
+            }
+          },
+        });
+      };
+      renderTrip();
+      return;
+    }
+    afterAction(res);
+  }
+  function roundsNight() {
+    const s = Game.state;
+    if (!s.session) IE.Rounds.startNight(s);
+    save();
+    openCraft();
+  }
+  function roundsShop() {
+    const s = Game.state;
+    IE.Rounds.shopOpen(s);
+    IE.Rounds.leaveShop(s);
+    roundsGo();
+  }
+  function roundsReview() {
+    const s = Game.state;
+    IE.Rounds.review(s);
+    roundsGo();
   }
 
   // ---------- 晚上 ----------

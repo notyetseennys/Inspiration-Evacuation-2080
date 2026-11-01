@@ -390,17 +390,18 @@
   }
 
   // ---------- 報告 ----------
-  function deltasHtml(d) {
+  function deltasHtml(d, isRounds) {
     const out = [];
     if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + signed(d.cr) + '</span></div>');
-    if (d.body) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
+    if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
     if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
     return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
   }
-  function linesHtml(lines) {
-    if (!lines.length) return '';
-    return '<ul class="lines">' + lines.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
+  function linesHtml(lines, isRounds) {
+    const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body') : (lines || []);
+    if (!list.length) return '';
+    return '<ul class="lines">' + list.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
       + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
   }
   function statsDeltaHtml(st) {
@@ -428,7 +429,8 @@
       + '</div>';
   }
   function reportModal(rep, btnLabel) {
-    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas) + linesHtml(rep.lines) + statsDeltaHtml(rep.stats) + gainedHtml(rep)
+    const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -967,11 +969,108 @@
       + '<button class="d-opt" type="button" data-do="stay"><span class="d-label">關上窗戶</span><span class="fx"><span class="fx-note">留下來</span></span></button></div></div>';
   }
 
+  // ---------- 第十五期：五輪模式白天面板與視窗 ----------
+  function dayPanel(s) {
+    const RD = IE.Rounds, T = D().ROUND_TEXT;
+    const round = RD.roundOf(s);
+    const groups = [];
+    for (let r = 0; r < 5; r++) {
+      const dots = [];
+      for (let j = 1; j <= 3; j++) {
+        const k = r * 3 + j;
+        const nk = RD.kindOf(k);
+        const log = (s.nightLog || []).find((x) => x.night === k);
+        const sd = s.stageDone && s.stageDone[RD.dayOfNight(k)];
+        const stCls = k === s.night ? ' now' : (log ? (log.pass ? ' done' : ' fail') : sd ? (sd === 'pass' ? ' done' : ' fail') : k < s.night ? ' done' : '');
+        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk]) + '"></i>');
+      }
+      groups.push('<span class="rm-round' + (r + 1 === round ? ' cur' : '') + '">' + dots.join('') + '</span>');
+    }
+    const dayTitle = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const nk = RD.kindOf(s.night);
+    let tonightLine = T.tonight.replace('{kind}', T.nightKinds[nk]).replace('{target}', fmt(RD.target(s)));
+    if (nk === 'boss' && IE.Stages && IE.Stages.today) {
+      const rng0 = s.rngState;
+      const hadBoss = !!(s.bosses && s.bosses[s.quarter]);
+      const stg = IE.Stages.today(s);
+      if (!hadBoss) s.rngState = rng0;
+      if (stg && stg.rules && stg.rules.length) {
+        tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
+      }
+    }
+    const rentDay = RD.dayOfNight(round * 3);
+    const rentLine = T.rentLine.replace('{rent}', fmt(RD.rentOf(s))).replace('{day}', rentDay);
+    const wd = R().weatherOf ? R().weatherOf(s) : null;
+    const wNote = wd && D().weatherNote ? D().weatherNote(wd) : '';
+    const wxHtml = wd ? '<span class="rd-wx-item">' + (wd.glyph ? '<i aria-hidden="true">' + wd.glyph + '</i> ' : '') + '<b>' + esc(wd.name) + '</b>' + (wNote ? '（' + esc(wNote) + '）' : '') + '</span>' : '';
+    const ev0 = (R().eventsInfo ? R().eventsInfo(s) : [])[0] || null;
+    const evHtml = ev0 ? '<span class="rd-ev-item"><b class="gbadge g-' + ev0.grade + '">' + ev0.grade + '</b>' + esc(ev0.name) + '・' + esc(ev0.news) + '</span>' : '';
+    const of = RD.offer(s);
+    const cardsHtml = (of.ids || []).map((id) => {
+      const c = RD.cardInfo(s, id);
+      return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span></div>'
+        + '<b class="rd-name">' + esc(c.name) + '</b>'
+        + '<p class="rd-sub">' + esc(c.sub) + '</p>'
+        + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
+        + (c.reason ? '<span class="act-why rd-why">' + esc(c.reason) + '</span>' : '')
+        + '</button>';
+    }).join('');
+    const rCost = RD.offerCost(s);
+    const rerollTxt = T.reroll.replace('{cost}', fmt(rCost));
+    const skipTxt = T.skip.replace('{v}', D().ECON.skipSpark);
+    return '<div class="rd-day">'
+      + '<div class="rd-top">'
+      + '<div class="rd-map-row"><div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div><span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
+      + '<div class="rd-meta-row">'
+      + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
+      + '<span class="rd-rent">' + esc(rentLine) + '</span>'
+      + '</div>'
+      + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
+      + '</div>'
+      + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
+      + '<div class="rd-cards">' + cardsHtml + '</div>'
+      + '<div class="rd-btns">'
+      + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
+      + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
+      + '</div>'
+      + '</div>';
+  }
+  function roundMicroModal(info, rank) {
+    const T = D().ROUND_TEXT;
+    return '<div class="modal rd-micro-modal">'
+      + '<span class="rd-kind k-' + info.kind + '">' + esc(T.kinds[info.kind]) + '</span>'
+      + '<h2>' + esc(info.name) + '</h2>'
+      + '<p class="mute">' + esc(info.sub) + '</p>'
+      + '<div class="fx big">' + fxHtml(info.fx) + '</div>'
+      + '<div class="btn-row">'
+      + '<button class="btn primary" type="button" data-do="byhand">' + esc(T.byHand) + '</button>'
+      + '<button class="btn sea" type="button" data-do="byauto">' + esc(T.byAuto.replace('{rank}', rank)) + '</button>'
+      + '</div></div>';
+  }
+  function roundTripModal(s, info) {
+    const T = D().ROUND_TEXT;
+    const t5 = s.trip5 || { ids: [], picked: [] };
+    const cards = t5.ids.map((cid, i) => {
+      const def = D().CARDS[cid];
+      const picked = (t5.picked || []).includes(i);
+      const fake = { uid: i, id: cid, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
+      return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-pack">'
+      + '<span class="rd-kind k-trip">' + esc(T.kinds.trip) + '</span>'
+      + '<h2>' + esc(info.name) + '</h2>'
+      + '<p class="mute">' + esc(info.sub) + '</p>'
+      + '<div class="rp-grid">' + cards + '</div>'
+      + '</div>';
+  }
+
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
     renderHud, setPanel, modal, pushModal, closeModal, objectsModal, modalOpen, bindDelegation, toast,
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
+    dayPanel, roundMicroModal, roundTripModal,
   };
 })(window.IE = window.IE || {});
