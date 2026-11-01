@@ -80,6 +80,9 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `docs/WORLD.md` | 世界觀與語氣聖經（與製作人共同制定；所有文字、美術、規則和數值的根據） |
+| `docs/PILLARS.md` | 方向研究：深度、黑色幽默、情感、爽快感（有待製作人決定的事項在最後一節） |
+| `docs/art-prompts/` | 美術盤點與 ChatGPT 生圖 prompt；製作人生成的 51 張圖在 `main` 分支的根目錄 |
 | `docs/REFORM_PLAN.md` | 改革藍圖（第十五至二十期的設計依據） |
 | `docs/workorders/README.md` | 流程、狀態表、交給 Gemini 的指令範本 |
 | `docs/workorders/CONVENTIONS.md`、`REVIEW.md` | Gemini 的工作守則、你的審核標準 |
