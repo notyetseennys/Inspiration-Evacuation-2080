@@ -4529,6 +4529,92 @@ body {
   .rd-card, .rm-night { transition: none; }
   .rd-card:hover:not(:disabled) { transform: none; }
 }
+/* 第十五期 WO-15-07：收工演出、結束面板與市集 */
+.ct-goal.night .bar > i { background: linear-gradient(90deg, #37c3d6, #9be36b); }
+.ct-cleared {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+  background: rgba(11, 15, 26, 0.58); pointer-events: none;
+}
+.ct-cleared-card {
+  display: grid; justify-items: center; gap: 6px; padding: 20px 32px; border-radius: 16px;
+  background: linear-gradient(180deg, #1b2845, #111a2e); border: 2px solid #9be36b;
+  box-shadow: 0 0 36px rgba(155, 227, 107, 0.45), 0 18px 44px rgba(0, 0, 0, 0.7);
+  text-align: center; animation: ctClearedPop 0.32s cubic-bezier(.2, 1.6, .4, 1);
+}
+.ct-cleared.static .ct-cleared-card { animation: none; }
+.ct-cleared-card b { font-size: 36px; line-height: 1.1; color: #9be36b; text-shadow: 0 0 16px rgba(155, 227, 107, 0.6); letter-spacing: 0.06em; }
+.ct-cleared-card p { margin: 0; font-size: 15px; font-weight: 700; color: #ffe2a0; }
+@keyframes ctClearedPop {
+  0% { transform: scale(0.55) rotate(-4deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.ct-stage-result .sr-reward { margin: 4px 0 0; font-size: 15px; color: #e9f5ff; }
+.ct-stage-result .sr-reward b { color: #ffd36b; font-size: 17px; }
+.ct-stage-result .sr-overkill { display: block; margin-top: 2px; color: #9be36b; font-weight: 700; }
+.ct-stage-result .sr-fail-msg { margin: 4px 0 2px; font-size: 14px; color: #ff8f9a; font-weight: 700; }
+.ct-stage-result .sr-chances { display: block; font-size: 13px; color: #d8c6e8; }
+.ct-stage-result .sr-dots { color: #ff8fd1; letter-spacing: 2px; font-weight: 400; }
+.ct-stage-result .sr-dots i { font-style: normal; color: #5b4a6b; }
+.rd-shop { display: grid; gap: 12px; max-width: 100%; box-sizing: border-box; }
+.rd-shop button, .rd-pack button, .rd-pick button { min-height: 44px; }
+.rs-head {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 14px;
+  padding-bottom: 10px; border-bottom: 1px solid #263452;
+}
+.rs-head h2 { margin: 2px 0 0; }
+.rs-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; }
+.rs-cash { padding: 4px 10px; border-radius: 8px; background: rgba(255, 211, 107, 0.12); border: 1px solid rgba(255, 211, 107, 0.4); color: #ffe2a0; }
+.rs-rent { padding: 4px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid #2a3756; color: #c5d1ea; }
+.rs-rent.ok b { color: #9be36b; }
+.rs-rent.short b { color: #ffd36b; }
+.rs-rent.due { border-color: #ffd36b; background: rgba(255, 211, 107, 0.14); font-weight: 700; }
+.rs-rent.due.short { border-color: #ff4d5e; background: rgba(255, 77, 94, 0.18); color: #ffd6da; }
+.rs-rent.due.short b { color: #ff6b7a; }
+.rs-sec { display: grid; gap: 8px; }
+.rs-sec-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.rs-sec-head h3 { margin: 0; font-size: 15px; color: #d8e4ff; }
+.rs-relic { padding: 10px 12px; border-radius: 14px; background: linear-gradient(180deg, rgba(255, 211, 107, 0.12), rgba(255, 211, 107, 0.03)); border: 1px solid rgba(255, 211, 107, 0.5); }
+.rs-relic .rs-sec-head h3 { color: #ffd36b; }
+.rs-grid { display: grid; gap: 8px; }
+.rs-relic-grid, .rs-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rs-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rs-item {
+  display: grid; grid-template-rows: 1fr auto; gap: 8px; padding: 10px 12px; min-width: 0;
+  border-radius: 12px; background: var(--surface), #141c30; border: 1px solid #2a3756;
+  box-shadow: inset 0 1px 0 var(--edge);
+}
+.rs-item.r-rare { border-color: #37c3d6; }
+.rs-item.r-legend { border-color: #ffc247; box-shadow: inset 0 1px 0 var(--edge), 0 0 14px rgba(255, 194, 71, 0.22); }
+.rs-item.bought, .rs-item.dim { opacity: 0.52; }
+.rs-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
+.rs-txt { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.rs-cat { font-size: 11px; color: var(--mute); }
+.rs-cat i { font-style: normal; font-weight: 700; }
+.rs-txt b { font-size: 15px; color: #f4f7ff; line-height: 1.3; }
+.rs-txt > span:not(.rs-cat) { font-size: 12px; color: #b9c4dc; line-height: 1.45; }
+.rs-dots { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.rs-tag-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px;
+  font-size: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid #2c3b5e; color: #dce6ff;
+}
+.rs-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c, #37c3d6); box-shadow: 0 0 4px var(--c, #37c3d6); }
+.rs-item .btn { width: 100%; }
+.rs-foot { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 10px; }
+.rs-foot .btn { flex: 1 1 140px; }
+.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; max-height: 58vh; overflow-y: auto; padding: 2px; }
+.cardpick {
+  display: grid; gap: 4px; align-content: start; padding: 6px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid #2a3756; color: var(--fg);
+  cursor: pointer; text-align: left;
+}
+.cardpick .card { width: 100%; }
+.cardpick:hover:not(:disabled) { border-color: #ffd36b; transform: translateY(-1px); }
+.cardpick:disabled { opacity: 0.42; cursor: not-allowed; }
+.cp-act { display: block; text-align: center; font-size: 12px; font-weight: 700; color: #ffe2a0; padding: 2px 0; }
+@media (max-width: 720px) {
+  .rs-relic-grid, .rs-grid-2, .rs-grid-3 { grid-template-columns: 1fr; }
+  .rp-grid, .cp-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -25076,6 +25162,203 @@ body {
       + '<div class="rp-grid">' + cards + '</div>'
       + '</div>';
   }
+  function shopModal(s) {
+    const D_ = D(), RD = IE.Rounds, T = D_.ROUND_TEXT;
+    const sh = s.shop || { objs: [], packs: [], bought: [] };
+    const round = RD.roundOf(s);
+    const rent = RD.rentOf(s);
+    const diff = Math.max(0, rent - s.cr);
+    const isLastNight = s.night % 3 === 0;
+    const canTakeObj = (id) => R().canEquip(s, id) || (s.objStash || []).length < 4;
+
+    let relicHtml = '';
+    if (sh.relic && sh.relic.items && sh.relic.items.length) {
+      const taken = !!sh.relic.taken;
+      const rItems = sh.relic.items.map((id) => {
+        const o = D_.OBJ[id], sc = o && o.school && D_.SCHOOLS[o.school];
+        if (!o) return '';
+        const slot = 'relic:' + id;
+        const bought = sh.bought.includes(slot);
+        const owned = (s.objects || []).includes(id) || (s.objStash || []).includes(id);
+        const hasSpace = canTakeObj(id);
+        const ok = !taken && !bought && !owned && hasSpace;
+        const btnTxt = bought ? '已買' : taken ? '—' : owned ? '已擁有' : !hasSpace ? '欄已滿' : '免費領取';
+        return '<div class="rs-item r-' + o.rarity + (bought ? ' bought' : taken ? ' dim' : '') + '" data-slot="' + slot + '">'
+          + '<div class="rs-icon">' + IE.Icons.obj(id, 44) + '</div>'
+          + '<div class="rs-txt"><span class="rs-cat">' + D_.RARITY[o.rarity] + (sc ? '・<i style="color:' + sc.color + '">' + esc(sc.name) + '</i>' : '') + '</span>'
+          + '<b>' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span></div>'
+          + '<button class="btn' + (ok ? ' primary' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + esc(btnTxt) + '</button>'
+          + '</div>';
+      }).join('');
+      relicHtml = '<section class="rs-sec rs-relic">'
+        + '<div class="rs-sec-head"><h3>' + esc(T.relic) + '</h3></div>'
+        + '<div class="rs-grid rs-relic-grid">' + rItems + '</div>'
+        + '</section>';
+    }
+
+    const rawObjs = sh.objs || [];
+    const boughtObjs = (sh.bought || []).filter((x) => x.startsWith('obj:')).map((x) => x.slice(4)).filter((id) => !rawObjs.includes(id));
+    const objList = rawObjs.length >= 2 ? rawObjs : rawObjs.concat(boughtObjs).slice(0, 2);
+    const objItems = objList.map((id) => {
+      const o = D_.OBJ[id], sc = o && o.school && D_.SCHOOLS[o.school];
+      if (!o) return '';
+      const slot = 'obj:' + id;
+      const p = RD.price(s, slot);
+      const bought = sh.bought.includes(slot);
+      const owned = (s.objects || []).includes(id) || (s.objStash || []).includes(id);
+      const hasSpace = canTakeObj(id);
+      const ok = !bought && !owned && hasSpace && s.cr >= p;
+      const btnTxt = bought ? '已買' : owned ? '已擁有' : !hasSpace ? '欄已滿' : '$' + fmt(p);
+      return '<div class="rs-item r-' + o.rarity + (bought ? ' bought' : '') + '" data-slot="' + slot + '">'
+        + '<div class="rs-icon">' + IE.Icons.obj(id, 44) + '</div>'
+        + '<div class="rs-txt"><span class="rs-cat">' + D_.RARITY[o.rarity] + (sc ? '・<i style="color:' + sc.color + '">' + esc(sc.name) + '</i>' : '') + '</span>'
+        + '<b>' + esc(o.name) + '</b><span>' + esc(o.desc) + '</span></div>'
+        + '<button class="btn' + (ok ? ' sea' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + esc(btnTxt) + '</button>'
+        + '</div>';
+    }).join('');
+    const rerollP = RD.price(s, 'objReroll');
+    const objHtml = '<section class="rs-sec">'
+      + '<div class="rs-sec-head"><h3>靈感物件 <small class="mute">' + (s.objects || []).length + '/' + R().slotsOf(s) + '</small></h3>'
+      + '<button class="btn" type="button" data-do="objreroll"' + (s.cr < rerollP ? ' disabled' : '') + '>重抽物件（$' + fmt(rerollP) + '）</button></div>'
+      + '<div class="rs-grid rs-grid-2">' + (objItems || '<p class="mute">已無可售物件</p>') + '</div>'
+      + '</section>';
+
+    const packItems = (sh.packs || []).map((pid) => {
+      const pk = D_.PACKS.find((x) => x.id === pid);
+      if (!pk) return '';
+      const slot = 'pack:' + pid;
+      const p = RD.price(s, slot);
+      const bought = sh.bought.includes(slot);
+      const ok = !bought && s.cr >= p;
+      const dots = pk.tags
+        ? pk.tags.map((t) => '<span class="rs-tag-pill"><i class="rs-dot" style="--c:' + D_.TAGS[t].color + '"></i>' + esc(D_.TAGS[t].name) + '</span>').join('')
+        : '<span class="rs-tag-pill"><i class="rs-dot" style="--c:#ffd36b"></i><i class="rs-dot" style="--c:#37c3d6"></i><i class="rs-dot" style="--c:#ff4fb4"></i>異國素材（機會出極稀有）</span>';
+      return '<div class="rs-item' + (bought ? ' bought' : '') + '" data-slot="' + slot + '">'
+        + '<div class="rs-txt"><span class="rs-cat">素材包・三選一</span><b>' + esc(pk.name) + '</b><div class="rs-dots">' + dots + '</div></div>'
+        + '<button class="btn' + (ok ? ' sea' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + (bought ? '已買' : '$' + fmt(p)) + '</button>'
+        + '</div>';
+    }).join('');
+    const packHtml = '<section class="rs-sec">'
+      + '<div class="rs-sec-head"><h3>素材包</h3></div>'
+      + '<div class="rs-grid rs-grid-2">' + packItems + '</div>'
+      + '</section>';
+
+    const sv = D_.SERVICES.find((x) => x.id === sh.service) || D_.SERVICES[0];
+    const svBought = sh.bought.includes('service');
+    const svP = RD.price(s, 'service');
+    const nonGuilt = (s.cards || []).filter((c) => !c.guilt);
+    let svOk = false, svLabel = '';
+    if (svBought) {
+      svLabel = '已買';
+    } else if (sv.id === 'polish') {
+      svOk = nonGuilt.some((c) => IE.Create.starOf(c) < 5 && s.cr >= RD.price(s, 'service', c));
+      svLabel = '$' + fmt(svP) + ' 起';
+    } else if (sv.id === 'burn') {
+      const enough = nonGuilt.length > D_.ECON.minDeck;
+      svOk = enough && s.cr >= svP;
+      svLabel = !enough ? '最少 ' + D_.ECON.minDeck + ' 張' : '$' + fmt(svP);
+    } else {
+      svOk = nonGuilt.length > 0 && s.cr >= svP;
+      svLabel = '$' + fmt(svP);
+    }
+    const serviceCell = '<div class="rs-item' + (svBought ? ' bought' : '') + '" data-slot="service">'
+      + '<div class="rs-txt"><span class="rs-cat">工作室服務</span><b>' + esc(sv.name) + '</b><span>' + esc(sv.desc) + '</span></div>'
+      + '<button class="btn' + (svOk ? ' sea' : '') + '" type="button" data-do="buy" data-slot="service"' + (svOk ? '' : ' disabled') + '>' + esc(svLabel) + '</button>'
+      + '</div>';
+
+    const fid = sh.tech;
+    const f = fid && IE.Create && IE.Create.FORM[fid];
+    const fs = f ? IE.Create.formStats(s, fid) : { level: 1, chips: 0, mult: 1 };
+    const techBought = sh.bought.includes('tech');
+    const techP = RD.price(s, 'tech');
+    const techOk = !techBought && !!f && s.cr >= techP;
+    const nextChips = f ? fs.chips + f.up[0] : fs.chips;
+    const nextMult = f ? fs.mult + f.up[1] : fs.mult;
+    const techCell = '<div class="rs-item' + (techBought ? ' bought' : '') + '" data-slot="tech">'
+      + '<div class="rs-txt"><span class="rs-cat">技法課</span>'
+      + '<b>' + esc(f ? f.name : '配色') + ' Lv.' + fs.level + (techBought ? '' : ' → Lv.' + (fs.level + 1)) + '</b>'
+      + '<span>' + (techBought ? '現在：' + fs.chips + ' 籌碼 × ' + fs.mult + ' 倍率' : '現在 ' + fs.chips + '×' + fs.mult + ' → 升級後 ' + nextChips + ' 籌碼 × ' + nextMult + ' 倍率') + '</span></div>'
+      + '<button class="btn' + (techOk ? ' sea' : '') + '" type="button" data-do="buy" data-slot="tech"' + (techOk ? '' : ' disabled') + '>' + (techBought ? '已買' : '$' + fmt(techP)) + '</button>'
+      + '</div>';
+
+    const tid = sh.tool;
+    const toolDef = tid && IE.Stages && IE.Stages.TOOL[tid];
+    const toolBought = sh.bought.includes('tool');
+    const toolP = RD.price(s, 'tool');
+    const toolCap = IE.Stages ? IE.Stages.toolSlots(s) : 2;
+    const toolFull = (s.tools || []).length >= toolCap;
+    const toolOk = !toolBought && !!toolDef && !toolFull && s.cr >= toolP;
+    const toolLabel = toolBought ? '已買' : !toolDef ? '售罄' : toolFull ? '欄已滿' : '$' + fmt(toolP);
+    const toolCell = '<div class="rs-item' + (toolBought ? ' bought' : '') + '" data-slot="tool">'
+      + '<div class="rs-txt"><span class="rs-cat">工具卡（' + (s.tools || []).length + '/' + toolCap + '）</span>'
+      + '<b>' + esc(toolDef ? toolDef.name : '無') + '</b><span>' + esc(toolDef ? toolDef.desc : '') + '</span></div>'
+      + '<button class="btn' + (toolOk ? ' sea' : '') + '" type="button" data-do="buy" data-slot="tool"' + (toolOk ? '' : ' disabled') + '>' + esc(toolLabel) + '</button>'
+      + '</div>';
+
+    const trioHtml = '<section class="rs-sec">'
+      + '<div class="rs-sec-head"><h3>服務・技法・工具</h3></div>'
+      + '<div class="rs-grid rs-grid-3">' + serviceCell + techCell + toolCell + '</div>'
+      + '</section>';
+
+    return '<div class="modal wide rd-shop">'
+      + '<div class="rs-head">'
+      + '<div><span class="eyebrow">' + esc(T.dayTitle.replace('{round}', round).replace('{night}', s.night)) + '</span><h2>' + esc(T.shopTitle) + '</h2></div>'
+      + '<div class="rs-meta' + (isLastNight ? ' due' : '') + '">'
+      + '<span class="rs-cash">現有 <b class="num">$' + fmt(s.cr) + '</b></span>'
+      + '<span class="rs-rent' + (diff > 0 ? ' short' : ' ok') + (isLastNight ? ' due' : '') + '">' + (isLastNight ? '離開後交租 ' : '本輪租金 ') + '<b class="num">$' + fmt(rent) + '</b>（<b>' + (diff > 0 ? '還差 $' + fmt(diff) : '已足夠') + '</b>）</span>'
+      + '</div></div>'
+      + relicHtml
+      + objHtml
+      + packHtml
+      + trioHtml
+      + '<div class="btn-row rs-foot">'
+      + '<button class="btn" type="button" data-do="objs">管理物件（' + (s.objects || []).length + '/' + R().slotsOf(s) + '）</button>'
+      + '<button class="btn primary" type="button" data-do="leave">' + esc(T.leave) + '</button>'
+      + '</div></div>';
+  }
+  function packModal(s) {
+    const pk = s.pack || { name: '素材包', cards: [] };
+    const cards = (pk.cards || []).map((c, i) => '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>').join('');
+    return '<div class="modal wide rd-pack">'
+      + '<span class="eyebrow">開包・三選一</span>'
+      + '<h2>' + esc(pk.name) + '</h2>'
+      + '<p class="mute" style="font-size:13px">挑一張素材收進素材庫。</p>'
+      + '<div class="rp-grid">' + cards + '</div>'
+      + '</div>';
+  }
+  function pickModal(s) {
+    const D_ = D(), C = IE.Create, RD = IE.Rounds;
+    const pk = s.pick || { service: 'polish', paid: 0 };
+    const sv = D_.SERVICES.find((x) => x.id === pk.service) || { id: pk.service, name: '工作室服務', desc: '' };
+    const cards = (s.cards || []).slice().sort((a, b) => C.starOf(b) - C.starOf(a) || (D_.WHEEL || []).indexOf(a.tags[0]) - (D_.WHEEL || []).indexOf(b.tags[0]));
+    const items = cards.map((c) => {
+      const star = C.starOf(c);
+      let disabled = !!c.guilt;
+      let label = '';
+      if (pk.service === 'polish') {
+        const cost = RD.price(s, 'service', c);
+        if (c.guilt) { disabled = true; label = '愧疚素材'; }
+        else if (star >= 5) { disabled = true; label = '已 ★5'; }
+        else if (s.cr < cost) { disabled = true; label = '打磨 ★' + (star + 1) + '・$' + fmt(cost); }
+        else { label = '打磨 ★' + (star + 1) + '・$' + fmt(cost); }
+      } else if (pk.service === 'burn') {
+        label = c.guilt ? '不能燒掉' : '燒掉';
+      } else {
+        label = c.guilt ? '不能複印' : '複印';
+      }
+      return '<button type="button" class="cardpick" data-do="pickcard" data-uid="' + c.uid + '"' + (disabled ? ' disabled' : '') + '>'
+        + cardHtml(c)
+        + '<span class="cp-act">' + esc(label) + '</span>'
+        + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-pick">'
+      + '<span class="eyebrow">工作室服務</span>'
+      + '<h2>' + esc(sv.name) + '：' + esc(sv.desc) + '</h2>'
+      + '<p class="mute" style="font-size:13px">點選一張素材。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
+      + '<div class="cp-grid">' + items + '</div>'
+      + '<div class="btn-row"><button class="btn" type="button" data-do="cancelpick">取消</button></div>'
+      + '</div>';
+  }
 
   IE.UI = {
     esc, fmt, kfmt, signed, tagsHtml, cardHtml, fxHtml, deltasHtml, linesHtml, gainedHtml,
@@ -25083,7 +25366,7 @@ body {
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, roundMicroModal, roundTripModal,
+    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal,
   };
 })(window.IE = window.IE || {});
 
@@ -25589,7 +25872,13 @@ body {
   function render() {
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
-    $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const kindName = D().ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)];
+      $('.ct-sub').textContent = '第 ' + s.night + '／15 晚・' + kindName + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+      $('[data-ct="leave"]').hidden = !ses.log.length;
+    } else {
+      $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+    }
     root.classList.toggle('has-stage', !!ses.stage);
     $('.ct-title b').textContent = ses.mode === 'sketch' ? '速寫' : '創作之夜';
     updateAudioBadge(st.lastNote);
@@ -25699,6 +25988,12 @@ body {
     await showTotal(r.res);
     $('.ct-played').innerHTML = '';
     $('.ct-total').hidden = true;
+    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
+      await showCleared(s.session);
+      st.busy = false;
+      await endNight();
+      return;
+    }
     st.busy = false;
     render();
     if ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)) await endNight();
@@ -25787,6 +26082,18 @@ body {
   }
   function renderGoal(extra) {
     const s = st.s;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      const ses = s.session;
+      const t = (ses && ses.stage && ses.stage.target) || IE.Rounds.target(s, s.night) || 1;
+      const sc = (ses && IE.Stages ? IE.Stages.stageScore(ses) : 0) + (extra || 0);
+      const goalEl = $('.ct-goal');
+      goalEl.classList.add('night');
+      goalEl.querySelector('.lbl').textContent = '今晚目標';
+      $('.ct-goal i').style.width = Math.min(100, sc / t * 100) + '%';
+      $('.ct-goal em').style.display = 'none';
+      $('.ct-goal-n').textContent = fmt(sc) + ' / ' + fmt(t);
+      return;
+    }
     const th = R().threshold(s);
     const sig = R().signal(s) + (extra || 0);
     $('.ct-goal i').style.width = Math.min(100, sig / th * 100) + '%';
@@ -26135,6 +26442,7 @@ body {
     if (st.busy) return;
     const s = st.s;
     if (!s.session.log.length) {
+      if (IE.Rounds && IE.Rounds.on(s)) return;
       C().cancel(s);
       close(null);
       return;
@@ -26407,11 +26715,36 @@ body {
     fx && (fx.burn = 0);
     await showArt(res);
     $('.ct-mult').classList.remove('burning', 'inferno');
+    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
+      await showCleared(ses);
+      st.busy = false;
+      await endNight();
+      return;
+    }
     st.busy = false;
     render();
     root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 220, delay: i * 30, fill: 'backwards' }));
     if ((ses.plays <= 0 || !ses.hand.length) && !canStillAct(s)) await endNight();
+  }
+
+  // 五輪模式：一筆過關時中央彈出「收工！」與提早收工獎金明細
+  async function showCleared(ses) {
+    if (!root) return;
+    const RT = D().ROUND_TEXT, E = D().ECON;
+    const el = document.createElement('div');
+    el.className = 'ct-cleared' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
+    const earlyTxt = ses && ses.plays > 0 ? RT.early.replace('{n}', ses.plays).replace('{v}', E.earlyBonus) : '';
+    el.innerHTML = '<div class="ct-cleared-card">'
+      + '<b>' + esc(RT.cleared) + '</b>'
+      + (earlyTxt ? '<p>' + esc(earlyTxt) + '</p>' : '')
+      + '</div>';
+    root.appendChild(el);
+    A().sfx('combo');
+    flash('#9be36b');
+    burst(el, 90, 1.3, '#ffd36b');
+    await new Promise((r) => setTimeout(r, 900 / Math.min(2, speedK())));
+    if (el.parentNode) el.remove();
   }
 
   async function animate(res) {
@@ -26673,6 +27006,8 @@ body {
   }
 
   function stageResultHtml(g, sesStage) {
+    const s = st && st.s;
+    const isRounds = !!(s && IE.Rounds && IE.Rounds.on(s));
     const J = IE.Judges;
     let quotes = '';
     if (J) {
@@ -26691,6 +27026,21 @@ body {
         }
       }
     }
+    if (isRounds) {
+      const RT = D().ROUND_TEXT, E = D().ECON;
+      const earlyAmt = (g.playsLeft || 0) * E.earlyBonus;
+      const overkill = g.pass && g.score >= g.target * 2;
+      const dots = '●'.repeat(Math.max(0, s.chances)) + '<i>' + '○'.repeat(Math.max(0, 3 - s.chances)) + '</i>';
+      return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '過關' : '未達標') + '</span>'
+        + '<b>第 ' + g.index + '／15 晚・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+        + quotes
+        + (g.pass
+          ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'
+            + (overkill ? '<small class="sr-overkill">超額兩倍：火花 +' + E.overkillSpark + (g.kind !== 'small' ? '・金色扭蛋券 +1' : '') + '</small>' : '')
+          : '<p class="sr-fail-msg">' + esc(RT.failed) + '</p>'
+            + '<small class="sr-chances">' + esc(RT.chances) + '：<b class="sr-dots">' + dots + '</b>（火花 ' + E.failSpark + '）</small>')
+        + '</div>';
+    }
     return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '入選' : '落選') + '</span>'
       + '<b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
       + quotes
@@ -26701,6 +27051,7 @@ body {
   // ---------- 今晚完成 ----------
   async function endNight() {
     const s = st.s;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     st.busy = true;
     renderScene(true);
     const before = st.sigStart;
@@ -26725,11 +27076,15 @@ body {
       + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
       + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
       + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
-      + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
-      + '<button type="button" class="btn primary big" data-end="done">完成</button></div>';
+      + (isRounds ? '' : '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>')
+      + (isRounds
+        ? '<button type="button" class="btn primary big" data-end="shop">' + esc(s.ended ? '看結局' : D().ROUND_TEXT.toShop) + '</button>'
+        : '<button type="button" class="btn primary big" data-end="done">完成</button>')
+      + '</div>';
     root.appendChild(panel);
     let closed = false;
-    panel.querySelector('[data-end="done"]').addEventListener('click', () => {
+    const endBtn = panel.querySelector('[data-end="done"], [data-end="shop"]');
+    endBtn.addEventListener('click', () => {
       if (closed) return;
       closed = true;
       if (IE.Game.celebrate) IE.Game.celebrate(w ? w.score : 0);
@@ -26747,10 +27102,12 @@ body {
     }
     burst(sc, 100, 1.4);
     shake(10);
-    panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
-    requestAnimationFrame(() => { panel.querySelector('.ct-goal i').style.width = Math.min(100, after / th * 100) + '%'; });
-    if (after >= th && before < th) { setTimeout(() => { A().sfx('combo'); flash('#9be36b'); }, 900); }
-    if (!closed) panel.querySelector('[data-end="done"]').focus({ preventScroll: true });
+    if (!isRounds) {
+      panel.querySelector('.ct-goal i').style.transition = 'width 1.2s ease';
+      requestAnimationFrame(() => { panel.querySelector('.ct-goal i').style.width = Math.min(100, after / th * 100) + '%'; });
+      if (after >= th && before < th) { setTimeout(() => { A().sfx('combo'); flash('#9be36b'); }, 900); }
+    }
+    if (!closed) endBtn.focus({ preventScroll: true });
   }
 
   // ---------- 圖鑑 ----------
@@ -27532,10 +27889,83 @@ body {
   }
   function roundsShop() {
     const s = Game.state;
+    if (!s || s.phase !== 'shop') return;
     IE.Rounds.shopOpen(s);
-    IE.Rounds.leaveShop(s);
-    roundsGo();
+    music('shop');
+    UI.renderHud(s);
+    A.setSpark(s.spark);
+    UI.setPanel('<p class="mute">' + UI.esc(D.ROUND_TEXT.shopTitle) + '</p>');
+    save();
+    if (s.pack) return roundsPack();
+    if (s.pick) return roundsPick();
+    UI.modal(UI.shopModal(s), {
+      buy(el) {
+        const slot = el.dataset.slot || (el.closest('[data-slot]') && el.closest('[data-slot]').dataset.slot);
+        const r = IE.Rounds.shopBuy(s, slot);
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx(slot && slot.startsWith('relic:') ? 'pickup' : 'coin');
+        save();
+        roundsShop();
+      },
+      objreroll() {
+        const r = IE.Rounds.objReroll(s);
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        save();
+        roundsShop();
+      },
+      objs() {
+        UI.closeModal();
+        openObjects(() => roundsShop());
+      },
+      leave() {
+        if (!IE.Rounds.leaveShop(s)) return;
+        UI.closeModal();
+        save();
+        roundsGo();
+      },
+    });
   }
+  function roundsPack() {
+    const s = Game.state;
+    UI.renderHud(s); save();
+    UI.modal(UI.packModal(s), {
+      packpick(el) {
+        const r = IE.Rounds.packPick(s, Number(el.dataset.i));
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('pickup');
+        save();
+        roundsShop();
+      },
+    });
+  }
+  function roundsPick() {
+    const s = Game.state;
+    UI.renderHud(s); save();
+    UI.modal(UI.pickModal(s), {
+      pickcard(el) {
+        const r = IE.Rounds.pickCard(s, Number(el.dataset.uid));
+        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        save();
+        roundsShop();
+      },
+      cancelpick() {
+        IE.Rounds.cancelPick(s);
+        A.sfx('click');
+        save();
+        roundsShop();
+      },
+    }, {
+      dismiss() {
+        IE.Rounds.cancelPick(s);
+        save();
+        roundsShop();
+      },
+    });
+  }
+  Game.roundsGo = roundsGo;
+  Game.roundsShop = roundsShop;
   function roundsReview() {
     const s = Game.state;
     IE.Rounds.review(s);

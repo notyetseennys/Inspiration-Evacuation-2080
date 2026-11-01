@@ -119,6 +119,125 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('#ctable .ct-hand .cc');
     ok('選小遊戲卡「' + microCardId + '」→ 照舊做 → 報告確定 → 創作桌（#ctable）打開');
 
+    // 5. 檢查創作桌上方進度列與第一筆前隱藏離開掣
+    const goalLbl = await page.$eval('#ctable .ct-goal .lbl', (el) => el.textContent);
+    const hasNightCls = await page.$eval('#ctable .ct-goal', (el) => el.classList.contains('night'));
+    const leaveHidden = await page.$eval('#ctable [data-ct="leave"]', (el) => el.hidden);
+    if (goalLbl !== '今晚目標' || !hasNightCls) await fail('創作桌進度列應為「今晚目標」並帶 .night');
+    if (!leaveHidden) await fail('第一筆之前應隱藏 [data-ct="leave"]');
+
+    // 6. 選建議的第一手牌（[data-sg="0"]；如果沒有建議就選前五張 .ct-hand .cc），按 .ct-play，等 .ct-end 出現
+    let clearedShotDone = false;
+    for (let playTurn = 0; playTurn < 6; playTurn++) {
+      if (await page.$('#ctable .ct-end')) break;
+      const sg0 = await page.$('#ctable [data-sg="0"]');
+      if (sg0) {
+        await sg0.click();
+      } else {
+        const cards = await page.$$('#ctable .ct-hand .cc:not(.forbidden)');
+        for (let i = 0; i < Math.min(5, cards.length); i++) await cards[i].click();
+      }
+      await page.click('#ctable .ct-play');
+      if (process.env.SHOTS && !clearedShotDone) {
+        try {
+          await page.waitForSelector('#ctable .ct-cleared', { timeout: 15000 });
+          await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-cleared-desktop.png') });
+          await page.setViewportSize({ width: 390, height: 844 });
+          await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-cleared-mobile.png') });
+          await page.setViewportSize({ width: 1280, height: 800 });
+          clearedShotDone = true;
+        } catch (e) { /* 這一筆未過關，繼續下一筆 */ }
+      }
+      // 等這一筆演出完成（回到可操作狀態或進入 .ct-end）
+      await page.waitForFunction(() => {
+        const end = document.querySelector('#ctable .ct-end');
+        const busy = window.__IE && window.__IE.Craft && window.__IE.Craft.isBusy();
+        return !!end || !busy;
+      }, { timeout: 15000 });
+    }
+    await page.waitForSelector('#ctable .ct-end', { timeout: 15000 });
+    ok('創作桌下筆並進入結束面板（.ct-end）');
+
+    // 7. 檢查 .ct-end 裡沒有 .ct-goal.end（本季訊號列）；按 [data-end="shop"]
+    const hasEndGoal = await page.$('#ctable .ct-end .ct-goal.end');
+    if (hasEndGoal) await fail('五輪模式結束面板不應顯示 .ct-goal.end（本季訊號列）');
+    await page.waitForSelector('#ctable .ct-end [data-end="shop"]');
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(350);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-end-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-end-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+    await page.click('#ctable .ct-end [data-end="shop"]');
+    ok('結束面板無本季訊號列，按「前往市集」');
+
+    // 8. 等 .rd-shop 出現；注入 s.cr = 500，重繪市集
+    await page.waitForSelector('#modal .rd-shop');
+    await page.evaluate(() => {
+      window.__IE.Game.state.cr = 500;
+      window.__IE.Game.roundsShop();
+    });
+    await page.waitForSelector('#modal .rd-shop');
+    // 檢查手機 390px 市集無橫向捲軸且每個按鈕高度 >= 44px
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const shopMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-shop button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (shopMob.sw > 390) await fail('手機 390px 市集出現橫向捲動：scrollWidth=' + shopMob.sw);
+    if (shopMob.minH < 44) await fail('手機市集按鈕高度不足 44px：minH=' + shopMob.minH);
+    if (process.env.SHOTS) {
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-shop-mobile.png') });
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForTimeout(150);
+    if (process.env.SHOTS) {
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-shop-desktop.png') });
+    }
+    ok('二手市集（.rd-shop）開啟並完成手機 390px 版面檢查');
+
+    // 9. 按第一包素材包 .rs-item[data-slot^="pack:"] button:not([disabled])；等 .rd-pack 出現，檢查有 3 張 .rp-card；按 [data-i="0"]，檢查 s.cards.length 加了 1
+    const cardsBefore = await page.evaluate(() => window.__IE.Game.state.cards.length);
+    await page.click('#modal .rs-item[data-slot^="pack:"] button:not([disabled])');
+    await page.waitForSelector('#modal .rd-pack');
+    const packCardN = await page.$$eval('#modal .rd-pack .rp-card', (els) => els.length);
+    if (packCardN !== 3) await fail('.rd-pack 應有 3 張 .rp-card，現在有 ' + packCardN + ' 張');
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-pack-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-pack-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+    await page.click('#modal .rd-pack [data-i="0"]');
+    await page.waitForSelector('#modal .rd-shop');
+    const cardsAfter = await page.evaluate(() => window.__IE.Game.state.cards.length);
+    if (cardsAfter !== cardsBefore + 1) await fail('開包選卡後 s.cards.length 應 +1（' + cardsBefore + ' → ' + cardsAfter + '）');
+    ok('開包三選一（.rd-pack）：素材庫 ' + cardsBefore + ' → ' + cardsAfter + ' 張');
+
+    // 10. 按 .rs-item[data-slot="tech"] button:not([disabled])；檢查對應配色的等級加了 1，該格變成 disabled
+    const techFid = await page.evaluate(() => window.__IE.Game.state.shop.tech);
+    const lvBefore = await page.evaluate((fid) => (window.__IE.Game.state.forms && window.__IE.Game.state.forms[fid]) || 1, techFid);
+    await page.click('#modal .rs-item[data-slot="tech"] button:not([disabled])');
+    const lvAfter = await page.evaluate((fid) => (window.__IE.Game.state.forms && window.__IE.Game.state.forms[fid]) || 1, techFid);
+    const techDisabled = await page.$eval('#modal .rs-item[data-slot="tech"] button', (b) => b.disabled);
+    if (lvAfter !== lvBefore + 1) await fail('技法課升級後等級應 +1（' + lvBefore + ' → ' + lvAfter + '）');
+    if (!techDisabled) await fail('技法課購買後按鈕應變成 disabled');
+    ok('技法課升級「' + techFid + '」：Lv.' + lvBefore + ' → Lv.' + lvAfter);
+
+    // 11. 按 [data-do="leave"]；檢查回到 .rd-day，而且 s.night === 2
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day');
+    const nightNow = await page.evaluate(() => window.__IE.Game.state.night);
+    if (nightNow !== 2) await fail('離開市集後 s.night 應為 2，實際為 ' + nightNow);
+    ok('離開市集回到白天面板（s.night === 2）');
+
     if (errors.length) await fail('有 JS 錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');
   } catch (e) {
