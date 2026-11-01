@@ -404,6 +404,7 @@
       s.chances = 3;
       // 五個外星評審之夜的規則在開局時全部選好：介面可以預告，之後讀取規則也不會動到隨機數
       if (IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
+      if (IE.Story && IE.Story.init) IE.Story.init(s);
     }
     return s;
   }

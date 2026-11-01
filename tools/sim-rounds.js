@@ -13,12 +13,12 @@ const path = require('path');
   'data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js',
   'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js',
   'data-abilities.js', 'data-stories.js', 'data-weather.js', 'data-contacts.js',
-  'data-rounds.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
-  'stages.js', 'meta.js', 'dossier.js', 'rounds.js',
+  'data-rounds.js', 'data-story.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
+  'stages.js', 'meta.js', 'dossier.js', 'rounds.js', 'story.js',
 ].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 
 const IE = globalThis.IE;
-const D = IE.DATA, R = IE.Rules, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto;
+const D = IE.DATA, R = IE.Rules, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
 
 // 支援 ECON 環境變數覆寫 D.ECON（供校準迭代使用）
 if (process.env.ECON) {
@@ -201,10 +201,47 @@ function pickDayCard(s, strat) {
   return null;
 }
 
+function chooseStoryChapter(s, ch, strat) {
+  const opts = ch.options || [];
+  if (!opts.length) return 0;
+  const idxOf = (side) => {
+    const i = opts.findIndex((o) => o.side === side);
+    return i >= 0 ? i : null;
+  };
+  if (strat === 'random') {
+    return R.pick(s, [0, 1, 2].filter((i) => i < opts.length));
+  }
+  if (strat === 'worker' || strat === 'shameless') {
+    return idxOf('survive') ?? 0;
+  }
+  if (strat === 'liver' || strat === 'saint') {
+    const peakIdx = idxOf('peak');
+    const bothIdx = idxOf('both');
+    if (peakIdx != null) {
+      const peakOpt = opts[peakIdx];
+      const crDelta = (peakOpt && peakOpt.fx && peakOpt.fx.cr) || 0;
+      const rentMult = (peakOpt && peakOpt.fx && peakOpt.fx.rent) || 1;
+      const rentNeed = Math.round(RD.rentOf(s) * rentMult);
+      if (s.cr + crDelta < rentNeed && bothIdx != null) {
+        return bothIdx;
+      }
+      return peakIdx;
+    }
+    return bothIdx ?? 0;
+  }
+  return idxOf('both') ?? idxOf('survive') ?? 0;
+}
+
 function runDay(s, strat, metrics) {
   R.morning(s);
   metrics.transitions++;
-  if (R.drawDilemma(s)) {
+  const pl = STORY.plan(s);
+  const ch = STORY.chapter(s);
+  if (ch) {
+    const optIdx = chooseStoryChapter(s, ch, strat);
+    STORY.choose(s, optIdx);
+    metrics.transitions++;
+  } else if (R.drawDilemma(s)) {
     const opt = chooseDilemma(s, strat);
     R.resolveDilemma(s, opt);
     metrics.transitions++;
@@ -216,6 +253,14 @@ function runDay(s, strat, metrics) {
     RD.skipDay(s);
   } else {
     const res = RD.choose(s, id);
+    if (id.startsWith('friend:')) {
+      const npcId = id.slice(7);
+      const r = RD.roundOf(s);
+      const hideCost = (D.ECON.hideCost && D.ECON.hideCost[r - 1]) || 90;
+      if ((strat === 'saint' || strat === 'liver') && pl && pl.npc === npcId && s.cr >= RD.rentOf(s) + hideCost) {
+        STORY.hide(s, npcId);
+      }
+    }
     if (res && res.micro) {
       AU.apply(s, res.micro);
       metrics.transitions++;
@@ -622,6 +667,9 @@ function runOne(bg, season, seed, strat) {
     roundsPassed: s.reviewsPassed || 0,
     lost: (s.lost || []).slice(),
     objectsCount: (s.objects || []).length,
+    chaptersDone: s.story && Array.isArray(s.story.done) ? s.story.done.length : 0,
+    friendsTaken: s.story && s.story.taken ? Object.keys(s.story.taken).length : 0,
+    friendsHidden: s.story && s.story.hidden ? Object.keys(s.story.hidden).length : 0,
     estMin,
     metrics,
   };
@@ -705,6 +753,10 @@ function runStrategy(strat) {
   console.log(`  單筆得分中位數: N1=${snowMed[1]} · N3=${snowMed[3]} · N6=${snowMed[6]} · N9=${snowMed[9]} · N12=${snowMed[12]} · N15=${snowMed[15]}  | 雪球倍數 (N15÷N1): ${snowMult}×`);
   console.log(`  篩選前現金中位數: R1=$${median(preReviewCrs[1])} · R2=$${median(preReviewCrs[2])} · R3=$${median(preReviewCrs[3])} · R4=$${median(preReviewCrs[4])} · R5=$${median(preReviewCrs[5])}`);
   console.log(`  市集平均購買: 每次進店 ${buysPerShop} 項（每局 ${buysPerRun} 項） | 終局物件數中位數: ${medObjects} 件 | 估算局時中位數: ${medEstMin} 分鐘`);
+  const avgChapters = avg((r) => r.chaptersDone);
+  const avgTaken = avg((r) => r.friendsTaken);
+  const avgHidden = avg((r) => r.friendsHidden);
+  console.log(`  故事線統計: 平均每局回答 ${avgChapters.toFixed(2)} 章角色線 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
   const formLine = FORM_KEYS
     .map((f) => `${f}:${totalPlays ? Math.round((formTotals[f] / totalPlays) * 100) : 0}%`)
     .join(' ');
