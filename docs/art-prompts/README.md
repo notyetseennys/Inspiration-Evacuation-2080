@@ -1,8 +1,8 @@
 # 美術盤點與生圖 prompt（第二版：黑色幽默）
 
-> 給製作人。最後更新：2026-11-01。
+> 給製作人。最後更新：2026-11-01（2.1：按遊戲的卡面文字、小遊戲操作、結局文字和朋友的對白逐張核對）。
 > 用途：用 ChatGPT 生成遊戲缺少的插圖。收到圖之後，由 Claude 處理成像素圖，再寫成美術整合工單交給 Gemini。
-> **第二版**：第一版試做的 5 張圖畫工很好，但語氣太可愛、太溫馨。這一版加入「黑色幽默的畫法」，重寫了風格設定和全部 prompt（第一版在 git 歷史裡）。
+> **第二版**：第一版試做的 5 張圖畫工很好，但語氣太可愛、太溫馨。第二版加入「黑色幽默的畫法」，重寫了風格設定；第三節說明哪些 prompt 真的要改、哪些不用（第一版在 git 歷史裡）。
 > 參考圖在 `docs/art-prompts/ref/`（由遊戲直接截取，沒有文字）。
 
 ---
@@ -12,7 +12,7 @@
 遊戲裡**沒有任何圖片檔**：全部畫面都是程式畫的。美術任務書 `docs/GEMINI_BRIEF.md` 規定「沒有外部素材」，只有你提供的背景音樂是例外。
 
 **已經完成，不需要重畫**：
-- 121 件物件圖示、20 個角色半身像、19 位外星評審（像素字串）；
+- 121 件物件圖示、20 個角色半身像、19 位外星評審（像素字串）。半身像本來就是豆眼、表情平淡，和冷面的風格一致；
 - 素材卡的五種卡面、計分演出、11 個小遊戲；
 - 浮城（天氣、水位、探射燈、朋友的窗）、創作桌的四個場景（CSS）；
 - 房間、地圖、30 個目的地只在舊模式出現（五輪模式會藏起來），不值得再投資。
@@ -40,25 +40,61 @@
 **不適合的地方**：
 1. **語氣不對**：可愛、溫馨、熱鬧，像療癒系遊戲。外星人是可愛的綠色小人；人物是動漫表情（張口大叫、汗滴、閃光、瞇眼笑）。遊戲的文字是冷面的官僚式笑話（例如死亡結局：「標註過 53 張圖片，最後倒在螢幕前。螢幕還在問：『這是貓嗎？』」），圖和文字不同調。
 2. **沒有笑位**：四張生活卡只是把工作畫出來。外送那張是熱血的追逐，不是「外賣乾了，外送員濕了」那種反差。
-3. **主角被固定成前文案**（眼鏡、紅領帶）：KA-01 是風格樣板，ChatGPT 之後每張都沿用了他；但玩家可以是 20 個角色之一。
+3. **主角被固定成前文案**（眼鏡、紅領帶）：玩家可以是 20 個角色之一。
 4. **太熱鬧**：生活卡在遊戲裡只有約 160×80 像素。縮小之後，臉和小道具全部糊掉；笑位要靠大形狀和構圖，不能靠表情。
-5. **背景出現了真實地標**（中銀大廈的輪廓）。浮城是虛構的城市，第二十期還要做其他城市，所以這一版加了「不畫真實地標」。想保留香港的地標，刪掉風格設定裡的「Do not draw real landmarks.」就可以。
+5. **背景出現了真實地標**（中銀大廈的輪廓）。浮城是虛構的城市，第二十期還要做其他城市，所以新的設定加了「不畫真實地標」。想保留香港的地標，刪掉風格設定裡的「Do not draw real landmarks.」就可以。
+
+**從試做看到 ChatGPT 的三個習慣**（第二版的寫法就是針對這三點）：
+1. **第一張圖會帶動之後每一張**：KA-01 的前文案出現在標註和診所兩張，可愛的語氣也延續下去。所以風格設定和第一張樣板錯了，之後全部都會錯。
+2. **指定像素密度沒有效**：第一版寫了「約 192×128 放大 8 倍」，四張生活卡的像素仍然很細。所以不再在 prompt 控制像素，交給我縮圖。
+3. **它偏向可愛**：寫了「穿西裝、拿文件夾的外星 HR」，出來的仍然是可愛的綠色小人。所以「不要可愛」要寫明，而且每張 prompt 的結尾都重複一次。
 
 ---
 
-## 三、黑色幽默的畫法
+## 三、要不要改所有 prompt？
+
+**不是全部都要大改。** 要分開看「畫法」和「內容」：畫法由第一則訊息的風格設定決定，每張都受影響；黑色幽默卻在「發生甚麼事」，要寫在每張的內容裡。
+
+| 部分 | 要不要改 | 原因 |
+|---|---|---|
+| 風格設定（第一則訊息） | **一定要改** | 它決定每一張的畫法和語氣，而且第一張會帶動之後每一張 |
+| 每張結尾的一句提醒 | 全部加上（機械式的改動） | 對付「偏向可愛」：每張都重複「不要動漫、世界用灰暗的顏色、不要文字」 |
+| 主視覺、生活卡、市集、篩選日、素材包、徽章、創作桌場景、明信片、圖示 | **要改內容** | 第一版只寫了「畫面裡有甚麼」，沒有笑位；只改畫法，只會得到一張比較暗的溫馨圖 |
+| 朋友頭像（8 張） | **只改畫法，內容沿用第一版** | 頭像每次聊天都會出現，笑話看三次就膩；朋友是遊戲裡真正的人情，黑色幽默要靠這份溫暖做對比。只加一個來自他們對白的小細節（例如何伯說過「被水泡過的詩，字會游走」） |
+| 結局（6 張） | **保留第一版的情感核心，加一個苦澀的細節** | 設計大綱要求玩家第一次最常拿到的結局「令人心酸但又覺得有意義」，令玩家想再玩；只有笑話做不到。大綱當時指「平凡人」；模擬器裡五輪模式最常見的結局是「人才庫」 |
+| 已經生成的 5 張 | **全部重做** | KA-01 是樣板：外星人可愛、主角固定成前文案、有真實地標；四張生活卡跟着它走 |
+
+**2.1 修正了第二版的 17 張**（核對遊戲內容時發現的錯誤和改過頭的地方）：
+
+| prompt | 第二版的問題 | 2.1 的做法 |
+|---|---|---|
+| DAY-clinic | 把主角畫成病人；但卡面是「替病人接駁義體」，小遊戲是替病人接線 | 主角是技師；笑位改為卡面的「有些義體沒有登記」：二手義肢還戴着別人的婚戒 |
+| DAY-haggle | 賣「自己」的家當；但卡面是「把撿回來的舊物賣給遊客」 | 把撿回來的陌生人婚照當「真古董」賣（小遊戲可以按 B 吹噓真古董） |
+| DAY-dive | 「自己童年的家」畫不出來，而且外星角色沒有童年的家 | 在別人淹沒的家裡撬開衣櫃尋寶（小遊戲是射魚、撬儲物櫃、看氧氣） |
+| DAY-busk | 錄歌的機械人是新發明的 | 改用小遊戲裡的管理員：唯一停下來的人是在寫告票的管理員；主角難得真心快樂（這張卡令火花上升） |
+| DAY-smile | 沒有用上小遊戲的「偏見言論」 | 客人說了一句偏見的話（紅色對話框），笑臉面具照樣微笑 |
+| FRIEND ×8 | 為了笑話發明了細節（Miu 的鏡頭眼、小妹偷來的電線、Mary 姐水浸到胸口） | 沿用第一版的內容，只加對白裡有的小細節 |
+| END-archived | 只剩「杯墊」的笑話，主角不見了，失去「不再被看見」的心酸 | 主角坐在窗台；探射燈掃過你的窗，停在隔壁的廣告牌上 |
+| END-heavy | 鄰居吃零食，沖淡了「背著這份重量繼續生活」 | 鄰居安靜地看 |
+| END-returned | 漏了結局文字的「你帶著一身火花回到浮城」 | 加回火花和上升的水位 |
+| END-perfect | 靈魂畫成羽毛 | 照結局文字「輕得像一張表格」：頭上浮着一張空白的表格 |
+
+---
+
+## 四、黑色幽默的畫法
 
 設計大綱對文字的要求是「冷面笑匠，用平淡的語氣講慘事，精華在最後一句」。畫面照同一個原則：
 
-1. **一張圖，一個笑位**：企業光鮮的表面（吉祥物、笑容、霓虹廣告、五星評分、天空區的奢華）對比人的處境（疲倦、水浸、被取代、被標價）。每張 prompt 都先寫明「Visual joke」。
+1. **一張圖，一個笑位**：企業光鮮的表面（吉祥物、笑容、霓虹廣告、五星評分、天空區的奢華）對比人的處境（疲倦、水浸、被取代、被標價）。笑位最好來自卡面文字或小遊戲本身。
 2. **冷面**：人物不誇張，表情平淡、疲倦，或者是職業假笑；構圖平穩，像監控鏡頭或證件照，荒謬的事安靜地發生。
 3. **顏色有意思**：城市和人是灰藍色、鏽色、日光燈的病態白；**只有企業和有錢人有霓虹色**；暖色燈光只留給真正的人情（朋友、義工、守護者結局）。
 4. **主角是可以替換的普通人**：灰色連帽衫、掛着空白的工作證、黑眼圈、面無表情，不畫髮型和配飾。玩家可以是 20 個角色之一；而且在這個城市，每個人都可以被替換。
 5. **不可愛**：不要 Q 版、汗滴、閃光、腮紅、大眼睛、張口大叫。只有企業吉祥物是可愛的：越可愛，越恐怖。
+6. **看越多次的圖，笑話越輕**：生活卡、結局只看一兩次，笑位要清楚；朋友頭像、創作桌背景每局看很多次，只放安靜的小細節。
 
 ---
 
-## 四、要生成甚麼
+## 五、要生成甚麼
 
 | 次序 | 內容 | 張數 | 用在哪裡 |
 |---|---|---|---|
@@ -74,9 +110,9 @@
 
 ---
 
-## 五、怎樣用 ChatGPT 生圖
+## 六、怎樣用 ChatGPT 生圖
 
-1. **開一個新對話**，不要沿用第一版的對話，否則會延續可愛的風格。上載 `ref-city-night.png`、`ref-characters.png`、`ref-palette-v2.png`（第二版的色票，比遊戲現在的色票灰暗），貼上第六節的「風格設定」。有外星人的圖再加上 `ref-judges.png`。
+1. **開一個新對話**，不要沿用第一版的對話，否則會延續可愛的風格。上載 `ref-city-night.png`、`ref-characters.png`、`ref-palette-v2.png`（第二版的色票，比遊戲現在的色票灰暗），貼上第七節的「風格設定」。有外星人的圖再加上 `ref-judges.png`。
 2. **先做試做的三張**，傳給我看。三張都對了，KA-01 就成為風格樣板：之後每個新對話都把它和參考圖一起上載，並說「Match the style and tone of KA-01.」。
 3. 一則訊息只生一張圖：貼上該張的 prompt 就可以。
 4. **檢查笑位**：每張的中文說明寫了「笑位」。縮成小圖之後仍然一眼看出笑位，才算合格。
@@ -87,7 +123,7 @@
 
 ---
 
-## 六、風格設定（每個新對話的第一則訊息）
+## 七、風格設定（每個新對話的第一則訊息）
 
 ```
 I'm making a pixel-art game called "Inspiration Evacuation 2080": a deadpan black comedy about a flooded city where aliens recruit "inspired" humans the way a corporate HR department hires staff. For every image in this conversation, follow this art direction exactly.
@@ -130,9 +166,9 @@ Reply "OK" and wait for my first image request.
 
 ---
 
-## 七、Prompt
+## 八、Prompt
 
-每一段 prompt 都是完整的一則訊息，直接複製貼上。
+每一段 prompt 都是完整的一則訊息，直接複製貼上。每段最後一句都是同一句提醒，不要刪。
 
 ### 試做（3 張）
 
@@ -148,10 +184,11 @@ Visual joke: the whole city is auditioning for the apocalypse. In every window, 
 Scene: night, rain. Centre-right, a crumbling tenement tower stands in flood water, cut away like a dollhouse so we can see into every flat. In each flat a tired resident holds something up towards the sky: a painting, a poem, a guitar, a sculpture made of junk, a child's drawing. On the flooded lowest floor, residents stand on their tables, still holding their work above the water. Above, a sleek white saucer hovers; in its lit window, grey alien HR officers with identical smiles hold clipboards and stopwatches. Its searchlight ends in a thin red scanning line, like a supermarket barcode scanner, and the line has just stopped on one middle-floor window, where the Everyman sits at a desk and, deadpan, holds up a single sheet of paper. At the top, on a white Sky District terrace, rich residents sip drinks and casually tip their rubbish over the edge onto the tower. Under the water: the drowned old town and a sunken billboard of a smiling real-estate mascot.
 
 Composition: keep the left third calm and dark (night sky, distant towers) as space for the game logo, which I will add later.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-label AI 數據標註　`day-label.png`
+卡面：教 AI 認貓，好讓它以後不再需要你。
 笑位：你在訓練取代你的 AI，而它已經掛上了你的工作證；保安拿着空紙箱在等你。
 
 ```
@@ -160,10 +197,11 @@ Image DAY-label: illustration for a "day card". Landscape 3:2 (1536x1024). It wi
 Visual joke: you are training your replacement, and it already wears your lanyard.
 
 Scene: a grim open-plan labelling office under flickering fluorescent tubes. In the foreground, the Everyman clicks through photos of cats on an old monitor (green tick, red cross). In the next chair, a cheerful white robot with a smiling screen-face copies every click and already wears the Everyman's lanyard. On the wall, a huge bright poster of the same robot giving a thumbs-up. Behind them, a security guard waits patiently, holding an empty cardboard box.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-delivery 外送潛水　`day-delivery.png`
+卡面：在淹水的街道限時送外賣，小心天空區的快艇。
 笑位：外賣是乾的，外送員不是；客人連頭也不抬，只給一粒星。
 
 ```
@@ -172,7 +210,7 @@ Image DAY-delivery: illustration for a "day card". Landscape 3:2 (1536x1024). It
 Visual joke: the food arrives dry; the courier does not.
 
 Scene: a flooded neon street at night. The courier's little boat has sunk; the Everyman, in a yellow delivery helmet, stands chest-deep in the water, holding the insulated food bag perfectly dry above their head with both arms. From a high window, the customer lowers a basket on a rope without looking up from their phone; the phone shows a single star. A gleaming white Sky District speedboat roars past, and its wake washes over the courier's blank face.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ### 第二批：其餘生活卡（10 張）
@@ -180,18 +218,20 @@ Same rules as set at the start.
 用途：白天三選一的卡頂橫幅。會從中間裁成 2:1，在遊戲裡顯示得很小。
 
 #### DAY-clinic 黑市義體診所　`day-clinic.png`
-笑位：免費的義肢，只是會播廣告；你原本的手臂放在架上待售。
+卡面：替病人接駁義體；有些義體沒有登記。（小遊戲：對照接線圖插插頭；非法義體可以拒絕安裝。）
+笑位：你替病人裝上「沒有登記」的二手義肢，手指上還戴着別人的婚戒。
 
 ```
 Image DAY-clinic: illustration for a "day card". Landscape 3:2 (1536x1024). It will be cropped to a 2:1 banner through the middle and shown very small, so use one main subject and a few big shapes; the joke must read from silhouettes alone.
 
-Visual joke: the prosthetic arm is free; it just shows advertisements.
+Visual joke: the "unregistered" second-hand arm still wears its previous owner's wedding ring.
 
-Scene: a back-alley cybernetics clinic. The Everyman sits in a cracked dentist's chair, staring blankly ahead, while a bored technician screws on a free prosthetic arm covered in blinking neon advertising: a bright smiling mascot on the forearm and a band of scrolling symbols. On the shelf behind, the Everyman's original arm sits in a clear plastic display box with a price tag, like merchandise. A cheerful poster of a smiling robot doctor gives a thumbs-up.
-Same rules as set at the start.
+Scene: a back-alley cybernetics clinic. The Everyman, working as the technician, plugs colourful cables into a mechanical arm newly attached to a patient, who sits in a cracked dentist's chair staring blankly ahead. On one of the arm's fingers is someone else's wedding ring, and a faded hospital wristband is still around its wrist. Behind them, more second-hand arms hang on a rack, each with a price tag. A cheerful poster of a smiling robot doctor gives a thumbs-up.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-salvage 拆樓打撈　`day-salvage.png`
+卡面：替重建計劃拆舊樓，看準弱點落錘，牆裡可能藏著舊世界的東西。
 笑位：「空置」的舊樓其實有人住：一對老夫婦還在吃晚飯，平靜地看着鐵球。
 
 ```
@@ -200,22 +240,24 @@ Image DAY-salvage: illustration for a "day card". Landscape 3:2 (1536x1024). It 
 Visual joke: the "abandoned" building is not empty.
 
 Scene: a wrecking ball has just smashed a big hole in the wall of an old, half-flooded tenement. Through the hole we see a small flat where an elderly couple still sits at their dinner table, chopsticks frozen mid-air, calmly looking at the crane. Beside the building, a glossy developer billboard with a smiling mascot shows the luxury tower that will replace it. In the crane cab, the Everyman, in a hard hat, looks away and sips tea from a flask.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-haggle 夜市擺地攤　`day-haggle.png`
-笑位：你把自己家的回憶賣給有錢人當擺設，對方還要殺價。
+卡面：把撿回來的舊物賣給遊客：開價太高客人會走，吹噓可以賣貴一點。（小遊戲可以按 B 吹噓「真古董」。）
+笑位：你把從水底撈回來的陌生人婚照，當作「真古董」賣給有錢遊客；對方用放大鏡驗貨，還要殺價。
 
 ```
 Image DAY-haggle: illustration for a "day card". Landscape 3:2 (1536x1024). It will be cropped to a 2:1 banner through the middle and shown very small, so use one main subject and a few big shapes; the joke must read from silhouettes alone.
 
-Visual joke: selling your own memories to the rich as kitsch, and being haggled down.
+Visual joke: selling a drowned stranger's wedding photo as a "genuine antique", and being haggled down.
 
-Scene: a night market under a concrete flyover. The Everyman sits on a low stool behind a mat of their own old belongings: a framed family photo (one person in it wears the same grey hoodie), a school bag, a mahjong set, a rice cooker. A rich Sky District tourist in spotless white, wearing a glowing VR visor, points at the family photo and holds up two fingers. The Everyman stares back without expression. Above them, a cheerful neon sign of a big downward arrow.
-Same rules as set at the start.
+Scene: a night market under a concrete flyover. The Everyman sits on a low stool behind a mat of things salvaged from the drowned old town, all still a little damp: a stranger's framed wedding photo, a school bag, a mahjong set, a rusty rice cooker. Deadpan, they hold up the wedding photo like a priceless treasure. A rich Sky District tourist in spotless white inspects it through a jeweller's loupe and holds up two fingers. Above them, a cheerful neon sign of a big downward arrow.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-farm 陰謀論內容農場（虧心）　`day-farm.png`
+卡面：拼湊聳動標題，越假越多人轉發。
 笑位：你為了點擊率偽造 UFO 照片；真的飛碟就在窗外，沒有人回頭。
 
 ```
@@ -224,46 +266,50 @@ Image DAY-farm: illustration for a "day card". Landscape 3:2 (1536x1024). It wil
 Visual joke: faking UFO photos for clicks while a real UFO hovers right outside, ignored.
 
 Scene: a dim room crammed with racks of phones and screens showing giant red arrows, shocked cartoon faces and a blurry fake UFO photo. The Everyman, lit by sickly green screens, tapes a paper UFO onto a photograph. Behind them, through the window, a real alien saucer hovers silently, its searchlight shining into the room. Nobody turns around. A corkboard with red string connects random pictures.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-smile 企業情緒陪伴（虧心）　`day-smile.png`
-笑位：笑容是制服：你舉着一個笑臉面具，手腕上的「笑容指數」滿格。
+卡面：陪有錢人說笑、點頭、倒酒，笑得越準越值錢。（小遊戲：偏見言論可以附和或沉默。）
+笑位：客人說了一句偏見的話（紅色對話框），你的笑臉面具照樣微笑；手腕上的「笑容指數」滿格。
 
 ```
 Image DAY-smile: illustration for a "day card". Landscape 3:2 (1536x1024). It will be cropped to a 2:1 banner through the middle and shown very small, so use one main subject and a few big shapes; the joke must read from silhouettes alone.
 
-Visual joke: the smile is part of the uniform.
+Visual joke: the smile is part of the uniform, even when the client says something ugly.
 
-Scene: a glossy Sky District lounge in gold and white. A rich client laughs at their own joke. The Everyman, working as a hired "emotional companion", pours wine with one hand and with the other holds a big, bright paper smile mask on a stick in front of their face; their real deadpan face shows at the edges. A smile-meter on their wrist glows full green. In the background, a row of other companions waits on a bench, all holding identical smile masks.
-Same rules as set at the start.
+Scene: a glossy Sky District lounge in gold and white. A rich client leans back, mid-sentence, with a red speech bubble that contains only an angry symbol. The Everyman, working as a hired "emotional companion", pours wine with one hand and with the other holds a big, bright paper smile mask on a stick in front of their face; their real deadpan face shows at the edges. A smile-meter on their wrist glows full green. In the background, a row of other companions waits on a bench, all holding identical smile masks.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-dive 舊城潛水　`day-dive.png`
-笑位：在自己童年的家裡打撈「遺物」。
+卡面：用魚叉捕魚，打撈水淹舊城的遺物。（小遊戲：射魚、撬開儲物櫃、氧氣用完前浮上水面。）
+笑位：在別人淹沒的家裡「尋寶」：全家福還掛在牆上，商場吉祥物在窗外繼續微笑。
 
 ```
 Image DAY-dive: illustration for a "day card". Landscape 3:2 (1536x1024). It will be cropped to a 2:1 banner through the middle and shown very small, so use one main subject and a few big shapes; the joke must read from silhouettes alone.
 
-Visual joke: diving for "relics" in your own childhood home.
+Visual joke: treasure hunting in someone else's drowned home, while a mall mascot keeps smiling outside.
 
-Scene: underwater in the drowned old town. The Everyman, in an old diving mask, swims slowly through a sunken living room: a family portrait still hangs on the wall, a fish swims out of an old TV screen, and on a child's bed a music box glows faintly. Outside the window, a sunken shopping-mall sign of a smiling mascot still flickers. Calm, teal, very quiet.
-Same rules as set at the start.
+Scene: underwater in the drowned old town. The Everyman, in an old diving mask with a small speargun on their back, pries open a wardrobe in a sunken living room; a family portrait still hangs on the wall, and a fish swims out of an old TV screen. Through the window, a sunken shopping-mall sign of a smiling mascot still flickers. A small oxygen gauge on the Everyman's wrist glows red. Calm, teal, very quiet.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-busk 街頭表演　`day-busk.png`
-笑位：唯一在聽的是一部機械人：它在錄你的歌，拿去訓練 AI。
+卡面：在天橋下表演，收入很少，但會讓火花變旺。（小遊戲：管理員巡邏時要立刻停手。）
+笑位：你難得真心快樂；唯一停下來聽的人，是正在寫告票的管理員。
 
 ```
 Image DAY-busk: illustration for a "day card". Landscape 3:2 (1536x1024). It will be cropped to a 2:1 banner through the middle and shown very small, so use one main subject and a few big shapes; the joke must read from silhouettes alone.
 
-Visual joke: the only one listening is a robot recording your song to train an AI.
+Visual joke: the only person who stops to listen is the officer writing you a fine.
 
-Scene: under a concrete flyover at night, the Everyman plays an acoustic guitar to a crowd that walks past staring at their phones. The only listeners are a stray cat and a small delivery robot that has stopped, its camera eye glowing red, recording. The open guitar case holds one coin and a takeaway menu.
-Same rules as set at the start.
+Scene: under a concrete flyover at night. In a pool of warm streetlight, the Everyman plays an acoustic guitar with eyes closed, genuinely happy for once. Commuters walk past staring at their phones. The only one who stops is a uniformed patrol officer, calmly writing a ticket. A stray cat sits beside the open guitar case, which holds a single coin.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-garden 天台菜園　`day-garden.png`
+卡面：在大廈天台種菜：澆水、收成、趕走偷菜的白鴿。
 笑位：在有錢人的陰影裡種菜：全部盆栽擠在唯一一道陽光下。
 
 ```
@@ -272,10 +318,11 @@ Image DAY-garden: illustration for a "day card". Landscape 3:2 (1536x1024). It w
 Visual joke: farming in the shadow of the rich.
 
 Scene: a tenement rooftop garden in planters made from bathtubs and old fridges. Directly above, the underside of a Sky District platform blocks out the sun; a single narrow beam of sunlight falls through a drain hole, and the Everyman has crammed every pot into that one small patch of light. From the platform's edge, a rich resident absent-mindedly pours out a glass of water. A fat white pigeon walks off with the only ripe tomato.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-volunteer 到避難所做義工　`day-volunteer.png`
+卡面：幫人不會賺錢，但會讓靈魂變輕。
 笑位：名人在拍照做善事；鏡頭一轉開，就把碗交還給你。
 
 ```
@@ -284,10 +331,11 @@ Image DAY-volunteer: illustration for a "day card". Landscape 3:2 (1536x1024). I
 Visual joke: charity as a photo opportunity.
 
 Scene: a crowded flood shelter in an old school gym, camp beds in rows. In warm lamp light, the Everyman, in a plain volunteer vest, ladles soup for an old person and a child. Beside them, a Sky District celebrity in a spotless white suit holds up a bowl and flashes a perfect smile at a hovering camera drone, while their other hand is already handing the bowl back to the Everyman. Cold camera-flash light on the celebrity, warm light on everyone else.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### DAY-trip 出國（通用）　`day-trip.png`
+卡面：付旅費出國，從五張當地素材中帶回兩張。
 笑位：所有乘客都戴着虛擬實境眼鏡看陽光海灘；只有你看着窗外淹水的世界。
 
 ```
@@ -296,167 +344,173 @@ Image DAY-trip: illustration for a rare "day card". Landscape 3:2 (1536x1024). I
 Visual joke: everyone flies over the drowning world while watching a sunny beach in VR.
 
 Scene: inside a small aeroplane cabin. Through the oval window, the flooded Floating City shrinks away below. Every passenger wears a glowing VR visor showing a bright, sunny beach and ignores the window. Only the Everyman looks out of the window, holding a sketchbook.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ### 第二批（續）：朋友頭像（8 張）
 
-用途：朋友卡、聊天視窗的對話頭像。朋友是遊戲裡真正的人情，所以用暖色燈光；但城市的生活在每個人身上留下一個黑色幽默的細節。
+用途：朋友卡、聊天視窗的對話頭像。每次聊天都會出現，所以**不放笑話**：真誠、溫暖（暖色燈光），表情自然，最多一個來自對白的小細節。
 
 #### FRIEND-ken 畫壁畫的阿 Ken（教三色）　`friend-ken.png`
-細節：被天空區保安打到一隻眼瘀黑，仍然滿足地笑。
+對白：「我昨晚又被天空區的保安追，跑得比外送員還快。」
 
 ```
-Image FRIEND-ken: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-ken: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Ah Ken, a street muralist in their late twenties: paint-splattered denim jacket, beanie, a spray can in one hand. Detail: a fresh black eye from the Sky District security guards, and a calm, satisfied half-smile.
-Same rules as set at the start.
+Ah Ken, a street muralist in their late twenties: paint-splattered denim jacket, a beanie pushed back on messy hair, a spray can in one hand, a smear of teal paint on one cheek, a lopsided grin; the look of someone who has just outrun the Sky District security guards again.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-dj 天台 DJ 小妹（教四色）　`friend-dj.png`
-細節：肩上搭着一條從天空區偷來的電線（金色插頭）。
+對白：「我叫小妹，喇叭比我還大聲。」
 
 ```
-Image FRIEND-dj: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-dj: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Siu Mui, a rooftop DJ in her early twenties: neon-pink bob, huge headphones around her neck. Detail: a stolen power cable with a fancy gold Sky District plug draped over her shoulder; a bored, unimpressed stare.
-Same rules as set at the start.
+Siu Mui, a rooftop DJ in her early twenties: neon-pink bob, oversized headphones around her neck, glow-stick bracelets, holding a vinyl record, a cheeky, sleepy grin; the edge of a speaker bigger than she is, just behind her shoulder.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-ho 寫詩的何伯（教單色）　`friend-ho.png`
-細節：一手茶杯，一手滴着水的詩集。
+對白：「你有沒有讀過一首被水泡過的詩？字會游走。」
 
 ```
-Image FRIEND-ho: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-ho: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Uncle Ho, an elderly poet (about 80) who has written poems for fifty years that nobody reads: thin white hair, round glasses, a faded cotton shirt. Detail: a chipped teacup in one hand and, in the other, a poetry notebook dripping with flood water; a wry, patient smile.
-Same rules as set at the start.
+Uncle Ho, an elderly poet (about 80) who has written poems for fifty years that nobody reads: thin white hair, round glasses, a faded cotton shirt, a chipped teacup in one hand and, in the other, a poetry notebook with water-stained, wavy pages; a kind, wry smile.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-miu 改裝機械人的 Miu（教互補）　`friend-miu.png`
-細節：一隻眼換成了便宜的鏡頭；機械貓在咬 Miu 的頭髮。
+對白：「別碰那個，它會咬人。是機械貓，不是真貓。」
 
 ```
-Image FRIEND-miu: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-miu: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Miu, a young robot tinkerer: welding goggles on the forehead, oil-stained overalls, short messy hair. Detail: one eye replaced by a cheap camera lens with a blinking red light, and a small mechanical cat on the shoulder chewing on Miu's hair; completely deadpan.
-Same rules as set at the start.
+Miu, a young robot tinkerer who talks to machines more than to people: welding goggles pushed up on the forehead, oil-stained overalls, short messy hair with one teal streak, a screwdriver behind one ear, and a small mechanical cat on the shoulder, gnawing on Miu's hair; a deadpan expression with a hint of pride.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-fong 唱粵劇的芳姐（教全光譜）　`friend-fong.png`
-細節：雨水令戲妝流下來，仍然保持莊嚴的身段。
+對白：「我是芳姐，唱了一輩子戲，觀眾越來越少，魚越來越多。」
 
 ```
-Image FRIEND-fong: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-fong: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Sister Fong, a Cantonese opera singer in her fifties: full opera make-up, a jewelled headdress, the collar of a red embroidered costume, a folding fan. Detail: the rain has made her make-up run down her cheeks, yet she holds a perfectly proud, dignified pose.
-Same rules as set at the start.
+Sister Fong, a Cantonese opera singer in her fifties: hair in an elegant bun, partial stage make-up with rose-red around the eyes, the embroidered collar of a red opera costume, a folding fan held near her chin; a proud, theatrical expression. One small detail: her hairpin is a little silver fish, because these days her audience has more fish than people.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-chan 修船的老陳（教矛盾）　`friend-chan.png`
-細節：救生衣是用膠樽綁成的。
+對白：「這根桅杆我換了三次，它還是歪的。像我。」
 
 ```
-Image FRIEND-chan: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-chan: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Old Chan, a weather-beaten boat repairer in their sixties: a faded fisherman's cap, grey stubble, a big wrench over one shoulder. Detail: a homemade life jacket made of empty plastic bottles tied together with string; a gruff, unbothered look.
-Same rules as set at the start.
+Old Chan, a weather-beaten boat repairer in their sixties: sun-darkened skin, short grey stubble, a faded fisherman's cap worn slightly crooked, a coil of rope over one shoulder, a big wrench in one hand; a gruff look but kind eyes.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-yu 寫歌的小雨（教鄰近色）　`friend-yu.png`
-細節：歌詞本每一行都劃掉了。
+對白：「噢……你好。我在寫歌，寫不出來。」
 
 ```
-Image FRIEND-yu: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-yu: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Siu Yu, a shy young songwriter (about 20): long dark hair over one eye, an oversized yellow raincoat, a guitar strap over one shoulder. Detail: holding up a lyric notebook in which every single line has been scribbled out; a tired, gentle half-smile.
-Same rules as set at the start.
+Siu Yu, a shy young songwriter (about 20): long dark hair partly covering one eye, an oversized yellow raincoat, a guitar strap over one shoulder, holding a small lyric notebook in which every line has been scribbled out; a tired, gentle half-smile.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### FRIEND-mary 開糖水舖的 Mary 姐（教分裂互補）　`friend-mary.png`
-細節：水浸到胸口，仍然笑着遞上一碗紅豆沙。
+對白：「我叫 Mary 姐，這間舖開了三代，水浸了兩次。」
 
 ```
-Image FRIEND-mary: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. Friends are drawn with real warmth (warm lamp-light colours), but city life shows in one darkly funny detail. Wry or deadpan expression, never anime.
+Image FRIEND-mary: dialogue portrait of one of the protagonist's friends. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery. This portrait will be seen many times, so keep it sincere and warm (warm lamp-light colours) with a natural, wry expression and at most one small, quiet detail from their life.
 
-Sister Mary, a plump dessert-shop owner (about 50): permed hair, an apron with a small embroidered mango. Detail: flood water has risen to her chest (a ripple line across the lower part of the portrait), and she is still holding out a steaming bowl of red bean soup with a cheerful, unbothered smile.
-Same rules as set at the start.
+Sister Mary, the warm, plump owner of a third-generation dessert shop (about 50): permed hair, an apron with a small embroidered mango and a faded tide-line stain across it from the last flood, holding out a steaming bowl of red bean soup, laughing.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ### 第三批：結局（6 張）與主視覺（直）
 
-用途：結局「人類樣本檔案」的頂部插圖，會裁成 16:9。笑話要苦，不要刻薄。
+用途：結局「人類樣本檔案」的頂部插圖，會裁成 16:9。先有心酸，再有一個苦澀的細節；笑話要苦，不要刻薄。
 
-#### END-archived 人才庫（機會用完）　`end-archived.png`
-笑位：你一生的作品，成了外星職員的杯墊。
+#### END-archived 人才庫（最常見的結局）　`end-archived.png`
+結局文字：探射燈不會再經過你的窗外。你還在浮城，只是不再被看見。
+笑位（安靜的）：探射燈掃過你的窗，停在隔壁的廣告牌上。
 
 ```
-Image END-archived: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. The humour should be bitter, never cruel.
+Image END-archived: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. Sadness first, then one bitter detail; never cruel.
 
-Visual joke: your life's work ends up as an alien's coffee coaster.
+Visual joke (quiet and sad): the searchlight passes over your window and settles on the billboard next door.
 
-Scene: the endless archive of the Interstellar Talent Development Bureau: identical filing cabinets vanish into the distance under cold light. A grey alien clerk with a fixed smile files a thin folder, with a small photo of the Everyman clipped to it, into a drawer marked only with a barcode. On the clerk's desk, a steaming coffee mug sits on the Everyman's best painting, used as a coaster. Through a porthole, far below, the flooded city glows.
-Same rules as set at the start.
+Scene: night, steady rain. Inside a tiny low-floor flat in a flooded tenement, the Everyman sits on the windowsill hugging their knees, surrounded by stacks of unfinished drawings. Flood water laps just below the window frame. The alien saucer's searchlight sweeps past their window without stopping and comes to rest, bright and steady, on a giant advertising billboard next door: a smiling mascot giving a thumbs-up. Mood: quiet and overlooked; you are still here, just no longer seen.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### END-heavy 良知太重（靈魂超過 21 克）　`end-heavy.png`
-笑位：良知太重，連外星人的光束也拉不動；鄰居一邊吃零食一邊看。
+結局文字：光束嘗試把你拉起來，卻拉不動……你留在浮城，背著這份重量繼續生活。
+笑位：良知太重，外星人的光束拉不動你；外星人看着紅色的超重警告，搖搖頭。
 
 ```
-Image END-heavy: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. The humour should be bitter, never cruel.
+Image END-heavy: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. Sadness first, then one bitter detail; never cruel.
 
 Visual joke: your conscience is too heavy for the alien elevator.
 
-Scene: night on a tenement rooftop. A saucer's tractor beam strains to lift the Everyman, who hovers only a few centimetres off the roof, held down by a glowing, heavy, heart-shaped stone on a chain that rests on the rooftop like an anchor. In the saucer's window, one alien looks at a scale display flashing red and calmly shakes their head; another checks a wristwatch. Neighbours watch from their windows with mild interest, eating snacks.
-Same rules as set at the start.
+Scene: night on a tenement rooftop. A saucer's tractor beam strains to lift the Everyman, who hovers only a few centimetres off the roof, held down by a glowing, heavy, heart-shaped stone on a chain that rests on the rooftop like an anchor. In the saucer's window, one alien looks at a scale display flashing red and calmly shakes their head; another checks a wristwatch. Neighbours watch silently from their windows. Mood: tragicomic; they will stay, and carry this weight.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### END-death 死亡（通用）　`end-death.png`
+死因有 141 種，文字已經寫了黑色幽默的墓誌銘；圖只負責氣氛。
 笑位：連喪禮也是外判的：紙箱當棺材，送花的無人機要你評分。
 
 ```
-Image END-death: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. The humour should be bitter, never cruel. No bodies, nothing gory.
+Image END-death: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. Sadness first, then one bitter detail; never cruel. No bodies, nothing gory.
 
 Visual joke: even your funeral is gig work.
 
 Scene: a flooded old-town canal at dawn. A cardboard delivery box, used as a coffin, floats past with a single candle on top. The only mourner is a stray cat on a windowsill. A delivery drone drops a plastic-wrapped bouquet onto the box and immediately projects five rating stars, waiting for a review. Above the canal, a cheerful hologram advertisement shows a smiling mascot holding a coffin: a funeral subscription plan.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### END-guardian 地球守護者（被選中但留下）　`end-guardian.png`
+結局文字：你關上了窗。探射燈在窗外等了很久，最後熄滅了。
 笑位：外星人看不懂一扇關上的窗。
 
 ```
-Image END-guardian: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. The humour should be bitter, never cruel.
+Image END-guardian: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. Sadness first, then one bitter detail; never cruel.
 
 Visual joke: the aliens cannot understand a closed window.
 
 Scene: night, seen as a cut-away of one apartment. Outside the closed shutters, the saucer hovers, its searchlight pressing through the slats; in the saucer's window, an alien HR officer frowns at a clipboard and taps it, confused. Inside, in warm lamp light, the Everyman's paintings cover every wall, and neighbours crowd around a small table sharing food: an old poet with tea, a young DJ with headphones, a dessert-shop owner carrying bowls. The Everyman sits with their back to the window, laughing. Warm inside, cold outside.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### END-agent 星際特工（被選中並離開）　`end-agent.png`
-笑位：你的第一份工作，是淘汰一個和你一模一樣的人；阿星就在隔壁，沒有抬頭。
+結局文字：第一份工作是篩選地球人……阿星就坐在隔壁，沒有抬頭看你。
+笑位：你的第一份工作，是淘汰一個和你一模一樣的人。
 
 ```
-Image END-agent: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. The humour should be bitter, never cruel.
+Image END-agent: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. Sadness first, then one bitter detail; never cruel.
 
 Visual joke: your first job is to reject someone exactly like you.
 
 Scene: the vast open-plan office of the Talent Bureau aboard the mothership: identical white desks in perfect rows, grey alien managers with fixed smiles and clipboards, a framed photo of an alien "employee of the month". The Everyman, now in a crisp alien staff uniform, sits at a desk holding a human candidate's file whose photo shows someone identical to the Everyman, about to drop it into a red reject tray. At the next desk, a long-lost best friend in the same uniform keeps working and does not look up. Through a giant window: Earth's flooded coastline.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### END-returned 被遣返　`end-returned.png`
-笑位：外星人把你當作次貨退回，頸上掛着退貨標籤；鄰居看一眼，繼續吃麵。
+結局文字：以「文化不契合」為由把你遣返地球。你帶著一身火花回到浮城，水位又上升了。
+笑位：外星人把你當作次貨退回；但你身上仍然帶着火花。
 
 ```
-Image END-returned: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. The humour should be bitter, never cruel.
+Image END-returned: ending illustration. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details. Sadness first, then one bitter detail; never cruel.
 
-Visual joke: the aliens return you like a faulty product.
+Visual joke: the aliens return you like a faulty product, but you come back still sparkling.
 
-Scene: grey drizzle over a flooded street. A hatch opens in the saucer and a beam lowers the Everyman, in a crumpled alien uniform, onto a floating wooden pallet. A big return label hangs from their neck (a barcode and a red cross symbol), a small cracked star badge is pinned to the chest, and they hold a cardboard box of desk things. Neighbours glance down from their windows and go back to their noodles.
-Same rules as set at the start.
+Scene: grey drizzle over a flooded street; the water is higher than before. A hatch opens in the saucer and a beam lowers the Everyman, in a crumpled alien uniform, onto a floating wooden pallet. A big return label hangs from their neck (a barcode and a red cross symbol), a small cracked star badge is pinned to the chest, and they hold a cardboard box of desk things. A few golden sparks of inspiration still flicker around their head. Neighbours glance down from their windows and go back to their noodles.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### KA-02 主視覺（直）　`ka-02-portrait.png`
@@ -470,7 +524,7 @@ Visual joke: the same audition for the apocalypse, as a vertical ladder of hope:
 
 Scene: at the top, the white saucer, with grey alien HR officers looking down with clipboards. Its searchlight ends in a red scanning line that rests on one window in the middle, where the Everyman holds up a single sheet of paper, deadpan, bathed in white light. Above and below, dozens of windows with residents holding their art up towards the light. At the bottom, flood water up to the third floor: a resident on a floating door holds a painting above their head.
 Composition: leave the upper quarter fairly plain for the game logo. The lit window is the brightest point.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ### 第四批：市集、篩選日、徽章、素材包（8 張）
@@ -485,7 +539,7 @@ Image SCENE-market: banner for the in-game "Second-hand Market". Landscape 3:2 (
 Visual joke: everything has a price, including other people's lives.
 
 Scene: a night market under a concrete flyover, one big stall where every item hangs from a price tag: odd trinkets on velvet, sealed foil card packs, a photocopier, a polishing wheel, and also a set of dentures, a wedding ring, an urn and a framed family portrait. The stall keeper, a tired old trader with a cat asleep on the counter, waits. Overhead, a neon sign of a smiling coin mascot buzzes.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### SCENE-review 篩選日　`scene-review.png`
@@ -498,7 +552,7 @@ Image SCENE-review: illustration for "Screening Day", the end-of-round check. La
 Visual joke: you are weighed and scanned like produce at a market.
 
 Scene: night on a tenement rooftop. In a saucer's beam, a giant brass balance scale floats: on one pan a small glowing orb (a human soul), on the other a small brass weight. An alien HR officer with a fixed smile scans the Everyman's forehead with a supermarket barcode scanner. On the other side, a landlord in a vest and slippers holds out a palm, with a ledger so long that it unrolls across the whole rooftop. The Everyman stands between them, holding three coins, deadpan.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### EMBLEM 星際人才發展局徽章　`emblem.png`
@@ -511,7 +565,7 @@ Image EMBLEM: logo emblem of the alien corporation "Interstellar Talent Developm
 Visual joke: the bureau's friendly corporate logo is literally a claw machine.
 
 A sleek, symmetrical emblem: a smiling flying saucer lowers a claw-machine claw that is picking up a tiny human holding a paintbrush; thin circuit-like lines curve around it like a laurel wreath. Flat, only two or three colours (white, pale lime #9be36b, a touch of navy). Friendly and sinister at the same time. No letters.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### 素材包（5 個）
@@ -524,7 +578,7 @@ Same rules as set at the start.
 Image PACK-flood: a booster pack of "material cards" sold in the in-game market. Portrait 2:3 (1024x1536). A sealed, crinkled foil pack with crimped seals at the top and bottom, standing upright and centred, on a transparent background (if transparency is not possible, use plain flat #151a2e). The wrapper looks like cheerful corporate snack packaging with a cute mascot; the joke is in what is being sold. No words or numbers anywhere.
 
 Theme "Old Town Dive", teal and gold: a cute cartoon fish mascot in a diving mask proudly holds up a stranger's family photo it found in a drowned living room.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### PACK-sky 天空區垃圾包（機械、霓虹）　`pack-sky.png`
@@ -534,7 +588,7 @@ Same rules as set at the start.
 Image PACK-sky: a booster pack of "material cards" sold in the in-game market. Portrait 2:3 (1024x1536). A sealed, crinkled foil pack with crimped seals at the top and bottom, standing upright and centred, on a transparent background (if transparency is not possible, use plain flat #151a2e). The wrapper looks like cheerful corporate snack packaging with a cute mascot; the joke is in what is being sold. No words or numbers anywhere.
 
 Theme "Sky District Junk", silver and neon magenta: the rich people's rubbish, gift-wrapped as a luxury product. A bin bag tied with a gold ribbon, overflowing with broken gadgets (a cracked robot eye, a burnt-out neon tube), presented by a smug champagne-glass mascot.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### PACK-street 街坊包（人情、飢餓、希望）　`pack-street.png`
@@ -544,7 +598,7 @@ Same rules as set at the start.
 Image PACK-street: a booster pack of "material cards" sold in the in-game market. Portrait 2:3 (1024x1536). A sealed, crinkled foil pack with crimped seals at the top and bottom, standing upright and centred, on a transparent background (if transparency is not possible, use plain flat #151a2e). The wrapper looks like cheerful corporate snack packaging with a cute mascot; the joke is in what is being sold. No words or numbers anywhere.
 
 Theme "Neighbourhood", coral, orange and green: a bowl of noodles, a bowl of sweet soup and a potted plant, presented by a tired smiling dumpling mascot. A price sticker in the corner has been covered by five more price stickers, each one slightly bigger.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### PACK-under 地下包（反叛、憤怒、愧疚）　`pack-under.png`
@@ -554,7 +608,7 @@ Same rules as set at the start.
 Image PACK-under: a booster pack of "material cards" sold in the in-game market. Portrait 2:3 (1024x1536). A sealed, crinkled foil pack with crimped seals at the top and bottom, standing upright and centred, on a transparent background (if transparency is not possible, use plain flat #151a2e). The wrapper looks like cheerful corporate snack packaging with a cute mascot; the joke is in what is being sold. No words or numbers anywhere.
 
 Theme "Underground", dark violet and crimson: crossed spray-paint cans, a torn poster, a broken chain and a smouldering match, with a cute rebel-cat mascot, and a big black censor bar printed diagonally across the whole wrapper.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### PACK-far 遠方包（外國素材，較貴）　`pack-far.png`
@@ -564,13 +618,13 @@ Same rules as set at the start.
 Image PACK-far: a booster pack of "material cards" sold in the in-game market. Portrait 2:3 (1024x1536). A sealed, crinkled foil pack with crimped seals at the top and bottom, standing upright and centred, on a transparent background (if transparency is not possible, use plain flat #151a2e). The wrapper looks like cheerful corporate snack packaging with a cute mascot; the joke is in what is being sold. No words or numbers anywhere.
 
 Theme "Far Away", lavender and gold with a holographic rainbow sheen (this is the rarer, more expensive pack): a glossy holiday-brochure picture of a paradise beach with a sunglasses-wearing sun mascot, except that the palm trees stand half underwater and the tip of a pyramid pokes out of the sea.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ### 第五批（選做）
 
 #### 創作桌場景（4 張）
-用途：取代 CSS 畫的創作桌舞台背景。會裁成 4:1 長條；中間要暗而且簡單（素材卡會放在上面），笑位放在左右兩端。
+用途：取代 CSS 畫的創作桌舞台背景。每局看 15 次，所以笑話放在左右兩端、安靜一點；會裁成 4:1 長條，中間要暗而且簡單（素材卡會放在上面）。
 
 ##### STAGE-desk 平常的晚上　`stage-desk.png`
 笑位：日曆每天都劃掉；窗上用膠紙記錄水位，最新一條已經高過窗台。
@@ -581,7 +635,7 @@ Image STAGE-desk: wide backdrop behind the card-playing area. Landscape 3:2 (153
 Visual joke: the water-level marks taped on the window have climbed above the windowsill.
 
 Scene: late night at the protagonist's desk, seen from the front. Left end: a brass lamp casting a warm pool of light on manuscripts and a coffee mug, and a wall calendar with every single day crossed out. Right end: a window with rain outside and strips of tape marking the rising water level; the newest strip is already above the windowsill, and water glints outside.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### STAGE-hall 社區小展　`stage-hall.png`
@@ -593,7 +647,7 @@ Image STAGE-hall: wide backdrop behind the card-playing area. Landscape 3:2 (153
 Visual joke: half the audience is cardboard cut-outs, and the only real person is asleep.
 
 Scene: a small community hall on a flood-proof upper floor: red velvet curtains at both ends, triangle bunting, buzzing fluorescent tubes. Along the bottom edge, rows of folding chairs filled with flat cardboard cut-out people; in the front row, one real elderly person has fallen asleep.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### STAGE-gallery 畫廊聯展　`stage-gallery.png`
@@ -605,7 +659,7 @@ Image STAGE-gallery: wide backdrop behind the card-playing area. Landscape 3:2 (
 Visual joke: the frames contain only price tags, and the visitors photograph themselves instead.
 
 Scene: a pristine white-cube gallery in the Sky District, track spotlights forming cones of light. At both ends, elegant gold frames hang on the white walls with nothing inside but a single dangling price tag; rich visitors in white pose for selfies in front of them. The middle of the wall is dim and empty.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ##### STAGE-ufo 外星評審　`stage-ufo.png`
@@ -617,7 +671,7 @@ Image STAGE-ufo: wide backdrop behind the card-playing area. Landscape 3:2 (1536
 Visual joke: the judges are not paying attention.
 
 Scene: the judging chamber inside the alien mothership: curved, ribbed metal walls and a tractor-beam core glowing pale green at the top centre. At the far left and far right, grey alien judges in suits sit behind a long curved bench: one is asleep, one scrolls a phone, and one has already raised a scorecard before anything has happened (the card shows only a symbol).
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### 出國明信片（6 張，取代通用的 DAY-trip）
@@ -626,7 +680,7 @@ Same rules as set at the start.
 ```
 Image TRIP-<region>: travel postcard for the rare "Go Abroad" day card. Landscape 3:2 (1536x1024), cropped to a 2:1 banner through the middle and shown small, so use one main subject and big shapes.
 Visual joke: tourism at the end of the world. Every place is partly flooded and full of tourists photographing it.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 | 檔名 | 地區 | 接在共用開頭之後 |
@@ -648,7 +702,7 @@ Image KA-03: wide panorama. Landscape 3:2 (1536x1024); it will be cropped to a 3
 Visual joke: the saucers scan the city like a supermarket checkout.
 
 Scene: a calm night panorama of the flooded Floating City: dozens of tenements standing in the sea, lit windows, laundry, boats tied to windows. Three white saucers glide above, each sweeping a beam that ends in a thin red scanning line across the rooftops; on each rooftop, a small queue of hopeful residents waits, holding up their art. The Sky District floats on the right, glowing gold, with a giant cheerful mascot billboard. No single character in focus. Slightly darker in the centre for the logo.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### ICON 遊戲圖示　`icon.png`
@@ -659,49 +713,49 @@ Image ICON: game icon. Square 1:1 (1024x1024), transparent background (if transp
 
 Visual joke: aliens pick talent the way you play a claw machine.
 
-A claw-machine claw hangs from the underside of a white saucer and lifts a tiny person holding a pencil. Very chunky pixels, as if drawn at 32x32 and scaled up, so it reads at tiny sizes. Bold shapes, maximum contrast.
-Same rules as set at the start.
+A claw-machine claw hangs from the underside of a white saucer and lifts a tiny person holding a pencil. Very chunky pixels and bold, simple shapes with maximum contrast, so it reads at tiny sizes.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 #### 另外三個結局
 `END-perfect` 是「被選中」的變化（靈魂很輕的時候）；`END-grey`、`END-ordinary` 只在舊模式出現。
 
-`END-perfect`：你的臉變成了外星人的標準笑容。
+`END-perfect`：結局文字「你的靈魂只有幾克，輕得像一張表格。你篩選地球人時，一點也不猶豫。」笑位：你的臉變成了外星人的標準笑容；靈魂只剩一張表格。
 
 ```
-Image END-perfect: ending illustration in the same office and framing as image END-agent. Landscape 3:2 (1536x1024), cropped to 16:9 through the middle. The humour should be bitter, never cruel.
+Image END-perfect: ending illustration in the same office and framing as image END-agent. Landscape 3:2 (1536x1024), cropped to 16:9 through the middle. Sadness first, then one bitter detail; never cruel.
 
-Visual joke: you have become the perfect employee: your face is now the aliens' face.
+Visual joke: you have become the perfect employee: your face is now the aliens' face, and your soul is as light as a form.
 
-Scene: the same alien office as END-agent, but colder and almost monochrome. The Everyman's skin has turned grey and their face wears exactly the same fixed smile as the aliens; they stamp red crosses onto human files at machine speed. Their reflection in the dark window is an alien. A tiny white feather, all that is left of their soul, floats above their head.
-Same rules as set at the start.
+Scene: the same alien office as END-agent, but colder and almost monochrome. The Everyman's skin has turned grey and their face wears exactly the same fixed smile as the aliens; they stamp red crosses onto human files at machine speed. Their reflection in the dark window is an alien. Above their head floats a single blank form, all that is left of their soul.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
-`END-grey`：你終於當上了「本月最佳員工」，在你變成灰色之後。
+`END-grey`：結局文字「你沒有死，只是不再思考。浮城多了一個非常有效率的標註員。」笑位：你終於當上了「本月最佳員工」，在你變成灰色之後。
 
 ```
-Image END-grey: ending illustration. Landscape 3:2 (1536x1024), cropped to 16:9 through the middle. The humour should be bitter, never cruel.
+Image END-grey: ending illustration. Landscape 3:2 (1536x1024), cropped to 16:9 through the middle. Sadness first, then one bitter detail; never cruel.
 
 Visual joke: you finally became employee of the month, after you turned grey.
 
 Scene: a night office of identical cubicles where workers label photos on monitors. The Everyman sits perfectly upright in profile, completely grey like a stone statue (skin, clothes, hair), eyes empty, clicking mechanically. On the wall, a framed "employee of the month" photo shows the same grey face. The whole picture is greyscale except the cold monitor glow and one tiny, dim pink spark on the desk.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
-`END-ordinary`：外星人走了，房東沒有。
+`END-ordinary`：結局文字「探射燈今晚沒有停在你的窗外……而你仍然在這裡。」笑位：外星人走了，房東沒有。
 
 ```
-Image END-ordinary: ending illustration. Landscape 3:2 (1536x1024), cropped to 16:9 through the middle. The humour should be bitter, never cruel.
+Image END-ordinary: ending illustration. Landscape 3:2 (1536x1024), cropped to 16:9 through the middle. Sadness first, then one bitter detail; never cruel.
 
 Visual joke: the aliens leave; the landlord doesn't.
 
 Scene: dawn on a rooftop garden. The Everyman sits on a plastic stool with a cup of tea; the water has risen to the edge of the roof and laps at their slippers; their drawings hang drying on the laundry line. Far away, the alien saucers fly off into the sunrise. Close by, the landlord's little boat is already approaching, ledger in hand. Bittersweet and quiet.
-Same rules as set at the start.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
 ```
 
 ---
 
-## 八、收到圖之後（Claude）
+## 九、收到圖之後（Claude）
 
 1. **檢查**：文字、亂碼、手指、風格是否一致、構圖能不能裁切、縮小之後笑位還看不看得出。不合格的列出來請你重做。
 2. **像素化**：縮到原生像素、減色、對齊色票；人物頭像和素材包去背。原圖不放進遊戲。
@@ -713,7 +767,7 @@ Same rules as set at the start.
    - 手機版面、減少動態效果；單一 HTML 的大小上限改為 2.5 MB。
 4. **Steam**：遊戲名稱標誌由我用遊戲標題的字型做成透明 PNG，再和主視覺合成各種尺寸（2024 年起的要求是：頁首 920×430、小 462×174、主要 1232×706、直式 748×896、收藏庫 600×900、收藏庫大圖 3840×1240、標誌 1280×720；上傳時以 Steamworks 的最新說明為準）。
 
-## 九、注意事項
+## 十、注意事項
 
 - **Steam 要申報 AI 內容**：上架時要在「內容調查」申報 AI 生成的內容（預先生成的美術可以使用，但要寫明）。
 - **版權**：完全由 AI 生成的圖，在部分地區未必受版權保護；經過人手修改（像素化、修圖、合成）會比較穩妥。商業用途以 ChatGPT 當時的使用條款為準。
