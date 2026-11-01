@@ -17,6 +17,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `docs/workorders/README.md` | 這份：流程、狀態表、交給 Gemini 的指令範本 |
+| `docs/workorders/HANDOFF.md` | 給接手的 Claude 的交接文件（角色、規則、審核步驟、現在的狀態） |
 | `docs/workorders/CONVENTIONS.md` | **工作守則**：分支、程式風格、文字、介面、測試、禁止事項（每張工單都要遵守） |
 | `docs/workorders/REVIEW.md` | Claude 的審核標準（Gemini 交 PR 之前可以自己先檢查一次） |
 | `docs/workorders/phase-15/README.md` | 第十五期總規格：規則、數值、狀態欄位、介面文字的唯一來源 |
