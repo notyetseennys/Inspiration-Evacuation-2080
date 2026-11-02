@@ -27,7 +27,8 @@
     // 白天
     offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
     skipSpark: 0.2,                 // 睡懶覺
-    tripCost: 85, tripPick: 2,      // 出國：五選二
+    tripCost: 240, tripPick: 2,     // 出國：五選二；2026-11-02 製作人：出國要更貴（約一期租，見 docs/ECONOMY.md）
+    tripStar: 4, tripSpark: 0.6,    // 出國帶回的素材是 ★4（親眼見過的東西最亮）；火花 +0.6（WO-15-14 接上）
     // 市集
     objReroll: [20, 30, 40, 50],    // 重抽物件
     pack: 35, packFar: 55,          // 素材包
