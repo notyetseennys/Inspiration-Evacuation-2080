@@ -243,8 +243,8 @@ module.exports = (t) => {
     });
   });
 
-  t.test('故事資料：R 級角色全部有角色線', () => {
-    Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === 'R')
-      .forEach((id) => assert.ok(ST().lines[id], 'R 級角色沒有角色線：' + id));
+  t.test('故事資料：R 級和 SR 級角色全部有角色線', () => {
+    Object.keys(D.BACKGROUNDS).filter((id) => ['R', 'SR'].includes(D.BACKGROUNDS[id].rarity))
+      .forEach((id) => assert.ok(ST().lines[id], D.BACKGROUNDS[id].rarity + ' 級角色沒有角色線：' + id));
   });
 };
