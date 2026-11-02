@@ -19,7 +19,8 @@ module.exports = (t) => {
     rent: [160, 240, 305, 365, 430],
     offerReroll: [10, 20, 30],
     skipSpark: 0.2,
-    tripCost: 85, tripPick: 2,
+    tripCost: 240, tripPick: 2,
+    tripStar: 4, tripSpark: 0.6,
     objReroll: [20, 30, 40, 50],
     pack: 35, packFar: 55,
     packStars: [0.01, 0.05, 0.18, 0.36, 0.40],
@@ -110,7 +111,7 @@ module.exports = (t) => {
     assert.equal(C.name, '浮城');
     assert.equal(C.zone, '第 7 區');
     assert.equal(C.difficulty, 1);
-    assert.deepEqual(C.currency, { name: '浮城元', symbol: '$', rate: 1, regime: 'peg', regimeName: '與星際信用點掛鈎' });
+    assert.deepEqual(C.currency, { name: '浮城元', symbol: '$', rate: 20, regime: 'peg', regimeName: '與星際信用點掛鈎' });
     assert.deepEqual(C.econ, { rent: 1, pay: 1, price: 1, inflation: 1 });
   });
 };

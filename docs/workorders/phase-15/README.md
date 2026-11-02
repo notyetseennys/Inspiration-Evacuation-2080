@@ -109,7 +109,8 @@ ECON: {
   // 白天
   offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
   skipSpark: 0.2,                 // 睡懶覺
-  tripCost: 85, tripPick: 2,      // 出國：五選二
+  tripCost: 240, tripPick: 2,     // 出國：五選二；2026-11-02 製作人：出國要更貴（約一期租，見 docs/ECONOMY.md）
+  tripStar: 4, tripSpark: 0.6,    // 出國帶回的素材是 ★4（親眼見過的東西最亮）；火花 +0.6（WO-15-14 接上）
   // 市集
   objReroll: [20, 30, 40, 50],    // 重抽物件
   pack: 35, packFar: 55,          // 素材包
@@ -137,7 +138,7 @@ ECON: {
 D.CITIES = {
   zone7: {
     name: '浮城', zone: '第 7 區', treaty: 'grey', difficulty: 1, difficultyName: '比較輕鬆',
-    currency: { name: '浮城元', symbol: '$', rate: 1, regime: 'peg', regimeName: '與星際信用點掛鈎' },
+    currency: { name: '浮城元', symbol: '$', rate: 20, regime: 'peg', regimeName: '與星際信用點掛鈎' },
     econ: { rent: 1, pay: 1, price: 1, inflation: 1 },
     blurb: '……',
   },
@@ -148,7 +149,8 @@ D.CITY_DEFAULT = 'zone7';
 - 第十五期只有一座城市。它的倍數全部是 1，即 `D.ECON` 本身就是第 7 區的經濟；規格測試鎖定這些數值。
 - `s.city`：五輪模式的城市 id，由 `IE.Story.init` 設定（沒有時用 `D.CITY_DEFAULT`）。
 - 第十五期只有故事線讀取城市（`IE.Story.money`，§14.3）；`IE.Rounds` 的租金、收入和價錢暫時不讀 `econ`，第二十期加入其他城市時另寫工單接上。
-- `currency.rate` 是顯示倍數（介面顯示的金額 = 遊戲數值 × `rate`）。第十五期維持 1；要不要改為 20（2080 年的票面價格）由製作人決定（`docs/ECONOMY.md` 第三節）。
+- `currency.rate` 是顯示倍數（介面顯示的金額 = 遊戲數值 × `rate`）。製作人在 2026-11-02 決定用 2080 年的票面價格：第 7 區是 20（`docs/ECONOMY.md` 第三節）。
+- **金額只在介面的最後一步乘 `rate`，而且只乘一次**（WO-15-14 的 `IE.Rounds.cashText`）：邏輯、資料、報告和故事線（`IE.Story.fmt`）一律用遊戲數值。經典模式不換算。
 
 ## §7 生活卡 `D.DAYCARDS`
 
@@ -166,7 +168,7 @@ D.CITY_DEFAULT = 'zone7';
 | `garden` | `life` | 小遊戲 `garden` | |
 | `friend:<npc>` | `friend` | 和該朋友聊天（沿用 `IE.Talk` 和 `R.applyChat`），之後**必定**令 `D.TEACH[npc]` 的配色升一級 | 每位還在浮城的朋友一張；花 `R.chatCost(s)` |
 | `volunteer` | `volunteer` | `R.applyVolunteer(s)` | 靈魂變輕 |
-| `trip:<origin>` | `trip` | 付 `ECON.tripCost`，從 `origin` 相同的素材中抽 5 張，選 `ECON.tripPick` 張加入素材庫；火花 +0.4 | 第 2 輪起；每次出牌有 15% 機會出現在第三張；`origin` 只用 asia、europe、america、africa、arctic、ocean。報告（旅費、實際的火花、帶回的素材）由 `choose` 建立並存在 `s.trip5.rep`，`tripPick` 選滿時回傳 `rep`；選到一半重新載入，介面回到五選二（WO-15-06 審核後加入） |
+| `trip:<origin>` | `trip` | 付 `ECON.tripCost`，從 `origin` 相同的素材中抽 5 張，選 `ECON.tripPick` 張加入素材庫；火花 +0.4（WO-15-14 起：火花 `ECON.tripSpark`，帶回的素材是 ★`ECON.tripStar`） | 第 2 輪起；每次出牌有 15% 機會出現在第三張；`origin` 只用 asia、europe、america、africa、arctic、ocean。報告（旅費、實際的火花、帶回的素材）由 `choose` 建立並存在 `s.trip5.rep`，`tripPick` 選滿時回傳 `rep`；選到一半重新載入，介面回到五選二（WO-15-06 審核後加入） |
 
 - 卡名和說明沿用 `R.actions(s)` 對應行動的 `name`、`sub`；朋友卡用「找 X 聊天」、出國卡用「出國：X」（X 用 `D.REGIONS`）。
 - **出牌規則** `IE.Rounds.offer(s)`：三張不同的卡。第一張從 `work`／`shady` 抽，第二張從 `life`／`friend` 抽，第三張從全部可用的卡（包括 `volunteer`，第 2 輪起有 15% 機會是 `trip`）抽。被世界事件關閉（`worldClosed`）或被 AI 取代（`s.removed`）的工作不出現。某一格的種類沒有可用的卡時（例如全部工作停工），改從其餘可用的卡抽，三張仍然不同。同一晚重複呼叫回傳同一組（存在 `s.offer`）。
@@ -349,7 +351,7 @@ s.rentMod = null;  // { round, mult }：fx.rent 留給本輪租金的倍數
 - **有得必有失**（`docs/WORLD.md` 第五節）：每個選項至少有一項「得」和一項「失」；每個反轉至少有一項「失」。得：`cr`、`spark`、`friend`、`chance` 大於 0；`atone`、`card`、`obj`、`form`；`target`、`rent` 小於 1。失：`cr`、`spark`、`chance` 小於 0；`sin`；`target`、`rent` 大於 1。`notice` 和 `set` 不算。
 - **錢按城市換算**（`docs/ECONOMY.md` 第六節）：
   - `IE.Story.money(s, v)` = `round(v × (v ≥ 0 ? econ.pay : econ.price) × econ.inflation^(本輪 − 1))`，`econ` 是 `D.CITIES[s.city].econ`。
-  - `IE.Story.fmt(s, v)` = `currency.symbol` + `|v| × currency.rate`（千位加逗號，不帶正負號）。
+  - `IE.Story.fmt(s, v)` = `currency.symbol` + `|v|`（遊戲數值，千位加逗號，不帶正負號）。**不乘** `currency.rate`：介面在最後一步統一換算（§6.1、WO-15-14），以免乘兩次。
   - `IE.Story.say(s, str, fx)`：把文字裡的 `{cr}` 換成 `fmt(s, money(s, fx.cr))`、`{rent}` 換成 `fmt(s, IE.Rounds.rentOf(s, 本輪))`、`{city}` 換成城市名、`{currency}` 換成貨幣名。章的 `text`、選項的 `label` 和 `line`、反轉的 `text`、結語都要經過 `say`。
 - 選項上顯示 `side`、極端的標記和效果：`IE.Story.fx(s, option)`，格式同 `R.optionFx`，金額已經換算；極端的選項另加一行 `['note', '物極必反（' + after + ' 輪後）：' + 反轉效果的摘要]`。玩家選擇之前看得見代價。
 - 結語：`D.STORY.lines[角色].epilogue = [{ if, unless, text }]`，`IE.Story.epilogue(s)` 用第一個成立的。
