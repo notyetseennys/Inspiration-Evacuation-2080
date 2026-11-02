@@ -16,10 +16,11 @@ module.exports = (t) => {
     earlyBonus: 8,
     overkillSpark: 0.22,
     failSpark: -0.3,
-    rent: [160, 240, 305, 365, 430],
+    rent: [175, 265, 335, 400, 475],
     offerReroll: [10, 20, 30],
     skipSpark: 0.2,
-    tripCost: 85, tripPick: 2,
+    tripCost: 240, tripPick: 2,
+    tripStar: 4, tripSpark: 0.6,
     objReroll: [20, 30, 40, 50],
     pack: 35, packFar: 55,
     packStars: [0.01, 0.05, 0.18, 0.36, 0.40],
@@ -29,6 +30,7 @@ module.exports = (t) => {
     tech: 20, techStep: 10,
     toolMult: 1,
     sparkFloor: 1,
+    hideCost: [80, 120, 160, 200],
   };
 
   // 總規格 §11
@@ -98,5 +100,18 @@ module.exports = (t) => {
     assert.deepEqual(M.stageDays, [4, 8, 12]);
     assert.equal(M.season, 20);
     assert.equal(M.sketch, false);
+  });
+
+  // 總規格 §6.1：第十五期只有一座城市，倍數全部是 1（ECON 本身就是第 7 區的經濟；見 docs/ECONOMY.md）
+  t.test('規格：城市與總規格 §6.1 一致', () => {
+    if (!D.CITIES) return;
+    assert.equal(D.CITY_DEFAULT, 'zone7');
+    assert.deepEqual(Object.keys(D.CITIES), ['zone7']);
+    const C = D.CITIES.zone7;
+    assert.equal(C.name, '浮城');
+    assert.equal(C.zone, '第 7 區');
+    assert.equal(C.difficulty, 1);
+    assert.deepEqual(C.currency, { name: '浮城元', symbol: '$', rate: 20, regime: 'peg', regimeName: '與星際信用點掛鈎' });
+    assert.deepEqual(C.econ, { rent: 1, pay: 1, price: 1, inflation: 1 });
   });
 };

@@ -41,7 +41,8 @@
     const k = night == null ? s.night : night;
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'stageTarget') : 1;
     const ease = s && s.firstRun && k <= 2 ? D.ECON.firstRunEase : 1;
-    return sig3(D.ECON.t1 * Math.pow(D.ECON.growth, k - 1) * stMod * ease);
+    const nMod = s && s.nightMod && s.nightMod.night === k ? s.nightMod.mult : 1;
+    return sig3(D.ECON.t1 * Math.pow(D.ECON.growth, k - 1) * stMod * ease * nMod);
   }
 
   // 第 r 輪結束時的租金
@@ -51,7 +52,8 @@
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'rent') : 1;
     const wMod = (s && R.worldMods(s).rentMult) || 1;
     const pMod = (s && D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.rentMult) || 1;
-    return Math.round(base * stMod * wMod * pMod);
+    const rMod = s && s.rentMod && s.rentMod.round === r ? s.rentMod.mult : 1;
+    return Math.round(base * stMod * wMod * pMod * rMod);
   }
 
   // ---------- 白天：生活卡 ----------
@@ -80,12 +82,17 @@
   function drawOfferIds(s) {
     const all = cardList(s);
     const kOf = (id) => { const d = cardDef(id); return d ? d.kind : ''; };
+    const pl = (s.night - 1) % 3 === 1 && IE.Story && IE.Story.plan ? IE.Story.plan(s) : null;
+    const st = s && s.story;
+    const plannedFriend = pl && pl.npc && R.aliveNpcs(s).some((n) => n.id === pl.npc) && !(st && st.taken && st.taken[pl.npc]) && !(st && st.hidden && st.hidden[pl.npc])
+      ? 'friend:' + pl.npc
+      : null;
     // 某一格的種類沒有可用的卡（例如世界事件令全部工作停工）：改從其餘可用的卡抽，三張仍然不同
     const others = (used) => all.filter((id) => !id.startsWith('trip:') && !used.includes(id));
     const p1 = all.filter((id) => { const k = kOf(id); return k === 'work' || k === 'shady'; });
-    const c1 = R.pick(s, p1.length ? p1 : others([]));
+    const c1 = R.pick(s, p1.length ? p1 : others(plannedFriend ? [plannedFriend] : []));
     const p2 = all.filter((id) => { const k = kOf(id); return (k === 'life' || k === 'friend') && id !== c1; });
-    const c2 = R.pick(s, p2.length ? p2 : others([c1]));
+    const c2 = plannedFriend || R.pick(s, p2.length ? p2 : others([c1]));
     const tripDef = D.DAYCARDS.find((c) => c.id === 'trip');
     const trips = all.filter((id) => id.startsWith('trip:'));
     const rest = others([c1, c2]);
@@ -224,6 +231,11 @@
     if (id.startsWith('friend:')) {
       of.chosen = id;
       const npcId = id.slice(7);
+      const r = roundOf(s);
+      const pl = IE.Story && IE.Story.plan ? IE.Story.plan(s) : (s.story && s.story.plan && s.story.plan[r]);
+      if (pl && pl.npc === npcId && s.story) {
+        s.story.met[npcId] = r;
+      }
       const fid = D.TEACH[npcId];
       const lv0 = (s.forms && s.forms[fid]) || 1;
       const rep = R.applyChat(s, npcId, reply);
@@ -311,8 +323,9 @@
     s.lost = s.lost || [];
     s.lost.push(cause);
     if (rep && rep.line) {
-      const msg = cause === 'rent' ? D.ROUND_TEXT.rentFail
+      const msg = cause === 'rent' ? D.ROUND_TEXT.rentFail.replace('{rent}', String(rentOf(s)))
         : cause === 'soul' ? D.ROUND_TEXT.soulFail.replace('{soul}', (s.soul || 0).toFixed(1))
+        : cause === 'story' ? '失去一次機會。'
         : D.ROUND_TEXT.failed;
       rep.line(msg, 'bad');
     }
@@ -731,14 +744,6 @@
     }
     s.roundLog = s.roundLog || [];
     s.roundLog.push({ round, rent, paid, soul, soulOk, lost });
-    if (!s.ended) {
-      if (round >= 5 && s.chances > 0) {
-        s.ended = R.endingFor(s, 'recruited');
-        s.phase = 'ended';
-      } else {
-        advance(s);
-      }
-    }
     const rep = {
       round,
       rent,
@@ -749,9 +754,23 @@
       lost,
       chances: s.chances,
       passed,
-      ending: s.ended || null,
+      ending: null,
       lines,
+      collect: null,
     };
+    if (!s.ended) {
+      if (round >= 5 && s.chances > 0) {
+        s.ended = R.endingFor(s, 'recruited');
+        s.phase = 'ended';
+      } else {
+        if (round < 5 && IE.Story && IE.Story.collect) {
+          IE.Story.collect(s, rep);
+        }
+        advance(s);
+      }
+    }
+    rep.ending = s.ended || null;
+    // 篩選日的報告跟着存檔（WO-15-08 §6）：重新載入時仍然可以顯示，ackReview 之後清除
     s.reviewRep = rep;
     return rep;
   }

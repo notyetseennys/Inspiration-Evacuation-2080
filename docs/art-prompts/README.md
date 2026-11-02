@@ -1,6 +1,6 @@
-# 美術盤點與生圖 prompt（第二版：黑色幽默）
+# 美術盤點與生圖 prompt（第三版：黑色幽默＋故事線、外星種族、經濟）
 
-> 給製作人。最後更新：2026-11-01（2.1：按遊戲的卡面文字、小遊戲操作、結局文字和朋友的對白逐張核對）。
+> 給製作人。最後更新：2026-11-02（第三版：第一至五批的 51 張已經收到並處理好，放在 `game/img/`；新增第十一節「第六批」，給故事線、外星種族和浮城經濟用，並重畫出國卡）。
 > 用途：用 ChatGPT 生成遊戲缺少的插圖。收到圖之後，由 Claude 處理成像素圖，再寫成美術整合工單交給 Gemini。
 > **第二版**：第一版試做的 5 張圖畫工很好，但語氣太可愛、太溫馨。第二版加入「黑色幽默的畫法」，重寫了風格設定；第三節說明哪些 prompt 真的要改、哪些不用（第一版在 git 歷史裡）。
 > 參考圖在 `docs/art-prompts/ref/`（由遊戲直接截取，沒有文字）。
@@ -9,7 +9,7 @@
 
 ## 一、現在的美術
 
-遊戲裡**沒有任何圖片檔**：全部畫面都是程式畫的。美術任務書 `docs/GEMINI_BRIEF.md` 規定「沒有外部素材」，只有你提供的背景音樂是例外。
+遊戲裡**沒有任何圖片檔**：全部畫面都是程式畫的。美術任務書 `docs/GEMINI_BRIEF.md` 本來規定「沒有外部素材」；製作人在 2026-11-01 刪除了這條規定，圖片可以加入。
 
 **已經完成，不需要重畫**：
 - 121 件物件圖示、20 個角色半身像、19 位外星評審（像素字串）。半身像本來就是豆眼、表情平淡，和冷面的風格一致；
@@ -24,7 +24,7 @@
 4. 結局沒有插圖；設計大綱說結局和死亡畫面是玩家截圖分享的主要來源。
 5. 沒有主視覺和標誌：路線圖的下一步是 Steam 頁面和 Next Fest。
 
-**限制**：單一 HTML 檔現在 1.58 MB，已經超過任務書的 1.5 MB 上限。每張圖收到之後由我縮到遊戲的原生像素（結局和場景 320×180、生活卡約 160×80、頭像 64×64）、減到約 32 色；處理後每張約 2 至 20 KB，全部約 300 KB。上限要改為 2.5 MB，而且圖片要像背景音樂一樣成為「沒有外部素材」的例外（等你決定）。
+**處理方法**：每張圖收到之後由我縮到遊戲的原生像素（結局和場景 320×180、生活卡約 160×80、頭像 64×64）、減到約 32 色；處理後每張約 2 至 20 KB。「沒有外部素材」的規定已經刪除，圖片放在 `game/img/`，用法在美術整合工單（WO-15-12）決定。
 
 ---
 
@@ -104,7 +104,10 @@
 | 第四批 | 素材包 5 個、市集、篩選日、徽章 | 8 | 市集（WO-15-07）、篩選日（WO-15-08）、檔案和備忘錄 |
 | 第五批（選做） | 創作桌場景 4 張、出國明信片 6 張、全景 KA-03、圖示、另外 3 個結局 | 15 | 創作桌、出國卡、Steam 收藏庫 |
 
-核心 36 張，選做 15 張。放進遊戲的工單排在 WO-15-08 之後。
+| **第六批**（2026-11-02，第十一節） | 4 個外星種族頭像、4 個「被收藏之後」的場景、章的橫幅、物極必反、阿星、浮城元紙幣、重畫出國卡 | 13 | 收藏預告、朋友近況、篩選日、章和反轉的視窗、白天面板、金額 |
+| 第六批（選做） | 其餘 6 個外星種族、「藏起來」 | 7 | 第十六期的評審按種族分派；藏起來的視窗 |
+
+第一至五批（51 張）已經收到：除了 3 張主視覺（Steam 和 README 用），48 張已經縮成遊戲的像素，放在 `game/img/`（`tools/art-import.py`），由 WO-15-12 放進遊戲。
 
 **不建議生成**：物件圖示、角色半身像、外星評審（已經完整）；舊模式的房間、地圖、目的地；任何帶文字的東西（遊戲名稱標誌由我用遊戲的字型做，因為中文字 ChatGPT 會寫錯）。
 
@@ -759,12 +762,13 @@ Same rules as set at the start (no anime or chibi features, muted world colours,
 
 1. **檢查**：文字、亂碼、手指、風格是否一致、構圖能不能裁切、縮小之後笑位還看不看得出。不合格的列出來請你重做。
 2. **像素化**：縮到原生像素、減色、對齊色票；人物頭像和素材包去背。原圖不放進遊戲。
-3. **美術整合工單**（暫定 WO-15-11，排在 WO-15-08 之後，交給 Gemini）：
+3. **美術整合工單**：WO-15-12（`docs/workorders/phase-15/WO-15-12.md`，排在 WO-15-08、14 之後，交給 Gemini）：
    - 生活卡的卡頂橫幅（同時保證 WO-15-08 的「桌面第一屏看到三張卡」）；
    - 朋友頭像放進朋友卡和聊天視窗；
    - 結局插圖放在「人類樣本檔案」頂部；
-   - 市集橫幅、素材包、篩選日插圖、徽章；
-   - 手機版面、減少動態效果；單一 HTML 的大小上限改為 2.5 MB。
+   - 市集橫幅、素材包、篩選日插圖、徽章、創作桌的四個場景；
+   - 手機版面、減少動態效果；單一 HTML 的大小上限是 4 MB。
+   - 已經做好（2026-11-02）：第一至五批的 48 張用 `tools/art-import.py` 處理好，放在 `game/img/`（合共約 850 KB）。
 4. **Steam**：遊戲名稱標誌由我用遊戲標題的字型做成透明 PNG，再和主視覺合成各種尺寸（2024 年起的要求是：頁首 920×430、小 462×174、主要 1232×706、直式 748×896、收藏庫 600×900、收藏庫大圖 3840×1240、標誌 1280×720；上傳時以 Steamworks 的最新說明為準）。
 
 ## 十、注意事項
@@ -773,6 +777,201 @@ Same rules as set at the start (no anime or chibi features, muted world colours,
 - **版權**：完全由 AI 生成的圖，在部分地區未必受版權保護；經過人手修改（像素化、修圖、合成）會比較穩妥。商業用途以 ChatGPT 當時的使用條款為準。
 - **不要在 prompt 加入其他遊戲或在世畫家的名字**，避免模仿特定作品引起爭議。
 - **插圖只負責氣氛和笑位**：規則和數字仍然由介面顯示，插圖上不放任何資訊。
+
+---
+
+## 十一、第六批：故事線、外星種族、浮城經濟（2026-11-02）
+
+第十五期加入了故事線（朋友被外星種族收藏、每輪的人生抉擇、物極必反、阿星）和浮城經濟（浮城元、昂貴的出國）。這一批補上它們的畫面。
+
+**做法和之前一樣**：同一個新對話先貼第七節的「風格設定」，再上載參考圖和 KA-01（風格樣板）。外星種族的圖另外上載 `ref-judges.png`。**畫外星種族之前，先貼下面這一段補充設定**（只要貼一次）：
+
+```
+ADDENDUM: ALIEN SPECIES
+From now on, the city is visited by several alien species, not only the grey HR staff of the Interstellar Talent Development Bureau. They are all "collectors" of human culture, like colonial-era collectors: curious, possessive and polite, never monstrous. Each species has its own silhouette, materials and colour, described in each request. Keep them deadpan and slightly absurd, never scary or cute. Each design must be readable as a silhouette at 64x64 pixels. Keep every other rule from the start of this conversation.
+Reply "OK".
+```
+
+### 外星種族頭像（核心 4 個；1:1，用法和朋友頭像一樣）
+
+用途：收藏預告（「本輪的收藏家：章魚星人看中了芳姐」）、朋友的近況、篩選日的收藏、人類樣本檔案的「朋友們」。每局會看很多次，所以**笑位要輕**：一個安靜的細節。
+
+#### SPECIES-grey 灰人（星際人才發展局）　`species-grey.png`
+腔調：人事部術語：「表現符合預期」。笑位：工作證上的相片是一個空白的人形。
+
+```
+Image SPECIES-grey: portrait of an alien species. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery.
+
+Species: the grey HR staff of the Interstellar Talent Development Bureau, as established: grey skin, large black almond eyes, an identical neat dark suit, a lanyard with an ID card, a clipboard held against the chest, a fixed polite smile.
+Quiet detail: the photo on its own ID card is a blank human-shaped silhouette.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### SPECIES-octo 章魚星人（觀光團和私人收藏家）　`species-octo.png`
+腔調：拍賣目錄和旅遊指南。笑位：恤衫的花紋是浮城淹水的唐樓。
+
+```
+Image SPECIES-octo: portrait of an alien species. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery.
+
+Species: the Octopods, wealthy alien tourists and private collectors who adore human art the way a colonial collector adores curios: they love it by owning it. A soft violet-pink octopus-like head with calm, heavy-lidded eyes; several tentacles visible at the shoulders. It wears a loud tourist shirt and a camera on a strap; one tentacle holds a jeweller's loupe, another a price-tag gun. As rich tourists they may use the corporate neon pink and gold.
+Quiet detail: the tourist shirt's print is a repeating pattern of tiny flooded tenement towers.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### SPECIES-myco 菌絲網絡（蘑菇星的集體意識）　`species-myco.png`
+腔調：田野筆記。笑位：它的田野筆記本，其實是一塊長了青苔的人類日記。
+
+```
+Image SPECIES-myco: portrait of an alien species. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery.
+
+Species: the Mycelial Network, a collective mind from a fungal planet that studies why humans can reach inspiration. A tall, soft figure made of pale woven fungal threads, with a wide mushroom cap instead of a head and faintly glowing lime-green gills (#9be36b, dim) under the cap; no visible face, yet it reads as attentive and calm. Thin thread-like fingers hold a pencil and a field notebook; a tiny glass sample tube hangs at its chest.
+Quiet detail: the field notebook is an old human diary with moss growing over its cover.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### SPECIES-conserve 保育者（以保護為名的家長）　`species-conserve.png`
+腔調：自然紀錄片的旁白。笑位：襟章是一個人形，外面圍着「請勿觸摸」的圓圈。
+
+```
+Image SPECIES-conserve: portrait of an alien species. Square 1:1 (1024x1024). Head and shoulders, three-quarter view, centred, on a plain flat dark navy background (#151a2e) with no scenery.
+
+Species: the Conservators, gentle aliens who "protect" humans as an endangered species by moving them into safe, sterile reserves where nobody ever creates anything again. Tall and porcelain-white, with a smooth face and small kind, tired eyes, like a softly spoken nature-documentary narrator. They wear a crisp park-ranger uniform with mint-green trim, soft white gloves and a wide-brimmed hat; a butterfly net rests on one shoulder.
+Quiet detail: the badge on the uniform is a pictogram of a human figure inside a "do not touch" circle.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+### 「被收藏之後」的場景（核心 4 個；3:2，會裁成 16:9）
+
+用途：朋友被收藏之後傳來的近況（白天面板的 `.rd-fate`），以及篩選日的收藏那一行。圖裡的人**不畫成某一位朋友**（從背面或遠處看），因為每位朋友都可能被同一個種族收藏。
+
+#### COLLECT-octo 章魚星人的客廳　`collect-octo.png`
+笑位：人類被放在玻璃櫃裡表演，八隻手的客人鼓掌，但沒有一隻手拍得準。
+
+```
+Image COLLECT-octo: illustration of where a collected human ends up. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details.
+
+Visual joke: a human is kept as a living exhibit in a rich alien's living room, applauded by guests with too many hands.
+
+Scene: a huge, luxurious alien living room with soft neon pink and gold lighting. Along the wall stand tall glass display cases with small brass plaques (no text), each holding a human object: a rusty bicycle, a rice cooker, a street-food cart. In the centre, inside the largest glass case, a human performer (seen from behind) sings on a tiny stage. Octopod guests in tourist shirts recline on sofas and applaud with eight tentacles each, all out of rhythm; one films with a camera.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### COLLECT-myco 菌絲網絡的研究室　`collect-myco.png`
+笑位：人類坐着寫字，四周的蘑菇全部在做筆記。
+
+```
+Image COLLECT-myco: illustration of where a collected human ends up. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details.
+
+Visual joke: a human is studied so gently and so closely that every mushroom in the room is taking notes.
+
+Scene: a quiet, dim cave-like laboratory grown out of pale fungal threads, lit only by faint lime-green bioluminescence. A small human (seen from behind) sits at a plain wooden desk, writing by the warm light of a single desk lamp (the only warm light in the room). All around, dozens of mushroom-capped observers of different sizes lean in from the walls and the ceiling, each holding a tiny notebook and pencil. Threads from the walls connect softly to the legs of the desk.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### COLLECT-conserve 保育者的人類保護區　`collect-conserve.png`
+笑位：保護區按浮城的樣子建了一條街，乾淨、安全、空無一人；唯一的居民在看說明牌。
+
+```
+Image COLLECT-conserve: illustration of where a collected human ends up. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details.
+
+Visual joke: a perfect, safe, spotless replica of the old city, with nobody living in it.
+
+Scene: inside an enormous glass dome on an alien planet, a spotless replica of a Floating City street: a few tenement shopfronts, a footbridge, laundry poles with perfectly folded clean laundry, a calm artificial pond where the flood water should be. Everything is white, mint and pale grey, sterile and quiet. A single human resident (seen from behind) stands reading an information plaque (no text) in front of a perfectly preserved dessert shop. Outside the dome, porcelain-white Conservators watch through binoculars and take notes. A sign shows a pictogram: no boats.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### COLLECT-grey 發展局的人才檔案庫　`collect-grey.png`
+笑位：被選中的人坐在一模一樣的工位，頭頂掛着一模一樣的「本月最佳員工」相框。
+
+```
+Image COLLECT-grey: illustration of where a collected human ends up. Landscape 3:2 (1536x1024); it will be cropped to 16:9 through the middle, so keep the top and bottom 8% free of important details.
+
+Visual joke: everyone recruited ends up at an identical desk under an identical "employee of the month" frame.
+
+Scene: an endless, symmetrical open-plan office aboard a white saucer, under flat fluorescent light. Rows of identical desks stretch to the horizon; at each one sits a recruited human in the same grey uniform, painting on a screen. Above every desk hangs the same framed "employee of the month" portrait, a blank human silhouette with a gold star. Grey HR aliens with clipboards walk between the rows checking a bar chart. One human (seen from behind) in the foreground has stopped painting and is looking out of a small round window at the distant, tiny Earth.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+### 故事線的畫面（核心 3 個）
+
+#### STORY-crossroads 每輪的人生抉擇　`story-crossroads.png`
+用途：章的視窗 `.rd-story` 的橫幅（每輪一次）。笑位：每一條人生路的入口都有一個收費閘。
+
+```
+Image STORY-crossroads: banner for "a choice in your life". Landscape 3:2 (1536x1024); it will be cropped to a 2:1 banner through the middle and shown small, so use big shapes.
+
+Visual joke: every path in life starts with a toll gate.
+
+Scene: night. The Everyman stands at the centre of a concrete footbridge junction above flooded streets, seen from behind. Four walkways split away: one lit by flashing neon-gold coin signs towards the Sky District; one rising as a narrow staircase towards a single faint star; one leading down to a warm-lit window where neighbours share a pot of food; one straight, plain path with a balance scale painted on it. At the start of every walkway stands an identical small toll gate with a card reader.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### STORY-reversal 物極必反　`story-reversal.png`
+用途：反轉的視窗 `.rd-reversal` 的橫幅。笑位：桌上的金幣越堆越高，它的影子是一個快要打下來的浪。
+
+```
+Image STORY-reversal: banner for "what goes up must come down". Landscape 3:2 (1536x1024); it will be cropped to a 2:1 banner through the middle and shown small, so use big shapes.
+
+Visual joke: the taller your pile of gold, the bigger the wave in its shadow.
+
+Scene: a small, dark room in a tenement, lit by one harsh desk lamp. On the desk, a tall, precarious tower of glowing neon-gold coins. The lamp throws the tower's shadow on the wall behind, and the shadow is shaped like a huge curling ocean wave about to crash down onto the desk. The Everyman sits at the desk, deadpan, still adding one more coin.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### ASTAR 阿星（被選中的朋友）　`astar.png`
+用途：白天面板的阿星訊息（`.rd-astar`）。阿星的訊息由興奮慢慢變成自動回覆和亂碼，所以頭像本身要平靜；「亂碼」的效果由介面做。笑位：窗外永遠是白天。
+
+```
+Image ASTAR: portrait of the protagonist's old friend, now working for the aliens. Square 1:1 (1024x1024). Head and shoulders, facing the viewer as if on a video call, centred.
+
+An androgynous young adult with a neat short haircut, in a crisp grey alien-corporate uniform with a lanyard and a small saucer pin. A polite, slightly too-wide customer-service smile; tired eyes. Behind them, a round saucer window shows endless bright daylight and white clouds (there is no night up there). The left edge of the image breaks into a few horizontal pixel-glitch stripes, like a bad video connection.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+### 浮城經濟（核心 2 個）
+
+#### NOTE-floatcity 浮城元紙幣　`note-floatcity.png`
+用途：狀態列的金額圖示、交租那一行。笑位：紙幣上的人像是一位發展局的人事主任；水印是一部夾公仔機。
+
+```
+Image NOTE-floatcity: a banknote of the Floating City currency, as a game icon. Landscape 2:1 (1536x768), transparent background (if transparency is not possible, use plain flat #0d1020).
+
+Visual joke: the currency's portrait is an alien HR officer, and its watermark is a claw machine, because the currency is pegged to the alien credit and backed by "talent exports".
+
+A single crisp banknote, slightly worn and creased, seen flat and straight. Muted teal and slate engraving patterns with a little neon-pink security foil. On the right, an oval portrait medallion of a smiling grey alien HR officer. On the left, a faint watermark of a claw-machine claw holding a tiny human. In the middle, a small engraving of the flooded Floating City skyline. No numbers, no letters, no symbols that look like writing.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+#### DAY-trip（重畫）出國　`day-trip.png`
+為甚麼重畫：出國由 $85 加價到一期租（畫面顯示 $4,800：機票、氣候附加費、邊境保證金）。新的笑位要講「貴」。舊的那張可以改用在出國的報告。
+笑位：登機證長到像交租的收據，一直拖到機艙的走廊；旁邊的有錢乘客戴着虛擬實境眼鏡看海灘。
+
+```
+Image DAY-trip: illustration for a rare and expensive "day card". Landscape 3:2 (1536x1024). It will be cropped to a 2:1 banner through the middle and shown very small, so use one main subject and a few big shapes; the joke must read from silhouettes alone.
+
+Visual joke: travelling abroad now costs as much as a month of rent, and the boarding pass is as long as a rent receipt.
+
+Scene: inside a cramped aeroplane cabin. The Everyman sits squeezed in a narrow middle seat, holding a boarding pass that unrolls into an absurdly long receipt of surcharges, trailing across the aisle and out of frame. On both sides, wealthy passengers in neon-trimmed clothes wear glowing VR visors showing a sunny beach. Through the small window, the flooded Floating City shrinks away under storm clouds.
+Same rules as set at the start (no anime or chibi features, muted world colours, no text).
+```
+
+### 選做（7 個）
+
+其餘 6 個外星種族，在第十六期「評審按種族分派」之前生成就可以；`story-hide` 給「藏起來」的視窗。畫法同上（種族頭像 1:1、場景 3:2）。
+
+| 編號 | 檔名 | 設計 | 笑位 |
+|---|---|---|---|
+| SPECIES-mirror 鏡神族 | `species-mirror.png` | 沒有固定形體，像流動的鏡面；頭頂一圈由廣告牌框組成的光環 | 臉是一塊鏡，照出看着它的人 |
+| SPECIES-harvest 收割者 | `species-harvest.png` | 高瘦的農夫，水鞋、吊帶褲、掃描器做成的鐮刀；額前垂着鮟鱇魚一樣的燈 | 那盞燈是唯一的暖光，卻是陷阱 |
+| SPECIES-elder 先選者 | `species-elder.png` | 衣着純白、姿態優雅的人類後代，瞳孔微微發光，手持半透明的平板 | 參觀淹水的浮城時，用手帕掩着鼻 |
+| SPECIES-defector 逃兵網絡 | `species-defector.png` | 一個灰人穿着破了的西裝和連帽衫，替一個蘑菇星人包紮 | 他們穿得和主角一樣（這是唯一的暖光） |
+| SPECIES-ascend 升維者 | `species-ascend.png` | 天台上空一個安靜發光的多面體，幾乎看不見 | 所有人都在拍照，只有它在看 |
+| SPECIES-purge 淨化派 | `species-purge.png` | 穿着白色防護衣的「牧師」，背着白漆噴槍 | 他們把一幅壁畫噴成白色，然後滿意地點頭 |
+| STORY-hide 藏起來 | `story-hide.png` | 一艘反轉的木船浮在水上，船底露出兩雙腳；飛碟的探射燈在旁邊掃過 | 兩雙腳裡，有一雙在打拍子 |
+
+### 收到之後
+
+每張圖照 `tools/art-import.py` 的規格處理（種族頭像 128×128、場景 320×180、橫幅 256×128、紙幣 128×64），放在 `game/img/`；用法寫在 WO-15-12 第 4 節和 WO-15-13。
 
 ---
 
@@ -792,6 +991,13 @@ Same rules as set at the start (no anime or chibi features, muted world colours,
 | 五 | TRIP-asia、europe、america、africa、arctic、ocean | `trip-<region>.png` ×6 | 3:2 |
 | 五 | KA-03、ICON | `ka-03-panorama.png`、`icon.png` | 3:2、1:1 |
 | 五 | END-perfect、grey、ordinary | `end-<id>.png` ×3 | 3:2 |
+| 六 | SPECIES-grey、octo、myco、conserve | `species-<id>.png` ×4 | 1:1 |
+| 六 | COLLECT-grey、octo、myco、conserve | `collect-<id>.png` ×4 | 3:2 |
+| 六 | STORY-crossroads、STORY-reversal | `story-crossroads.png`、`story-reversal.png` | 3:2 |
+| 六 | ASTAR | `astar.png` | 1:1 |
+| 六 | NOTE-floatcity | `note-floatcity.png` | 2:1 |
+| 六 | DAY-trip（重畫） | `day-trip.png` | 3:2 |
+| 六（選做） | SPECIES-mirror、harvest、elder、defector、ascend、purge；STORY-hide | `species-<id>.png` ×6、`story-hide.png` | 1:1、3:2 |
 
 參考圖（`docs/art-prompts/ref/`）：
 

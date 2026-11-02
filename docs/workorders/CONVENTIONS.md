@@ -14,7 +14,7 @@
 
 ## 2. 程式
 
-- 純 JavaScript（ES2019），不加任何函式庫、框架、建置工具或外部素材。
+- 純 JavaScript（ES2019），不加任何函式庫、框架或建置工具。圖片、音檔等素材可以加入，放在 `game/` 之下的資料夾（例如 `game/img/`）。
 - 兩格縮排、單引號、句尾分號、每個檔案 `'use strict'`。
 - **純邏輯檔案**（`data*.js`、`rules.js`、`create.js`、`stages.js`、`rounds.js`、`world.js`、`jobs2.js`、`auto.js`、`meta.js`、`dossier.js`）：
   - 瀏覽器和 Node（模擬器、單元測試）共用，用 UMD 寫法：
@@ -64,7 +64,7 @@ diff /tmp/sim-before.txt /tmp/sim-after.txt && echo "舊模式沒有改變"
 - 系統設定減少動態效果時（`IE.Pixel.reducedMotion`），閃光、震動、全畫面演出要改為靜態或極短版本。
 - 總規格和煙霧測試用到的 class 名稱、`data-do`、`data-slot` 等屬性**不可以改名**。
 - 新樣式加在 `game/css/polish.css` 檔尾，前面寫一行註解標明期數和工單（例如 `/* 第十五期 WO-15-06：白天面板 */`）。
-- 字型只用已載入的 Noto Sans HK、Silkscreen、VT323；圖像用 CSS、內嵌 SVG、像素字串或 canvas。
+- 字型只用已載入的 Noto Sans HK、Silkscreen、VT323；圖像可以用圖片檔，也可以用 CSS、內嵌 SVG、像素字串或 canvas。
 
 ## 6. 測試
 
