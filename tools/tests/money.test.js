@@ -32,6 +32,14 @@ module.exports = (t) => {
     assert.equal(RD.cashText(s, plain), plain);
   });
 
+  t.test('2b. cashText：金額後面的半形逗號保留、多組千位（WO-15-14 審核加入）', () => {
+    const s = run({ mode: 'rounds' });
+    assert.equal(RD.cashText(s, '$84, $20'), '$1,680, $400');
+    assert.equal(RD.cashText(s, '換一批：$10,$20,$30'), '換一批：$200,$400,$600');
+    assert.equal(RD.cashText(s, '$1,234,567'), '$24,691,340');
+    assert.equal(RD.cashText(s, '+$84。'), '+$1,680。');
+  });
+
   t.test('3. cashText：經典模式下原樣回傳（不換算也不補千分位）', () => {
     const s = run({ mode: 'standard' });
     const raw = '現有 $1234，賺 +$84，花 −$20，街頭 $ +120 / $ -30';

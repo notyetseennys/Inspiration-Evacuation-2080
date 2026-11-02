@@ -6,6 +6,7 @@
 //   ECON='{"growth":1.28,"nightPay":{"small":95,"big":150,"boss":220}}' node tools/sim-rounds.js 200
 //   BG=monk node tools/sim-rounds.js 50
 //   SEED0=5000 node tools/sim-rounds.js 200（換一段種子：第 i 局的種子是 SEED0 + i，審核時確認結果穩定）
+//   TRIP=any node tools/sim-rounds.js 200（只要付得起旅費就出國，不保留本輪租金：估計出國本身的價值，見 CALIBRATION.md 第九節）
 'use strict';
 
 const path = require('path');
@@ -47,6 +48,8 @@ const ALL_STRATS = [
   { id: 'shameless', name: '無良   (shameless)' },
   { id: 'random',    name: '亂玩   (random)' },
 ];
+// 出國的門檻（WO-15-14 審核加入）：TRIP=any 時只要付得起旅費就出國，不保留本輪租金；用來估計出國本身的價值
+const TRIP_ANY = process.env.TRIP === 'any';
 const STRATS = process.env.STRAT
   ? ALL_STRATS.filter((x) => process.env.STRAT.split(',').includes(x.id))
   : ALL_STRATS;
@@ -133,7 +136,7 @@ function pickDayCard(s, strat) {
       const ia = topForms.indexOf(fa), ib = topForms.indexOf(fb);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     });
-    const trips = infos.filter((c) => c.kind === 'trip' && s.cr >= rent + tripCost);
+    const trips = infos.filter((c) => c.kind === 'trip' && s.cr >= (TRIP_ANY ? tripCost : rent + tripCost));
     const lives = infos.filter((c) => c.kind === 'life').sort((a, b) => (LIFE_RANK[b.id] || 0) - (LIFE_RANK[a.id] || 0));
     if (trips.length) return trips[0].id;
     if (lives.length) return lives[0].id;
@@ -191,7 +194,7 @@ function pickDayCard(s, strat) {
   });
   if (friends.length) return friends[0].id;
 
-  const trips = pool.filter((c) => c.kind === 'trip' && s.cr >= rent + tripCost + 60);
+  const trips = pool.filter((c) => c.kind === 'trip' && s.cr >= (TRIP_ANY ? tripCost : rent + tripCost + 60));
   if (trips.length) return trips[0].id;
 
   const lives = pool.filter((c) => c.kind === 'life').sort((a, b) => (LIFE_RANK[b.id] || 0) - (LIFE_RANK[a.id] || 0));

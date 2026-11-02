@@ -416,9 +416,16 @@
   }
 
   // ---------- 報告 ----------
+  // 五輪模式的貨幣名稱取自所在城市（docs/ECONOMY.md；第 7 區是浮城元）
+  function cityCurrency() {
+    const s = IE.Game && IE.Game.state;
+    const C = D().CITIES || {};
+    const c = (s && C[s.city]) || C[D().CITY_DEFAULT];
+    return (c && c.currency && c.currency.name) || '浮城元';
+  }
   function deltasHtml(d, isRounds) {
     const out = [];
-    if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span></div>');
+    if (d.cr) out.push('<div class="delta cr"><span class="k">' + (isRounds ? esc(cityCurrency()) : '信用點') + '</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span></div>');
     if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
     if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');

@@ -35,7 +35,8 @@
     const r = rate(s);
     if (r === 1) return str;
     return str.replace(
-      /(?:([+\-−]?)\$([ \t]*)|\$([ \t]*[+\-−][ \t]*))(\d[\d,]*)/g,
+      // 數字只接受 1,234 這種千位寫法；金額後面的半形逗號（例如「$84, $20」）保留原樣（WO-15-14 審核修正）
+      /(?:([+\-−]?)\$([ \t]*)|\$([ \t]*[+\-−][ \t]*))(\d{1,3}(?:,\d{3})+(?!\d)|\d+)/g,
       (m, pre, sp, post, digits) => {
         const n = Number(digits.replace(/,/g, ''));
         if (!Number.isFinite(n)) return m;

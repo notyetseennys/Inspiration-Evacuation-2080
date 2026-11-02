@@ -37,6 +37,29 @@ const URL = 'http://localhost:' + PORT + '/';
     process.exit(1);
   };
   const ok = (msg) => console.log('✓ ' + msg);
+  // WO-15-14 審核加入（工單第 5 節第 2 步）：畫面上每一個金額都已經換算成票面價格（第 7 區 × 20）。
+  // 每一個金額都是 20 的倍數；同一個區域（一次寫入畫面）只要有金額，最大的一個至少 $100。
+  // 沒有換算的區域，金額是遊戲數值（大多小於 $100，例如聊天 $15、素材包 $35），會被抓到；
+  // 換算後的小額（例如 $2 的評級獎金 → $40）不會誤判，因為同一次寫入的其他金額證明這個區域已經換算。
+  const scanMoney = async (label, sels, need) => {
+    const groups = await page.evaluate((list) => {
+      const re = /[+\-−]?\$[ \t]*[+\-−]?[ \t]*\d[\d,]*/g;
+      const out = [];
+      list.forEach((sel) => document.querySelectorAll(sel).forEach((el) => {
+        const m = (el.innerText || '').match(re);
+        if (m) out.push(m);
+      }));
+      return out;
+    }, sels);
+    const num = (x) => Number(x.replace(/[^\d]/g, ''));
+    const found = [].concat(...groups);
+    const bad = found.filter((x) => num(x) % 20 !== 0);
+    const raw = groups.filter((g) => { const ns = g.map(num); return ns.some((n) => n > 0) && Math.max(...ns) < 100; });
+    if (found.length < (need || 0)) await fail(label + '：應該至少有 ' + need + ' 個金額，只找到 ' + found.length + ' 個（' + sels.join('、') + '）');
+    if (bad.length) await fail(label + '：有金額不是 20 的倍數（沒有換算）：' + bad.join('、'));
+    if (raw.length) await fail(label + '：有區域的金額全部小於 $100（可能沒有換算）：' + raw.map((g) => g.join('、')).join('／'));
+    ok('票面價格（' + label + '）：' + found.length + ' 個金額都已換算' + (found.length ? '，例如 ' + found.slice(0, 3).join('、') : ''));
+  };
 
   try {
     await page.goto(URL);
@@ -135,6 +158,18 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('狀態列或白天面板票面價格不正確：' + JSON.stringify(dayCashCheck));
     }
     ok('票面價格（白天）：HUD 含 ' + dayCashCheck.expCr + ' 與租金 ' + dayCashCheck.expRent + '；換一批含 ' + dayCashCheck.expReroll);
+    // WO-15-14 審核加入（工單第 5 節第 1 步）：直接比對數字，不經 IE.Rounds.cash（第一期租金 $175 × 20；錢 = s.cr × 20，文案出身起始 $170）
+    const hudLit = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      return { cr: s.cr, want: '$' + (s.cr * 20).toLocaleString('en-US'),
+        cash: ((document.querySelector('#hud .m-cash .num') || {}).textContent || '').trim(),
+        rent: ((document.querySelector('#hud .chip.rent') || {}).textContent || '').trim() };
+    });
+    if (hudLit.cash !== hudLit.want || !hudLit.rent.includes('$3,500') || (hudLit.cr === 170 && hudLit.cash !== '$3,400')) {
+      await fail('第 1 晚：狀態列的錢應是 ' + hudLit.want + '、租金應是 $3,500，實際：' + JSON.stringify(hudLit));
+    }
+    ok('第 1 晚：錢 ' + hudLit.cash + '（遊戲數值 $' + hudLit.cr + '）、' + hudLit.rent);
+    await scanMoney('第 1 晚的白天', ['#hud', '#panel'], 3);
 
     if (process.env.SHOTS) {
       fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
@@ -193,6 +228,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('#modal [data-do="ok"]');
     const hasBodyDelta = await page.$('#modal .delta.body');
     if (hasBodyDelta) await fail('五輪模式的報告視窗不應顯示身體變化');
+    await scanMoney('報告視窗', ['#modal'], 0);
     await page.click('#modal [data-do="ok"]');
 
     await page.waitForSelector('#ctable .ct-hand .cc');
@@ -248,6 +284,7 @@ const URL = 'http://localhost:' + PORT + '/';
     const hasEndGoal = await page.$('#ctable .ct-end .ct-goal.end');
     if (hasEndGoal) await fail('五輪模式結束面板不應顯示 .ct-goal.end（本季訊號列）');
     await page.waitForSelector('#ctable .ct-end [data-end="shop"]');
+    await scanMoney('第 1 晚的收工結束卡', ['#ctable .ct-end'], n1.pass ? 1 : 0);
     if (process.env.SHOTS) {
       await page.waitForTimeout(350);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-end-desktop.png') });
@@ -290,6 +327,7 @@ const URL = 'http://localhost:' + PORT + '/';
     if (shopCashAfter !== shopCashBefore.expPack) {
       await fail('關閉管理物件後市集價格被二次換算：應為 ' + shopCashBefore.expPack + '，實際為 ' + shopCashAfter);
     }
+    await scanMoney('第 1 晚的市集', ['#modal .rd-shop', '#hud'], 3);
     ok('票面價格（市集）：' + shopCashBefore.slot + ' 顯示 ' + shopCashBefore.expPack + '（s.cr=' + shopCashBefore.cr + '），pushModal 還原後不重複換算');
 
     // 檢查手機 390px 市集無橫向捲軸且每個按鈕高度 >= 44px
@@ -343,6 +381,8 @@ const URL = 'http://localhost:' + PORT + '/';
     if (lvAfter !== lvBefore + 1) await fail('技法課升級後等級應 +1（' + lvBefore + ' → ' + lvAfter + '）');
     if (!techDisabled) await fail('技法課購買後按鈕應變成 disabled');
     ok('技法課升級「' + techFid + '」：Lv.' + lvBefore + ' → Lv.' + lvAfter);
+    // 買素材包之後，開包的視窗會再畫一次狀態列，浮動數字留不住；技法課買完之後不再重畫，所以在這裡檢查
+    await scanMoney('買技法課之後狀態列的浮動數字', ['#hud .float-delta'], 1);
 
     // 10b. 工作室服務（第 1 晚是燒掉）：在 .rd-pick 選一張，素材庫少一張（WO-15-07 第 9 步，審核時補上）
     const svc = await page.evaluate(() => window.__IE.Game.state.shop.service);
@@ -449,6 +489,7 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('篩選日本輪租金未換算為票面價格：應含 ' + revCashCheck.expRent + '，實際：' + revCashCheck.rentTxt);
     }
     ok('票面價格（篩選日）：本輪租金包含 ' + revCashCheck.expRent);
+    await scanMoney('第 1 輪的篩選日', ['#modal .rd-review', '#hud'], 2);
 
     if (process.env.SHOTS) {
       await page.waitForTimeout(200);
