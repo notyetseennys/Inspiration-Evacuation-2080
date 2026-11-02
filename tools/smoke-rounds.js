@@ -392,7 +392,13 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
-    ok('第 1 輪篩選日（.rd-review）：有 .rr-rent 與 .rr-soul，顯示「通過」及「進入第 2 輪」');
+    // 工單第 16 步：篩選日在手機 390px 沒有橫向捲動（WO-15-08 審核時加入）
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(200);
+    const revMob = await page.evaluate(() => document.documentElement.scrollWidth);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (revMob > 390) await fail('手機 390px 篩選日出現橫向捲動：scrollWidth=' + revMob);
+    ok('第 1 輪篩選日（.rd-review）：有 .rr-rent 與 .rr-soul，顯示「通過」及「進入第 2 輪」；手機 390px 沒有橫向捲動');
 
     // §6. 在 .rd-review 重新整理頁面再按「繼續」，仍然看到 .rd-review
     await page.reload();

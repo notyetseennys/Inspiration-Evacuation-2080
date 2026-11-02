@@ -26436,6 +26436,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     hud.hidden = false;
     if (IE.Rounds && IE.Rounds.on(s)) {
       const RD = IE.Rounds, T = D().ROUND_TEXT;
+      // 貨幣名稱取自所在城市（docs/ECONOMY.md；第 7 區是浮城元）
+      const city = (D().CITIES && (D().CITIES[s.city] || D().CITIES[D().CITY_DEFAULT])) || null;
+      const cur = (city && city.currency) || {};
       const chances = Math.max(0, s.chances == null ? 3 : s.chances);
       const rent = RD.rentOf(s);
       hud.innerHTML = ''
@@ -26448,7 +26451,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
         + '</div></div>'
         + '<div class="hud-meters rd-meters">'
-        + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">$' + fmt(s.cr) + '</b></div>'
+        + '<div class="meter m-cash"><span class="lbl">$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
         + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
         + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
         + '</div>';
