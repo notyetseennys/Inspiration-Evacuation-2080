@@ -204,13 +204,15 @@ function pickDayCard(s, strat) {
 function chooseStoryChapter(s, ch, strat) {
   const opts = ch.options || [];
   if (!opts.length) return 0;
-  const indices = opts.map((_, i) => i);
+  // 只考慮付得起的選項（總規格 §14.3：錢不夠的選項不可以選；每章至少有一個不用付錢的選項）
+  const affordable = opts.map((_, i) => i).filter((i) => !STORY.reason(s, opts[i]));
+  const indices = affordable.length ? affordable : opts.map((_, i) => i);
   if (strat === 'random') {
     return R.pick(s, indices);
   }
   if (strat === 'balanced') {
-    const idx = opts.findIndex((o) => o.side === 'both');
-    return idx >= 0 ? idx : 0;
+    const idx = indices.find((i) => opts[i].side === 'both');
+    return idx != null ? idx : indices[0];
   }
   if (strat === 'worker') {
     const surv = indices.filter((i) => opts[i].side === 'survive');
@@ -236,7 +238,7 @@ function chooseStoryChapter(s, ch, strat) {
   if (strat === 'shameless') {
     return indices.slice().sort((a, b) => ((opts[b].fx && opts[b].fx.cr) || 0) - ((opts[a].fx && opts[a].fx.cr) || 0))[0];
   }
-  return 0;
+  return indices[0];
 }
 
 function runDay(s, strat, metrics) {

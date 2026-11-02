@@ -230,14 +230,14 @@ module.exports = (t) => {
       // 支出乘 price (2.0) × inflation^(2-1) (1.6) = × 3.2
       assert.equal(Story.money(s, -50), Math.round(-50 * 2.0 * 1.6));
 
-      // fmt 乘 currency.rate (20)、加千位逗號、不帶正負號
-      assert.equal(Story.fmt(s, 100), 'C$2,000');
-      assert.equal(Story.fmt(s, -240), 'C$4,800');
+      // fmt 加貨幣符號和千位逗號、不帶正負號；不乘 currency.rate（介面最後一步才換算，WO-15-14）
+      assert.equal(Story.fmt(s, 100), 'C$100');
+      assert.equal(Story.fmt(s, -2400), 'C$2,400');
 
-      // say 替換 {cr}、{rent}、{city}、{currency}
+      // say 替換 {cr}、{rent}、{city}、{currency}（{cr} 是 money 換算之後的遊戲數值：100 × 2.4 = 240）
       const rent2 = Rounds.rentOf(s, 2);
       const text = Story.say(s, '在{city}用{currency}收了 {cr}，本輪租金 {rent}', { cr: 100 });
-      assert.equal(text, '在高通脹城用舊城幣收了 C$4,800，本輪租金 ' + Story.fmt(s, rent2));
+      assert.equal(text, '在高通脹城用舊城幣收了 C$240，本輪租金 ' + Story.fmt(s, rent2));
     } finally {
       delete D.CITIES.hyper;
     }
@@ -552,5 +552,27 @@ module.exports = (t) => {
     assert.equal(ep.friends.find((f) => f.npc === pl1.npc).species, pl1.species);
     assert.equal(ep.friends.find((f) => f.npc === pl2.npc).state, 'hidden');
     assert.ok(ep.friends.some((f) => f.state === 'stayed'));
+  });
+
+  // 17.（合併時加入）無效的選項不會改選另一個；錢不夠的選項不可以選（總規格 §14.3）
+  t.test('17. 無效的選項和付不起的選項：choose 甚麼都不做', () => {
+    const s = t.run({ mode: 'rounds', bg: 'copywriter', seed: 77 });
+    const ch = Story.chapter(s);
+    assert.ok(ch);
+    assert.equal(Story.choose(s, 99), null);
+    assert.equal(Story.choose(s, -1), null);
+    assert.equal(s.story.pending, ch.id, '無效的選項不會清除 pending');
+    // copywriter.1 的「要求署名」要付錢：錢不夠時不可以選
+    const i = ch.options.findIndex((o) => o.fx.cr < 0);
+    assert.ok(i >= 0);
+    s.cr = 0;
+    assert.ok(Story.reason(s, ch.options[i]));
+    assert.equal(Story.choose(s, i), null);
+    assert.equal(s.story.done.length, 0);
+    // 不用付錢的選項照樣可以選
+    const j = ch.options.findIndex((o) => !(o.fx.cr < 0));
+    assert.equal(Story.reason(s, ch.options[j]), null);
+    assert.ok(Story.choose(s, j));
+    assert.equal(s.story.done.length, 1);
   });
 };

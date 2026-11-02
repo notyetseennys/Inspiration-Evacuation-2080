@@ -105,7 +105,7 @@ ECON: {
   overkillSpark: 0.22,  // 分數達到目標兩倍：火花 +0.22
   failSpark: -0.3,      // 一晚失敗：火花 −0.3
   // 篩選日
-  rent: [160, 240, 305, 365, 430],
+  rent: [175, 265, 335, 400, 475],  // 每輪的租金；2026-11-02 加入故事線之後加一成（製作人：第 7 區維持，甚至稍為加難；CALIBRATION.md 第七節）
   // 白天
   offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
   skipSpark: 0.2,                 // 睡懶覺
@@ -324,7 +324,8 @@ s.rentMod = null;  // { round, mult }：fx.rent 留給本輪租金的倍數
   - `city`（可以沒有）：城市 id 的陣列，只在這些城市出現；沒有就每座城市都出現。
   - `options`：四至五個 `{ label, side, fx, line, extreme, later }`。`side` 是 `survive`、`both`、`peak`、`others` 其中一個；每章至少有生存、兼顧、巔峰各一。
 - `IE.Story.chapter(s)`：今天是本輪的第 `day` 天，找 `round` 等於本輪、城市符合、`if` 全部成立、`unless` 全部不成立、而且不在 `done` 的第一章；有的話設 `pending` 並回傳。同一天重複呼叫回傳同一章。這個角色還沒有內容就回傳 null。
-- `IE.Story.choose(s, i)`：套用 `pending` 那一章的第 i 個選項，回傳報告（`R.report`，標題是選項的 `label`，第一行是 `say` 之後的 `line`）；記在 `done`、`log`；`side` 累加（極端加倍）；極端的選項在 `later` 加 `{ round: 本輪 + later.after, id, i }`；`pending = null`。
+- **錢不夠的選項不可以選**（WO-15-11 審核時加入）：選項要付錢（`fx.cr < 0`）而 `s.cr` 少於換算後的金額時，`IE.Story.reason(s, option)` 回傳原因（「錢不夠（要 $X）」），介面把它停用。每章至少有一個不用付錢的選項（`story-data.test.js` 檢查），所以永遠有路可選。
+- `IE.Story.choose(s, i)`：無效的 i 或付不起的選項甚麼都不做（回傳 null，`pending` 不變）；否則套用 `pending` 那一章的第 i 個選項，回傳報告（`R.report`，標題是選項的 `label`，第一行是 `say` 之後的 `line`）；記在 `done`、`log`；`side` 累加（極端加倍）；極端的選項在 `later` 加 `{ round: 本輪 + later.after, id, i }`；`pending = null`。
 - **物極必反**（極端的選項，`extreme: true`）：現在得到很多；`later.after` 輪之後的第一天自動反轉。
   - `IE.Story.reversals(s)`：今天要發生的反轉（`later` 中 `round` 等於本輪，而且今天是本輪第一天），回傳 `[{ id, i, text, fx }]`（`text` 已經 `say`）；不改變狀態。
   - `IE.Story.reverse(s)`：套用這些反轉的 `later.fx`，從 `later` 移除，回傳報告（標題 `D.STORY.text.reversalHead`，每一則一行）；沒有就回傳 null。
@@ -359,6 +360,7 @@ s.rentMod = null;  // { round, mult }：fx.rent 留給本輪租金的倍數
 ### 4. 朋友線（收藏，做法 B）
 
 1. **預告**：每輪第一天（第 1、4、7、10 晚），`IE.Story.plan(s)` 決定本輪的收藏：種族是 `D.STORY.collectOrder[本輪 − 1]`；候選是還在浮城、沒有被收藏、而且 `D.STORY.friends[npc].collectors` 包含這個種族的朋友；沒有就用其他還在浮城的朋友；`R.pick` 一位，存在 `s.story.plan[本輪]`。一位朋友都不在浮城就不收藏（`plan[本輪] = null`）。同一輪重複呼叫不再抽。第 5 輪不收藏。
+   - 已經被收藏或藏起來的朋友，之後都不再是候選（藏起來的朋友一直留在浮城）。
    - 文字：朋友的 `why[種族]`、`fate[種族]`；改抽其他朋友時朋友沒有這個種族的文字，用 `D.STORY.species[種族].why`、`.fate`（`{npc}` 換成朋友的名字）。
 2. **最後一次見面**：本輪第二天，生活卡的第二張固定是這位朋友的朋友卡（`IE.Rounds.offer` 的出牌規則；朋友已經藏起來或不在就照舊）。選了這張朋友卡：`met[npc] = 本輪`。
 3. **藏起來**：朋友卡的聊天視窗多一個選項；`IE.Story.hide(s, npc)` 付 `|IE.Story.money(s, −ECON.hideCost[本輪 − 1])|`（錢不夠回傳失敗），`hidden[npc] = 本輪`，`notice[種族] += 1`，然後照常聊天。

@@ -97,11 +97,20 @@
     return moneyAtRound(s, v, s && IE.Rounds ? IE.Rounds.roundOf(s) : 1);
   }
 
+  // 只加貨幣符號和千位逗號，不乘 currency.rate：介面在最後一步換算一次（總規格 §6.1、WO-15-14），以免乘兩次
   function fmt(s, v) {
     const c = getCity(s);
-    const cur = (c && c.currency) || { symbol: '$', rate: 1 };
-    const num = Math.round(Math.abs(v || 0) * (cur.rate || 1));
+    const cur = (c && c.currency) || { symbol: '$' };
+    const num = Math.round(Math.abs(v || 0));
     return (cur.symbol || '$') + String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  // 選項不可以選的原因（沒有就回傳 null）：要付錢而錢不夠（總規格 §14.3）
+  function reason(s, opt) {
+    const f = opt && opt.fx;
+    if (!s || !f || !(f.cr < 0)) return null;
+    const cost = Math.abs(money(s, f.cr));
+    return s.cr < cost ? '錢不夠（要 ' + fmt(s, cost) + '）' : null;
   }
 
   function say(s, str, fxObj) {
@@ -317,8 +326,10 @@
     if (!st.pending) chapter(s);
     const ch = st.pending ? line.chapters.find((c) => c.id === st.pending) : null;
     if (!ch || !Array.isArray(ch.options) || !ch.options.length) return null;
-    const opt = ch.options[i] || ch.options[0];
-    const idx = ch.options.indexOf(opt);
+    if (!Number.isInteger(i) || i < 0 || i >= ch.options.length) return null;
+    const opt = ch.options[i];
+    if (reason(s, opt)) return null;
+    const idx = i;
     const f = opt.fx || {};
     const label = say(s, opt.label, f);
     const lineText = say(s, opt.line, f);
@@ -584,6 +595,7 @@
     money,
     fmt,
     say,
+    reason,
     hide,
     collect,
     astar,

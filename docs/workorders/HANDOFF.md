@@ -56,10 +56,11 @@
 | WO-15-01 至 07、09 | 已合併（審核記錄在 `docs/workorders/reviews/`） |
 | WO-15-08 篩選日介面、狀態列、隱藏舊系統 | **可以開始**（WO-15-07 審核後加了 §6：篩選日的重新載入） |
 | WO-15-10 成為預設、文件、發佈 | 等 08、11、13（第二版：故事線要在發佈之前完成） |
-| WO-15-11 故事線（邏輯） | **可以開始**（第二版，2026-11-02），可以和 08 同時做；規格在總規格 §6.1、§14 |
+| WO-15-11 故事線（邏輯） | 已合併（2026-11-02，第二版；審核記錄 `reviews/WO-15-11-r1.md`）。合併時加了「付不起的選項不可以選」（`IE.Story.reason`），租金加一成 |
 | WO-15-13 故事線（介面） | 等 08、11（第二版） |
 | WO-15-14 票面價格與出國 | 等 08 |
-| Gemini 的分支 | `gemini/wo-15-08-review-hud`（741af26）和 `gemini/wo-15-11-story-logic`（c0f6668，按第一版做，要補上第二版）已經推送，等製作人說「已完成」再審核 |
+| Gemini 的分支 | `gemini/wo-15-08-review-hud`（741af26）已經推送，等製作人說「已完成」再審核 |
+| 本地模型 | 製作人有 LM Studio 和 ComfyUI（RTX 3080、64 GB）；本地模型的工單在 `docs/workorders/LOCAL.md`（L-00 至 L-05），結果交給你檢查；核心工單仍然交給 Gemini |
 | WO-15-12 美術整合 | 等 08、14。51 張原圖在 `main` 分支的根目錄；48 張已經用 `tools/art-import.py` 處理好，放在 `game/img/`（主視覺 3 張不放進遊戲）。第六批的 prompt 在 `docs/art-prompts/README.md` 第十一節：製作人生成之後，你用同一個腳本處理，放進 `game/img/` |
 | 第十六至二十期 | `docs/workorders/BACKLOG.md` 只有清單；寫成正式工單之前，先對照 `docs/WORLD.md` 和 `docs/PILLARS.md` 修訂 |
 

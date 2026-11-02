@@ -16,7 +16,7 @@ module.exports = (t) => {
     earlyBonus: 8,
     overkillSpark: 0.22,
     failSpark: -0.3,
-    rent: [160, 240, 305, 365, 430],
+    rent: [175, 265, 335, 400, 475],
     offerReroll: [10, 20, 30],
     skipSpark: 0.2,
     tripCost: 240, tripPick: 2,

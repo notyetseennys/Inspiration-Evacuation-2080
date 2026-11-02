@@ -160,6 +160,7 @@ module.exports = (t) => {
         sides.forEach((x) => assert.ok(SIDES.includes(x), c.id + '：未知的 side ' + x));
         ['survive', 'both', 'peak'].forEach((x) => assert.ok(sides.includes(x), c.id + '：缺少「' + ST().text.sides[x] + '」的選項'));
         assert.ok(c.options.filter((o) => o.extreme).length <= 1, c.id + '：每章最多一個極端的選項');
+        assert.ok(c.options.some((o) => !(o.fx.cr < 0)), c.id + '：至少一個不用付錢的選項（錢不夠的選項不可以選）');
         assert.equal(new Set(c.options.map((o) => o.label)).size, c.options.length, c.id + '：選項的標題不可以重複');
         c.options.forEach((o, i) => {
           const where = c.id + ' 選項 ' + i;
