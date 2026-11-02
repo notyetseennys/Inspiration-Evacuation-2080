@@ -60,7 +60,7 @@
 | WO-15-13 故事線（介面） | 等 08、11（第二版） |
 | WO-15-14 票面價格與出國 | 等 08 |
 | Gemini 的分支 | `gemini/wo-15-08-review-hud`（741af26）和 `gemini/wo-15-11-story-logic`（c0f6668，按第一版做，要補上第二版）已經推送，等製作人說「已完成」再審核 |
-| WO-15-12 美術整合 | 工單未寫；51 張圖在 `main` 分支的根目錄（`docs/art-prompts/` 是 prompt 和參考圖）；「沒有外部素材」的規定已經刪除（2026-11-01），圖片可以加入 |
+| WO-15-12 美術整合 | 等 08、14。51 張原圖在 `main` 分支的根目錄；48 張已經用 `tools/art-import.py` 處理好，放在 `game/img/`（主視覺 3 張不放進遊戲）。第六批的 prompt 在 `docs/art-prompts/README.md` 第十一節：製作人生成之後，你用同一個腳本處理，放進 `game/img/` |
 | 第十六至二十期 | `docs/workorders/BACKLOG.md` 只有清單；寫成正式工單之前，先對照 `docs/WORLD.md` 和 `docs/PILLARS.md` 修訂 |
 
 `main.js` 裏的暫時版本：`roundsReview()`（直接完成篩選日）和 `roundsGo()` 的 `'ended'` 分支（直接 `finishRun`），都由 WO-15-08 取代。
