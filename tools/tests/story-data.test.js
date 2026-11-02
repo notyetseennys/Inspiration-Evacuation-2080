@@ -1,16 +1,19 @@
 // 故事線內容的檢查（由 Claude 維護）：game/js/data-story.js 必須符合總規格 §14。
 // 實作工單（WO-15-11、WO-15-13）不可以修改這個檔案，也不可以修改 data-story.js。
-// 重點：每個選項都「有得必有失」（docs/WORLD.md 第五節）；每個角色每一輪都有章，旗標的分支走得通。
+// 重點：每章四至五個選項；每個選項都「有得必有失」（docs/WORLD.md 第五節）；極端的選項之後會反轉（物極必反）；
+// 錢的尺度跟這一輪的租金（docs/ECONOMY.md 第六節）；每個角色每一輪都有章，旗標的分支走得通。
 module.exports = (t) => {
   const { D, assert } = t;
   const ST = () => D.STORY;
-  const SIDES = ['survive', 'both', 'peak'];
+  const SIDES = ['survive', 'both', 'peak', 'others'];
   const FX_KEYS = ['cr', 'spark', 'sin', 'guilt', 'tag', 'atone', 'card', 'obj', 'form', 'friend', 'chance', 'target', 'rent', 'notice', 'set'];
+  const PLACEHOLDERS = ['cr', 'rent', 'city', 'currency'];
   const tagOk = (x) => !!D.TAGS[x];
   const npcOk = (x) => D.NPCS.some((n) => n.id === x);
   const formOk = (x) => D.FORMS.some((f) => f.id === x);
   const isText = (x) => typeof x === 'string' && x.trim().length > 0;
   const flagsOf = (set) => (set ? [].concat(set) : []);
+  const rentOf = (round) => D.ECON.rent[round - 1];
 
   // 總規格 §14.3「有得必有失」的定義
   const gains = (fx) => {
@@ -37,6 +40,16 @@ module.exports = (t) => {
     if (fx.rent && fx.rent > 1) c.push('rent');
     return c;
   };
+  // 文字：只可以用 {cr}、{rent}、{city}、{currency}；{cr} 只可以出現在有 cr 的效果旁邊；不可以直接寫金額
+  const checkText = (str, where, hasCr) => {
+    assert.ok(isText(str), where + '：文字是空的');
+    (str.match(/\{(\w+)\}/g) || []).forEach((m) => {
+      const k = m.slice(1, -1);
+      assert.ok(PLACEHOLDERS.includes(k), where + '：未知的佔位符 ' + m);
+      if (k === 'cr') assert.ok(hasCr, where + '：寫了 {cr}，但這裡的效果沒有 cr');
+    });
+    assert.ok(!/\$\s*\d/.test(str), where + '：金額要寫 {cr} 或 {rent}，不可以直接寫數字（城市不同，金額不同）');
+  };
   const checkCard = (c, where) => {
     assert.ok(c && isText(c.name), where + '：素材要有名稱');
     assert.ok(Array.isArray(c.tags) && c.tags.length === 2 && c.tags.every(tagOk) && c.tags[0] !== c.tags[1], where + '：素材要有兩個不同而且存在的標籤');
@@ -47,7 +60,7 @@ module.exports = (t) => {
   };
   const checkFx = (fx, where, bg) => {
     Object.keys(fx).forEach((k) => assert.ok(FX_KEYS.includes(k), where + '：未知的效果 ' + k));
-    if ('cr' in fx) assert.ok(Number.isInteger(fx.cr) && fx.cr !== 0 && Math.abs(fx.cr) <= 300, where + '：cr');
+    if ('cr' in fx) assert.ok(Number.isInteger(fx.cr) && fx.cr !== 0, where + '：cr 是不等於 0 的整數');
     if ('spark' in fx) assert.ok(typeof fx.spark === 'number' && fx.spark !== 0 && Math.abs(fx.spark) <= 1, where + '：spark');
     if ('sin' in fx) assert.ok(fx.sin > 0 && fx.sin <= 3, where + '：sin 是 0 至 3');
     if (fx.sin >= 1) assert.ok(isText(fx.guilt) && tagOk(fx.tag) && fx.tag !== 'guilt', where + '：sin ≥ 1 會留下愧疚素材，要有 guilt 和 tag（tag 不可以是 guilt）');
@@ -66,17 +79,26 @@ module.exports = (t) => {
   // 第一個成立的章（總規格 §14.3；現在每章都是第 1 天）
   const chapterFor = (line, round, flags) => line.chapters.find((c) => c.round === round
     && (c.if || []).every((f) => flags.has(f)) && !(c.unless || []).some((f) => flags.has(f)));
+  const eachOption = (fn) => Object.keys(ST().lines).forEach((bg) => ST().lines[bg].chapters.forEach((c) => c.options.forEach((o, i) => fn(o, c, bg, c.id + ' 選項 ' + i + '（' + o.label + '）'))));
 
-  t.test('故事資料：D.STORY 的結構齊全', () => {
+  t.test('故事資料：D.STORY 和城市的結構齊全', () => {
     assert.ok(ST(), 'data-story.js 沒有載入');
     ['species', 'collectOrder', 'friends', 'astarNights', 'feed', 'text', 'lines'].forEach((k) => assert.ok(ST()[k], '缺少 D.STORY.' + k));
     const tx = ST().text;
-    ['astarHead', 'feedHead', 'fateHead', 'preview', 'lastMeet', 'hide', 'hideFail', 'storyHead', 'epilogueHead', 'friendsHead', 'sideHead']
+    ['astarHead', 'feedHead', 'fateHead', 'preview', 'lastMeet', 'hide', 'hideFail', 'storyHead', 'epilogueHead', 'friendsHead', 'sideHead', 'extreme', 'reversalHead', 'othersCount']
       .forEach((k) => assert.ok(isText(tx[k]), '缺少 text.' + k));
     SIDES.forEach((k) => assert.ok(isText(tx.sides[k]), '缺少 text.sides.' + k));
     ['taken', 'hidden', 'stayed'].forEach((k) => assert.ok(isText(tx.friendStates[k]), '缺少 text.friendStates.' + k));
     assert.ok(tx.preview.includes('{species}') && tx.preview.includes('{npc}') && tx.preview.includes('{why}'));
     assert.ok(tx.hide.includes('{npc}') && tx.hide.includes('{cost}') && tx.hideFail.includes('{cost}'));
+    assert.ok(!tx.hide.includes('$') && !tx.hideFail.includes('$'), 'hide、hideFail 的 {cost} 已經包括貨幣符號');
+    assert.ok(tx.othersCount.includes('{n}'));
+    assert.ok(D.CITIES && D.CITIES[D.CITY_DEFAULT], '缺少 D.CITIES 或預設城市');
+    Object.keys(D.CITIES).forEach((id) => {
+      const C = D.CITIES[id];
+      assert.ok(isText(C.name) && isText(C.currency.name) && isText(C.currency.symbol) && C.currency.rate > 0, id + '：名稱和貨幣');
+      ['rent', 'pay', 'price', 'inflation'].forEach((k) => assert.ok(C.econ[k] > 0, id + '：econ.' + k));
+    });
   });
 
   t.test('故事資料：外星種族和收藏次序', () => {
@@ -115,11 +137,11 @@ module.exports = (t) => {
     assert.deepEqual(nights, [1, 3, 5, 7, 9, 11, 13, 15], '阿星隔一晚一則（第 1、3……15 晚）');
     nights.forEach((n) => assert.ok(D.ASTAR[ST().astarNights[n]], '第 ' + n + ' 晚對應的 D.ASTAR 日子不存在'));
     assert.ok(ST().feed.length >= 15, '今日快訊至少 15 則');
-    ST().feed.forEach((x, i) => assert.ok(isText(x), '第 ' + i + ' 則快訊是空的'));
+    ST().feed.forEach((x, i) => assert.ok(isText(x) && !/\$\s*\d/.test(x), '第 ' + i + ' 則快訊是空的，或者直接寫了金額'));
     assert.equal(new Set(ST().feed).size, ST().feed.length, '快訊不可以重複');
   });
 
-  t.test('故事資料：每章三個選項，生存、兼顧、巔峰各一', () => {
+  t.test('故事資料：每章四至五個選項，生存、兼顧、巔峰都有', () => {
     const ids = new Set();
     Object.keys(ST().lines).forEach((bg) => {
       assert.ok(D.BACKGROUNDS[bg], '不是角色：' + bg);
@@ -130,24 +152,61 @@ module.exports = (t) => {
         ids.add(c.id);
         assert.ok(Number.isInteger(c.round) && c.round >= 1 && c.round <= 5, c.id + '：round');
         assert.ok(Number.isInteger(c.day) && c.day >= 1 && c.day <= 3, c.id + '：day');
-        assert.ok(isText(c.text), c.id + '：text');
+        assert.ok(!c.city || (Array.isArray(c.city) && c.city.every((x) => D.CITIES[x])), c.id + '：city 是城市 id 的陣列');
+        checkText(c.text, c.id, false);
         ['if', 'unless'].forEach((k) => assert.ok(!c[k] || (Array.isArray(c[k]) && c[k].every(isText)), c.id + '：' + k + ' 是旗標的陣列'));
-        assert.equal(c.options.length, 3, c.id + '：三個選項');
-        assert.deepEqual(c.options.map((o) => o.side).sort(), ['both', 'peak', 'survive'], c.id + '：生存、兼顧、巔峰各一');
+        assert.ok(c.options.length >= 4 && c.options.length <= 5, c.id + '：四至五個選項');
+        const sides = c.options.map((o) => o.side);
+        sides.forEach((x) => assert.ok(SIDES.includes(x), c.id + '：未知的 side ' + x));
+        ['survive', 'both', 'peak'].forEach((x) => assert.ok(sides.includes(x), c.id + '：缺少「' + ST().text.sides[x] + '」的選項'));
+        assert.ok(c.options.filter((o) => o.extreme).length <= 1, c.id + '：每章最多一個極端的選項');
+        assert.equal(new Set(c.options.map((o) => o.label)).size, c.options.length, c.id + '：選項的標題不可以重複');
         c.options.forEach((o, i) => {
-          assert.ok(isText(o.label) && isText(o.line), c.id + ' 選項 ' + i + '：label、line');
-          checkFx(o.fx, c.id + ' 選項 ' + i, bg);
+          const where = c.id + ' 選項 ' + i;
+          checkText(o.label, where + ' 的 label', 'cr' in o.fx);
+          checkText(o.line, where + ' 的 line', 'cr' in o.fx);
+          checkFx(o.fx, where, bg);
         });
       });
     });
   });
 
   t.test('故事資料：每個選項都有得也有失', () => {
-    Object.keys(ST().lines).forEach((bg) => ST().lines[bg].chapters.forEach((c) => c.options.forEach((o, i) => {
-      const where = c.id + ' 選項 ' + i + '（' + o.label + '）';
+    eachOption((o, c, bg, where) => {
       assert.ok(gains(o.fx).length >= 1, where + '：沒有「得」');
       assert.ok(costs(o.fx).length >= 1, where + '：沒有「失」');
-    })));
+    });
+  });
+
+  t.test('故事資料：極端的選項之後會反轉（物極必反）', () => {
+    let n = 0;
+    eachOption((o, c, bg, where) => {
+      if (!o.extreme) {
+        assert.ok(!('later' in o), where + '：只有極端的選項有 later');
+        return;
+      }
+      n++;
+      assert.ok(o.side === 'survive' || o.side === 'peak', where + '：極端只可以是生存或巔峰');
+      const L = o.later;
+      assert.ok(L && (L.after === 1 || L.after === 2), where + '：later.after 是 1 或 2');
+      assert.ok(c.round + L.after <= 5, where + '：反轉要在第 5 輪或之前發生');
+      checkText(L.text, where + ' 的 later.text', 'cr' in L.fx);
+      checkFx(L.fx, where + ' 的 later.fx', bg);
+      assert.ok(!('set' in L.fx), where + '：反轉不設定旗標');
+      assert.ok(costs(L.fx).length >= 1, where + '：反轉至少有一項「失」');
+    });
+    assert.ok(n >= Object.keys(ST().lines).length, '每個角色至少一個極端的選項');
+  });
+
+  t.test('故事資料：錢的尺度跟這一輪的租金（docs/ECONOMY.md 第六節）', () => {
+    eachOption((o, c, bg, where) => {
+      const R = rentOf(c.round);
+      const cr = o.fx.cr || 0;
+      if (o.extreme) assert.ok(Math.abs(cr) <= 1.5 * R, where + '：極端的金額不超過這一輪租金的 1.5 倍（' + R + '）');
+      else if (cr > 0) assert.ok(cr <= 0.8 * R, where + '：收入不超過這一輪租金的 0.8 倍（' + R + '）');
+      else assert.ok(-cr <= 0.5 * R, where + '：支出不超過這一輪租金的 0.5 倍（' + R + '）');
+      if (o.later && o.later.fx.cr) assert.ok(Math.abs(o.later.fx.cr) <= 0.5 * rentOf(c.round + o.later.after), where + '：反轉的金額不超過那一輪租金的 0.5 倍');
+    });
   });
 
   t.test('故事資料：每一條路都有五章，每一章、每個結語都走得到', () => {
@@ -173,10 +232,10 @@ module.exports = (t) => {
         c.options.forEach((o) => walk(round + 1, new Set([...flags, ...flagsOf(o.fx.set)])));
       };
       walk(1, new Set());
-      assert.ok(paths >= 243, bg + '：至少 3⁵ 條路');
+      assert.ok(paths >= 1024, bg + '：至少 4⁵ 條路');
       line.chapters.forEach((c) => assert.ok(seenCh.has(c.id), bg + '：章 ' + c.id + ' 走不到'));
       line.epilogue.forEach((x, i) => {
-        assert.ok(isText(x.text), bg + '：結語 ' + i + ' 是空的');
+        checkText(x.text, bg + ' 結語 ' + i, false);
         assert.ok(seenEp.has(i), bg + '：結語 ' + i + ' 走不到');
       });
       const last = line.epilogue[line.epilogue.length - 1];

@@ -21,7 +21,8 @@
 |---|---|---|
 | `data-rounds.js` | 在 `data-contacts.js` 之後、`rules.js` 之前 | 加在資料檔清單最後 |
 | `rounds.js` | 在 `dossier.js` 之後、`audio.js` 之前 | 加在 `dossier.js` 之後 |
-| `data-story.js`（§14，Claude 撰寫） | 在 `data-rounds.js` 之後（已經加入） | `tools/test.js` 已經加入；`tools/sim-rounds.js` 加在 `data-rounds.js` 之後（WO-15-11） |
+| `data-cities.js`（§6.1，Claude 撰寫） | 在 `data-rounds.js` 之後、`data-story.js` 之前（已經加入） | `tools/test.js` 已經加入；`tools/sim-rounds.js` 加在 `data-rounds.js` 之後（WO-15-11） |
+| `data-story.js`（§14，Claude 撰寫） | 在 `data-cities.js` 之後（已經加入） | `tools/test.js` 已經加入；`tools/sim-rounds.js` 加在 `data-cities.js` 之後（WO-15-11） |
 | `story.js`（§14，WO-15-11） | 在 `rounds.js` 之後、`audio.js` 之前 | `tools/test.js` 已經預留；`tools/sim-rounds.js` 加在 `rounds.js` 之後 |
 
 `tools/build.js` 會自動內嵌 `index.html` 列出的檔案，不用改。`tools/test.js` 已經預留這兩個檔名（存在才載入）。
@@ -129,6 +130,25 @@ ECON: {
 **目標公式**：`target(s, k) = sig3(ECON.t1 × ECON.growth^(k−1) × stakeMod(s, 'stageTarget') × (s.firstRun && k ≤ 2 ? ECON.firstRunEase : 1))`，`sig3` 是取三位有效數字（例如 12,345 → 12,300；4,000 → 4,000）。
 
 **獎金公式**：`reward = round(ECON.nightPay[kind] × (1 + ECON.payGrowth × (round − 1))) + ECON.earlyBonus × playsLeft`。
+
+## §6.1 城市 `D.CITIES`（`game/js/data-cities.js`；經濟的根據見 `docs/ECONOMY.md`）
+
+```js
+D.CITIES = {
+  zone7: {
+    name: '浮城', zone: '第 7 區', treaty: 'grey', difficulty: 1, difficultyName: '比較輕鬆',
+    currency: { name: '浮城元', symbol: '$', rate: 1, regime: 'peg', regimeName: '與星際信用點掛鈎' },
+    econ: { rent: 1, pay: 1, price: 1, inflation: 1 },
+    blurb: '……',
+  },
+};
+D.CITY_DEFAULT = 'zone7';
+```
+
+- 第十五期只有一座城市。它的倍數全部是 1，即 `D.ECON` 本身就是第 7 區的經濟；規格測試鎖定這些數值。
+- `s.city`：五輪模式的城市 id，由 `IE.Story.init` 設定（沒有時用 `D.CITY_DEFAULT`）。
+- 第十五期只有故事線讀取城市（`IE.Story.money`，§14.3）；`IE.Rounds` 的租金、收入和價錢暫時不讀 `econ`，第二十期加入其他城市時另寫工單接上。
+- `currency.rate` 是顯示倍數（介面顯示的金額 = 遊戲數值 × `rate`）。第十五期維持 1；要不要改為 20（2080 年的票面價格）由製作人決定（`docs/ECONOMY.md` 第三節）。
 
 ## §7 生活卡 `D.DAYCARDS`
 
@@ -258,15 +278,16 @@ ROUND_TEXT: {
 - 故事線（§14）在五輪模式玩得到：每輪的章、朋友被收藏（預告、最後一次見面、藏起來）、阿星、今日快訊，以及結局的「你的故事」。
 - 舊模式（`standard`、`long`）的模擬結果和第十四期相同（同一個 seed 的結果完全一樣）。
 
-## §14 故事線（WO-15-11 邏輯、WO-15-13 介面；2026-11-01 製作人要求加入）
+## §14 故事線（WO-15-11 邏輯、WO-15-13 介面；2026-11-01 製作人要求加入，2026-11-02 第二版）
 
-> 世界觀和語氣以 `docs/WORLD.md` 為準。內容（文字和選項）在 `game/js/data-story.js`（`D.STORY`），由 Claude 撰寫；Gemini 不改內容，只實作邏輯和介面。
+> 世界觀和語氣以 `docs/WORLD.md` 為準，錢的尺度以 `docs/ECONOMY.md` 為準。內容（文字和選項）在 `game/js/data-story.js`（`D.STORY`），由 Claude 撰寫，`tools/tests/story-data.test.js` 檢查；Gemini 不改內容，只實作邏輯和介面。
+> 第二版（製作人 2026-11-02）：每章四至五個選項（新增「為別人」）；極端的選項之後會反轉（物極必反）；故事線的錢按城市換算，文字裡的金額寫佔位符。
 
 ### 1. 四條線
 
 | 線 | 內容 | 甚麼時候 |
 |---|---|---|
-| 角色線 | 每個角色一條：每輪一章，每章三個人生選項；選擇會改變之後的章；一局結束時有這個角色的結語 | 每輪第一天的早上 |
+| 角色線 | 每個角色一條：每輪一章，每章四至五個人生選項（生存、兼顧、巔峰、為別人；部分是極端的選項，之後會反轉）；選擇會改變之後的章；一局結束時有這個角色的結語 | 每輪第一天的早上 |
 | 朋友線 | 第 1 至 4 輪各有一位朋友被一個外星種族收藏；有預告、有最後一次見面、可以把對方藏起來；被收藏之後傳來近況 | 預告在每輪第一天；收藏在篩選日 |
 | 阿星線 | 隔一晚一則訊息（第 1、3、5……15 晚） | 白天面板 |
 | 今日快訊 | 每天一則 2080 年的新聞 | 白天面板 |
@@ -274,39 +295,48 @@ ROUND_TEXT: {
 ### 2. 狀態欄位（五輪模式；舊存檔沒有時由 `IE.Story` 建立）
 
 ```js
+s.city = 'zone7'; // 所在城市（§6.1）
 s.story = {
   done: [],      // 已經回答的章 id
   pending: null, // 今天要回答、還沒有回答的章 id（重新載入時仍然在）
   flags: {},     // 故事旗標
-  side: 0,       // 光譜：每次選擇 survive −1、peak +1、both 0
+  side: 0,       // 光譜：survive −1、peak +1、both 和 others 0；極端的選項加倍（−2、+2）
   notice: {},    // 外星種族對你的注意 { 種族 id: 次數 }
   log: [],       // [{ night, id, i }]
-  plan: {},      // 收藏預告 { 輪: { npc, species } }
+  later: [],     // 未發生的反轉 [{ round, id, i }]（§14.3 物極必反）
+  plan: {},      // 收藏預告 { 輪: { npc, species } 或 null }
   met: {},       // 本輪見過最後一面 { npc: 輪 }
   hidden: {},    // 藏起來 { npc: 輪 }
   taken: {},     // 被收藏 { npc: { round, species, met } }
   fates: [],     // 待顯示的近況 [{ npc, species, night }]
 };
-s.nightMod = null; // { night, mult }：選項 fx.target 留給下一晚的目標倍數
-s.rentMod = null;  // { round, mult }：選項 fx.rent 留給本輪租金的倍數
+s.nightMod = null; // { night, mult }：fx.target 留給下一晚的目標倍數
+s.rentMod = null;  // { round, mult }：fx.rent 留給本輪租金的倍數
 ```
 
 ### 3. 角色線
 
 - 資料：`D.STORY.lines[角色 id] = { chapters: [...], epilogue: [...] }`。
-- 章：`{ id, round, day, if, unless, text, options: [{ label, side, fx, line }] }`。`day` 是本輪的第幾天（1 至 3；現在全部是 1，之後可以加）；`if`、`unless` 是旗標的陣列。
-- `IE.Story.chapter(s)`：今天是本輪的第 `day` 天，找 `round` 等於本輪、`if` 全部成立、`unless` 全部不成立、而且不在 `done` 的第一章；有的話設 `pending` 並回傳。同一天重複呼叫回傳同一章。這個角色還沒有內容就回傳 null。
-- `IE.Story.choose(s, i)`：套用 `pending` 那一章的第 i 個選項，回傳報告（`R.report`，標題是選項的 `label`，第一行是選項的 `line`）；記在 `done`、`log`；`side` 累加；`pending = null`。
-- **白天的流程**（`main.js` 的 `roundsDay` 和 `tools/sim-rounds.js` 必須相同）：`R.morning(s)` → `IE.Story.plan(s)` → `IE.Story.chapter(s)`：**有章就先回答，而且那一天不抽道德抉擇** → 沒有章才 `R.drawDilemma(s)` → 生活卡。
-- 選項的效果 `fx`：
+- 章：`{ id, round, day, city, if, unless, text, options }`。
+  - `day` 是本輪的第幾天（1 至 3；現在全部是 1，之後可以加）；`if`、`unless` 是旗標的陣列。
+  - `city`（可以沒有）：城市 id 的陣列，只在這些城市出現；沒有就每座城市都出現。
+  - `options`：四至五個 `{ label, side, fx, line, extreme, later }`。`side` 是 `survive`、`both`、`peak`、`others` 其中一個；每章至少有生存、兼顧、巔峰各一。
+- `IE.Story.chapter(s)`：今天是本輪的第 `day` 天，找 `round` 等於本輪、城市符合、`if` 全部成立、`unless` 全部不成立、而且不在 `done` 的第一章；有的話設 `pending` 並回傳。同一天重複呼叫回傳同一章。這個角色還沒有內容就回傳 null。
+- `IE.Story.choose(s, i)`：套用 `pending` 那一章的第 i 個選項，回傳報告（`R.report`，標題是選項的 `label`，第一行是 `say` 之後的 `line`）；記在 `done`、`log`；`side` 累加（極端加倍）；極端的選項在 `later` 加 `{ round: 本輪 + later.after, id, i }`；`pending = null`。
+- **物極必反**（極端的選項，`extreme: true`）：現在得到很多；`later.after` 輪之後的第一天自動反轉。
+  - `IE.Story.reversals(s)`：今天要發生的反轉（`later` 中 `round` 等於本輪，而且今天是本輪第一天），回傳 `[{ id, i, text, fx }]`（`text` 已經 `say`）；不改變狀態。
+  - `IE.Story.reverse(s)`：套用這些反轉的 `later.fx`，從 `later` 移除，回傳報告（標題 `D.STORY.text.reversalHead`，每一則一行）；沒有就回傳 null。
+  - 介面先顯示反轉、玩家按確認才呼叫 `reverse`；重新載入時反轉仍然在，不會重複套用。
+- **白天的流程**（`main.js` 的 `roundsDay` 和 `tools/sim-rounds.js` 必須相同）：`R.morning(s)` → `IE.Story.plan(s)` → 有反轉就 `IE.Story.reverse(s)` → `IE.Story.chapter(s)`：**有章就先回答，而且那一天不抽道德抉擇** → 沒有章才 `R.drawDilemma(s)` → 生活卡。
+- 選項的效果 `fx`（反轉的 `later.fx` 也一樣，但不設旗標）：
 
 | 鍵 | 意思 |
 |---|---|
-| `cr` | 錢 ± |
+| `cr` | 錢 ±（按城市換算：`IE.Story.money`） |
 | `spark` | 火花 ±（`R.addSpark(s, v, true)`） |
-| `sin`、`guilt`、`tag` | 靈魂變重（`R.sin`），留下愧疚素材（名稱 `guilt`、第二個標籤 `tag`） |
+| `sin`、`guilt`、`tag` | 靈魂變重（`R.sin`）；`sin` ≥ 1 時留下愧疚素材（名稱 `guilt`、第二個標籤 `tag`） |
 | `atone` | 靈魂變輕（`R.atone`） |
-| `card` | 得到一張故事素材 `{ name, tags, value, star }`（`R.addCard` 加入素材庫，不登記在 `D.CARDS`） |
+| `card` | 得到一張故事素材 `{ name, tags, value, star, medium }`（`R.addCard` 加入素材庫，不登記在 `D.CARDS`） |
 | `obj` | 得到一件靈感物件（`R.gainObject`） |
 | `form` | 配色升級 `{ 配色 id: 1 }` |
 | `friend` | 熟絡度 `{ npc: 1 }` |
@@ -316,8 +346,12 @@ s.rentMod = null;  // { round, mult }：選項 fx.rent 留給本輪租金的倍�
 | `notice` | 外星種族的注意 `{ 種族 id: n }`（只記錄，結局和之後的工單用） |
 | `set` | 設定旗標（字串或陣列） |
 
-- **有得必有失**（`docs/WORLD.md` 第五節）：每個選項至少有一項「得」和一項「失」，`tools/tests/story-data.test.js` 檢查。得：`cr`、`spark`、`friend`、`chance` 大於 0；`atone`、`card`、`obj`、`form`；`target`、`rent` 小於 1。失：`cr`、`spark`、`chance` 小於 0；`sin`；`target`、`rent` 大於 1。`notice` 和 `set` 不算。
-- 選項上顯示 `side` 和效果（`IE.Story.fx(option)`，格式同 `R.optionFx`），玩家選擇之前有足夠的資訊。
+- **有得必有失**（`docs/WORLD.md` 第五節）：每個選項至少有一項「得」和一項「失」；每個反轉至少有一項「失」。得：`cr`、`spark`、`friend`、`chance` 大於 0；`atone`、`card`、`obj`、`form`；`target`、`rent` 小於 1。失：`cr`、`spark`、`chance` 小於 0；`sin`；`target`、`rent` 大於 1。`notice` 和 `set` 不算。
+- **錢按城市換算**（`docs/ECONOMY.md` 第六節）：
+  - `IE.Story.money(s, v)` = `round(v × (v ≥ 0 ? econ.pay : econ.price) × econ.inflation^(本輪 − 1))`，`econ` 是 `D.CITIES[s.city].econ`。
+  - `IE.Story.fmt(s, v)` = `currency.symbol` + `|v| × currency.rate`（千位加逗號，不帶正負號）。
+  - `IE.Story.say(s, str, fx)`：把文字裡的 `{cr}` 換成 `fmt(s, money(s, fx.cr))`、`{rent}` 換成 `fmt(s, IE.Rounds.rentOf(s, 本輪))`、`{city}` 換成城市名、`{currency}` 換成貨幣名。章的 `text`、選項的 `label` 和 `line`、反轉的 `text`、結語都要經過 `say`。
+- 選項上顯示 `side`、極端的標記和效果：`IE.Story.fx(s, option)`，格式同 `R.optionFx`，金額已經換算；極端的選項另加一行 `['note', '物極必反（' + after + ' 輪後）：' + 反轉效果的摘要]`。玩家選擇之前看得見代價。
 - 結語：`D.STORY.lines[角色].epilogue = [{ if, unless, text }]`，`IE.Story.epilogue(s)` 用第一個成立的。
 
 ### 4. 朋友線（收藏，做法 B）
@@ -325,13 +359,13 @@ s.rentMod = null;  // { round, mult }：選項 fx.rent 留給本輪租金的倍�
 1. **預告**：每輪第一天（第 1、4、7、10 晚），`IE.Story.plan(s)` 決定本輪的收藏：種族是 `D.STORY.collectOrder[本輪 − 1]`；候選是還在浮城、沒有被收藏、而且 `D.STORY.friends[npc].collectors` 包含這個種族的朋友；沒有就用其他還在浮城的朋友；`R.pick` 一位，存在 `s.story.plan[本輪]`。一位朋友都不在浮城就不收藏（`plan[本輪] = null`）。同一輪重複呼叫不再抽。第 5 輪不收藏。
    - 文字：朋友的 `why[種族]`、`fate[種族]`；改抽其他朋友時朋友沒有這個種族的文字，用 `D.STORY.species[種族].why`、`.fate`（`{npc}` 換成朋友的名字）。
 2. **最後一次見面**：本輪第二天，生活卡的第二張固定是這位朋友的朋友卡（`IE.Rounds.offer` 的出牌規則；朋友已經藏起來或不在就照舊）。選了這張朋友卡：`met[npc] = 本輪`。
-3. **藏起來**：朋友卡的聊天視窗多一個選項；`IE.Story.hide(s, npc)` 付 `ECON.hideCost[本輪 − 1]`（錢不夠回傳失敗），`hidden[npc] = 本輪`，`notice[種族] += 1`，然後照常聊天。
+3. **藏起來**：朋友卡的聊天視窗多一個選項；`IE.Story.hide(s, npc)` 付 `|IE.Story.money(s, −ECON.hideCost[本輪 − 1])|`（錢不夠回傳失敗），`hidden[npc] = 本輪`，`notice[種族] += 1`，然後照常聊天。
 4. **收藏**：`IE.Rounds.review` 在交租和秤重之後、`advance` 之前呼叫 `IE.Story.collect(s, rep)`：
    - 機會已經用完：不收藏；
    - 藏起來了：不收藏，報告加 `hiddenLine`；
    - 否則：朋友 `alive = false`，記在 `taken`；見過最後一面就得到贈物（`gift` 物件）和 `farewell`，沒見就得到一張紙條素材（`note`）和 `nomeet`；報告加上這些文字，`rep.collect = { npc, species, met, hidden }`；
    - `fates` 加一則，下一晚的白天顯示 `fate[種族]`。
-5. 結局：`IE.Story.epilogue(s)` 回傳 `{ line, friends: [{ npc, state: 'taken' | 'hidden' | 'stayed', species }], side: 'survive' | 'both' | 'peak' }`（`side` ≤ −2 生存、≥ 2 巔峰、其餘兼顧）。
+5. 結局：`IE.Story.epilogue(s)` 回傳 `{ line, friends: [{ npc, state: 'taken' | 'hidden' | 'stayed', species }], side: 'survive' | 'both' | 'peak', others }`（`side` ≤ −2 生存、≥ 2 巔峰、其餘兼顧；`others` 是選了「為別人」的次數；`line` 已經 `say`）。
 
 ### 5. 阿星和今日快訊
 
@@ -341,16 +375,18 @@ s.rentMod = null;  // { round, mult }：選項 fx.rent 留給本輪租金的倍�
 
 ### 6. 數值
 
-`ECON.hideCost: [80, 120, 160, 200]`：把朋友藏起來的費用（第 1 至 4 輪）。
+- `ECON.hideCost: [80, 120, 160, 200]`：把朋友藏起來的費用（第 1 至 4 輪，第 7 區的數值）。
+- 故事線的錢的尺度（`story-data.test.js` 檢查，R 是這一輪的租金）：一般的選項收入不超過 0.8R、支出不超過 0.5R；極端的選項不超過 1.5R；反轉不超過反轉那一輪的 0.5R。
 
 ### 7. 介面（WO-15-13；煙霧測試會用到，不要改名）
 
 | 元件 | class／屬性 |
 |---|---|
-| 章 | 視窗 `.rd-story`；選項 `[data-do="storypick"][data-i="0..2"]`；光譜標記 `.st-side.s-survive`／`.s-both`／`.s-peak` |
+| 章 | 視窗 `.rd-story`；選項 `[data-do="storypick"][data-i="0..4"]`；光譜標記 `.st-side.s-survive`／`.s-both`／`.s-peak`／`.s-others`；極端的標記 `.st-extreme` |
+| 反轉 | 視窗 `.rd-reversal`；確認 `[data-do="reverse"]` |
 | 白天面板 | 阿星 `.rd-astar`（加 `.st-casual`、`.st-memo`、`.st-auto`、`.st-glitch`）；今日快訊 `.rd-feed`；收藏預告 `.rd-collect`；朋友近況 `.rd-fate` |
 | 朋友卡 | 最後一次見面 `.rd-card .rd-last`；聊天視窗的藏起來 `[data-do="hide"]` |
 | 篩選日 | 收藏那一行 `.rr-collect` |
-| 人類樣本檔案 | 你的故事 `.d-story`；朋友們 `.d-friends`；光譜 `.d-side` |
+| 人類樣本檔案 | 你的故事 `.d-story`；朋友們 `.d-friends`；光譜 `.d-side`（包括「為別人」的次數，`D.STORY.text.othersCount`） |
 
-介面文字取自 `D.STORY.text`。
+介面文字取自 `D.STORY.text`；金額一律經 `IE.Story.fmt`。
