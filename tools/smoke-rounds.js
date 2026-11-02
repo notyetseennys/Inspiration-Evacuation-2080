@@ -112,11 +112,36 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('外星評審預告（第 1 晚）：' + bossAhead1.text);
 
+    // WO-15-14 (1) & (2)：狀態列與白天面板顯示票面價格（×20）
+    const dayCashCheck = await page.evaluate(() => {
+      const s = window.__IE.Game.state, RD = window.__IE.Rounds;
+      const hudTxt = document.getElementById('hud').textContent || '';
+      const rerollTxt = (document.querySelector('.rd-day [data-do="reroll"]') || {}).textContent || '';
+      const expCr = RD.cash(s, s.cr);
+      const expRent = RD.cash(s, RD.rentOf(s));
+      const expReroll = RD.cash(s, RD.offerCost(s));
+      return {
+        hudHasCr: hudTxt.includes(expCr),
+        hudHasRent: hudTxt.includes(expRent),
+        rerollHasCost: rerollTxt.includes(expReroll),
+        expCr,
+        expRent,
+        expReroll,
+        hudTxt,
+        rerollTxt,
+      };
+    });
+    if (!dayCashCheck.hudHasCr || !dayCashCheck.hudHasRent || !dayCashCheck.rerollHasCost) {
+      await fail('狀態列或白天面板票面價格不正確：' + JSON.stringify(dayCashCheck));
+    }
+    ok('票面價格（白天）：HUD 含 ' + dayCashCheck.expCr + ' 與租金 ' + dayCashCheck.expRent + '；換一批含 ' + dayCashCheck.expReroll);
+
     if (process.env.SHOTS) {
       fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
       await page.waitForTimeout(250);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-06-day-desktop.png'), fullPage: true });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-day-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-day-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(250);
       const mob = await page.evaluate(() => {
@@ -128,6 +153,7 @@ const URL = 'http://localhost:' + PORT + '/';
       if (mob.minH < 44) await fail('手機按鈕高度不足 44px：minH=' + mob.minH);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-06-day-mobile.png'), fullPage: true });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-day-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-day-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     ok('白天面板：3 張生活卡、15 晚進度點');
@@ -240,6 +266,32 @@ const URL = 'http://localhost:' + PORT + '/';
       window.__IE.Game.roundsShop();
     });
     await page.waitForSelector('#modal .rd-shop');
+
+    // WO-15-14 (3) & (4)：市集票面價格已換算、s.cr 仍是遊戲數值（< 5000），開關「管理物件」（pushModal → closeModal）不會二次換算
+    const shopCashBefore = await page.evaluate(() => {
+      const s = window.__IE.Game.state, RD = window.__IE.Rounds;
+      const packEl = document.querySelector('#modal .rs-item[data-slot^="pack:"]');
+      const slot = packEl ? packEl.getAttribute('data-slot') : '';
+      const btnTxt = packEl ? (packEl.querySelector('button') || {}).textContent.trim() : '';
+      const expPack = RD.cash(s, RD.price(s, slot));
+      return { cr: s.cr, slot, btnTxt, expPack };
+    });
+    if (shopCashBefore.cr >= 5000 || shopCashBefore.btnTxt !== shopCashBefore.expPack) {
+      await fail('市集票面價格或 s.cr 不正確：' + JSON.stringify(shopCashBefore));
+    }
+    await page.click('#modal .rd-shop [data-do="objs"]');
+    await page.waitForSelector('#modal [data-do="close"]');
+    await page.click('#modal [data-do="close"]');
+    await page.waitForSelector('#modal .rd-shop');
+    const shopCashAfter = await page.evaluate((slot) => {
+      const packEl = document.querySelector('#modal .rs-item[data-slot="' + slot + '"]');
+      return packEl ? (packEl.querySelector('button') || {}).textContent.trim() : '';
+    }, shopCashBefore.slot);
+    if (shopCashAfter !== shopCashBefore.expPack) {
+      await fail('關閉管理物件後市集價格被二次換算：應為 ' + shopCashBefore.expPack + '，實際為 ' + shopCashAfter);
+    }
+    ok('票面價格（市集）：' + shopCashBefore.slot + ' 顯示 ' + shopCashBefore.expPack + '（s.cr=' + shopCashBefore.cr + '），pushModal 還原後不重複換算');
+
     // 檢查手機 390px 市集無橫向捲軸且每個按鈕高度 >= 44px
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
@@ -252,11 +304,13 @@ const URL = 'http://localhost:' + PORT + '/';
     if (shopMob.minH < 44) await fail('手機市集按鈕高度不足 44px：minH=' + shopMob.minH);
     if (process.env.SHOTS) {
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-shop-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-shop-mobile.png') });
     }
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.waitForTimeout(150);
     if (process.env.SHOTS) {
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-shop-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-shop-desktop.png') });
     }
     ok('二手市集（.rd-shop）開啟並完成手機 390px 版面檢查');
 
@@ -384,12 +438,26 @@ const URL = 'http://localhost:' + PORT + '/';
     if (!revPass.hasRent || !revPass.hasSoul || revPass.stamp !== '通過' || !revPass.nextBtn.includes('進入第 2 輪')) {
       await fail('第 1 輪篩選日通過顯示不正確：' + JSON.stringify(revPass));
     }
+    // WO-15-14 (5)：篩選日本輪租金文字包含 IE.Rounds.cash(s, rep.rent)
+    const revCashCheck = await page.evaluate(() => {
+      const s = window.__IE.Game.state, RD = window.__IE.Rounds;
+      const expRent = RD.cash(s, s.reviewRep.rent);
+      const rentTxt = (document.querySelector('#modal .rd-review .rr-rent') || {}).textContent || '';
+      return { expRent, rentTxt, ok: rentTxt.includes(expRent) };
+    });
+    if (!revCashCheck.ok) {
+      await fail('篩選日本輪租金未換算為票面價格：應含 ' + revCashCheck.expRent + '，實際：' + revCashCheck.rentTxt);
+    }
+    ok('票面價格（篩選日）：本輪租金包含 ' + revCashCheck.expRent);
+
     if (process.env.SHOTS) {
       await page.waitForTimeout(200);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-review-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(200);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-review-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     // 工單第 16 步：篩選日在手機 390px 沒有橫向捲動（WO-15-08 審核時加入）

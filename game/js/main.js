@@ -89,6 +89,7 @@
   const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
   function showTitle() {
+    Game.state = null;
     document.body.classList.remove('mode-rounds');
     music('title');
     document.getElementById('hud').hidden = true;
@@ -149,6 +150,7 @@
     render(null, false);
   }
   function showSetup() {
+    Game.state = null;
     document.body.classList.remove('mode-rounds');
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {

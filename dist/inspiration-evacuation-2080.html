@@ -13839,6 +13839,38 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     return !!(s && D.MODES[s.mode] && D.MODES[s.mode].rounds);
   }
 
+  // 介面顯示用的貨幣換算倍數（總規格 §6、ECONOMY.md §3）
+  function rate(s) {
+    if (!on(s)) return 1;
+    const id = (s && s.city) || (D && D.CITY_DEFAULT) || 'zone7';
+    const c = D && D.CITIES && D.CITIES[id];
+    return (c && c.currency && c.currency.rate) || 1;
+  }
+
+  function comma(n) {
+    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function cash(s, v) {
+    const n = Math.round(Math.abs(v || 0) * rate(s));
+    return (v < 0 ? '−$' : '$') + comma(n);
+  }
+
+  function cashText(s, str) {
+    if (typeof str !== 'string' || !str) return str;
+    const r = rate(s);
+    if (r === 1) return str;
+    return str.replace(
+      /(?:([+\-−]?)\$([ \t]*)|\$([ \t]*[+\-−][ \t]*))(\d[\d,]*)/g,
+      (m, pre, sp, post, digits) => {
+        const n = Number(digits.replace(/,/g, ''));
+        if (!Number.isFinite(n)) return m;
+        const v = comma(Math.round(n * r));
+        return post != null ? '$' + post + v : (pre || '') + '$' + (sp || '') + v;
+      },
+    );
+  }
+
   // 第幾輪（1..5）
   function roundOf(s, night) {
     const n = night == null ? s.night : night;
@@ -13988,9 +14020,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
         kind: 'trip',
         kindName: D.ROUND_TEXT.kinds.trip,
         name: '出國：' + reg,
-        sub: '飛往' + reg + '，從五張當地素材中帶回兩張',
+        sub: '飛往' + reg + '：機票、氣候附加費和邊境保證金。從五張當地素材中帶回兩張',
         micro: null,
-        fx: [['cr', '−$' + cost], ['spark', '+0.4'], ['card', reg + '素材 五選二']],
+        fx: [['cr', '−$' + cost], ['spark', '+' + D.ECON.tripSpark], ['card', reg + '素材 五選二（★' + D.ECON.tripStar + '）']],
         danger: 0,
         enabled: !reason,
         reason,
@@ -14087,7 +14119,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
       const rep = R.report(s, info.name);
       s.cr -= cost;
       rep.delta('cr', -cost);
-      rep.line('飛往' + reg + '，看見浮城以外的世界', 'good', R.addSpark(s, 0.4, true), 'spark');
+      rep.line('飛往' + reg + '，看見浮城以外的世界', 'good', R.addSpark(s, D.ECON.tripSpark, true), 'spark');
       s.visited[origin] = (s.visited[origin] || 0) + 1;
       s.stats.trips = (s.stats.trips || 0) + 1;
       const pool = Object.keys(D.CARDS).filter((k) => D.CARDS[k].origin === origin && D.CARDS[k].rarity !== 'legend');
@@ -14114,6 +14146,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
     const res = R.addCard(s, t5.ids[i]);
+    res.card.star = D.ECON.tripStar;
     if (t5.rep) {
       t5.rep.cards.push(res.card);
       if (res.dropped) t5.rep.dropped.push(res.dropped);
@@ -14608,6 +14641,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
 
   IE.Rounds = {
     on,
+    cash,
+    cashText,
     roundOf,
     kindOf,
     dayOfNight,
@@ -26373,6 +26408,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   const kfmt = (n) => (n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
   const pad2 = (n) => String(n).padStart(2, '0');
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
+  const uiCash = (str) => (IE.Rounds && IE.Rounds.cashText && IE.Game && IE.Game.state ? IE.Rounds.cashText(IE.Game.state, str) : str);
 
   function tagsHtml(tags) {
     return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
@@ -26427,7 +26463,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
       el.classList.add(good ? 'flash-up' : 'flash-down');
       const f = document.createElement('span');
       f.className = 'float-delta ' + (good ? 'up' : 'down');
-      f.textContent = fmtD[k](d);
+      const txt = fmtD[k](d);
+      f.textContent = IE.Rounds && IE.Rounds.cashText ? IE.Rounds.cashText(s, txt) : txt;
       el.appendChild(f);
     });
   }
@@ -26441,7 +26478,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
       const cur = (city && city.currency) || {};
       const chances = Math.max(0, s.chances == null ? 3 : s.chances);
       const rent = RD.rentOf(s);
-      hud.innerHTML = ''
+      hud.innerHTML = RD.cashText(s, ''
         + '<div class="hud-top">'
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">第 ' + s.night + '／15 晚</span></div>'
         + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
@@ -26454,7 +26491,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
         + '<div class="meter m-cash"><span class="lbl">$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
         + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
         + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
-        + '</div>';
+        + '</div>');
       hudFlash(s);
       return;
     }
@@ -26516,7 +26553,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   // ---------- 面板與對話框 ----------
   let panelHandlers = {}, modalHandlers = {}, modalOpts = {};
   function setPanel(html, handlers) {
-    $('#panel').innerHTML = html;
+    $('#panel').innerHTML = uiCash(html);
     panelHandlers = handlers || {};
   }
   function modal(html, handlers, opts) {
@@ -26524,7 +26561,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     modalOpts = opts || {};
     // 已開啟的對話框重新繪畫時，不再播放彈出動畫
     wrap.classList.toggle('static', !wrap.hidden);
-    wrap.innerHTML = html;
+    wrap.innerHTML = uiCash(html);
     wrap.hidden = false;
     modalHandlers = handlers || {};
     const first = wrap.querySelector('[data-autofocus]') || wrap.querySelector('.btn.primary') || wrap.querySelector('button');
@@ -26575,7 +26612,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   function toast(text, kind) {
     const el = document.createElement('div');
     el.className = 'toast ' + (kind || '');
-    el.textContent = text;
+    el.textContent = uiCash(text);
     $('#toasts').appendChild(el);
     setTimeout(() => el.remove(), 2600);
   }
@@ -26778,7 +26815,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   // ---------- 報告 ----------
   function deltasHtml(d, isRounds) {
     const out = [];
-    if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + signed(d.cr) + '</span></div>');
+    if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span></div>');
     if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
     if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
@@ -26788,7 +26825,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body') : (lines || []);
     if (!list.length) return '';
     return '<ul class="lines">' + list.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
-      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
+      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : isRounds && l.stat === 'cr' ? (l.v > 0 ? '+$' : l.v < 0 ? '−$' : '$') + fmt(Math.abs(l.v)) : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
   }
   function statsDeltaHtml(st) {
     const keys = Object.keys(st || {});
@@ -27450,7 +27487,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     const cards = t5.ids.map((cid, i) => {
       const def = D().CARDS[cid];
       const picked = (t5.picked || []).includes(i);
-      const fake = { uid: i, id: cid, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
+      const fake = { uid: i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
       return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
     }).join('');
     return '<div class="modal wide rd-trip">'
@@ -27879,6 +27916,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   };
   let root = null, st = null;
   const $ = (sel) => root.querySelector(sel);
+  const ctCash = (str) => (IE.Rounds && IE.Rounds.cashText && st && st.s ? IE.Rounds.cashText(st.s, str) : str);
 
   // ---------- 素材卡 ----------
   function cardEl(s, c, o) {
@@ -28220,8 +28258,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
-    $('.ct-objs').innerHTML = slots.join('');
-    $('.ct-schools').innerHTML = schoolsHtml(s);
+    $('.ct-objs').innerHTML = ctCash(slots.join(''));
+    $('.ct-schools').innerHTML = ctCash(schoolsHtml(s));
     renderTools();
     renderAbility();
     renderStage();
@@ -28271,7 +28309,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
       case 'antiquedealer': btns = b('forge', '做舊選中的一張', '靈魂 +2 克') + '<button type="button" class="ab-btn" data-ct="deck">鑑定（賣素材）</button>'; break;
       default: btns = '<span class="ab-note">' + esc(A.desc) + '</span>';
     }
-    bar.innerHTML = '<span class="ab-name"><span class="lbl">招牌能力</span>' + esc(A.name) + '</span>' + btns;
+    bar.innerHTML = ctCash('<span class="ab-name"><span class="lbl">招牌能力</span>' + esc(A.name) + '</span>' + btns);
   }
   async function useAbility(k) {
     const s = st.s;
@@ -28292,7 +28330,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     finishAbility(C().useAbility(s, k, arg));
   }
   function finishAbility(r) {
-    $('.ct-info').innerHTML = esc(r.msg);
+    $('.ct-info').innerHTML = ctCash(esc(r.msg));
     if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); burst($('.ct-abil'), 24, 0.8, '#ffd36b'); st.sel = []; } else A().sfx('wrong');
     render();
@@ -28678,13 +28716,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     const ab = e.target.closest('[data-ab]');
     if (ab && !ab.disabled && !st.busy) { useAbility(ab.dataset.ab); return; }
     const ob = e.target.closest('.ct-obj[data-obj]');
-    if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
+    if (ob) { $('.ct-info').innerHTML = ctCash(objInfo(st.s, ob.dataset.obj)); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
     if (sb) {
       const k = sb.dataset.school, sc = D().SCHOOLS[k];
       const mf = IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
-      $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
-        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : '');
+      $('.ct-info').innerHTML = ctCash('<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
+        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : ''));
       return;
     }
     const b = e.target.closest('[data-ct]');
@@ -28738,7 +28776,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   // 使用工具卡：先選素材，再按工具卡
   function useTool(idx) {
     const r = IE.Stages.useTool(st.s, idx, st.sel.slice());
-    $('.ct-info').innerHTML = esc(r.msg);
+    $('.ct-info').innerHTML = ctCash(esc(r.msg));
     if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); st.sel = []; burst($('.ct-tools'), 24, 0.8, '#9be36b'); }
     else A().sfx('wrong');
@@ -28746,7 +28784,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   }
   function openDeck(replace) {
     const s = st.s;
-    const h = { close: UI().closeModal, sellcard(el) { const r = C().useAbility(s, 'sell', Number(el.dataset.id)); A().sfx(r.ok ? 'coin' : 'wrong'); $('.ct-info').innerHTML = esc(r.msg); render(); openDeck(true); } };
+    const h = { close: UI().closeModal, sellcard(el) { const r = C().useAbility(s, 'sell', Number(el.dataset.id)); A().sfx(r.ok ? 'coin' : 'wrong'); $('.ct-info').innerHTML = ctCash(esc(r.msg)); render(); openDeck(true); } };
     if (replace) UI().modal(deckHtml(s), h, { dismiss: () => {} }); else UI().pushModal(deckHtml(s), h, { dismiss: () => {} });
   }
   // 牌庫檢視：還沒抽的素材按標籤分佈
@@ -29073,10 +29111,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     const el = document.createElement('div');
     el.className = 'ct-cleared' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
     const earlyTxt = ses && ses.plays > 0 ? RT.early.replace('{n}', ses.plays).replace('{v}', E.earlyBonus) : '';
-    el.innerHTML = '<div class="ct-cleared-card">'
+    el.innerHTML = ctCash('<div class="ct-cleared-card">'
       + '<b>' + esc(RT.cleared) + '</b>'
       + (earlyTxt ? '<p>' + esc(earlyTxt) + '</p>' : '')
-      + '</div>';
+      + '</div>');
     root.appendChild(el);
     A().sfx('combo');
     flash('#9be36b');
@@ -29403,7 +29441,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     const best = s.stats.bestWork && w && s.stats.bestWork === w;
     const panel = document.createElement('div');
     panel.className = 'ct-end';
-    panel.innerHTML = '<div class="ct-end-card">'
+    panel.innerHTML = ctCash('<div class="ct-end-card">'
       + '<span class="mute">' + (res.session.mode === 'sketch' ? '今晚的速寫' : '今晚的作品') + '</span>'
       + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
       + '<div class="ct-end-score num">0</div>'
@@ -29420,7 +29458,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
       + (isRounds
         ? '<button type="button" class="btn primary big" data-end="shop">' + esc(s.ended ? '看結局' : D().ROUND_TEXT.toShop) + '</button>'
         : '<button type="button" class="btn primary big" data-end="done">完成</button>')
-      + '</div>';
+      + '</div>');
     root.appendChild(panel);
     let closed = false;
     const endBtn = panel.querySelector('[data-end="done"], [data-end="shop"]');
@@ -29574,6 +29612,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
   function showTitle() {
+    Game.state = null;
     document.body.classList.remove('mode-rounds');
     music('title');
     document.getElementById('hud').hidden = true;
@@ -29634,6 +29673,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
     render(null, false);
   }
   function showSetup() {
+    Game.state = null;
     document.body.classList.remove('mode-rounds');
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
     const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {

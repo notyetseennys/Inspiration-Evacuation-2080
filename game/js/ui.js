@@ -11,6 +11,7 @@
   const kfmt = (n) => (n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
   const pad2 = (n) => String(n).padStart(2, '0');
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
+  const uiCash = (str) => (IE.Rounds && IE.Rounds.cashText && IE.Game && IE.Game.state ? IE.Rounds.cashText(IE.Game.state, str) : str);
 
   function tagsHtml(tags) {
     return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
@@ -65,7 +66,8 @@
       el.classList.add(good ? 'flash-up' : 'flash-down');
       const f = document.createElement('span');
       f.className = 'float-delta ' + (good ? 'up' : 'down');
-      f.textContent = fmtD[k](d);
+      const txt = fmtD[k](d);
+      f.textContent = IE.Rounds && IE.Rounds.cashText ? IE.Rounds.cashText(s, txt) : txt;
       el.appendChild(f);
     });
   }
@@ -79,7 +81,7 @@
       const cur = (city && city.currency) || {};
       const chances = Math.max(0, s.chances == null ? 3 : s.chances);
       const rent = RD.rentOf(s);
-      hud.innerHTML = ''
+      hud.innerHTML = RD.cashText(s, ''
         + '<div class="hud-top">'
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">第 ' + s.night + '／15 晚</span></div>'
         + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
@@ -92,7 +94,7 @@
         + '<div class="meter m-cash"><span class="lbl">$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
         + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
         + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
-        + '</div>';
+        + '</div>');
       hudFlash(s);
       return;
     }
@@ -154,7 +156,7 @@
   // ---------- 面板與對話框 ----------
   let panelHandlers = {}, modalHandlers = {}, modalOpts = {};
   function setPanel(html, handlers) {
-    $('#panel').innerHTML = html;
+    $('#panel').innerHTML = uiCash(html);
     panelHandlers = handlers || {};
   }
   function modal(html, handlers, opts) {
@@ -162,7 +164,7 @@
     modalOpts = opts || {};
     // 已開啟的對話框重新繪畫時，不再播放彈出動畫
     wrap.classList.toggle('static', !wrap.hidden);
-    wrap.innerHTML = html;
+    wrap.innerHTML = uiCash(html);
     wrap.hidden = false;
     modalHandlers = handlers || {};
     const first = wrap.querySelector('[data-autofocus]') || wrap.querySelector('.btn.primary') || wrap.querySelector('button');
@@ -213,7 +215,7 @@
   function toast(text, kind) {
     const el = document.createElement('div');
     el.className = 'toast ' + (kind || '');
-    el.textContent = text;
+    el.textContent = uiCash(text);
     $('#toasts').appendChild(el);
     setTimeout(() => el.remove(), 2600);
   }
@@ -416,7 +418,7 @@
   // ---------- 報告 ----------
   function deltasHtml(d, isRounds) {
     const out = [];
-    if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + signed(d.cr) + '</span></div>');
+    if (d.cr) out.push('<div class="delta cr"><span class="k">信用點</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span></div>');
     if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
     if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
     if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
@@ -426,7 +428,7 @@
     const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body') : (lines || []);
     if (!list.length) return '';
     return '<ul class="lines">' + list.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
-      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
+      + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : isRounds && l.stat === 'cr' ? (l.v > 0 ? '+$' : l.v < 0 ? '−$' : '$') + fmt(Math.abs(l.v)) : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
   }
   function statsDeltaHtml(st) {
     const keys = Object.keys(st || {});
@@ -1088,7 +1090,7 @@
     const cards = t5.ids.map((cid, i) => {
       const def = D().CARDS[cid];
       const picked = (t5.picked || []).includes(i);
-      const fake = { uid: i, id: cid, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
+      const fake = { uid: i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
       return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
     }).join('');
     return '<div class="modal wide rd-trip">'

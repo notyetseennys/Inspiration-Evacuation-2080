@@ -693,6 +693,7 @@ function runOne(bg, season, seed, strat) {
     roundsPassed: s.reviewsPassed || 0,
     lost: (s.lost || []).slice(),
     objectsCount: (s.objects || []).length,
+    trips: (s.stats && s.stats.trips) || 0,
     chaptersDone: s.story && Array.isArray(s.story.done) ? s.story.done.length : 0,
     friendsTaken: s.story && s.story.taken ? Object.keys(s.story.taken).length : 0,
     friendsHidden: s.story && s.story.hidden ? Object.keys(s.story.hidden).length : 0,
@@ -784,7 +785,8 @@ function runStrategy(strat) {
   const avgReversals = avg((r) => r.metrics.reversals);
   const avgTaken = avg((r) => r.friendsTaken);
   const avgHidden = avg((r) => r.friendsHidden);
-  console.log(`  故事線統計: 平均每局回答 ${avgChapters.toFixed(2)} 章角色線 · 極端選項 ${avgExtremes.toFixed(2)} 個 · 發生反轉 ${avgReversals.toFixed(2)} 次 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
+  const avgTrips = avg((r) => r.trips);
+  console.log(`  出國與故事線: 平均每局出國 ${avgTrips.toFixed(2)} 次 · 回答 ${avgChapters.toFixed(2)} 章角色線 · 極端選項 ${avgExtremes.toFixed(2)} 個 · 發生反轉 ${avgReversals.toFixed(2)} 次 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
   const formLine = FORM_KEYS
     .map((f) => `${f}:${totalPlays ? Math.round((formTotals[f] / totalPlays) * 100) : 0}%`)
     .join(' ');

@@ -13,6 +13,38 @@
     return !!(s && D.MODES[s.mode] && D.MODES[s.mode].rounds);
   }
 
+  // 介面顯示用的貨幣換算倍數（總規格 §6、ECONOMY.md §3）
+  function rate(s) {
+    if (!on(s)) return 1;
+    const id = (s && s.city) || (D && D.CITY_DEFAULT) || 'zone7';
+    const c = D && D.CITIES && D.CITIES[id];
+    return (c && c.currency && c.currency.rate) || 1;
+  }
+
+  function comma(n) {
+    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function cash(s, v) {
+    const n = Math.round(Math.abs(v || 0) * rate(s));
+    return (v < 0 ? '−$' : '$') + comma(n);
+  }
+
+  function cashText(s, str) {
+    if (typeof str !== 'string' || !str) return str;
+    const r = rate(s);
+    if (r === 1) return str;
+    return str.replace(
+      /(?:([+\-−]?)\$([ \t]*)|\$([ \t]*[+\-−][ \t]*))(\d[\d,]*)/g,
+      (m, pre, sp, post, digits) => {
+        const n = Number(digits.replace(/,/g, ''));
+        if (!Number.isFinite(n)) return m;
+        const v = comma(Math.round(n * r));
+        return post != null ? '$' + post + v : (pre || '') + '$' + (sp || '') + v;
+      },
+    );
+  }
+
   // 第幾輪（1..5）
   function roundOf(s, night) {
     const n = night == null ? s.night : night;
@@ -162,9 +194,9 @@
         kind: 'trip',
         kindName: D.ROUND_TEXT.kinds.trip,
         name: '出國：' + reg,
-        sub: '飛往' + reg + '，從五張當地素材中帶回兩張',
+        sub: '飛往' + reg + '：機票、氣候附加費和邊境保證金。從五張當地素材中帶回兩張',
         micro: null,
-        fx: [['cr', '−$' + cost], ['spark', '+0.4'], ['card', reg + '素材 五選二']],
+        fx: [['cr', '−$' + cost], ['spark', '+' + D.ECON.tripSpark], ['card', reg + '素材 五選二（★' + D.ECON.tripStar + '）']],
         danger: 0,
         enabled: !reason,
         reason,
@@ -261,7 +293,7 @@
       const rep = R.report(s, info.name);
       s.cr -= cost;
       rep.delta('cr', -cost);
-      rep.line('飛往' + reg + '，看見浮城以外的世界', 'good', R.addSpark(s, 0.4, true), 'spark');
+      rep.line('飛往' + reg + '，看見浮城以外的世界', 'good', R.addSpark(s, D.ECON.tripSpark, true), 'spark');
       s.visited[origin] = (s.visited[origin] || 0) + 1;
       s.stats.trips = (s.stats.trips || 0) + 1;
       const pool = Object.keys(D.CARDS).filter((k) => D.CARDS[k].origin === origin && D.CARDS[k].rarity !== 'legend');
@@ -288,6 +320,7 @@
     if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
     const res = R.addCard(s, t5.ids[i]);
+    res.card.star = D.ECON.tripStar;
     if (t5.rep) {
       t5.rep.cards.push(res.card);
       if (res.dropped) t5.rep.dropped.push(res.dropped);
@@ -782,6 +815,8 @@
 
   IE.Rounds = {
     on,
+    cash,
+    cashText,
     roundOf,
     kindOf,
     dayOfNight,

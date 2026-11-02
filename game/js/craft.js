@@ -12,6 +12,7 @@
   };
   let root = null, st = null;
   const $ = (sel) => root.querySelector(sel);
+  const ctCash = (str) => (IE.Rounds && IE.Rounds.cashText && st && st.s ? IE.Rounds.cashText(st.s, str) : str);
 
   // ---------- 素材卡 ----------
   function cardEl(s, c, o) {
@@ -353,8 +354,8 @@
     $('[data-ct="speed"]').textContent = '速度 ×' + st.speed;
     const slots = [];
     for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
-    $('.ct-objs').innerHTML = slots.join('');
-    $('.ct-schools').innerHTML = schoolsHtml(s);
+    $('.ct-objs').innerHTML = ctCash(slots.join(''));
+    $('.ct-schools').innerHTML = ctCash(schoolsHtml(s));
     renderTools();
     renderAbility();
     renderStage();
@@ -404,7 +405,7 @@
       case 'antiquedealer': btns = b('forge', '做舊選中的一張', '靈魂 +2 克') + '<button type="button" class="ab-btn" data-ct="deck">鑑定（賣素材）</button>'; break;
       default: btns = '<span class="ab-note">' + esc(A.desc) + '</span>';
     }
-    bar.innerHTML = '<span class="ab-name"><span class="lbl">招牌能力</span>' + esc(A.name) + '</span>' + btns;
+    bar.innerHTML = ctCash('<span class="ab-name"><span class="lbl">招牌能力</span>' + esc(A.name) + '</span>' + btns);
   }
   async function useAbility(k) {
     const s = st.s;
@@ -425,7 +426,7 @@
     finishAbility(C().useAbility(s, k, arg));
   }
   function finishAbility(r) {
-    $('.ct-info').innerHTML = esc(r.msg);
+    $('.ct-info').innerHTML = ctCash(esc(r.msg));
     if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); burst($('.ct-abil'), 24, 0.8, '#ffd36b'); st.sel = []; } else A().sfx('wrong');
     render();
@@ -811,13 +812,13 @@
     const ab = e.target.closest('[data-ab]');
     if (ab && !ab.disabled && !st.busy) { useAbility(ab.dataset.ab); return; }
     const ob = e.target.closest('.ct-obj[data-obj]');
-    if (ob) { $('.ct-info').innerHTML = objInfo(st.s, ob.dataset.obj); wiggle(ob); return; }
+    if (ob) { $('.ct-info').innerHTML = ctCash(objInfo(st.s, ob.dataset.obj)); wiggle(ob); return; }
     const sb = e.target.closest('.sch[data-school]');
     if (sb) {
       const k = sb.dataset.school, sc = D().SCHOOLS[k];
       const mf = IE.Flavor && IE.Flavor.school ? IE.Flavor.school(k) : '';
-      $('.ct-info').innerHTML = '<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
-        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : '');
+      $('.ct-info').innerHTML = ctCash('<b>' + esc(sc.name) + '</b>（' + esc(sc.motto) + '）：兩件——' + esc(sc.b2) + '；三件——' + esc(sc.b3)
+        + (mf ? '<em class="fl-quote sch-manifesto">' + esc(mf) + '</em>' : ''));
       return;
     }
     const b = e.target.closest('[data-ct]');
@@ -871,7 +872,7 @@
   // 使用工具卡：先選素材，再按工具卡
   function useTool(idx) {
     const r = IE.Stages.useTool(st.s, idx, st.sel.slice());
-    $('.ct-info').innerHTML = esc(r.msg);
+    $('.ct-info').innerHTML = ctCash(esc(r.msg));
     if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); st.sel = []; burst($('.ct-tools'), 24, 0.8, '#9be36b'); }
     else A().sfx('wrong');
@@ -879,7 +880,7 @@
   }
   function openDeck(replace) {
     const s = st.s;
-    const h = { close: UI().closeModal, sellcard(el) { const r = C().useAbility(s, 'sell', Number(el.dataset.id)); A().sfx(r.ok ? 'coin' : 'wrong'); $('.ct-info').innerHTML = esc(r.msg); render(); openDeck(true); } };
+    const h = { close: UI().closeModal, sellcard(el) { const r = C().useAbility(s, 'sell', Number(el.dataset.id)); A().sfx(r.ok ? 'coin' : 'wrong'); $('.ct-info').innerHTML = ctCash(esc(r.msg)); render(); openDeck(true); } };
     if (replace) UI().modal(deckHtml(s), h, { dismiss: () => {} }); else UI().pushModal(deckHtml(s), h, { dismiss: () => {} });
   }
   // 牌庫檢視：還沒抽的素材按標籤分佈
@@ -1206,10 +1207,10 @@
     const el = document.createElement('div');
     el.className = 'ct-cleared' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
     const earlyTxt = ses && ses.plays > 0 ? RT.early.replace('{n}', ses.plays).replace('{v}', E.earlyBonus) : '';
-    el.innerHTML = '<div class="ct-cleared-card">'
+    el.innerHTML = ctCash('<div class="ct-cleared-card">'
       + '<b>' + esc(RT.cleared) + '</b>'
       + (earlyTxt ? '<p>' + esc(earlyTxt) + '</p>' : '')
-      + '</div>';
+      + '</div>');
     root.appendChild(el);
     A().sfx('combo');
     flash('#9be36b');
@@ -1536,7 +1537,7 @@
     const best = s.stats.bestWork && w && s.stats.bestWork === w;
     const panel = document.createElement('div');
     panel.className = 'ct-end';
-    panel.innerHTML = '<div class="ct-end-card">'
+    panel.innerHTML = ctCash('<div class="ct-end-card">'
       + '<span class="mute">' + (res.session.mode === 'sketch' ? '今晚的速寫' : '今晚的作品') + '</span>'
       + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
       + '<div class="ct-end-score num">0</div>'
@@ -1553,7 +1554,7 @@
       + (isRounds
         ? '<button type="button" class="btn primary big" data-end="shop">' + esc(s.ended ? '看結局' : D().ROUND_TEXT.toShop) + '</button>'
         : '<button type="button" class="btn primary big" data-end="done">完成</button>')
-      + '</div>';
+      + '</div>');
     root.appendChild(panel);
     let closed = false;
     const endBtn = panel.querySelector('[data-end="done"], [data-end="shop"]');
