@@ -451,6 +451,18 @@ body.mode-rounds #ctable .ct-actions .btn,
 .rs-pack-item .btn {
   grid-column: 2;
 }
+/* 出國五選二視窗頂部的地區圖（2:1；WO-15-12 審核加入） */
+.rt-banner {
+  display: block;
+  width: 100%;
+  max-height: 128px;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #2a3756;
+  background: #0a101d;
+  margin-bottom: 10px;
+}
 .rr-banner {
   width: 100%;
   max-height: 132px;
@@ -519,6 +531,7 @@ body.mode-rounds #ctable .ct-actions .btn,
   .rd-banner,
   .rs-banner,
   .rr-banner,
+  .rt-banner,
   .end-banner,
   .sc-bg-img {
     max-height: 120px;

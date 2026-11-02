@@ -1067,8 +1067,9 @@
         const av = IE.imgTag ? IE.imgTag('friend-' + npcId, 'rd-avatar') : '';
         head = '<div class="rd-friend-head">' + av + '<b class="rd-name">' + esc(c.name) + '</b></div>';
       } else if (c.kind === 'trip') {
+        // 出國卡用重畫的 day-trip（笑位是「貴」：收據一樣長的登機證）；目的地的地區圖放在五選二的視窗（WO-15-12 審核）
         const origin = c.id.startsWith('trip:') ? c.id.slice(5) : '';
-        const imgKey = origin && IE.img && IE.img('trip-' + origin) ? 'trip-' + origin : 'day-trip';
+        const imgKey = IE.img && IE.img('day-trip') ? 'day-trip' : 'trip-' + origin;
         banner = IE.imgTag ? IE.imgTag(imgKey, 'rd-banner') : '';
       } else {
         banner = IE.imgTag ? IE.imgTag('day-' + c.id, 'rd-banner') : '';
@@ -1124,7 +1125,9 @@
       const fake = { uid: i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
       return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
     }).join('');
+    const tripBanner = t5.origin && IE.imgTag ? IE.imgTag('trip-' + t5.origin, 'rt-banner') : '';
     return '<div class="modal wide rd-trip">'
+      + tripBanner
       + '<span class="rd-kind k-trip">' + esc(T.kinds.trip) + '</span>'
       + '<h2>' + esc(info.name) + '</h2>'
       + '<p class="mute">' + esc(info.sub) + '</p>'

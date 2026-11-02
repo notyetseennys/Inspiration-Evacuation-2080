@@ -973,6 +973,8 @@ Same rules as set at the start (no anime or chibi features, muted world colours,
 
 每張圖照 `tools/art-import.py` 的規格處理（種族頭像 128×128、場景 320×180、橫幅 256×128、紙幣 128×64），放在 `game/img/`；用法寫在 WO-15-12 第 4 節和 WO-15-13。
 
+**狀態（2026-11-02）**：核心 13 張已經收到（`main` 分支的根目錄）並處理好，放在 `game/img/`（合共 205 KB）：`species-` ×4、`collect-` ×4、`story-crossroads`、`story-reversal`、`astar`、`note-floatcity`，以及重畫的 `day-trip`。出國卡改用重畫的 `day-trip`，地區圖 `trip-<地區>` 放在出國五選二的視窗。選做的 7 張還沒有生成。
+
 ---
 
 ## 附錄：清單

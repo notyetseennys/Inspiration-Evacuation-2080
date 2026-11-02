@@ -96,6 +96,11 @@ const URL = 'http://localhost:' + PORT + '/';
     }, SEED);
     await closeDilemma();
     ok('五輪模式開新局（seed=' + SEED + '）');
+    // WO-15-12 審核加入：開發版的圖片清單（img.js 的 KNOWN）和 game/img/ 一致，加入新圖時不會漏掉
+    const imgFiles = fs.readdirSync(path.join(__dirname, '..', 'game', 'img')).filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4));
+    const imgMissing = await page.evaluate((names) => names.filter((n) => !window.__IE.img(n)), imgFiles);
+    if (imgMissing.length) await fail('img.js 的圖片清單缺少：' + imgMissing.join('、'));
+    ok('開發版的圖片清單和 game/img/ 一致（' + imgFiles.length + ' 張）');
 
     // 2. 看到 .rd-day 和三張 .rd-card；.rd-map .rm-night 有 15 個
     await page.waitForSelector('.rd-day');
