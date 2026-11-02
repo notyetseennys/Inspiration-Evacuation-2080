@@ -5,6 +5,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { spawn } = require('child_process');
 const { chromium } = require('playwright');
 
@@ -59,6 +60,24 @@ const URL = 'http://localhost:' + PORT + '/';
     if (bad.length) await fail(label + '：有金額不是 20 的倍數（沒有換算）：' + bad.join('、'));
     if (raw.length) await fail(label + '：有區域的金額全部小於 $100（可能沒有換算）：' + raw.map((g) => g.join('、')).join('／'));
     ok('票面價格（' + label + '）：' + found.length + ' 個金額都已換算' + (found.length ? '，例如 ' + found.slice(0, 3).join('、') : ''));
+  };
+  const checkAllImgs = async (label) => {
+    await page.waitForFunction(() => {
+      const imgs = Array.from(document.querySelectorAll('img'));
+      return imgs.every((im) => im.complete);
+    }, { timeout: 5000 }).catch(() => {});
+    const res = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('img')).map((im) => ({
+        src: im.getAttribute('src') || '',
+        cls: im.className || '',
+        complete: im.complete,
+        nw: im.naturalWidth,
+        hidden: !!im.hidden,
+      }));
+    });
+    const broken = res.filter((x) => !x.complete || x.nw <= 0 || x.hidden);
+    if (broken.length) await fail(label + '：發現未載入或破圖的 img：' + JSON.stringify(broken));
+    return res;
   };
 
   try {
@@ -170,6 +189,26 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('第 1 晚：錢 ' + hudLit.cash + '（遊戲數值 $' + hudLit.cr + '）、' + hudLit.rent);
     await scanMoney('第 1 晚的白天', ['#hud', '#panel'], 3);
+    await checkAllImgs('第 1 晚的白天');
+    const dayImgs = await page.$$eval('.rd-day .rd-card', (cards) => cards.map((c) => {
+      const im = c.querySelector('img.px');
+      return im ? { src: im.getAttribute('src'), nw: im.naturalWidth } : null;
+    }));
+    if (dayImgs.length !== 3 || dayImgs.some((x) => !x || x.nw <= 0)) {
+      await fail('第 1 晚的白天：三張 .rd-card 都應有載入完成的 img.px（naturalWidth > 0）：' + JSON.stringify(dayImgs));
+    }
+    ok('美術整合（第 1 晚的白天）：三張 .rd-card 都有插圖（' + dayImgs.map((x) => x.src).join('、') + '）');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const dayMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (dayMob.sw > 390) await fail('手機 390px 白天面板出現橫向捲動：scrollWidth=' + dayMob.sw);
+    if (dayMob.minH < 44) await fail('手機白天面板按鈕高度不足 44px：minH=' + dayMob.minH);
+    await page.setViewportSize({ width: 1280, height: 800 });
 
     if (process.env.SHOTS) {
       fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
@@ -177,18 +216,13 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-06-day-desktop.png'), fullPage: true });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-day-desktop.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-day-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-day-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(250);
-      const mob = await page.evaluate(() => {
-        const sw = document.documentElement.scrollWidth;
-        const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => Math.round(b.getBoundingClientRect().height));
-        return { sw, minH: Math.min(...hs) };
-      });
-      if (mob.sw > 390) await fail('手機 390px 出現橫向捲動：scrollWidth=' + mob.sw);
-      if (mob.minH < 44) await fail('手機按鈕高度不足 44px：minH=' + mob.minH);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-06-day-mobile.png'), fullPage: true });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-day-mobile.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-day-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-day-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     ok('白天面板：3 張生活卡、15 晚進度點');
@@ -240,6 +274,36 @@ const URL = 'http://localhost:' + PORT + '/';
     const leaveHidden = await page.$eval('#ctable [data-ct="leave"]', (el) => el.hidden);
     if (goalLbl !== '今晚目標' || !hasNightCls) await fail('創作桌進度列應為「今晚目標」並帶 .night');
     if (!leaveHidden) await fail('第一筆之前應隱藏 [data-ct="leave"]');
+
+    await checkAllImgs('創作台');
+    const stageImg = await page.$eval('#ctable .ct-scene-stage img.px', (im) => ({ src: im.getAttribute('src'), nw: im.naturalWidth })).catch(() => null);
+    if (!stageImg || !/stage-(desk|hall|gallery|ufo)/.test(stageImg.src) || stageImg.nw <= 0) {
+      await fail('創作台 .ct-scene-stage 應有對應關卡的 stage-* 圖片（naturalWidth > 0）：' + JSON.stringify(stageImg));
+    }
+    ok('美術整合（創作台）：.ct-scene-stage 顯示 ' + stageImg.src + '（naturalWidth=' + stageImg.nw + '）');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const ctMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#ctable .ct-actions .btn')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (ctMob.sw > 390) await fail('手機 390px 創作台出現橫向捲動：scrollWidth=' + ctMob.sw);
+    if (ctMob.minH < 44) await fail('手機創作台動作按鈕高度不足 44px：minH=' + ctMob.minH);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (process.env.SHOTS) {
+      await page.evaluate(() => { const intro = document.querySelector('#ctable .ct-stage-intro'); if (intro) intro.remove(); });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-craft-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(() => {
+        const stg = document.querySelector('#ctable .ct-scene-stage');
+        if (stg) stg.scrollIntoView({ block: 'start' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-craft-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
 
     // 收工演出只出現約一秒：用 MutationObserver 記下它曾經出現（WO-15-07 審核加入）
     await page.evaluate(() => {
@@ -329,6 +393,20 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     await scanMoney('第 1 晚的市集', ['#modal .rd-shop', '#hud'], 3);
     ok('票面價格（市集）：' + shopCashBefore.slot + ' 顯示 ' + shopCashBefore.expPack + '（s.cr=' + shopCashBefore.cr + '），pushModal 還原後不重複換算');
+    await checkAllImgs('第 1 輪市集');
+    const shopArt = await page.evaluate(() => {
+      const m = document.querySelector('#modal .rd-shop');
+      const banner = m && m.querySelector('img.rs-banner');
+      const packs = m ? Array.from(m.querySelectorAll('.rs-item[data-slot^="pack:"] img.rs-pack-img')) : [];
+      return {
+        banner: banner ? { src: banner.getAttribute('src'), nw: banner.naturalWidth } : null,
+        packs: packs.map((p) => ({ src: p.getAttribute('src'), nw: p.naturalWidth })),
+      };
+    });
+    if (!shopArt.banner || !shopArt.banner.src.includes('scene-market') || shopArt.banner.nw <= 0 || shopArt.packs.length !== 2 || shopArt.packs.some((p) => !p.src.includes('pack-') || p.nw <= 0)) {
+      await fail('第 1 輪市集插圖不正確：' + JSON.stringify(shopArt));
+    }
+    ok('美術整合（第 1 輪市集）：頂部 scene-market 及 2 包 pack-* 插圖載入完成');
 
     // 檢查手機 390px 市集無橫向捲軸且每個按鈕高度 >= 44px
     await page.setViewportSize({ width: 390, height: 844 });
@@ -343,12 +421,14 @@ const URL = 'http://localhost:' + PORT + '/';
     if (process.env.SHOTS) {
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-shop-mobile.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-shop-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-shop-mobile.png') });
     }
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.waitForTimeout(150);
     if (process.env.SHOTS) {
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-shop-desktop.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-shop-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-shop-desktop.png') });
     }
     ok('二手市集（.rd-shop）開啟並完成手機 390px 版面檢查');
 
@@ -490,23 +570,36 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('票面價格（篩選日）：本輪租金包含 ' + revCashCheck.expRent);
     await scanMoney('第 1 輪的篩選日', ['#modal .rd-review', '#hud'], 2);
+    await checkAllImgs('第 1 輪篩選日');
+    const revArt = await page.$eval('#modal .rd-review img.rr-banner', (im) => ({ src: im.getAttribute('src'), nw: im.naturalWidth })).catch(() => null);
+    if (!revArt || !revArt.src.includes('scene-review') || revArt.nw <= 0) {
+      await fail('第 1 輪篩選日頂部應有 scene-review（naturalWidth > 0）：' + JSON.stringify(revArt));
+    }
+    ok('美術整合（第 1 輪篩選日）：頂部 scene-review 載入完成（naturalWidth=' + revArt.nw + '）');
 
     if (process.env.SHOTS) {
       await page.waitForTimeout(200);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-desktop.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-review-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-review-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(200);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-review-pass-mobile.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-14-review-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-review-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     // 工單第 16 步：篩選日在手機 390px 沒有橫向捲動（WO-15-08 審核時加入）
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(200);
-    const revMob = await page.evaluate(() => document.documentElement.scrollWidth);
+    const revMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-review button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
     await page.setViewportSize({ width: 1280, height: 800 });
-    if (revMob > 390) await fail('手機 390px 篩選日出現橫向捲動：scrollWidth=' + revMob);
+    if (revMob.sw > 390) await fail('手機 390px 篩選日出現橫向捲動：scrollWidth=' + revMob.sw);
+    if (revMob.minH < 44) await fail('手機篩選日按鈕高度不足 44px：minH=' + revMob.minH);
     ok('第 1 輪篩選日（.rd-review）：有 .rr-rent 與 .rr-soul，顯示「通過」及「進入第 2 輪」；手機 390px 沒有橫向捲動');
 
     // §6. 在 .rd-review 重新整理頁面再按「繼續」，仍然看到 .rd-review
@@ -590,17 +683,67 @@ const URL = 'http://localhost:' + PORT + '/';
     if (!/通過 \d+ \/ 5 輪・完成 \d+ \/ 15 晚/.test(runSum)) {
       await fail('.run-sum 格式不正確：' + runSum);
     }
+    await checkAllImgs('結局畫面');
+    const endArt = await page.evaluate(() => {
+      const endIm = document.querySelector('#modal img.end-banner');
+      const embIm = document.querySelector('#modal .dossier img.d-emblem');
+      return {
+        end: endIm ? { src: endIm.getAttribute('src'), nw: endIm.naturalWidth } : null,
+        emblem: embIm ? { src: embIm.getAttribute('src'), nw: embIm.naturalWidth } : null,
+      };
+    });
+    if (!endArt.end || !endArt.end.src.includes('end-archived') || endArt.end.nw <= 0 || !endArt.emblem || !endArt.emblem.src.includes('emblem') || endArt.emblem.nw <= 0) {
+      await fail('結局畫面 end-* 或 emblem 插圖不正確：' + JSON.stringify(endArt));
+    }
+    ok('美術整合（結局畫面）：end-archived 與 emblem 載入完成');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const endMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .btn-row .btn, #panel .btn-row .btn')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (endMob.sw > 390) await fail('手機 390px 結局畫面出現橫向捲動：scrollWidth=' + endMob.sw);
+    if (endMob.minH < 44) await fail('手機結局畫面按鈕高度不足 44px：minH=' + endMob.minH);
+    await page.setViewportSize({ width: 1280, height: 800 });
+
     if (process.env.SHOTS) {
       await page.waitForTimeout(450);
       await page.evaluate(() => { const t = document.getElementById('toasts'); if (t) t.innerHTML = ''; });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-ending-desktop.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-ending-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(200);
       await page.evaluate(() => { const t = document.getElementById('toasts'); if (t) t.innerHTML = ''; });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-ending-mobile.png') });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-ending-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     ok('最後一次機會耗盡 → 進入人才檔案結局畫面（.dossier）與局摘要（' + runSum + '）');
+
+    // WO-15-12 §5.9：dist/inspiration-evacuation-2080.html 用 file:// 離線開啟時，圖片 naturalWidth > 0，檔案大小 < 4 MB
+    const distFile = path.join(__dirname, '..', 'dist', 'inspiration-evacuation-2080.html');
+    const distStat = fs.statSync(distFile);
+    if (distStat.size >= 4 * 1024 * 1024) {
+      await fail('dist/inspiration-evacuation-2080.html 超過 4 MB：' + distStat.size + ' bytes');
+    }
+    const filePage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await filePage.goto(pathToFileURL(distFile).href);
+    await filePage.evaluate((seed) => {
+      window.__IE.Game.newGame('copywriter', 'storm', { mode: 'rounds', seed });
+    }, SEED);
+    if (await filePage.$('#modal [data-do="pick"]')) {
+      await filePage.click('#modal [data-do="pick"]:not([disabled])');
+      await filePage.click('#modal [data-do="ok"]');
+    }
+    await filePage.waitForSelector('.rd-day');
+    const fileImgs = await filePage.$$eval('img.px', (els) => els.map((im) => ({ complete: im.complete, nw: im.naturalWidth })));
+    await filePage.close();
+    if (!fileImgs.length || fileImgs.some((x) => !x.complete || x.nw <= 0)) {
+      await fail('file:// 離線開啟 dist/ 時圖片未載入：' + JSON.stringify(fileImgs));
+    }
+    ok('dist/inspiration-evacuation-2080.html（' + (distStat.size / 1024).toFixed(0) + ' KB < 4 MB）用 file:// 離線開啟時，' + fileImgs.length + ' 張圖片 naturalWidth > 0');
 
     if (errors.length) await fail('有 JS 錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');

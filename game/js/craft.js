@@ -284,12 +284,18 @@
     root.style.setProperty('--water-pct', waterPct + '%');
     const box = $('.ct-scene-stage');
     if (!box) return;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const stageImgKey = scene === 'boss' ? 'stage-ufo' : scene === 'gallery' ? 'stage-gallery' : scene === 'small' ? 'stage-hall' : 'stage-desk';
+    const bgImg = isRounds && IE.imgTag ? IE.imgTag(stageImgKey, 'sc-bg-img') : '';
+    const bgCls = bgImg ? ' has-bg-img' : '';
     const dawnPill = isAll
       ? '<span class="sc-dawn-pill">☀ 通宵破曉・' + DAWN_TIMES[dawnStep] + '</span>'
       : '';
+    let html = '';
     if (scene === 'desk') {
       const locTxt = floor > 0 ? (floor + ' 樓書桌' + (flooded ? '・淹水中' : '')) : '天橋船屋書桌';
-      box.innerHTML = '<div class="sc-diorama sc-desk">'
+      html = '<div class="sc-diorama sc-desk' + bgCls + '">'
+        + bgImg
         + '<div class="sc-lamp-cone"></div>'
         + '<div class="sc-window">'
         + '<div class="sc-sky">'
@@ -308,7 +314,8 @@
         + '<div class="sc-caption"><span>深夜書桌・檯燈｜窗外水位 <b>' + water.toFixed(1) + ' 樓</b>（' + locTxt + '）</span>' + dawnPill + '</div>'
         + '</div>';
     } else if (scene === 'small') {
-      box.innerHTML = '<div class="sc-diorama sc-small">'
+      html = '<div class="sc-diorama sc-small' + bgCls + '">'
+        + bgImg
         + '<div class="sc-curtain left"></div><div class="sc-curtain right"></div>'
         + '<div class="sc-tubes"><i></i><i></i></div>'
         + '<div class="sc-bunting"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'
@@ -318,7 +325,8 @@
         + '<div class="sc-caption"><span>場景：舊城社區會堂（社區小展・摺凳與佈告板）</span>' + dawnPill + '</div>'
         + '</div>';
     } else if (scene === 'gallery') {
-      box.innerHTML = '<div class="sc-diorama sc-gallery">'
+      html = '<div class="sc-diorama sc-gallery' + bgCls + '">'
+        + bgImg
         + '<div class="sc-track"><i class="sp1"></i><i class="sp2"></i><i class="sp3"></i></div>'
         + '<div class="sc-cones"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>'
         + '<div class="sc-frames"><div class="sc-art a1"></div><div class="sc-art a2"></div><div class="sc-art a3"></div></div>'
@@ -327,7 +335,8 @@
         + '<div class="sc-caption"><span>場景：天空區白盒畫廊（畫廊聯展・無影射燈與白牆）</span>' + dawnPill + '</div>'
         + '</div>';
     } else {
-      box.innerHTML = '<div class="sc-diorama sc-boss">'
+      html = '<div class="sc-diorama sc-boss' + bgCls + '">'
+        + bgImg
         + '<div class="sc-ufo-ribs"><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="r4"></i></div>'
         + '<div class="sc-ufo-core"></div>'
         + '<div class="sc-ufo-beam"></div>'
@@ -335,6 +344,10 @@
         + '<div class="sc-ufo-consoles"><div class="uc left"><i></i><i></i><i></i></div><div class="uc right"><i></i><i></i><i></i></div></div>'
         + '<div class="sc-caption"><span>場景：母艦飛碟內部（外星評審艙・牽引光束核心）</span>' + dawnPill + '</div>'
         + '</div>';
+    }
+    if (box._lastHtml !== html) {
+      box.innerHTML = html;
+      box._lastHtml = html;
     }
   }
   function render() {

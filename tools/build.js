@@ -25,16 +25,32 @@ const metaSides = head.match(/<meta name="claude:viewport-fit-sides"[^>]*>/)[0];
 const metaDesc = head.match(/<meta name="description"[^>]*>/)[0];
 const fontLinks = head.match(/<link rel="preconnect"[^>]*>|<link rel="stylesheet" href="https:\/\/fonts[^>]*>/g).join('\n');
 
-const inner = [title, metaSides, metaDesc, fontLinks, '<style>\n' + css + '</style>', body, '<script>\n' + js + '</script>'].join('\n');
+const imgDir = path.join(game, 'img');
+const imgs = {};
+if (fs.existsSync(imgDir)) {
+  fs.readdirSync(imgDir).filter((f) => f.endsWith('.png')).sort().forEach((f) => {
+    const key = f.replace(/\.png$/, '');
+    imgs[key] = 'data:image/png;base64,' + fs.readFileSync(path.join(imgDir, f)).toString('base64');
+  });
+}
+const imgScript = '<script>window.IE=window.IE||{};IE.IMG=' + JSON.stringify(imgs) + ';</script>';
+const iconLink = imgs.icon ? '<link rel="icon" href="' + imgs.icon + '">' : '';
+
+const inner = [title, metaSides, metaDesc, iconLink, fontLinks, '<style>\n' + css + '</style>', body, imgScript, '<script>\n' + js + '</script>'].filter(Boolean).join('\n');
 const full = '<!doctype html>\n<html lang="zh-HK">\n<head>\n<meta charset="utf-8">\n'
   + '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-  + [title, metaSides, metaDesc, fontLinks, '<style>\n' + css + '</style>'].join('\n')
-  + '\n</head>\n<body>\n' + body + '\n<script>window.IE_AUDIO_BASE = "../game/";</script>\n<script>\n' + js + '</script>\n</body>\n</html>\n';
+  + [title, metaSides, metaDesc, iconLink, fontLinks, '<style>\n' + css + '</style>'].filter(Boolean).join('\n')
+  + '\n</head>\n<body>\n' + body + '\n<script>window.IE_AUDIO_BASE = "../game/";</script>\n' + imgScript + '\n<script>\n' + js + '</script>\n</body>\n</html>\n';
 
 const out = path.join(root, 'dist');
 fs.mkdirSync(out, { recursive: true });
-fs.writeFileSync(path.join(out, 'inspiration-evacuation-2080.html'), full);
-console.log('dist/inspiration-evacuation-2080.html  ' + (full.length / 1024).toFixed(0) + ' KB');
+const outFile = path.join(out, 'inspiration-evacuation-2080.html');
+fs.writeFileSync(outFile, full);
+const bytes = Buffer.byteLength(full, 'utf8');
+console.log('dist/inspiration-evacuation-2080.html  ' + (bytes / 1024).toFixed(0) + ' KB (' + (bytes / (1024 * 1024)).toFixed(2) + ' MB)');
+if (bytes > 4 * 1024 * 1024) {
+  throw new Error('dist/inspiration-evacuation-2080.html 超過 4 MB 上限：' + bytes + ' bytes');
+}
 // 背景音樂：dist/ 直接讀 game/audio/（不在 git 裡重複存一份）；Artifact 版本把音樂檔複製到 HTML 旁邊的 audio/
 const ai = process.argv.indexOf('--artifact');
 if (ai !== -1) {

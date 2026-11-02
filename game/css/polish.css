@@ -365,3 +365,176 @@ body.mode-rounds #stage:not(.playing) canvas { height: 194px !important; width: 
   .hud-meters.rd-meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hud-meters.rd-meters .m-soul { grid-column: span 2; }
 }
+
+/* 第十五期 WO-15-12：美術整合 */
+body.mode-rounds #ctable .ct-actions .btn,
+#modal .btn-row .btn {
+  min-height: 44px;
+}
+.px {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  max-width: 100%;
+}
+.rd-banner {
+  width: 100%;
+  height: 76px;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0a101d;
+}
+.rd-friend-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.rd-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 143, 209, 0.45);
+  background: #141c30;
+}
+.talk-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.talk-title {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.talk-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #2d3d60;
+  background: #0d1424;
+}
+.rs-banner {
+  width: 100%;
+  max-height: 112px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #2a3756;
+  background: #0a101d;
+}
+.rs-pack-item {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: 12px;
+  align-items: start;
+}
+.rs-pack-img {
+  grid-row: 1 / 3;
+  width: 64px;
+  height: 96px;
+  aspect-ratio: 2 / 3;
+  object-fit: contain;
+  align-self: center;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+.rs-pack-item .rs-txt {
+  grid-column: 2;
+}
+.rs-pack-item .btn {
+  grid-column: 2;
+}
+.rr-banner {
+  width: 100%;
+  max-height: 132px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #2a3756;
+  background: #0a101d;
+}
+.sc-diorama.has-bg-img {
+  position: relative;
+  overflow: hidden;
+}
+.sc-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  pointer-events: none;
+  z-index: 0;
+}
+.sc-diorama.has-bg-img::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 12, 24, 0.22) 0%, rgba(8, 12, 24, 0.68) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+.sc-diorama.has-bg-img > :not(.sc-bg-img):not(.sc-caption) {
+  opacity: 0.18;
+}
+.sc-diorama.has-bg-img .sc-caption {
+  z-index: 4;
+  color: #eef4ff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+.end-banner {
+  width: 100%;
+  max-width: 420px;
+  max-height: 160px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #2d3d60;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.d-head-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.d-emblem {
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  border-radius: 6px;
+  background: #141c30;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+@media (max-width: 720px) {
+  .rd-banner,
+  .rs-banner,
+  .rr-banner,
+  .end-banner,
+  .sc-bg-img {
+    max-height: 120px;
+  }
+  .talk-avatar {
+    width: 72px;
+    height: 72px;
+  }
+  .rs-pack-img {
+    width: 56px;
+    height: 84px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .px {
+    animation: none !important;
+    transition: none !important;
+  }
+}

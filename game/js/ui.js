@@ -385,8 +385,12 @@
   // 和朋友聊天（第十期）：三句對話，然後選擇怎樣回應
   function talkModal(s, id, lines) {
     const def = D().NPCS.find((x) => x.id === id), n = s.npcs.find((x) => x.id === id) || { friend: 0 };
-    return '<div class="modal talk"><span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span>'
-      + '<h2>' + esc(def.name) + '</h2>'
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const av = isRounds && IE.imgTag ? IE.imgTag('friend-' + id, 'talk-avatar') : '';
+    const head = av
+      ? '<div class="talk-head">' + av + '<div class="talk-title"><span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span><h2>' + esc(def.name) + '</h2></div></div>'
+      : '<span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span><h2>' + esc(def.name) + '</h2>';
+    return '<div class="modal talk">' + head
       + '<div class="talk-lines">' + lines.map((t, i) => '<p class="bubble" style="--d:' + (i * 0.45) + 's">' + esc(t) + '</p>').join('') + '</div>'
       + '<div class="talk-replies">' + D().TALK_REPLIES.map((r) => '<button class="btn talk-reply" type="button" data-do="reply" data-id="' + r.id + '"><b>' + r.name + '</b><small>' + r.desc + '</small></button>').join('') + '</div></div>';
   }
@@ -753,12 +757,19 @@
     const roundSum = isRounds
       ? '<p class="run-sum">通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '') + '</p>'
       : '';
+    const endKey = e.kind === 'agent' && (e.title === '完美員工' || s.conscience < 0.3) ? 'perfect' : e.kind;
+    const endBanner = isRounds && IE.imgTag ? IE.imgTag('end-' + endKey, 'end-banner') : '';
+    const emblemImg = isRounds && IE.imgTag ? IE.imgTag('emblem', 'd-emblem') : '';
+    const dHeadLeft = emblemImg
+      ? '<span class="d-head-title">' + emblemImg + '<span>星際人才發展局・人類樣本檔案</span></span>'
+      : '<span>星際人才發展局・人類樣本檔案</span>';
     return '<div class="modal wide"><div class="ending ' + e.kind + '">'
+      + endBanner
       + '<span class="e-kind">' + ENDING_KIND[e.kind] + '・DAY ' + s.day + '</span>'
       + '<h2>' + esc(e.title) + '</h2>'
       + '<p class="epitaph">' + esc(e.text) + '</p>' + roundSum + '</div>'
       + '<div class="dossier">'
-      + '<div class="d-head"><span>星際人才發展局・人類樣本檔案</span><span class="num">' + esc(dos.sampleId) + '</span></div>'
+      + '<div class="d-head">' + dHeadLeft + '<span class="num">' + esc(dos.sampleId) + '</span></div>'
       + '<div class="d-meta"><span>來源：浮城（地球）</span><span>觀察期：' + dos.days + ' 天</span><span>狀態：' + esc(dos.status || e.title) + '</span></div>'
       + '<div class="d-class d-with-por"><div class="d-por">' + IE.Chars.img(s.bg, 5) + '<small>' + esc(D().BACKGROUNDS[s.bg].name) + '</small></div>'
       + '<div class="d-ctxt"><span class="d-k">模組分類</span><h3>' + esc(a.name) + '</h3><p>' + esc(a.desc) + '</p>'
@@ -1050,9 +1061,22 @@
     const of = RD.offer(s);
     const cardsHtml = (of.ids || []).map((id) => {
       const c = RD.cardInfo(s, id);
+      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>';
+      if (c.kind === 'friend') {
+        const npcId = c.id.slice(7);
+        const av = IE.imgTag ? IE.imgTag('friend-' + npcId, 'rd-avatar') : '';
+        head = '<div class="rd-friend-head">' + av + '<b class="rd-name">' + esc(c.name) + '</b></div>';
+      } else if (c.kind === 'trip') {
+        const origin = c.id.startsWith('trip:') ? c.id.slice(5) : '';
+        const imgKey = origin && IE.img && IE.img('trip-' + origin) ? 'trip-' + origin : 'day-trip';
+        banner = IE.imgTag ? IE.imgTag(imgKey, 'rd-banner') : '';
+      } else {
+        banner = IE.imgTag ? IE.imgTag('day-' + c.id, 'rd-banner') : '';
+      }
       return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+        + banner
         + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span></div>'
-        + '<b class="rd-name">' + esc(c.name) + '</b>'
+        + head
         + '<p class="rd-sub">' + esc(c.sub) + '</p>'
         + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
         + (c.reason ? '<span class="act-why rd-why">' + esc(c.reason) + '</span>' : '')
@@ -1178,7 +1202,9 @@
       const dots = pk.tags
         ? pk.tags.map((t) => '<span class="rs-tag-pill"><i class="rs-dot" style="--c:' + D_.TAGS[t].color + '"></i>' + esc(D_.TAGS[t].name) + '</span>').join('')
         : '<span class="rs-tag-pill"><i class="rs-dot" style="--c:#ffd36b"></i><i class="rs-dot" style="--c:#37c3d6"></i><i class="rs-dot" style="--c:#ff4fb4"></i>異國素材（機會出極稀有）</span>';
-      return '<div class="rs-item' + (bought ? ' bought' : '') + '" data-slot="' + slot + '">'
+      const packImg = IE.imgTag ? IE.imgTag('pack-' + pid, 'rs-pack-img') : '';
+      return '<div class="rs-item rs-pack-item' + (bought ? ' bought' : '') + '" data-slot="' + slot + '">'
+        + packImg
         + '<div class="rs-txt"><span class="rs-cat">素材包・三選一</span><b>' + esc(pk.name) + '</b><div class="rs-dots">' + dots + '</div></div>'
         + '<button class="btn' + (ok ? ' sea' : '') + '" type="button" data-do="buy" data-slot="' + slot + '"' + (ok ? '' : ' disabled') + '>' + (bought ? '已買' : '$' + fmt(p)) + '</button>'
         + '</div>';
@@ -1245,7 +1271,9 @@
       + '<div class="rs-grid rs-grid-3">' + serviceCell + techCell + toolCell + '</div>'
       + '</section>';
 
+    const shopBanner = IE.imgTag ? IE.imgTag('scene-market', 'rs-banner') : '';
     return '<div class="modal wide rd-shop">'
+      + shopBanner
       + '<div class="rs-head">'
       + '<div><span class="eyebrow">' + esc(T.dayTitle.replace('{round}', round).replace('{night}', s.night)) + '</span><h2>' + esc(T.shopTitle) + '</h2></div>'
       + '<div class="rs-meta' + (isLastNight ? ' due' : '') + '">'
@@ -1318,7 +1346,9 @@
       : rep.ending.type === 'recruited'
         ? '探射燈停在你的窗外'
         : '看結局';
+    const revBanner = IE.imgTag ? IE.imgTag('scene-review', 'rr-banner') : '';
     return '<div class="modal rd-review">'
+      + revBanner
       + '<span class="eyebrow">星際人才發展局・天賦對齊流程</span>'
       + '<h2>第 ' + rep.round + ' 輪・篩選日</h2>'
       + '<div class="rr-sec rr-rent ' + (rep.paid ? 'ok' : 'fail') + '">'
