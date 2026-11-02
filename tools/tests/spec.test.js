@@ -100,4 +100,17 @@ module.exports = (t) => {
     assert.equal(M.season, 20);
     assert.equal(M.sketch, false);
   });
+
+  // 總規格 §6.1：第十五期只有一座城市，倍數全部是 1（ECON 本身就是第 7 區的經濟；見 docs/ECONOMY.md）
+  t.test('規格：城市與總規格 §6.1 一致', () => {
+    if (!D.CITIES) return;
+    assert.equal(D.CITY_DEFAULT, 'zone7');
+    assert.deepEqual(Object.keys(D.CITIES), ['zone7']);
+    const C = D.CITIES.zone7;
+    assert.equal(C.name, '浮城');
+    assert.equal(C.zone, '第 7 區');
+    assert.equal(C.difficulty, 1);
+    assert.deepEqual(C.currency, { name: '浮城元', symbol: '$', rate: 1, regime: 'peg', regimeName: '與星際信用點掛鈎' });
+    assert.deepEqual(C.econ, { rent: 1, pay: 1, price: 1, inflation: 1 });
+  });
 };
