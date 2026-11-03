@@ -147,10 +147,20 @@
     - 共 20 張天空、6 張遠景、30 張中景、30 張主角、32 張複合情緒小景、8 位夥伴客串、12 張前景；名作插畫之後再做。
     - 同一個側面視角、透明背景、固定比例（成年人佔圖高 45%）。
     - 先做 8 張試做批；收到之後擴充 `tools/art-import.py`（`np-` 規則、640×400 的畫布、統一 64 色、發光圖、`night-art.json`）。
-  - 歌：`docs/music/night-stems.md`。
+  - 歌：`docs/music/night-stems.md`（Google Flow Music，Lyria 3.5 起可以設定 BPM、下載整首歌的分軌、上載音樂再改編）。
     - 三種風格各一個 BPM、調和四和弦循環：lo-fi 85 BPM C 大調、city pop 112 BPM F 大調、synthwave 100 BPM A 小調。
-    - 每種風格 15 首 16 小節的歌：主歌版和副歌版樂隊、十種情緒的主旋律、人聲、琶音、敲擊，再加音效。
-    - 先做 lo-fi 的 3 首試做；收到之後對齊、按小節切開、用色度分析確認和弦、轉成 OGG，並以 `night-music.json` 記錄。新的 `music.js` 按小節排程播放片段。
+    - 每種風格 16 首歌：
+      - 主歌版和副歌版樂隊；
+      - 十種情緒的主旋律、弦樂、琶音、人聲、敲擊。
+      - 除了樂隊，每首只有鼓、低音和一件樂器，這樣即使 Flow Music 只拆成「人聲、鼓、低音、其他」，那件樂器也是單獨一條。
+      - 音效由程式做。
+    - 方法 A 只用文字；方法 B 上載樣板音軌（`docs/music/guide/`，由 `tools/music-guide.py` 生成）再改編，鎖定速度和和弦。
+    - 試做批：lo-fi 的 `base`、`lead-warmth`、`vocal`，每首兩個方法各做一次，上載 zip。
+    - 收到之後：
+      - 用 `tools/music-check.py` 找速度、小節線和每小節的和弦（樣板音軌測試全對）；
+      - 統一響度，轉 MP3，用 `night-music.json` 記錄每小節的時間和和弦；
+      - 新的 `music.js` 按小節排程：同一筆盡量播原曲連續的小節（「起承承轉合」正好是原曲的 I–vi–IV–V–I）；倍率越高樂隊越滿；斷的地方歌停一停。
+  - 試做批工作單（Artifact，可以逐段複製 prompt、試聽樣板音軌）：https://claude.ai/artifact/WMMxE6SuhgtRPxjgp4oXzZ（原檔不在倉庫；要更新就用 Artifact 的 read 取回再發佈）。
   - **正在等兩批試做素材**（上載到 `main` 的 `art-src/night/` 和 `music-src/night/`）。收到之後先在原型裏組合給製作人看和聽，確定可行才大量生成。
   - 校準方法：知道答案的機械人約 96% 完成委託；隨機挑 25 個組合的機械人三晚的通過率約 99%、79%、36%。
 - 判斷好玩的標準：動手多於閱讀；規則看得見、結果要自己試；每個動作都有畫面、聲音和數字的回饋；白天的選擇為今晚做準備；每個畫面只有一個焦點。
@@ -221,4 +231,7 @@
 | `proto/night2/` | 原型第二版「起承轉合」（不改 `game/`；規則、歌、畫、音效、畫面、作品頁和分享碼、打包；說明在 `README.md`） |
 | `proto/night3/` | 原型第三版「畫與歌」（不改 `game/`；複合情緒和題材、浮城插畫、完整編曲、背景音樂、作品改名；說明在 `README.md`） |
 | `proto/night4/` | 原型第四版「難題」（不改 `game/`；每晚難題、提示、進修和改造、重寫的歌和會動的畫；說明在 `README.md`） |
+| `docs/art-prompts/night-painting.md`、`docs/music/night-stems.md` | 創作之夜的專業素材規格：畫（ChatGPT）和歌（Flow Music 分軌） |
+| `tools/music-guide.py`、`docs/music/guide/` | 給 Flow Music 上載改編的樣板音軌（準確的 BPM、調、四和弦循環） |
+| `tools/music-check.py` | 檢查分軌的速度、小節線和每一小節的和弦 |
 | `.github/workflows/ci.yml` | CI |

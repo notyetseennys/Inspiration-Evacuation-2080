@@ -119,20 +119,22 @@ Reply "OK" and wait for my first request.
 ```
 Piece <檔名>: <類別說明>.
 Subject: <清單裏的英文主體>
-Same stage, scale, lighting and style as set at the start (transparent or #FF00FF background, base touching the bottom edge, no text).
+<結尾>
 ```
 
-各類別說明（直接複製）：
+各類別的說明和結尾（直接複製）：
 
-| 類別 | `<類別說明>` |
-|---|---|
-| 天空 | `sky backdrop, landscape 3:2 (1536x1024), fill the whole image, nothing below the horizon line at 60% from the top except dark calm sea` |
-| 遠景 | `distant skyline strip, landscape 3:2 (1536x1024), silhouettes along the bottom third only, transparent above` |
-| 中景 | `mid-ground piece standing in the water, square (1024x1024)` |
-| 主角 | `foreground piece standing on the pier, square (1024x1024)` |
-| 小景 | `special foreground vignette standing on the pier, square (1024x1024), a small story in one picture` |
-| 夥伴 | `cameo of a recurring character standing on the pier, square (1024x1024)` |
-| 前景 | `foreground frame overlay, landscape 3:2 (1536x1024), only along the edges, transparent centre` |
+| 類別 | `<類別說明>` | `<結尾>` |
+|---|---|---|
+| 天空 | `sky backdrop, landscape 3:2 (1536x1024), fill the whole image, nothing below the horizon line at 60% from the top except dark calm sea` | `Same style, palette and lighting as set at the start. Fill the whole image: no transparency, no text.` |
+| 遠景 | `distant skyline strip, landscape 3:2 (1536x1024), silhouettes along the bottom third only, transparent above` | 甲 |
+| 中景 | `mid-ground piece standing in the water, square (1024x1024)` | 甲 |
+| 主角 | `foreground piece standing on the pier, square (1024x1024)` | 甲 |
+| 小景 | `special foreground vignette standing on the pier, square (1024x1024), a small story in one picture` | 甲 |
+| 夥伴 | `cameo of a recurring character standing on the pier, square (1024x1024)` | 甲 |
+| 前景 | `foreground frame overlay, landscape 3:2 (1536x1024), only along the edges, transparent centre` | `Same style and lighting as set at the start (transparent or #FF00FF background, no text).` |
+
+甲：`Same stage, scale, lighting and style as set at the start (transparent or #FF00FF background, base touching the bottom edge, no text).`
 
 每張生兩、三次，揀最好的一張，按檔名存成 PNG。
 
