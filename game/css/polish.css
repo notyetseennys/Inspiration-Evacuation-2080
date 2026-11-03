@@ -1041,3 +1041,11 @@ body.mode-rounds .rd-top {
     animation: none !important;
   }
 }
+
+/* 2026-11-03 製作人：「中間的主畫面好像太小了」。五輪模式的浮城畫面放大成主畫面（之前縮到 162px 高） */
+body.mode-rounds #stage:not(.playing) { max-height: none; }
+body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !important; }
+@media (max-width: 720px) {
+  body.mode-rounds #stage:not(.playing) canvas { height: auto !important; width: 100% !important; }
+}
+.est-hidden { color: var(--muted, #8b95ad); font-style: italic; }

@@ -11,6 +11,10 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 忽略 */ } },
   };
   let root = null, st = null;
+  // 五輪模式：創作桌不替玩家找答案（製作人 2026-11-03：「直接把可能性寫了出來，就沒有探索和遊玩的空間」）。
+  // 不顯示「這手牌可以」的推薦、預計得分、「這一筆足夠」、「差一張」、改稿追的機會和「配得出」的配色；
+  // 只保留選牌時亮出的配色名稱和基本籌碼 × 倍率，分數在下筆之後的演出裡揭曉。經典模式照舊。
+  const explore = () => !!(st && st.s && IE.Rounds && IE.Rounds.on(st.s));
   const $ = (sel) => root.querySelector(sel);
   const ctCash = (str) => (IE.Rounds && IE.Rounds.cashText && st && st.s ? IE.Rounds.cashText(st.s, str) : str);
 
@@ -131,7 +135,9 @@
       return;
     }
     const idx = st.tutStep;
-    const step = TUT_STEPS[idx];
+    const step = explore() && TUT_STEPS[idx].id === 'est'
+      ? Object.assign({}, TUT_STEPS[idx], { short: '看配色', title: '步驟 2/6：看配色（籌碼 × 倍率）', desc: '配色決定倍率；素材的星級（★1 至 ★5）決定籌碼。今晚的靈感物件、組合和加成會在下筆時才觸發：分數要下筆之後才知道。配色表列出所有配色，自己試試能湊出哪一種。', action: '看看計分板和配色表，再按「下一步」', target: '.ct-score, .ct-forms' })
+      : TUT_STEPS[idx];
     root.classList.add('tut-active');
     tutEl.hidden = false;
     root.querySelectorAll(step.target).forEach((el) => el.classList.add('tut-focus'));
@@ -597,7 +603,7 @@
     const s = st.s, ses = s.session;
     const key = handCards().map((c) => c.uid + ':' + c.tags.join('/') + ':' + D().mediumOf(c) + ':' + c.value + ':' + C().starOf(c) + ':' + (c.mod || '') + ':' + (c.wear || 0)).join(',')
       + '|' + s.objects.join(',') + '|' + s.spark + '|' + ses.plays + '|' + JSON.stringify(s.forms || {}) + '|' + JSON.stringify(ses.abil || {}) + '|' + (ses.packaged ? 1 : 0);
-    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 && s.firstRun ? C().suggest(s, ses.hand, 3) : []; }
+    if (st.sgKey !== key) { st.sgKey = key; st.sg = ses.plays > 0 && s.firstRun && !explore() ? C().suggest(s, ses.hand, 3) : []; }
     return st.sg;
   }
   function sgKeyText(x) {
@@ -632,8 +638,8 @@
     }).join('') : '';
     // 「改稿追」接在建議後面（以前的「手上的標籤」列已取消：卡上的標籤和排序已經夠用）
     $('.ct-suits').innerHTML = '';
-    if (handCards().length) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
-    renderForms(new Set(sg.map((x) => x.form)));
+    if (handCards().length && !explore()) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
+    renderForms(explore() ? new Set() : new Set(sg.map((x) => x.form)));
   }
   // 配色表：由高至低；這手牌配得出的會亮起；每一行有一個小圖示表示形狀
   const FORM_GLYPH = { mix: '·', adj: '◠', triad: '△', split: 'Y', comp: '⟷', tetrad: '□', full: '✺', mono: '●', paradox: '◐' };
@@ -767,7 +773,7 @@
     if (pv.ai < 1) bits.push('<span class="rc ai">AI 正在模仿你的「' + esc(pv.name) + '」：×' + pv.ai + '</span>');
     if (pv.blocked) bits.push('<span class="rc ai">' + pv.blocked + ' 張素材被評審判為不計分</span>');
     // 「差一張」提示
-    pv.hints.forEach((h) => bits.push('<span class="rc near">加入「' + esc(h.card) + '」→' + (h.form ? '形式「' + esc(h.name) + '」' : '《' + esc(h.name) + '》') + '</span>'));
+    if (!explore()) pv.hints.forEach((h) => bits.push('<span class="rc near">加入「' + esc(h.card) + '」→' + (h.form ? '形式「' + esc(h.name) + '」' : '《' + esc(h.name) + '》') + '</span>'));
     const chasing = st.chasing === st.sel.join(',');
     if (chasing) bits.unshift('<span class="rc near">已選好要換走的 ' + st.sel.length + ' 張：按「改稿」換牌</span>');
     $('.ct-discard').classList.toggle('ready', chasing);
@@ -780,6 +786,12 @@
       const what = D().TAGS[ch.label.tag].name;
       $('.ct-est').innerHTML = '改稿：換走這 ' + ch.uids.length + ' 張，抽中一張「' + esc(what) + '」就可以組成「' + esc(ch.name) + '」<b class="num">' + ch.odds + '%</b>';
       root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('scoring', 'kin', 'near'));
+      return;
+    }
+    if (explore()) {
+      $('.ct-est').innerHTML = '<span class="est-hidden">分數在下筆之後揭曉</span>';
+      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.toggle('scoring', pv.scoring.includes(Number(b.dataset.uid))));
+      root.querySelectorAll('.ct-hand .cc').forEach((b) => b.classList.remove('kin', 'near'));
       return;
     }
     $('.ct-est').innerHTML = '預計 <b class="num">≈ ' + fmt(pv.est) + '</b> 分'

@@ -283,15 +283,17 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('狀態列：有 .chip.chances、.chip.night、.chip.rent；無狀態掣、手機掣與身體');
 
-    // 18. 第一屏看到三張生活卡：桌面 1280×800 第 1 晚，三張 .rd-card .rd-name 的 bottom 全部 <= 800
+    // 18. 主畫面：浮城是主畫面（製作人 2026-11-03：「中間的主畫面好像太小了」）。
+    // 舊規則「第一屏看到三張生活卡」（WO-15-08）取消：桌面 1280×800 的浮城畫面至少 300px 高，三張生活卡照樣存在
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(100);
+    const stageH = await page.$eval('#stage canvas', (c) => Math.round(c.getBoundingClientRect().height));
     const nameBottoms = await page.$$eval('.rd-day .rd-card .rd-name', (els) => els.map((e) => Math.round(e.getBoundingClientRect().bottom)));
-    if (nameBottoms.length !== 3 || nameBottoms.some((b) => b > 800)) {
-      await fail('桌面 1280×800 第一屏應看到三張 .rd-card .rd-name（bottom <= 800），實際：' + JSON.stringify(nameBottoms));
+    if (stageH < 300 || nameBottoms.length !== 3) {
+      await fail('桌面 1280×800 的浮城畫面應至少 300px 高，並有三張生活卡：' + JSON.stringify({ stageH, nameBottoms }));
     }
-    ok('桌面 1280×800 第一屏看到三張生活卡（.rd-name bottom=' + nameBottoms.join(', ') + ' <= 800）');
+    ok('主畫面：桌面 1280×800 的浮城畫面高 ' + stageH + 'px；三張生活卡（.rd-name bottom=' + nameBottoms.join(', ') + '）');
 
     // 19a. 外星評審預告（第 1 晚）：存在 .rd-boss-ahead，文字包含 IE.Stages.bossesFor(s, 0)[0].name；進度條外星評審圓點 title 含規則名
     const bossAhead1 = await page.evaluate(() => {
@@ -493,16 +495,21 @@ const URL = 'http://localhost:' + PORT + '/';
       window.__sawCleared = false;
       new MutationObserver(() => { if (document.querySelector('#ctable .ct-cleared')) window.__sawCleared = true; }).observe(document.body, { childList: true, subtree: true });
     });
-    // 6. 選建議的第一手牌（[data-sg="0"]；如果沒有建議就選前五張 .ct-hand .cc），按 .ct-play，等 .ct-end 出現
+    // 6. 選最好的一手牌，按 .ct-play，等 .ct-end 出現。
+    // 五輪模式的畫面不再顯示推薦（2026-11-03：讓玩家自己發現），所以測試直接用遊戲邏輯的 IE.Create.suggest 選牌，再按 data-uid 點卡
     let clearedShotDone = false;
     for (let playTurn = 0; playTurn < 6; playTurn++) {
       if (await page.$('#ctable .ct-end')) break;
-      const sg0 = await page.$('#ctable [data-sg="0"]');
-      if (sg0) {
-        await sg0.click();
+      const best = await page.evaluate(() => {
+        const s = window.__IE.Game.state, ses = s.session;
+        const sg = ses && window.__IE.Create.suggest(s, ses.hand, 1);
+        return sg && sg[0] ? sg[0].uids : null;
+      });
+      if (best && best.length) {
+        for (const u of best) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
       } else {
-        const cards = await page.$$('#ctable .ct-hand .cc:not(.forbidden)');
-        for (let i = 0; i < Math.min(5, cards.length); i++) await cards[i].click();
+        const n = await page.locator('#ctable .ct-hand .cc:not(.forbidden)').count();
+        for (let i = 0; i < Math.min(5, n); i++) await page.locator('#ctable .ct-hand .cc:not(.forbidden)').nth(i).click();
       }
       await page.click('#ctable .ct-play');
       if (process.env.SHOTS && !clearedShotDone) {
@@ -948,8 +955,8 @@ const URL = 'http://localhost:' + PORT + '/';
     const r3NameBottoms = await page.$$eval('.rd-card .rd-name', (els) =>
       els.map((el) => Math.round(el.getBoundingClientRect().bottom))
     );
-    if (r3NameBottoms.length !== 3 || r3NameBottoms.some((b) => b > 800)) {
-      await fail('第 3 輪白天面板（含 4 條故事區）1280×800 第一屏應看到三張生活卡卡名（bottom <= 800）：' + JSON.stringify(r3NameBottoms));
+    if (r3NameBottoms.length !== 3) {
+      await fail('第 3 輪白天面板（含 4 條故事區）應有三張生活卡：' + JSON.stringify(r3NameBottoms));
     }
     if (process.env.SHOTS) {
       await page.evaluate(() => {
@@ -963,7 +970,7 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.setViewportSize({ width: 1280, height: 800 });
       await page.waitForTimeout(150);
     }
-    ok('第 3 輪白天面板：出現 .rd-fate（被收藏朋友的近況）與 collect-* 插圖（naturalWidth=' + fateNw + '），且三張卡名 bottom=' + r3NameBottoms.join(', ') + ' <= 800');
+    ok('第 3 輪白天面板：出現 .rd-fate（被收藏朋友的近況）與 collect-* 插圖（naturalWidth=' + fateNw + '），三張生活卡（卡名 bottom=' + r3NameBottoms.join(', ') + '）');
 
     // 16. 把 s.cr = 0、s.soul = 25、s.phase = 'review'，進入篩選日：同時顯示兩項失敗，s.chances === 1
     await page.evaluate(() => {
