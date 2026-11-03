@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>創作之夜・畫與歌</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&family=Silkscreen&family=VT323&display=swap">
+<link rel="stylesheet" href="night.css">
+</head>
+<body>
+<!-- BUILD:BODY -->
+<div class="app" id="app">
+  <header class="top">
+    <div class="night-id">
+      <span class="eyebrow" id="nightNo">第 1 晚</span>
+      <b id="nightName">社區小展</b>
+    </div>
+    <div class="goal">
+      <div class="goal-bar" id="goalBar" role="progressbar" aria-label="今晚的目標"><i id="goalFill"></i></div>
+      <div class="goal-num"><b id="scoreNum">0</b><span>/ <span id="targetNum">0</span></span></div>
+    </div>
+    <div class="top-btns">
+      <button type="button" class="ib" id="btnHelp" aria-label="規則">?</button>
+      <button type="button" class="ib" id="btnMute" aria-label="聲音" aria-pressed="false">♪</button>
+    </div>
+  </header>
+
+  <section class="palette" aria-label="結構">
+    <div class="wheel" id="wheel">
+      <svg id="wheelSvg" viewBox="-66 -66 132 132" aria-hidden="true"></svg>
+    </div>
+    <div class="struct"><b id="formName">起承轉合</b><small id="formTag">按次序選素材</small></div>
+    <div class="subject" id="subject"></div>
+    <div class="calc">
+      <div class="box chips"><small>籌碼</small><b id="chipsNum">0</b></div>
+      <span class="x">×</span>
+      <div class="box mult"><small>倍率</small><b id="multNum">0</b></div>
+    </div>
+    <div class="flame"><i class="fl-ico"></i>火花 ×<b id="sparkNum">2.4</b></div>
+  </section>
+
+  <section class="easel" aria-label="作品">
+    <div class="frame" id="frame">
+      <canvas id="paint" width="320" height="200" aria-label="今晚的畫"></canvas>
+      <div class="canvas-fx" id="canvasFx"></div>
+      <p class="lyric" id="lyric" aria-live="polite"></p>
+    </div>
+    <div class="draft" id="draft" aria-label="稿紙"></div>
+    <p class="hint" id="hint" aria-live="polite"></p>
+  </section>
+
+  <aside class="jury" aria-label="評審席">
+    <div class="judge">
+      <img id="judgeImg" alt="">
+      <div class="judge-id"><b id="judgeName"></b><small id="judgeTitle"></small></div>
+    </div>
+    <p class="rule" id="judgeRule"></p>
+    <p class="say" id="judgeSay" aria-live="polite"></p>
+    <p class="wish" id="judgeWish" hidden></p>
+  </aside>
+  <div class="band" id="band" aria-label="創作夥伴"></div>
+
+  <div class="hand" id="hand" aria-label="手上的素材"></div>
+  <div class="actions">
+    <button type="button" class="btn ghost" id="btnDiscard">改稿 <span class="pips" id="discardPips"></span></button>
+    <button type="button" class="btn hot" id="btnPlay">下筆 <span class="pips" id="playPips"></span></button>
+  </div>
+</div>
+<div class="fx" id="fx" aria-hidden="true"></div>
+<div class="speedtag" id="speedTag" hidden>快轉 ×4</div>
+<div class="veil" id="veil" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<!-- /BUILD:BODY -->
+<script src="../../game/js/img.js"></script>
+<script src="../../game/js/data.js"></script>
+<script src="../../game/js/data-craft.js"></script>
+<script src="../../game/js/data-chars.js"></script>
+<script src="../../game/js/data-schools.js"></script>
+<script src="engine.js"></script>
+<script src="sfx.js"></script>
+<script src="music.js"></script>
+<script src="painter.js"></script>
+<script src="night.js"></script>
+</body>
+</html>
