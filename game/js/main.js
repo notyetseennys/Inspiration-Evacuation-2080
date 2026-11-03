@@ -14,7 +14,7 @@
   const seasons = Object.keys(D.SEASONS);
   const Game = IE.Game = {
     state: null, meta: store.get(KEY_META) || {}, scene: null, micro: null,
-    setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)], mode: 'standard' },
+    setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)], mode: 'rounds' },
     celebrate(total) {
       const s = Game.state;
       const sc = Game.scene;
@@ -164,7 +164,7 @@
       mode(el) { Game.setup.mode = el.dataset.id; render(); },
       back() { showTitle(); },
       gacha() { openGacha(render); },
-      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)), mode: Game.setup.mode || 'standard' }); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)), mode: Game.setup.mode || 'rounds' }); },
     });
     render();
     window.scrollTo({ top: 0 });

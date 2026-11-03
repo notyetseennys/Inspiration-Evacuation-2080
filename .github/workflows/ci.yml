@@ -19,6 +19,8 @@ jobs:
         run: node tools/test.js
       - name: 模擬器（舊模式，確認可以跑完）
         run: node tools/sim.js 5
+      - name: 模擬器（五輪模式）
+        run: node tools/sim-rounds.js 20
       - name: 打包
         run: node tools/build.js
 

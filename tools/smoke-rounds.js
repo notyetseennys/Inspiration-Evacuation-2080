@@ -103,11 +103,82 @@ const URL = 'http://localhost:' + PORT + '/';
     }, SEED);
     await page.reload();
 
-    // 1. 開新局（五輪模式）
-    await page.evaluate((seed) => {
-      window.__IE.Game.newGame('copywriter', 'storm', { mode: 'rounds', seed });
-    }, SEED);
-    ok('五輪模式開新局（seed=' + SEED + '）');
+    // 1. WO-15-10 §3、§6：由開局畫面按「五輪」開始（確認預設選中、經典模式收在 <details>、起始現金顯示票面價格 $3,400，經典模式顯示 $170）
+    await page.click('[data-do="new"]');
+    await page.waitForSelector('.setup8');
+    const setupDefault = await page.evaluate(() => {
+      const rBtn = document.querySelector('[data-do="mode"][data-id="rounds"]');
+      const det = document.querySelector('details.su-classic');
+      const sum = det && det.querySelector('summary');
+      const sBtn = det && det.querySelector('[data-do="mode"][data-id="standard"]');
+      const lBtn = det && det.querySelector('[data-do="mode"][data-id="long"]');
+      const cashChip = (document.querySelector('.sd-chips span') || {}).textContent || '';
+      return {
+        mode: window.__IE.Game.setup.mode,
+        roundsSel: !!(rBtn && rBtn.classList.contains('sel')),
+        roundsTxt: rBtn ? rBtn.textContent : '',
+        hasClassic: !!det,
+        classicOpen: !!(det && det.open),
+        classicSum: sum ? sum.textContent : '',
+        classicTxt: det ? det.textContent : '',
+        hasStd: !!sBtn,
+        hasLong: !!lBtn,
+        cashChip,
+      };
+    });
+    if (
+      setupDefault.mode !== 'rounds' ||
+      !setupDefault.roundsSel ||
+      !setupDefault.roundsTxt.includes('五輪') ||
+      !setupDefault.hasClassic ||
+      setupDefault.classicOpen ||
+      !setupDefault.classicSum.includes('經典模式') ||
+      !setupDefault.classicTxt.includes('舊版玩法，不再平衡') ||
+      !setupDefault.hasStd ||
+      !setupDefault.hasLong ||
+      setupDefault.cashChip !== '$3,400'
+    ) {
+      await fail('開局畫面預設五輪模式或起始現金檢查不通過：' + JSON.stringify(setupDefault));
+    }
+    // 切換到經典模式確認起始現金顯示 $170，再切回五輪模式確認顯示 $3,400
+    await page.click('details.su-classic summary');
+    await page.click('[data-do="mode"][data-id="standard"]');
+    const stdCashChip = await page.$eval('.sd-chips span', (el) => el.textContent);
+    if (stdCashChip !== '$170') {
+      await fail('開局畫面切換為經典模式（標準）時，文案起始現金應為 $170，實際為 ' + stdCashChip);
+    }
+    await page.click('[data-do="mode"][data-id="rounds"]');
+    const roundsCashChip = await page.$eval('.sd-chips span', (el) => el.textContent);
+    if (roundsCashChip !== '$3,400') {
+      await fail('開局畫面切回五輪模式時，文案起始現金應為 $3,400，實際為 ' + roundsCashChip);
+    }
+    await page.click('[data-do="season"][data-id="storm"]');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const setupMobSw = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (setupMobSw > 390) await fail('手機 390px 開局畫面出現橫向捲動：scrollWidth=' + setupMobSw);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForTimeout(150);
+    if (process.env.SHOTS || process.env.SHOTS_10) {
+      await page.evaluate(() => {
+        const det = document.querySelector('details.su-classic');
+        if (det) det.scrollIntoView({ block: 'end' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-10-setup-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(() => {
+        const sd = document.querySelector('.su-detail');
+        if (sd) sd.scrollIntoView({ block: 'start' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-10-setup-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(150);
+    }
+    await page.click('[data-do="mode"][data-id="rounds"]');
+    await page.click('[data-do="start"]');
+    ok('五輪模式由開局畫面開新局（預設選中五輪、起始現金 $3,400、經典模式 $170，seed=' + SEED + '）');
     // WO-15-12 / WO-15-13 (1)：開發版的圖片清單（img.js 的 KNOWN）和 game/img/ 一致，包括第六批圖片
     const imgFiles = fs.readdirSync(path.join(__dirname, '..', 'game', 'img')).filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4));
     const batch6Need = [
@@ -1034,32 +1105,98 @@ const URL = 'http://localhost:' + PORT + '/';
     const filePage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await filePage.goto(pathToFileURL(distFile).href);
     await filePage.evaluate((seed) => {
-      window.__IE.Game.newGame('copywriter', 'storm', { mode: 'rounds', seed });
+      localStorage.clear();
+      localStorage.setItem('ie2080.speed', '4');
+      localStorage.setItem('ie2080.noEncounter', '1');
+      localStorage.setItem('ie2080.seed', String(seed));
     }, SEED);
-    for (let step = 0; step < 4; step++) {
-      if (await filePage.$('#modal .rd-story [data-do="storypick"]')) {
-        await filePage.click('#modal .rd-story [data-do="storypick"]:not([disabled])');
-        if (await filePage.$('#modal [data-do="ok"]')) await filePage.click('#modal [data-do="ok"]');
-        continue;
+    await filePage.reload();
+    await filePage.click('[data-do="new"]');
+    await filePage.click('[data-do="season"][data-id="storm"]');
+    await filePage.click('[data-do="mode"][data-id="rounds"]');
+    await filePage.click('[data-do="start"]');
+    const closeFileDilemma = async () => {
+      for (let step = 0; step < 5; step++) {
+        if (await filePage.$('#modal .rd-reversal [data-do="reverse"]')) {
+          await filePage.click('#modal .rd-reversal [data-do="reverse"]');
+          continue;
+        }
+        if (await filePage.$('#modal .rd-story [data-do="storypick"]')) {
+          await filePage.click('#modal .rd-story [data-do="storypick"]:not([disabled])');
+          if (await filePage.$('#modal [data-do="ok"]')) await filePage.click('#modal [data-do="ok"]');
+          continue;
+        }
+        if (await filePage.$('#modal [data-do="pick"]')) {
+          await filePage.click('#modal [data-do="pick"]:not([disabled])');
+          if (await filePage.$('#modal [data-do="ok"]')) await filePage.click('#modal [data-do="ok"]');
+          continue;
+        }
+        break;
       }
-      if (await filePage.$('#modal [data-do="pick"]')) {
-        await filePage.click('#modal [data-do="pick"]:not([disabled])');
-        if (await filePage.$('#modal [data-do="ok"]')) await filePage.click('#modal [data-do="ok"]');
-        continue;
-      }
-      break;
-    }
+    };
+    await closeFileDilemma();
     await filePage.waitForSelector('.rd-day');
     await filePage.waitForFunction(() => {
       const els = Array.from(document.querySelectorAll('img.px'));
       return els.length > 0 && els.every((im) => im.complete && im.naturalWidth > 0);
     }, { timeout: 3000 });
     const fileImgs = await filePage.$$eval('img.px', (els) => els.map((im) => ({ complete: im.complete, nw: im.naturalWidth })));
-    await filePage.close();
     if (!fileImgs.length || fileImgs.some((x) => !x.complete || x.nw <= 0)) {
+      await filePage.close();
       await fail('file:// 離線開啟 dist/ 時圖片未載入：' + JSON.stringify(fileImgs));
     }
-    ok('dist/inspiration-evacuation-2080.html（' + (distStat.size / 1024).toFixed(0) + ' KB < 4 MB）用 file:// 離線開啟時，' + fileImgs.length + ' 張圖片 naturalWidth > 0');
+    // WO-15-10 驗收條件：用 dist/ 直接開啟玩到第 2 輪並截圖
+    for (let n = 1; n <= 3; n++) {
+      await closeFileDilemma();
+      await filePage.waitForSelector('.rd-day [data-do="skip"]');
+      await filePage.click('.rd-day [data-do="skip"]');
+      await filePage.waitForSelector('#modal [data-do="ok"]');
+      await filePage.click('#modal [data-do="ok"]');
+      await filePage.waitForSelector('#ctable .ct-hand .cc');
+      await filePage.evaluate(() => {
+        const s = window.__IE.Game.state;
+        s.spark = Math.max(s.spark, 8);
+        s.session.hand.forEach((u) => {
+          const c = s.cards.find((x) => x.uid === u);
+          if (c) c.star = 5;
+        });
+      });
+      for (let p = 0; p < 6; p++) {
+        if (await filePage.$('.ct-end [data-end="shop"]')) break;
+        const uids = await filePage.evaluate(() => {
+          const b = window.__IE.Create.bestPlay(window.__IE.Game.state);
+          return b ? b.uids : [];
+        });
+        if (!uids.length) break;
+        for (const u of uids) await filePage.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
+        await filePage.click('#ctable [data-ct="play"]');
+        await filePage.waitForFunction(() => !!document.querySelector('.ct-end') || !window.__IE.Craft.isBusy(), null, { timeout: 15000 });
+      }
+      await filePage.waitForSelector('.ct-end [data-end="shop"]');
+      await filePage.click('.ct-end [data-end="shop"]');
+      await filePage.waitForSelector('#modal .rd-shop [data-do="leave"]');
+      await filePage.click('#modal .rd-shop [data-do="leave"]');
+      if (n === 3) {
+        await filePage.waitForSelector('#modal .rd-review [data-do="next"]');
+        await filePage.click('#modal .rd-review [data-do="next"]');
+      }
+    }
+    await closeFileDilemma();
+    await filePage.waitForSelector('.rd-day .rd-day-title');
+    const distR2Title = await filePage.$eval('.rd-day .rd-day-title', (el) => el.textContent);
+    if (!distR2Title.includes('第 2 輪・第 4／15 晚')) {
+      await filePage.close();
+      await fail('dist/ 離線遊玩應進入「第 2 輪・第 4／15 晚」，實際：' + distR2Title);
+    }
+    if (process.env.SHOTS || process.env.SHOTS_10) {
+      await filePage.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast, #toasts').forEach((el) => { el.innerHTML = ''; el.className = ''; });
+      });
+      await filePage.waitForTimeout(150);
+      await filePage.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-10-dist-round2.png') });
+    }
+    await filePage.close();
+    ok('dist/inspiration-evacuation-2080.html（' + (distStat.size / 1024).toFixed(0) + ' KB < 4 MB）用 file:// 離線開啟時，' + fileImgs.length + ' 張圖片 naturalWidth > 0，並可完整玩到第 2 輪（' + distR2Title + '）');
 
     if (errors.length) await fail('有 JS 錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');
