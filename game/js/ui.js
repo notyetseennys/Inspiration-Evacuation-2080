@@ -41,7 +41,8 @@
     const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠', rare: '★' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
-      return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
+      const pfx = (k === 'cr' && /^[+\-−]?[$€¥£₩]/.test(v)) ? '' : (label[k] ? label[k] + ' ' : '');
+      return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + pfx + esc(v) + '</span>';
     }).join('');
   }
 
@@ -91,7 +92,7 @@
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
         + '</div></div>'
         + '<div class="hud-meters rd-meters">'
-        + '<div class="meter m-cash"><span class="lbl">$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
+        + '<div class="meter m-cash"><span class="lbl">' + (IE.imgTag ? IE.imgTag('note-floatcity', 'note-icon') : '') + '$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
         + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
         + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
         + '</div>');
@@ -390,8 +391,22 @@
     const head = av
       ? '<div class="talk-head">' + av + '<div class="talk-title"><span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span><h2>' + esc(def.name) + '</h2></div></div>'
       : '<span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span><h2>' + esc(def.name) + '</h2>';
+    let hideHtml = '';
+    const rNow = isRounds ? IE.Rounds.roundOf(s) : 0;
+    const plTalk = isRounds && s.story && s.story.plan && s.story.plan[rNow];
+    if (isRounds && IE.Story && plTalk && plTalk.npc === id) {
+      const hidden = !!(s.story.hidden && s.story.hidden[id]);
+      const raw = (D().ECON && Array.isArray(D().ECON.hideCost) && D().ECON.hideCost[rNow - 1]) || 80;
+      const cost = Math.abs(IE.Story.money(s, -raw));
+      const TX = (D().STORY && D().STORY.text) || {};
+      const hideTxt = hidden
+        ? ((TX.friendStates && TX.friendStates.hidden) || '藏起來了')
+        : (TX.hide || '幫{npc}躲起來（{cost}）').replace('{npc}', def.name).replace('{cost}', IE.Story.fmt(s, cost));
+      hideHtml = '<div class="talk-hide"><button class="btn hide-btn' + (hidden ? ' done' : ' sea') + '" type="button" data-do="hide"' + (hidden || s.cr < cost ? ' disabled' : '') + '>' + esc(hideTxt) + '</button></div>';
+    }
     return '<div class="modal talk">' + head
       + '<div class="talk-lines">' + lines.map((t, i) => '<p class="bubble" style="--d:' + (i * 0.45) + 's">' + esc(t) + '</p>').join('') + '</div>'
+      + hideHtml
       + '<div class="talk-replies">' + D().TALK_REPLIES.map((r) => '<button class="btn talk-reply" type="button" data-do="reply" data-id="' + r.id + '"><b>' + r.name + '</b><small>' + r.desc + '</small></button>').join('') + '</div></div>';
   }
   function chatPanel(s) {
@@ -763,6 +778,35 @@
     const dHeadLeft = emblemImg
       ? '<span class="d-head-title">' + emblemImg + '<span>星際人才發展局・人類樣本檔案</span></span>'
       : '<span>星際人才發展局・人類樣本檔案</span>';
+    let storyDosHtml = '';
+    if (isRounds && IE.Story && IE.Story.epilogue) {
+      const ep = IE.Story.epilogue(s);
+      if (ep) {
+        const TX = (D().STORY && D().STORY.text) || {};
+        const frList = (ep.friends || []).map((f) => {
+          const av = IE.imgTag ? IE.imgTag('friend-' + f.id, 'df-avatar') : '';
+          const sp = f.species && IE.imgTag ? IE.imgTag('species-' + f.species, 'df-sp-img') : '';
+          const fdef = D().STORY && D().STORY.friends && D().STORY.friends[f.id];
+          const extra = f.state === 'taken' && fdef && fdef.fate && fdef.fate[f.species]
+            ? IE.Story.say(s, fdef.fate[f.species])
+            : f.state === 'hidden' && fdef && fdef.hiddenLine
+              ? IE.Story.say(s, fdef.hiddenLine)
+              : '';
+          return '<div class="df-item st-' + esc(f.state) + '">'
+            + '<div class="df-imgs">' + av + sp + '</div>'
+            + '<div class="df-txt"><b>' + esc(f.name) + '</b><span class="df-state">' + esc(f.text) + '</span>'
+            + (extra ? '<small class="df-note">' + esc(extra) + '</small>' : '')
+            + '</div></div>';
+        }).join('');
+        const sidePills = ['survive', 'both', 'peak'].map((k) => '<span class="st-side s-' + k + (ep.side === k ? ' on' : '') + '">' + esc((TX.sides && TX.sides[k]) || k) + '</span>').join('');
+        const othersTxt = (TX.othersCount || '你為別人選擇了 {n} 次').replace('{n}', String(ep.others || 0));
+        storyDosHtml = '<div class="d-story">'
+          + (ep.line ? '<div class="ds-epilogue"><span class="d-k">' + esc(TX.epilogueHead || '你的故事') + '</span><p class="ds-line">' + esc(ep.line) + '</p></div>' : '')
+          + '<div class="d-side"><span class="d-k">' + esc(TX.sideHead || '你停在光譜的哪裡') + '</span><div class="ds-sides">' + sidePills + '<span class="ds-others st-side s-others">' + esc(othersTxt) + '</span></div></div>'
+          + '<div class="d-friends"><span class="d-k">' + esc(TX.friendsHead || '朋友們') + '</span><div class="df-grid">' + frList + '</div></div>'
+          + '</div>';
+      }
+    }
     return '<div class="modal wide"><div class="ending ' + e.kind + '">'
       + endBanner
       + '<span class="e-kind">' + ENDING_KIND[e.kind] + '・DAY ' + s.day + '</span>'
@@ -776,6 +820,7 @@
       + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
       + '<div class="d-cols"><div><span class="d-k">觀察筆記</span><ol class="d-notes">' + dos.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ol></div>'
       + '<div><span class="d-k">能力讀數</span>' + statBars(dos.attr, { compact: true }) + '</div></div>'
+      + storyDosHtml
       + '<div class="d-stamps">' + stamps + '</div>'
       + '<p class="d-foot">本檔案由自動化流程產生，無需人手覆核。我們不是一個組織，我們是一個宇宙大家庭。</p>'
       + '</div>'
@@ -1058,14 +1103,62 @@
     const wxHtml = wd ? '<span class="rd-wx-item">' + (wd.glyph ? '<i aria-hidden="true">' + wd.glyph + '</i> ' : '') + '<b>' + esc(wd.name) + '</b>' + (wNote ? '（' + esc(wNote) + '）' : '') + '</span>' : '';
     const ev0 = (R().eventsInfo ? R().eventsInfo(s) : [])[0] || null;
     const evHtml = ev0 ? '<span class="rd-ev-item"><b class="gbadge g-' + ev0.grade + '">' + ev0.grade + '</b>' + esc(ev0.name) + '・' + esc(ev0.news) + '</span>' : '';
+    const ST = IE.Story;
+    const TX = (D().STORY && D().STORY.text) || {};
+    const pl = (s.story && s.story.plan && s.story.plan[round]) || null;
+    let collectHtml = '';
+    if (pl && pl.npc && pl.species) {
+      const spDef = D().STORY && D().STORY.species && D().STORY.species[pl.species];
+      const npcDef = (D().NPCS || []).find((x) => x.id === pl.npc);
+      const spName = (spDef && spDef.name) || pl.species;
+      const npcName = (npcDef && npcDef.name) || pl.npc;
+      const rawPrev = (TX.preview || '本輪的收藏家：{species}看中了{npc}，{why}。').replace('{species}', spName).replace('{npc}', npcName).replace('{why}', pl.why || '');
+      const prevTxt = ST && ST.say ? ST.say(s, rawPrev) : rawPrev;
+      const isHidden = !!(s.story && s.story.hidden && s.story.hidden[pl.npc]);
+      const hidBadge = isHidden ? ' <b class="rc-hid-tag">（' + esc((TX.friendStates && TX.friendStates.hidden) || '藏起來了') + '）</b>' : '';
+      const spImg = IE.imgTag ? IE.imgTag('species-' + pl.species, 'rc-sp-img') : '';
+      collectHtml = '<div class="rd-collect' + (isHidden ? ' is-hidden' : '') + '">'
+        + spImg
+        + '<span class="rc-txt">' + esc(prevTxt) + hidBadge + '</span>'
+        + '</div>';
+    }
+    const fates = ST && ST.fate ? ST.fate(s) : [];
+    const fateHtml = fates.map((f) => {
+      const npcDef = (D().NPCS || []).find((x) => x.id === f.npc);
+      const npcName = (npcDef && npcDef.name) || f.npc;
+      const fHead = (TX.fateHead || '{npc}的近況').replace('{npc}', npcName);
+      const fImg = IE.imgTag ? IE.imgTag('collect-' + f.species, 'rf-img') : '';
+      const fTxt = ST && ST.say ? ST.say(s, f.text) : f.text;
+      return '<div class="rd-fate">'
+        + fImg
+        + '<div class="rf-body"><span class="rf-head">' + esc(fHead) + '</span><span class="rf-text">' + esc(fTxt) + '</span></div>'
+        + '</div>';
+    }).join('');
+    const ast = ST && ST.astar ? ST.astar(s) : null;
+    const astarHtml = ast
+      ? '<div class="rd-astar st-' + esc(ast.style || 'casual') + '">'
+        + (IE.imgTag ? IE.imgTag('astar', 'ra-img') : '')
+        + '<div class="ra-body"><span class="ra-head">' + esc(TX.astarHead || '阿星（神秘頻道）') + '</span><span class="ra-text">' + esc(ST && ST.say ? ST.say(s, ast.text) : ast.text) + '</span></div>'
+        + '</div>'
+      : '';
+    const fdTxt = ST && ST.feed ? ST.feed(s) : '';
+    const feedHtml = fdTxt
+      ? '<div class="rd-feed"><span class="rf-tag">' + esc(TX.feedHead || '浮城快訊') + '</span><span class="rf-news">' + esc(ST && ST.say ? ST.say(s, fdTxt) : fdTxt) + '</span></div>'
+      : '';
+    const storyStripHtml = (collectHtml || fateHtml || astarHtml || feedHtml)
+      ? '<div class="rd-story-strip">' + collectHtml + fateHtml + astarHtml + feedHtml + '</div>'
+      : '';
     const of = RD.offer(s);
     const cardsHtml = (of.ids || []).map((id) => {
       const c = RD.cardInfo(s, id);
-      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>';
+      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '';
       if (c.kind === 'friend') {
         const npcId = c.id.slice(7);
         const av = IE.imgTag ? IE.imgTag('friend-' + npcId, 'rd-avatar') : '';
         head = '<div class="rd-friend-head">' + av + '<b class="rd-name">' + esc(c.name) + '</b></div>';
+        if (pl && pl.npc === npcId && !(s.story && s.story.hidden && s.story.hidden[npcId])) {
+          lastBadge = '<span class="rd-last">' + esc(TX.lastMeet || '最後一次見面') + '</span>';
+        }
       } else if (c.kind === 'trip') {
         // 出國卡用重畫的 day-trip（笑位是「貴」：收據一樣長的登機證）；目的地的地區圖放在五選二的視窗（WO-15-12 審核）
         const origin = c.id.startsWith('trip:') ? c.id.slice(5) : '';
@@ -1076,7 +1169,7 @@
       }
       return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
         + banner
-        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span></div>'
+        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span>' + lastBadge + '</div>'
         + head
         + '<p class="rd-sub">' + esc(c.sub) + '</p>'
         + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
@@ -1094,6 +1187,7 @@
       + '<span class="rd-rent">' + esc(rentLine) + '</span>'
       + '</div>'
       + bossAheadHtml
+      + storyStripHtml
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
@@ -1102,6 +1196,57 @@
       + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
       + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
       + '</div>'
+      + '</div>';
+  }
+  function storyModal(s, ch) {
+    const D_ = D(), ST = IE.Story, T = D_.ROUND_TEXT, TX = (D_.STORY && D_.STORY.text) || {};
+    const bg = D_.BACKGROUNDS[s.bg];
+    const banner = IE.imgTag ? IE.imgTag('story-crossroads', 'st-banner') : '';
+    const sub = T.dayTitle.replace('{round}', ch.round).replace('{night}', s.night);
+    const title = (TX.storyHead || '{name}的人生').replace('{name}', bg ? bg.name : '');
+    const opts = (ch.options || []).map((opt, i) => {
+      const reason = ST ? ST.reason(s, opt) : null;
+      const side = opt.side || 'both';
+      const sideTxt = (TX.sides && TX.sides[side]) || side;
+      const extBadge = opt.extreme ? '<span class="st-extreme">' + esc(TX.extreme || '極端') + '</span>' : '';
+      const fx = ST ? ST.fx(s, opt) : [];
+      return '<button class="d-opt st-opt' + (opt.extreme ? ' is-extreme' : '') + '" type="button" data-do="storypick" data-i="' + i + '"' + (reason ? ' disabled' : '') + '>'
+        + '<div class="st-opt-top">'
+        + '<span class="d-label">' + esc(opt.label) + '</span>'
+        + '<span class="st-badges"><span class="st-side s-' + esc(side) + '">' + esc(sideTxt) + '</span>' + extBadge + '</span>'
+        + '</div>'
+        + (fx.length ? '<div class="fx">' + fxHtml(fx) + '</div>' : '')
+        + (reason ? '<span class="act-why">' + esc(reason) + '</span>' : '')
+        + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-story">'
+      + banner
+      + '<div class="st-head">'
+      + IE.Chars.img(s.bg, 3)
+      + '<div class="st-title"><span class="eyebrow">' + esc(sub) + '</span><h2>' + esc(title) + '</h2></div>'
+      + '</div>'
+      + '<p class="d-text st-text">' + esc(ch.text) + '</p>'
+      + '<div class="d-opts st-opts">' + opts + '</div>'
+      + '</div>';
+  }
+  function reversalModal(s, revs) {
+    const D_ = D(), ST = IE.Story, T = D_.ROUND_TEXT, TX = (D_.STORY && D_.STORY.text) || {};
+    const round = IE.Rounds.roundOf(s);
+    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const banner = IE.imgTag ? IE.imgTag('story-reversal', 'rv-banner') : '';
+    const items = (revs || []).map((rv) => {
+      const fx = ST ? ST.fx(s, rv.fx || {}) : [];
+      return '<div class="rv-item">'
+        + '<p class="d-text rv-text">' + esc(rv.text) + '</p>'
+        + (fx.length ? '<div class="fx">' + fxHtml(fx) + '</div>' : '')
+        + '</div>';
+    }).join('');
+    return '<div class="modal rd-reversal">'
+      + banner
+      + '<span class="eyebrow">' + esc(sub) + '</span>'
+      + '<h2>' + esc(TX.reversalHead || '物極必反') + '</h2>'
+      + items
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="reverse">承受後果</button></div>'
       + '</div>';
   }
   function roundMicroModal(info, rank) {
@@ -1350,17 +1495,51 @@
         ? '探射燈停在你的窗外'
         : '看結局';
     const revBanner = IE.imgTag ? IE.imgTag('scene-review', 'rr-banner') : '';
+    const noteIcon = IE.imgTag ? IE.imgTag('note-floatcity', 'note-icon') : '';
+    let collectHtml = '';
+    if (rep.collect) {
+      const col = rep.collect;
+      const s = IE.Game && IE.Game.state;
+      const fdef = D().STORY && D().STORY.friends && D().STORY.friends[col.npc];
+      const npcDef = (D().NPCS || []).find((x) => x.id === col.npc);
+      const spDef = D().STORY && D().STORY.species && D().STORY.species[col.species];
+      const spImg = IE.imgTag ? IE.imgTag('species-' + col.species, 'rr-sp-img') : '';
+      const frImg = !col.hidden && IE.imgTag ? IE.imgTag('friend-' + col.npc, 'rr-friend-img') : '';
+      const rawLine = (rep.lines && rep.lines[2])
+        || (fdef && (col.hidden ? fdef.hiddenLine : col.met ? fdef.farewell : fdef.nomeet))
+        || '';
+      const colLine = IE.Story && IE.Story.say && s ? IE.Story.say(s, rawLine) : rawLine;
+      const fStates = (D().STORY && D().STORY.text && D().STORY.text.friendStates) || {};
+      const colHead = col.hidden
+        ? ((npcDef ? npcDef.name + '・' : '') + (fStates.hidden || '藏起來了'))
+        : ((fStates.taken || '被{species}收藏').replace('{species}', (spDef && spDef.name) || col.species)
+          + (npcDef ? '：' + npcDef.name : ''));
+      let giftHtml = '';
+      if (!col.hidden && fdef) {
+        if (col.met && fdef.gift && D().OBJ[fdef.gift]) {
+          const obj = D().OBJ[fdef.gift];
+          giftHtml = '<div class="rr-gift">' + IE.Icons.obj(fdef.gift, 28) + '<span>留下遺物：<b>' + esc(obj.name) + '</b>（' + esc(obj.desc) + '）</span></div>';
+        } else if (!col.met && fdef.note) {
+          giftHtml = '<div class="rr-gift"><span>留下便條：<b>「' + esc(fdef.note.name) + '」</b></span><span class="tags">' + tagsHtml(fdef.note.tags || []) + '</span></div>';
+        }
+      }
+      collectHtml = '<div class="rr-sec rr-collect ' + (col.hidden ? 'ok' : 'taken') + '">'
+        + '<div class="rr-imgs">' + spImg + frImg + '</div>'
+        + '<div class="rr-body"><span class="rr-k">' + esc(colHead) + '</span><p class="rr-line">' + esc(colLine) + '</p>' + giftHtml + '</div>'
+        + '</div>';
+    }
     return '<div class="modal rd-review">'
       + revBanner
       + '<span class="eyebrow">星際人才發展局・天賦對齊流程</span>'
       + '<h2>第 ' + rep.round + ' 輪・篩選日</h2>'
       + '<div class="rr-sec rr-rent ' + (rep.paid ? 'ok' : 'fail') + '">'
-      + '<div class="rr-body"><span class="rr-k">本輪房租</span><p class="rr-line">' + esc((rep.lines && rep.lines[0]) || '') + '</p></div>'
+      + '<div class="rr-body"><span class="rr-k">' + noteIcon + '本輪房租</span><p class="rr-line">' + esc((rep.lines && rep.lines[0]) || '') + '</p></div>'
       + '</div>'
       + '<div class="rr-sec rr-soul ' + (rep.soulOk ? 'ok' : 'fail') + '">'
       + scaleSvg
       + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().SOUL_LIMIT + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
       + '</div>'
+      + collectHtml
       + '<div class="rr-verdict">'
       + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'
       + '<span class="rr-chances">' + esc(T.chances) + ' <b class="rr-dots">' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
@@ -1375,6 +1554,6 @@
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
+    dayPanel, storyModal, reversalModal, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
   };
 })(window.IE = window.IE || {});

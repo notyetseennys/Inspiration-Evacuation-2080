@@ -647,14 +647,51 @@
   }
   function roundsDay() {
     const s = Game.state;
+    if (s.ended || s.phase === 'ended') return roundsGo();
     S.City.forceNight = false;
     R.morning(s);
+    if (IE.Story && IE.Story.plan) IE.Story.plan(s);
     setScene(S.City);
     renderViews(false);
     UI.renderHud(s);
     A.setMode('city');
     A.setSpark(s.spark);
-    if (R.drawDilemma(s)) {
+    const revs = IE.Story && IE.Story.reversals ? IE.Story.reversals(s) : [];
+    if (revs.length) {
+      save();
+      music('dilemma');
+      UI.setPanel('<p class="mute">' + UI.esc((D.STORY && D.STORY.text && D.STORY.text.reversalHead) || '物極必反') + '</p>');
+      UI.modal(UI.reversalModal(s, revs), {
+        reverse() {
+          IE.Story.reverse(s);
+          A.sfx('wrong');
+          UI.closeModal();
+          UI.renderHud(s); A.setSpark(s.spark); save();
+          roundsDay();
+        },
+      });
+      return;
+    }
+    const ch = IE.Story && IE.Story.chapter ? IE.Story.chapter(s) : null;
+    if (ch) {
+      save();
+      music('dilemma');
+      const bg = D.BACKGROUNDS[s.bg];
+      const stHead = ((D.STORY && D.STORY.text && D.STORY.text.storyHead) || '{name}的人生').replace('{name}', bg ? bg.name : '');
+      UI.setPanel('<p class="mute">' + UI.esc(stHead) + '</p>');
+      UI.modal(UI.storyModal(s, ch), {
+        storypick(el) {
+          const rep = IE.Story.choose(s, Number(el.dataset.i));
+          if (!rep) return;
+          A.sfx(rep.deltas && rep.deltas.soul > 0 ? 'wrong' : 'pickup');
+          UI.renderHud(s); A.setSpark(s.spark); save();
+          UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+        },
+      });
+      return;
+    }
+    const hadChapterToday = !!(s.story && Array.isArray(s.story.log) && s.story.log.some((x) => x.night === s.night));
+    if (!hadChapterToday && R.drawDilemma(s)) {
       save();
       music('dilemma');
       UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
@@ -702,13 +739,22 @@
         if (rep) afterAction(rep);
         return;
       }
-      UI.modal(UI.talkModal(s, npcId, IE.Talk.lines(s, npcId)), {
+      const lines = IE.Talk.lines(s, npcId);
+      const openTalk = () => UI.modal(UI.talkModal(s, npcId, lines), {
+        hide() {
+          if (!IE.Story || !IE.Story.hide) return;
+          const r = IE.Story.hide(s, npcId);
+          UI.toast(r.msg, r.ok ? 'good' : 'bad');
+          A.sfx(r.ok ? 'coin' : 'wrong');
+          if (r.ok) { UI.renderHud(s); save(); openTalk(); }
+        },
         reply(b) {
           UI.closeModal();
           const rep = IE.Rounds.choose(s, id, b.dataset.id);
           if (rep) afterAction(rep);
         },
-      }, { dismiss: () => {} });
+      }, { dismiss: () => { roundsDay(); } });
+      openTalk();
       return;
     }
     const res = IE.Rounds.choose(s, id);

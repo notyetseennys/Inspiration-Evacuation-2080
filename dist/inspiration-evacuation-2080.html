@@ -4853,6 +4853,496 @@ body.mode-rounds #ctable .ct-actions .btn,
     transition: none !important;
   }
 }
+
+/* 第十五期 WO-15-13：故事線介面 */
+.note-icon {
+  display: inline-block;
+  height: 16px;
+  width: auto;
+  vertical-align: -3px;
+  margin-right: 4px;
+  border-radius: 2px;
+}
+body.mode-rounds #stage:not(.playing) {
+  max-height: 164px;
+}
+body.mode-rounds #stage:not(.playing) canvas {
+  height: 162px !important;
+}
+body.mode-rounds .rd-day {
+  gap: 8px;
+}
+body.mode-rounds .rd-top {
+  gap: 6px;
+  padding: 9px 12px;
+}
+.rd-story-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 8px;
+}
+.rd-story-strip > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.rd-collect,
+.rd-astar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #283859;
+}
+.rd-collect {
+  background: rgba(255, 194, 71, 0.08);
+  border-color: rgba(255, 194, 71, 0.36);
+  color: #f4e8c6;
+}
+.rd-collect.is-hidden {
+  background: rgba(55, 195, 214, 0.1);
+  border-color: rgba(55, 195, 214, 0.42);
+}
+.rc-hid-tag {
+  color: #7fe3ff;
+  font-weight: 700;
+}
+.rc-sp-img,
+.ra-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0b1120;
+}
+.rc-txt,
+.ra-body {
+  min-width: 0;
+}
+.ra-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+}
+.ra-head,
+.rf-head {
+  font-size: 11px;
+  font-weight: 800;
+  color: #7fe3ff;
+  white-space: nowrap;
+}
+.ra-text {
+  color: #e4eeff;
+}
+.rd-astar.st-casual {
+  background: rgba(55, 195, 214, 0.08);
+  border-color: rgba(55, 195, 214, 0.36);
+}
+.rd-astar.st-memo {
+  background: rgba(255, 211, 107, 0.08);
+  border-color: rgba(255, 211, 107, 0.38);
+}
+.rd-astar.st-memo .ra-head {
+  color: #ffd36b;
+}
+.rd-astar.st-auto {
+  background: rgba(140, 156, 188, 0.08);
+  border-color: rgba(140, 156, 188, 0.3);
+  color: #9fb0d0;
+}
+.rd-astar.st-auto .ra-head,
+.rd-astar.st-auto .ra-text {
+  color: #9fb0d0;
+}
+.rd-astar.st-glitch {
+  background: rgba(255, 77, 94, 0.14);
+  border-color: rgba(255, 77, 94, 0.6);
+}
+.rd-astar.st-glitch .ra-head,
+.rd-astar.st-glitch .ra-text {
+  color: #ffb3bc;
+  font-weight: 700;
+}
+@keyframes astarGlitch {
+  0%, 90%, 100% { transform: translate(0, 0); filter: none; }
+  92% { transform: translate(-2px, 1px); filter: hue-rotate(70deg); }
+  95% { transform: translate(2px, -1px); filter: hue-rotate(-70deg); }
+  98% { transform: translate(-1px, 0); }
+}
+.rd-astar.st-glitch .ra-img {
+  animation: astarGlitch 2.6s infinite steps(1);
+}
+.rd-fate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(155, 227, 107, 0.08);
+  border: 1px solid rgba(155, 227, 107, 0.35);
+  font-size: 12px;
+  line-height: 1.3;
+  min-width: 0;
+}
+.rf-img {
+  width: 52px;
+  height: 26px;
+  aspect-ratio: 2 / 1;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #0b1120;
+}
+.rf-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.rf-head {
+  color: #9be36b;
+}
+.rf-text {
+  color: #e8f5e0;
+}
+.rd-feed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  line-height: 1.3;
+  color: #c5d1ea;
+  min-width: 0;
+}
+.rf-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0b0f1a;
+  background: #7fe3ff;
+  flex-shrink: 0;
+}
+.rf-news {
+  min-width: 0;
+}
+.rd-last {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffe2a0;
+  background: rgba(255, 77, 94, 0.24);
+  border: 1px solid rgba(255, 143, 154, 0.65);
+}
+.talk-hide {
+  margin: 8px 0 4px;
+}
+.hide-btn {
+  width: 100%;
+  min-height: 44px;
+  font-weight: 700;
+}
+.rd-story,
+.rd-reversal {
+  display: grid;
+  gap: 10px;
+}
+.st-banner,
+.rv-banner {
+  width: 100%;
+  max-height: 124px;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #2a3756;
+  background: #0a101d;
+}
+.rv-banner {
+  border-color: rgba(255, 77, 94, 0.5);
+}
+.st-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.st-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.st-title h2,
+.rd-reversal h2 {
+  margin: 0;
+}
+.rd-reversal h2 {
+  color: #ff8f9a;
+}
+.st-text,
+.rv-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #eef3ff;
+}
+.st-opts {
+  display: grid;
+  gap: 8px;
+}
+.st-opt {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  padding: 10px 12px;
+  min-height: 46px;
+}
+.st-opt.is-extreme {
+  border-color: rgba(255, 77, 94, 0.55);
+  background: linear-gradient(180deg, rgba(255, 77, 94, 0.1), rgba(20, 28, 48, 0.94));
+}
+.st-opt-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.st-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.st-side {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+.st-side.s-survive {
+  color: #7fe3ff;
+  background: rgba(55, 195, 214, 0.16);
+  border-color: rgba(55, 195, 214, 0.45);
+}
+.st-side.s-both {
+  color: #b8f294;
+  background: rgba(155, 227, 107, 0.16);
+  border-color: rgba(155, 227, 107, 0.45);
+}
+.st-side.s-peak {
+  color: #ff99d6;
+  background: rgba(255, 79, 180, 0.18);
+  border-color: rgba(255, 79, 180, 0.5);
+}
+.st-side.s-others {
+  color: #ffe2a0;
+  background: rgba(255, 211, 107, 0.18);
+  border-color: rgba(255, 211, 107, 0.5);
+}
+.st-extreme {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  background: #d62f43;
+  border: 1px solid #ff8f9a;
+  box-shadow: 0 0 8px rgba(255, 77, 94, 0.45);
+}
+.rv-item {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 77, 94, 0.1);
+  border: 1px solid rgba(255, 77, 94, 0.4);
+}
+.rr-collect.taken {
+  border-color: rgba(255, 194, 71, 0.48);
+  background: rgba(255, 194, 71, 0.08);
+}
+.rr-imgs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.rr-sp-img,
+.rr-friend-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0d1424;
+}
+.rr-gift {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #ffe2a0;
+}
+.d-story {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(20, 30, 52, 0.06);
+  border: 1px solid rgba(30, 45, 75, 0.22);
+}
+.d-story .d-lbl {
+  color: #4a5a78;
+  font-weight: 700;
+}
+.ds-line {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1b2438;
+  font-weight: 500;
+}
+.ds-sides {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.d-side .st-side {
+  opacity: 0.42;
+}
+.d-side .st-side.s-survive {
+  color: #0b536b;
+  background: rgba(55, 195, 214, 0.22);
+  border-color: rgba(20, 130, 150, 0.55);
+}
+.d-side .st-side.s-both {
+  color: #1f5c16;
+  background: rgba(120, 204, 68, 0.24);
+  border-color: rgba(65, 145, 35, 0.55);
+}
+.d-side .st-side.s-peak {
+  color: #8a1457;
+  background: rgba(255, 79, 180, 0.2);
+  border-color: rgba(195, 45, 125, 0.55);
+}
+.d-side .st-side.s-others {
+  color: #6b4400;
+  background: rgba(255, 194, 71, 0.3);
+  border-color: rgba(185, 125, 15, 0.6);
+}
+.d-side .st-side.on,
+.d-side .ds-others {
+  opacity: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+.df-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.df-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #162033;
+  color: #f4f7ff;
+  border: 1px solid #2b3b5c;
+  min-width: 0;
+}
+.df-txt b {
+  color: #f4f7ff;
+}
+.df-imgs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.df-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #0d1424;
+}
+.df-sp-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 211, 107, 0.45);
+  background: #0d1424;
+}
+.df-txt {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.df-state {
+  color: #ffd36b;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.df-item.st-stayed .df-state {
+  color: #9be36b;
+}
+.df-item.st-hidden .df-state {
+  color: #7fe3ff;
+}
+.df-note {
+  color: #b8c4de;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+@media (max-width: 720px) {
+  .rd-story-strip,
+  .df-grid {
+    grid-template-columns: 1fr;
+  }
+  .st-banner,
+  .rv-banner {
+    max-height: 112px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rd-astar.st-glitch .ra-img {
+    animation: none !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -27149,7 +27639,8 @@ body.mode-rounds #ctable .ct-actions .btn,
     const label = { cr: '$', body: '身體', spark: '火花', card: '素材', sig: '', soul: '靈魂', note: '', danger: '⚠', rare: '★' };
     return fx.map(([k, v]) => {
       const neg = /−/.test(v) && k !== 'card';
-      return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + (label[k] ? label[k] + ' ' : '') + esc(v) + '</span>';
+      const pfx = (k === 'cr' && /^[+\-−]?[$€¥£₩]/.test(v)) ? '' : (label[k] ? label[k] + ' ' : '');
+      return '<span class="fx-' + k + (neg ? ' neg' : '') + '">' + pfx + esc(v) + '</span>';
     }).join('');
   }
 
@@ -27199,7 +27690,7 @@ body.mode-rounds #ctable .ct-actions .btn,
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
         + '</div></div>'
         + '<div class="hud-meters rd-meters">'
-        + '<div class="meter m-cash"><span class="lbl">$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
+        + '<div class="meter m-cash"><span class="lbl">' + (IE.imgTag ? IE.imgTag('note-floatcity', 'note-icon') : '') + '$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
         + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
         + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
         + '</div>');
@@ -27498,8 +27989,22 @@ body.mode-rounds #ctable .ct-actions .btn,
     const head = av
       ? '<div class="talk-head">' + av + '<div class="talk-title"><span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span><h2>' + esc(def.name) + '</h2></div></div>'
       : '<span class="eyebrow">熟絡度 ' + '●'.repeat(Math.min(4, Math.max(0, n.friend))) + '○'.repeat(Math.max(0, 4 - n.friend)) + '</span><h2>' + esc(def.name) + '</h2>';
+    let hideHtml = '';
+    const rNow = isRounds ? IE.Rounds.roundOf(s) : 0;
+    const plTalk = isRounds && s.story && s.story.plan && s.story.plan[rNow];
+    if (isRounds && IE.Story && plTalk && plTalk.npc === id) {
+      const hidden = !!(s.story.hidden && s.story.hidden[id]);
+      const raw = (D().ECON && Array.isArray(D().ECON.hideCost) && D().ECON.hideCost[rNow - 1]) || 80;
+      const cost = Math.abs(IE.Story.money(s, -raw));
+      const TX = (D().STORY && D().STORY.text) || {};
+      const hideTxt = hidden
+        ? ((TX.friendStates && TX.friendStates.hidden) || '藏起來了')
+        : (TX.hide || '幫{npc}躲起來（{cost}）').replace('{npc}', def.name).replace('{cost}', IE.Story.fmt(s, cost));
+      hideHtml = '<div class="talk-hide"><button class="btn hide-btn' + (hidden ? ' done' : ' sea') + '" type="button" data-do="hide"' + (hidden || s.cr < cost ? ' disabled' : '') + '>' + esc(hideTxt) + '</button></div>';
+    }
     return '<div class="modal talk">' + head
       + '<div class="talk-lines">' + lines.map((t, i) => '<p class="bubble" style="--d:' + (i * 0.45) + 's">' + esc(t) + '</p>').join('') + '</div>'
+      + hideHtml
       + '<div class="talk-replies">' + D().TALK_REPLIES.map((r) => '<button class="btn talk-reply" type="button" data-do="reply" data-id="' + r.id + '"><b>' + r.name + '</b><small>' + r.desc + '</small></button>').join('') + '</div></div>';
   }
   function chatPanel(s) {
@@ -27871,6 +28376,35 @@ body.mode-rounds #ctable .ct-actions .btn,
     const dHeadLeft = emblemImg
       ? '<span class="d-head-title">' + emblemImg + '<span>星際人才發展局・人類樣本檔案</span></span>'
       : '<span>星際人才發展局・人類樣本檔案</span>';
+    let storyDosHtml = '';
+    if (isRounds && IE.Story && IE.Story.epilogue) {
+      const ep = IE.Story.epilogue(s);
+      if (ep) {
+        const TX = (D().STORY && D().STORY.text) || {};
+        const frList = (ep.friends || []).map((f) => {
+          const av = IE.imgTag ? IE.imgTag('friend-' + f.id, 'df-avatar') : '';
+          const sp = f.species && IE.imgTag ? IE.imgTag('species-' + f.species, 'df-sp-img') : '';
+          const fdef = D().STORY && D().STORY.friends && D().STORY.friends[f.id];
+          const extra = f.state === 'taken' && fdef && fdef.fate && fdef.fate[f.species]
+            ? IE.Story.say(s, fdef.fate[f.species])
+            : f.state === 'hidden' && fdef && fdef.hiddenLine
+              ? IE.Story.say(s, fdef.hiddenLine)
+              : '';
+          return '<div class="df-item st-' + esc(f.state) + '">'
+            + '<div class="df-imgs">' + av + sp + '</div>'
+            + '<div class="df-txt"><b>' + esc(f.name) + '</b><span class="df-state">' + esc(f.text) + '</span>'
+            + (extra ? '<small class="df-note">' + esc(extra) + '</small>' : '')
+            + '</div></div>';
+        }).join('');
+        const sidePills = ['survive', 'both', 'peak'].map((k) => '<span class="st-side s-' + k + (ep.side === k ? ' on' : '') + '">' + esc((TX.sides && TX.sides[k]) || k) + '</span>').join('');
+        const othersTxt = (TX.othersCount || '你為別人選擇了 {n} 次').replace('{n}', String(ep.others || 0));
+        storyDosHtml = '<div class="d-story">'
+          + (ep.line ? '<div class="ds-epilogue"><span class="d-k">' + esc(TX.epilogueHead || '你的故事') + '</span><p class="ds-line">' + esc(ep.line) + '</p></div>' : '')
+          + '<div class="d-side"><span class="d-k">' + esc(TX.sideHead || '你停在光譜的哪裡') + '</span><div class="ds-sides">' + sidePills + '<span class="ds-others st-side s-others">' + esc(othersTxt) + '</span></div></div>'
+          + '<div class="d-friends"><span class="d-k">' + esc(TX.friendsHead || '朋友們') + '</span><div class="df-grid">' + frList + '</div></div>'
+          + '</div>';
+      }
+    }
     return '<div class="modal wide"><div class="ending ' + e.kind + '">'
       + endBanner
       + '<span class="e-kind">' + ENDING_KIND[e.kind] + '・DAY ' + s.day + '</span>'
@@ -27884,6 +28418,7 @@ body.mode-rounds #ctable .ct-actions .btn,
       + '<p class="d-runner">次要特徵：' + esc(dos.runnerUp.name) + '</p></div></div>'
       + '<div class="d-cols"><div><span class="d-k">觀察筆記</span><ol class="d-notes">' + dos.notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ol></div>'
       + '<div><span class="d-k">能力讀數</span>' + statBars(dos.attr, { compact: true }) + '</div></div>'
+      + storyDosHtml
       + '<div class="d-stamps">' + stamps + '</div>'
       + '<p class="d-foot">本檔案由自動化流程產生，無需人手覆核。我們不是一個組織，我們是一個宇宙大家庭。</p>'
       + '</div>'
@@ -28166,14 +28701,62 @@ body.mode-rounds #ctable .ct-actions .btn,
     const wxHtml = wd ? '<span class="rd-wx-item">' + (wd.glyph ? '<i aria-hidden="true">' + wd.glyph + '</i> ' : '') + '<b>' + esc(wd.name) + '</b>' + (wNote ? '（' + esc(wNote) + '）' : '') + '</span>' : '';
     const ev0 = (R().eventsInfo ? R().eventsInfo(s) : [])[0] || null;
     const evHtml = ev0 ? '<span class="rd-ev-item"><b class="gbadge g-' + ev0.grade + '">' + ev0.grade + '</b>' + esc(ev0.name) + '・' + esc(ev0.news) + '</span>' : '';
+    const ST = IE.Story;
+    const TX = (D().STORY && D().STORY.text) || {};
+    const pl = (s.story && s.story.plan && s.story.plan[round]) || null;
+    let collectHtml = '';
+    if (pl && pl.npc && pl.species) {
+      const spDef = D().STORY && D().STORY.species && D().STORY.species[pl.species];
+      const npcDef = (D().NPCS || []).find((x) => x.id === pl.npc);
+      const spName = (spDef && spDef.name) || pl.species;
+      const npcName = (npcDef && npcDef.name) || pl.npc;
+      const rawPrev = (TX.preview || '本輪的收藏家：{species}看中了{npc}，{why}。').replace('{species}', spName).replace('{npc}', npcName).replace('{why}', pl.why || '');
+      const prevTxt = ST && ST.say ? ST.say(s, rawPrev) : rawPrev;
+      const isHidden = !!(s.story && s.story.hidden && s.story.hidden[pl.npc]);
+      const hidBadge = isHidden ? ' <b class="rc-hid-tag">（' + esc((TX.friendStates && TX.friendStates.hidden) || '藏起來了') + '）</b>' : '';
+      const spImg = IE.imgTag ? IE.imgTag('species-' + pl.species, 'rc-sp-img') : '';
+      collectHtml = '<div class="rd-collect' + (isHidden ? ' is-hidden' : '') + '">'
+        + spImg
+        + '<span class="rc-txt">' + esc(prevTxt) + hidBadge + '</span>'
+        + '</div>';
+    }
+    const fates = ST && ST.fate ? ST.fate(s) : [];
+    const fateHtml = fates.map((f) => {
+      const npcDef = (D().NPCS || []).find((x) => x.id === f.npc);
+      const npcName = (npcDef && npcDef.name) || f.npc;
+      const fHead = (TX.fateHead || '{npc}的近況').replace('{npc}', npcName);
+      const fImg = IE.imgTag ? IE.imgTag('collect-' + f.species, 'rf-img') : '';
+      const fTxt = ST && ST.say ? ST.say(s, f.text) : f.text;
+      return '<div class="rd-fate">'
+        + fImg
+        + '<div class="rf-body"><span class="rf-head">' + esc(fHead) + '</span><span class="rf-text">' + esc(fTxt) + '</span></div>'
+        + '</div>';
+    }).join('');
+    const ast = ST && ST.astar ? ST.astar(s) : null;
+    const astarHtml = ast
+      ? '<div class="rd-astar st-' + esc(ast.style || 'casual') + '">'
+        + (IE.imgTag ? IE.imgTag('astar', 'ra-img') : '')
+        + '<div class="ra-body"><span class="ra-head">' + esc(TX.astarHead || '阿星（神秘頻道）') + '</span><span class="ra-text">' + esc(ST && ST.say ? ST.say(s, ast.text) : ast.text) + '</span></div>'
+        + '</div>'
+      : '';
+    const fdTxt = ST && ST.feed ? ST.feed(s) : '';
+    const feedHtml = fdTxt
+      ? '<div class="rd-feed"><span class="rf-tag">' + esc(TX.feedHead || '浮城快訊') + '</span><span class="rf-news">' + esc(ST && ST.say ? ST.say(s, fdTxt) : fdTxt) + '</span></div>'
+      : '';
+    const storyStripHtml = (collectHtml || fateHtml || astarHtml || feedHtml)
+      ? '<div class="rd-story-strip">' + collectHtml + fateHtml + astarHtml + feedHtml + '</div>'
+      : '';
     const of = RD.offer(s);
     const cardsHtml = (of.ids || []).map((id) => {
       const c = RD.cardInfo(s, id);
-      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>';
+      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '';
       if (c.kind === 'friend') {
         const npcId = c.id.slice(7);
         const av = IE.imgTag ? IE.imgTag('friend-' + npcId, 'rd-avatar') : '';
         head = '<div class="rd-friend-head">' + av + '<b class="rd-name">' + esc(c.name) + '</b></div>';
+        if (pl && pl.npc === npcId && !(s.story && s.story.hidden && s.story.hidden[npcId])) {
+          lastBadge = '<span class="rd-last">' + esc(TX.lastMeet || '最後一次見面') + '</span>';
+        }
       } else if (c.kind === 'trip') {
         // 出國卡用重畫的 day-trip（笑位是「貴」：收據一樣長的登機證）；目的地的地區圖放在五選二的視窗（WO-15-12 審核）
         const origin = c.id.startsWith('trip:') ? c.id.slice(5) : '';
@@ -28184,7 +28767,7 @@ body.mode-rounds #ctable .ct-actions .btn,
       }
       return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
         + banner
-        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span></div>'
+        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span>' + lastBadge + '</div>'
         + head
         + '<p class="rd-sub">' + esc(c.sub) + '</p>'
         + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
@@ -28202,6 +28785,7 @@ body.mode-rounds #ctable .ct-actions .btn,
       + '<span class="rd-rent">' + esc(rentLine) + '</span>'
       + '</div>'
       + bossAheadHtml
+      + storyStripHtml
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
@@ -28210,6 +28794,57 @@ body.mode-rounds #ctable .ct-actions .btn,
       + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
       + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
       + '</div>'
+      + '</div>';
+  }
+  function storyModal(s, ch) {
+    const D_ = D(), ST = IE.Story, T = D_.ROUND_TEXT, TX = (D_.STORY && D_.STORY.text) || {};
+    const bg = D_.BACKGROUNDS[s.bg];
+    const banner = IE.imgTag ? IE.imgTag('story-crossroads', 'st-banner') : '';
+    const sub = T.dayTitle.replace('{round}', ch.round).replace('{night}', s.night);
+    const title = (TX.storyHead || '{name}的人生').replace('{name}', bg ? bg.name : '');
+    const opts = (ch.options || []).map((opt, i) => {
+      const reason = ST ? ST.reason(s, opt) : null;
+      const side = opt.side || 'both';
+      const sideTxt = (TX.sides && TX.sides[side]) || side;
+      const extBadge = opt.extreme ? '<span class="st-extreme">' + esc(TX.extreme || '極端') + '</span>' : '';
+      const fx = ST ? ST.fx(s, opt) : [];
+      return '<button class="d-opt st-opt' + (opt.extreme ? ' is-extreme' : '') + '" type="button" data-do="storypick" data-i="' + i + '"' + (reason ? ' disabled' : '') + '>'
+        + '<div class="st-opt-top">'
+        + '<span class="d-label">' + esc(opt.label) + '</span>'
+        + '<span class="st-badges"><span class="st-side s-' + esc(side) + '">' + esc(sideTxt) + '</span>' + extBadge + '</span>'
+        + '</div>'
+        + (fx.length ? '<div class="fx">' + fxHtml(fx) + '</div>' : '')
+        + (reason ? '<span class="act-why">' + esc(reason) + '</span>' : '')
+        + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-story">'
+      + banner
+      + '<div class="st-head">'
+      + IE.Chars.img(s.bg, 3)
+      + '<div class="st-title"><span class="eyebrow">' + esc(sub) + '</span><h2>' + esc(title) + '</h2></div>'
+      + '</div>'
+      + '<p class="d-text st-text">' + esc(ch.text) + '</p>'
+      + '<div class="d-opts st-opts">' + opts + '</div>'
+      + '</div>';
+  }
+  function reversalModal(s, revs) {
+    const D_ = D(), ST = IE.Story, T = D_.ROUND_TEXT, TX = (D_.STORY && D_.STORY.text) || {};
+    const round = IE.Rounds.roundOf(s);
+    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const banner = IE.imgTag ? IE.imgTag('story-reversal', 'rv-banner') : '';
+    const items = (revs || []).map((rv) => {
+      const fx = ST ? ST.fx(s, rv.fx || {}) : [];
+      return '<div class="rv-item">'
+        + '<p class="d-text rv-text">' + esc(rv.text) + '</p>'
+        + (fx.length ? '<div class="fx">' + fxHtml(fx) + '</div>' : '')
+        + '</div>';
+    }).join('');
+    return '<div class="modal rd-reversal">'
+      + banner
+      + '<span class="eyebrow">' + esc(sub) + '</span>'
+      + '<h2>' + esc(TX.reversalHead || '物極必反') + '</h2>'
+      + items
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="reverse">承受後果</button></div>'
       + '</div>';
   }
   function roundMicroModal(info, rank) {
@@ -28458,17 +29093,51 @@ body.mode-rounds #ctable .ct-actions .btn,
         ? '探射燈停在你的窗外'
         : '看結局';
     const revBanner = IE.imgTag ? IE.imgTag('scene-review', 'rr-banner') : '';
+    const noteIcon = IE.imgTag ? IE.imgTag('note-floatcity', 'note-icon') : '';
+    let collectHtml = '';
+    if (rep.collect) {
+      const col = rep.collect;
+      const s = IE.Game && IE.Game.state;
+      const fdef = D().STORY && D().STORY.friends && D().STORY.friends[col.npc];
+      const npcDef = (D().NPCS || []).find((x) => x.id === col.npc);
+      const spDef = D().STORY && D().STORY.species && D().STORY.species[col.species];
+      const spImg = IE.imgTag ? IE.imgTag('species-' + col.species, 'rr-sp-img') : '';
+      const frImg = !col.hidden && IE.imgTag ? IE.imgTag('friend-' + col.npc, 'rr-friend-img') : '';
+      const rawLine = (rep.lines && rep.lines[2])
+        || (fdef && (col.hidden ? fdef.hiddenLine : col.met ? fdef.farewell : fdef.nomeet))
+        || '';
+      const colLine = IE.Story && IE.Story.say && s ? IE.Story.say(s, rawLine) : rawLine;
+      const fStates = (D().STORY && D().STORY.text && D().STORY.text.friendStates) || {};
+      const colHead = col.hidden
+        ? ((npcDef ? npcDef.name + '・' : '') + (fStates.hidden || '藏起來了'))
+        : ((fStates.taken || '被{species}收藏').replace('{species}', (spDef && spDef.name) || col.species)
+          + (npcDef ? '：' + npcDef.name : ''));
+      let giftHtml = '';
+      if (!col.hidden && fdef) {
+        if (col.met && fdef.gift && D().OBJ[fdef.gift]) {
+          const obj = D().OBJ[fdef.gift];
+          giftHtml = '<div class="rr-gift">' + IE.Icons.obj(fdef.gift, 28) + '<span>留下遺物：<b>' + esc(obj.name) + '</b>（' + esc(obj.desc) + '）</span></div>';
+        } else if (!col.met && fdef.note) {
+          giftHtml = '<div class="rr-gift"><span>留下便條：<b>「' + esc(fdef.note.name) + '」</b></span><span class="tags">' + tagsHtml(fdef.note.tags || []) + '</span></div>';
+        }
+      }
+      collectHtml = '<div class="rr-sec rr-collect ' + (col.hidden ? 'ok' : 'taken') + '">'
+        + '<div class="rr-imgs">' + spImg + frImg + '</div>'
+        + '<div class="rr-body"><span class="rr-k">' + esc(colHead) + '</span><p class="rr-line">' + esc(colLine) + '</p>' + giftHtml + '</div>'
+        + '</div>';
+    }
     return '<div class="modal rd-review">'
       + revBanner
       + '<span class="eyebrow">星際人才發展局・天賦對齊流程</span>'
       + '<h2>第 ' + rep.round + ' 輪・篩選日</h2>'
       + '<div class="rr-sec rr-rent ' + (rep.paid ? 'ok' : 'fail') + '">'
-      + '<div class="rr-body"><span class="rr-k">本輪房租</span><p class="rr-line">' + esc((rep.lines && rep.lines[0]) || '') + '</p></div>'
+      + '<div class="rr-body"><span class="rr-k">' + noteIcon + '本輪房租</span><p class="rr-line">' + esc((rep.lines && rep.lines[0]) || '') + '</p></div>'
       + '</div>'
       + '<div class="rr-sec rr-soul ' + (rep.soulOk ? 'ok' : 'fail') + '">'
       + scaleSvg
       + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().SOUL_LIMIT + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
       + '</div>'
+      + collectHtml
       + '<div class="rr-verdict">'
       + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'
       + '<span class="rr-chances">' + esc(T.chances) + ' <b class="rr-dots">' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
@@ -28483,7 +29152,7 @@ body.mode-rounds #ctable .ct-actions .btn,
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
+    dayPanel, storyModal, reversalModal, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
   };
 })(window.IE = window.IE || {});
 
@@ -30934,14 +31603,51 @@ body.mode-rounds #ctable .ct-actions .btn,
   }
   function roundsDay() {
     const s = Game.state;
+    if (s.ended || s.phase === 'ended') return roundsGo();
     S.City.forceNight = false;
     R.morning(s);
+    if (IE.Story && IE.Story.plan) IE.Story.plan(s);
     setScene(S.City);
     renderViews(false);
     UI.renderHud(s);
     A.setMode('city');
     A.setSpark(s.spark);
-    if (R.drawDilemma(s)) {
+    const revs = IE.Story && IE.Story.reversals ? IE.Story.reversals(s) : [];
+    if (revs.length) {
+      save();
+      music('dilemma');
+      UI.setPanel('<p class="mute">' + UI.esc((D.STORY && D.STORY.text && D.STORY.text.reversalHead) || '物極必反') + '</p>');
+      UI.modal(UI.reversalModal(s, revs), {
+        reverse() {
+          IE.Story.reverse(s);
+          A.sfx('wrong');
+          UI.closeModal();
+          UI.renderHud(s); A.setSpark(s.spark); save();
+          roundsDay();
+        },
+      });
+      return;
+    }
+    const ch = IE.Story && IE.Story.chapter ? IE.Story.chapter(s) : null;
+    if (ch) {
+      save();
+      music('dilemma');
+      const bg = D.BACKGROUNDS[s.bg];
+      const stHead = ((D.STORY && D.STORY.text && D.STORY.text.storyHead) || '{name}的人生').replace('{name}', bg ? bg.name : '');
+      UI.setPanel('<p class="mute">' + UI.esc(stHead) + '</p>');
+      UI.modal(UI.storyModal(s, ch), {
+        storypick(el) {
+          const rep = IE.Story.choose(s, Number(el.dataset.i));
+          if (!rep) return;
+          A.sfx(rep.deltas && rep.deltas.soul > 0 ? 'wrong' : 'pickup');
+          UI.renderHud(s); A.setSpark(s.spark); save();
+          UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+        },
+      });
+      return;
+    }
+    const hadChapterToday = !!(s.story && Array.isArray(s.story.log) && s.story.log.some((x) => x.night === s.night));
+    if (!hadChapterToday && R.drawDilemma(s)) {
       save();
       music('dilemma');
       UI.setPanel('<p class="mute">出門前，發生了一件事。</p>');
@@ -30989,13 +31695,22 @@ body.mode-rounds #ctable .ct-actions .btn,
         if (rep) afterAction(rep);
         return;
       }
-      UI.modal(UI.talkModal(s, npcId, IE.Talk.lines(s, npcId)), {
+      const lines = IE.Talk.lines(s, npcId);
+      const openTalk = () => UI.modal(UI.talkModal(s, npcId, lines), {
+        hide() {
+          if (!IE.Story || !IE.Story.hide) return;
+          const r = IE.Story.hide(s, npcId);
+          UI.toast(r.msg, r.ok ? 'good' : 'bad');
+          A.sfx(r.ok ? 'coin' : 'wrong');
+          if (r.ok) { UI.renderHud(s); save(); openTalk(); }
+        },
         reply(b) {
           UI.closeModal();
           const rep = IE.Rounds.choose(s, id, b.dataset.id);
           if (rep) afterAction(rep);
         },
-      }, { dismiss: () => {} });
+      }, { dismiss: () => { roundsDay(); } });
+      openTalk();
       return;
     }
     const res = IE.Rounds.choose(s, id);

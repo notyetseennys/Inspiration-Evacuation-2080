@@ -24,9 +24,22 @@ const URL = 'http://localhost:' + PORT + '/';
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push(m.text()); });
 
   const closeDilemma = async () => {
-    if (await page.$('#modal [data-do="pick"]')) {
-      await page.click('#modal [data-do="pick"]:not([disabled])');
-      await page.click('#modal [data-do="ok"]');
+    for (let step = 0; step < 5; step++) {
+      if (await page.$('#modal .rd-reversal [data-do="reverse"]')) {
+        await page.click('#modal .rd-reversal [data-do="reverse"]');
+        continue;
+      }
+      if (await page.$('#modal .rd-story [data-do="storypick"]')) {
+        await page.click('#modal .rd-story [data-do="storypick"]:not([disabled])');
+        if (await page.$('#modal [data-do="ok"]')) await page.click('#modal [data-do="ok"]');
+        continue;
+      }
+      if (await page.$('#modal [data-do="pick"]')) {
+        await page.click('#modal [data-do="pick"]:not([disabled])');
+        if (await page.$('#modal [data-do="ok"]')) await page.click('#modal [data-do="ok"]');
+        continue;
+      }
+      break;
     }
   };
 
@@ -94,13 +107,71 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.evaluate((seed) => {
       window.__IE.Game.newGame('copywriter', 'storm', { mode: 'rounds', seed });
     }, SEED);
-    await closeDilemma();
     ok('五輪模式開新局（seed=' + SEED + '）');
-    // WO-15-12 審核加入：開發版的圖片清單（img.js 的 KNOWN）和 game/img/ 一致，加入新圖時不會漏掉
+    // WO-15-12 / WO-15-13 (1)：開發版的圖片清單（img.js 的 KNOWN）和 game/img/ 一致，包括第六批圖片
     const imgFiles = fs.readdirSync(path.join(__dirname, '..', 'game', 'img')).filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4));
-    const imgMissing = await page.evaluate((names) => names.filter((n) => !window.__IE.img(n)), imgFiles);
+    const batch6Need = [
+      'species-grey', 'species-octo', 'species-myco', 'species-conserve',
+      'collect-grey', 'collect-octo', 'collect-myco', 'collect-conserve',
+      'story-crossroads', 'story-reversal', 'astar', 'note-floatcity',
+    ];
+    const imgMissing = await page.evaluate((names) => names.filter((n) => !window.__IE.img(n)), imgFiles.concat(batch6Need));
     if (imgMissing.length) await fail('img.js 的圖片清單缺少：' + imgMissing.join('、'));
-    ok('開發版的圖片清單和 game/img/ 一致（' + imgFiles.length + ' 張）');
+    ok('開發版的圖片清單和 game/img/ 一致（' + imgFiles.length + ' 張，含第六批故事與收藏圖片）');
+
+    // WO-15-13 (2)：第 1 輪第 1 晚（s.night === 1）自動彈出 .rd-story
+    await page.waitForSelector('#modal .rd-story');
+    await checkAllImgs('角色線第 1 章（.rd-story）');
+    const stCheck = await page.evaluate(() => {
+      const m = document.querySelector('#modal .rd-story');
+      const im = m && m.querySelector('img.st-banner');
+      const btns = m ? Array.from(m.querySelectorAll('[data-do="storypick"]')) : [];
+      const others = m ? m.querySelectorAll('.st-side.s-others').length : 0;
+      const extreme = m ? m.querySelectorAll('.st-extreme').length : 0;
+      return {
+        bannerNw: im ? im.naturalWidth : 0,
+        btnCount: btns.length,
+        others,
+        extreme,
+      };
+    });
+    if (stCheck.bannerNw <= 0 || stCheck.btnCount < 4 || stCheck.btnCount > 5 || stCheck.others < 1 || stCheck.extreme < 1) {
+      await fail('角色線第 1 章 .rd-story 檢查不通過：' + JSON.stringify(stCheck));
+    }
+    await scanMoney('角色線第 1 章（.rd-story）', ['#modal .rd-story'], 1);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const stMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-story button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (stMob.sw > 390) await fail('手機 390px .rd-story 出現橫向捲動：scrollWidth=' + stMob.sw);
+    if (stMob.minH < 44) await fail('手機 .rd-story 按鈕高度不足 44px：minH=' + stMob.minH);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForTimeout(150);
+    if (process.env.SHOTS) {
+      fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-story-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-story-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(150);
+    }
+    await page.click('#modal .rd-story [data-do="storypick"]:has(.st-extreme)');
+    await page.waitForSelector('#modal [data-do="ok"]');
+    await scanMoney('角色線第 1 章結果報告', ['#modal'], 1);
+    await page.click('#modal [data-do="ok"]');
+    await page.waitForSelector('.rd-day');
+    const stAfter = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      return { logLen: s.story.log.length, laterLen: s.story.later.length, laterRound: s.story.later[0] && s.story.later[0].round };
+    });
+    if (stAfter.logLen !== 1 || stAfter.laterLen !== 1) {
+      await fail('點選極端選項後 s.story.log / later 長度不正確：' + JSON.stringify(stAfter));
+    }
+    ok('角色線第 1 章（.rd-story）：' + stCheck.btnCount + ' 個選項（含為別人與極端），選極端選項後 log=1、later=1（第 ' + stAfter.laterRound + ' 輪反轉）');
 
     // 2. 看到 .rd-day 和三張 .rd-card；.rd-map .rm-night 有 15 個
     await page.waitForSelector('.rd-day');
@@ -182,6 +253,30 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('狀態列或白天面板票面價格不正確：' + JSON.stringify(dayCashCheck));
     }
     ok('票面價格（白天）：HUD 含 ' + dayCashCheck.expCr + ' 與租金 ' + dayCashCheck.expRent + '；換一批含 ' + dayCashCheck.expReroll);
+    // WO-15-13 (4)：白天面板四條故事線（第 1 晚有 .rd-collect、.rd-astar、.rd-feed）
+    const dayStoryCheck = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const pl = window.__IE.Story.plan(s);
+      const npcDef = window.__IE.DATA.NPCS.find((x) => x.id === (pl && pl.npc));
+      const colEl = document.querySelector('.rd-day .rd-collect');
+      const colIm = colEl && colEl.querySelector('img.px');
+      const astEl = document.querySelector('.rd-day .rd-astar');
+      const astIm = astEl && astEl.querySelector('img.px');
+      const feedEl = document.querySelector('.rd-day .rd-feed');
+      const noteIm = document.querySelector('#hud .m-cash img.note-icon');
+      return {
+        npcName: npcDef ? npcDef.name : '',
+        colTxt: colEl ? colEl.textContent : '',
+        colNw: colIm ? colIm.naturalWidth : 0,
+        astNw: astIm ? astIm.naturalWidth : 0,
+        hasFeed: !!(feedEl && feedEl.textContent.trim()),
+        noteNw: noteIm ? noteIm.naturalWidth : 0,
+      };
+    });
+    if (!dayStoryCheck.colTxt.includes(dayStoryCheck.npcName) || dayStoryCheck.colNw <= 0 || dayStoryCheck.astNw <= 0 || !dayStoryCheck.hasFeed || dayStoryCheck.noteNw <= 0) {
+      await fail('白天面板故事線區塊檢查不通過：' + JSON.stringify(dayStoryCheck));
+    }
+    ok('白天面板故事線：.rd-collect（含「' + dayStoryCheck.npcName + '」與種族頭像）、.rd-astar（含阿星頭像）、.rd-feed、HUD 浮城元紙幣圖示全部正常');
     // WO-15-14 審核加入（工單第 5 節第 1 步）：直接比對數字，不經 IE.Rounds.cash（第一期租金 $175 × 20；錢 = s.cr × 20，文案出身起始 $170）
     const hudLit = await page.evaluate(() => {
       const s = window.__IE.Game.state;
@@ -537,9 +632,50 @@ const URL = 'http://localhost:' + PORT + '/';
     if (hasBossAheadOn3) await fail('第 3 晚本身已是外星評審，不應重複出現 .rd-boss-ahead');
     ok('第 3 晚不重複出現 .rd-boss-ahead');
 
+    // WO-15-13 (5)：幫朋友躲起來（第 1 輪第 3 晚，強制今日三張卡包含 friend:<plan.npc>）
+    const r1Npc = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.cr = 500;
+      const pl = window.__IE.Story.plan(s);
+      const npc = pl.npc;
+      s.offer.ids[0] = 'friend:' + npc;
+      window.__IE.Game.roundsGo();
+      return npc;
+    });
+    await page.waitForSelector('.rd-day .rd-card[data-card="friend:' + r1Npc + '"]');
+    const hasLastBadge = await page.$('.rd-day .rd-card[data-card="friend:' + r1Npc + '"] .rd-last');
+    if (!hasLastBadge) await fail('本輪被盯上的朋友卡應顯示 .rd-last 標記');
+    await page.click('.rd-day .rd-card[data-card="friend:' + r1Npc + '"]');
+    await page.waitForSelector('#modal [data-do="hide"]');
+    await scanMoney('幫朋友躲起來按鈕', ['#modal [data-do="hide"]'], 1);
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-talk-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-talk-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(150);
+    }
+    await page.click('#modal [data-do="hide"]');
+    const hideCheck = await page.evaluate((npc) => {
+      const s = window.__IE.Game.state;
+      return { hidden: !!s.story.hidden[npc], cr: s.cr };
+    }, r1Npc);
+    if (!hideCheck.hidden || hideCheck.cr >= 500) {
+      await fail('按幫朋友躲起來後 s.story.hidden / s.cr 不正確：' + JSON.stringify(hideCheck));
+    }
+    await page.click('#modal [data-do="reply"]');
+    await page.waitForSelector('#modal [data-do="ok"]');
+    await page.click('#modal [data-do="ok"]');
+    await page.waitForSelector('#ctable .ct-hand .cc');
+    ok('幫朋友躲起來（friend:' + r1Npc + '）：朋友卡有 .rd-last，聊天視窗有 [data-do="hide"]，躲藏成功（s.cr=500 → ' + hideCheck.cr + '）並進入夜晚');
+
     // 13. 第 3 晚完成創作和市集，按離開市集進入篩選日 .rd-review
     await page.evaluate(() => {
       const s = window.__IE.Game.state;
+      s.session = null;
+      if (window.__IE.Craft && window.__IE.Craft.close) window.__IE.Craft.close();
       s.night = 3;
       s.day = 12;
       s.cr = 300;
@@ -551,18 +687,27 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('#modal .rd-shop');
     await page.click('#modal .rd-shop [data-do="leave"]');
     await page.waitForSelector('#modal .rd-review');
-    const revPass = await page.evaluate(() => {
+    const revPass = await page.evaluate((npc) => {
+      const s = window.__IE.Game.state;
+      const fdef = window.__IE.DATA.STORY.friends[npc];
+      const nObj = s.npcs.find((x) => x.id === npc);
       const m = document.querySelector('#modal .rd-review');
+      const colEl = m && m.querySelector('.rr-collect');
       return {
         hasRent: !!m.querySelector('.rr-rent'),
         hasSoul: !!m.querySelector('.rr-soul'),
+        hasCollect: !!colEl,
+        colTxt: colEl ? colEl.textContent : '',
+        hiddenLine: fdef ? fdef.hiddenLine : '',
+        npcAlive: !!(nObj && nObj.alive),
         stamp: (m.querySelector('.stamp') || {}).textContent || '',
         nextBtn: (m.querySelector('[data-do="next"]') || {}).textContent || '',
       };
-    });
-    if (!revPass.hasRent || !revPass.hasSoul || revPass.stamp !== '通過' || !revPass.nextBtn.includes('進入第 2 輪')) {
-      await fail('第 1 輪篩選日通過顯示不正確：' + JSON.stringify(revPass));
+    }, r1Npc);
+    if (!revPass.hasRent || !revPass.hasSoul || !revPass.hasCollect || !revPass.colTxt.includes(revPass.hiddenLine) || !revPass.npcAlive || revPass.stamp !== '通過' || !revPass.nextBtn.includes('進入第 2 輪')) {
+      await fail('第 1 輪篩選日通過或朋友已藏好顯示不正確：' + JSON.stringify(revPass));
     }
+    ok('篩選日（朋友已藏好）：.rr-collect 顯示 hiddenLine，朋友仍然 alive=true');
     // WO-15-14 (5)：篩選日本輪租金文字包含 IE.Rounds.cash(s, rep.rent)
     const revCashCheck = await page.evaluate(() => {
       const s = window.__IE.Game.state, RD = window.__IE.Rounds;
@@ -574,7 +719,7 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('篩選日本輪租金未換算為票面價格：應含 ' + revCashCheck.expRent + '，實際：' + revCashCheck.rentTxt);
     }
     ok('票面價格（篩選日）：本輪租金包含 ' + revCashCheck.expRent);
-    await scanMoney('第 1 輪的篩選日', ['#modal .rd-review', '#hud'], 2);
+    await scanMoney('第 1 輪的篩選日', ['#modal .rd-review', '#modal .rr-collect', '#hud'], 2);
     await checkAllImgs('第 1 輪篩選日');
     const revArt = await page.$eval('#modal .rd-review img.rr-banner', (im) => ({ src: im.getAttribute('src'), nw: im.naturalWidth })).catch(() => null);
     if (!revArt || !revArt.src.includes('scene-review') || revArt.nw <= 0) {
@@ -623,6 +768,110 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('應進入「第 2 輪・第 4／15 晚」，實際：' + r2Title);
     }
     ok('按繼續進入：' + r2Title);
+
+    // WO-15-13 (7) & (3)：第 2 輪不藏朋友，進入第 2 輪篩選日（朋友被收藏），按繼續到第 3 輪第 1 晚觸發 .rd-reversal 與 .rd-fate
+    const r2Npc = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const pl = window.__IE.Story.plan(s);
+      const npc = pl.npc;
+      s.cr = 400;
+      s.soul = 5;
+      s.chances = 3;
+      s.night = 6;
+      s.day = 24;
+      s.phase = 'review';
+      window.__IE.Game.roundsGo();
+      return npc;
+    });
+    await page.waitForSelector('#modal .rd-review .rr-collect');
+    await checkAllImgs('第 2 輪篩選日（朋友被收藏）');
+    await scanMoney('第 2 輪篩選日（朋友被收藏）', ['#modal .rd-review', '#modal .rr-collect', '#hud'], 2);
+    const revTaken = await page.evaluate((npc) => {
+      const s = window.__IE.Game.state;
+      const fdef = window.__IE.DATA.STORY.friends[npc];
+      const nObj = s.npcs.find((x) => x.id === npc);
+      const colEl = document.querySelector('#modal .rd-review .rr-collect');
+      const spIm = colEl && colEl.querySelector('img.rr-sp-img');
+      const frIm = colEl && colEl.querySelector('img.rr-friend-img');
+      const colTxt = colEl ? colEl.textContent : '';
+      return {
+        npcAlive: !!(nObj && nObj.alive),
+        hasLine: !!(fdef && (colTxt.includes(fdef.nomeet) || colTxt.includes(fdef.farewell))),
+        spSrc: spIm ? spIm.getAttribute('src') : '',
+        spNw: spIm ? spIm.naturalWidth : 0,
+        frNw: frIm ? frIm.naturalWidth : 0,
+      };
+    }, r2Npc);
+    if (revTaken.npcAlive || !revTaken.hasLine || !revTaken.spSrc.includes('species-') || revTaken.spNw <= 0 || revTaken.frNw <= 0) {
+      await fail('第 2 輪篩選日朋友被收藏檢查不通過：' + JSON.stringify(revTaken));
+    }
+    if (process.env.SHOTS) {
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-review-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-review-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(150);
+    }
+    ok('篩選日（朋友被收藏）：.rr-collect 顯示被收藏文字與 species-* + friend-* 頭像');
+
+    // 按繼續進入第 3 輪第 1 晚（s.night === 7），自動彈出 .rd-reversal（物極必反）
+    await page.click('#modal .rd-review [data-do="next"]');
+    await page.waitForSelector('#modal .rd-reversal');
+    await checkAllImgs('物極必反視窗（.rd-reversal）');
+    await scanMoney('物極必反視窗（.rd-reversal）', ['#modal .rd-reversal', '#hud'], 1);
+    const rvBannerNw = await page.$eval('#modal .rd-reversal img.rv-banner', (im) => im.naturalWidth);
+    if (rvBannerNw <= 0) await fail('.rd-reversal 頂部圖片 naturalWidth 應 > 0');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
+    const rvMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-reversal button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (rvMob.sw > 390) await fail('手機 390px .rd-reversal 出現橫向捲動：scrollWidth=' + rvMob.sw);
+    if (rvMob.minH < 44) await fail('手機 .rd-reversal 按鈕高度不足 44px：minH=' + rvMob.minH);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForTimeout(150);
+    if (process.env.SHOTS) {
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-reversal-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-reversal-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(150);
+    }
+    await page.click('#modal .rd-reversal [data-do="reverse"]');
+    const laterLeft = await page.evaluate(() => window.__IE.Game.state.story.later.length);
+    if (laterLeft !== 0) await fail('按 [data-do="reverse"] 後 s.story.later.length 應為 0，實際為 ' + laterLeft);
+    ok('物極必反觸發（.rd-reversal）：頂部圖片載入完成，按確認後 s.story.later.length === 0');
+
+    // 關閉第 3 輪的角色章，進入第 3 輪第 7 晚白天面板：檢查 .rd-fate（被收藏朋友的近況）出現
+    await closeDilemma();
+    await page.waitForSelector('.rd-day .rd-fate');
+    await checkAllImgs('第 3 輪白天面板（含 .rd-fate）');
+    const fateNw = await page.$eval('.rd-day .rd-fate img.px', (im) => im.naturalWidth);
+    if (fateNw <= 0) await fail('.rd-fate img.px 的 naturalWidth 應 > 0');
+    const r3NameBottoms = await page.$$eval('.rd-card .rd-name', (els) =>
+      els.map((el) => Math.round(el.getBoundingClientRect().bottom))
+    );
+    if (r3NameBottoms.length !== 3 || r3NameBottoms.some((b) => b > 800)) {
+      await fail('第 3 輪白天面板（含 4 條故事區）1280×800 第一屏應看到三張生活卡卡名（bottom <= 800）：' + JSON.stringify(r3NameBottoms));
+    }
+    if (process.env.SHOTS) {
+      await page.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast').forEach((el) => { el.innerHTML = ''; el.className = ''; });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-day-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-day-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(150);
+    }
+    ok('第 3 輪白天面板：出現 .rd-fate（被收藏朋友的近況）與 collect-* 插圖（naturalWidth=' + fateNw + '），且三張卡名 bottom=' + r3NameBottoms.join(', ') + ' <= 800');
 
     // 16. 把 s.cr = 0、s.soul = 25、s.phase = 'review'，進入篩選日：同時顯示兩項失敗，s.chances === 1
     await page.evaluate(() => {
@@ -692,15 +941,24 @@ const URL = 'http://localhost:' + PORT + '/';
     const endArt = await page.evaluate(() => {
       const endIm = document.querySelector('#modal img.end-banner');
       const embIm = document.querySelector('#modal .dossier img.d-emblem');
+      const dStory = document.querySelector('#modal .dossier .d-story');
+      const dFriends = document.querySelector('#modal .dossier .d-friends');
+      const dSide = document.querySelector('#modal .dossier .d-side');
       return {
         end: endIm ? { src: endIm.getAttribute('src'), nw: endIm.naturalWidth } : null,
         emblem: embIm ? { src: embIm.getAttribute('src'), nw: embIm.naturalWidth } : null,
+        hasDStory: !!dStory,
+        hasDFriends: !!dFriends,
+        hasDSide: !!dSide,
       };
     });
     if (!endArt.end || !endArt.end.src.includes('end-archived') || endArt.end.nw <= 0 || !endArt.emblem || !endArt.emblem.src.includes('emblem') || endArt.emblem.nw <= 0) {
       await fail('結局畫面 end-* 或 emblem 插圖不正確：' + JSON.stringify(endArt));
     }
-    ok('美術整合（結局畫面）：end-archived 與 emblem 載入完成');
+    if (!endArt.hasDStory || !endArt.hasDFriends || !endArt.hasDSide) {
+      await fail('五輪模式結局 .dossier 缺少 .d-story / .d-friends / .d-side：' + JSON.stringify(endArt));
+    }
+    ok('美術整合与故事結局：end-archived、emblem、.d-story、.d-friends、.d-side 全部正常');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
@@ -715,14 +973,33 @@ const URL = 'http://localhost:' + PORT + '/';
 
     if (process.env.SHOTS) {
       await page.waitForTimeout(450);
-      await page.evaluate(() => { const t = document.getElementById('toasts'); if (t) t.innerHTML = ''; });
+      await page.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast, #toasts').forEach((el) => { el.innerHTML = ''; el.className = ''; });
+      });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-ending-desktop.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-ending-desktop.png') });
+      await page.evaluate(() => {
+        const ds = document.querySelector('#modal .dossier .d-story');
+        if (ds) ds.scrollIntoView({ block: 'center' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-ending-desktop.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(200);
-      await page.evaluate(() => { const t = document.getElementById('toasts'); if (t) t.innerHTML = ''; });
+      await page.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast, #toasts').forEach((el) => { el.innerHTML = ''; el.className = ''; });
+        const m = document.querySelector('#modal .modal');
+        if (m) m.scrollTop = 0;
+      });
+      await page.waitForTimeout(100);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-08-ending-mobile.png') });
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-ending-mobile.png') });
+      await page.evaluate(() => {
+        const ds = document.querySelector('#modal .dossier .d-story');
+        if (ds) ds.scrollIntoView({ block: 'center' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-13-ending-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     ok('最後一次機會耗盡 → 進入人才檔案結局畫面（.dossier）與局摘要（' + runSum + '）');
@@ -738,11 +1015,24 @@ const URL = 'http://localhost:' + PORT + '/';
     await filePage.evaluate((seed) => {
       window.__IE.Game.newGame('copywriter', 'storm', { mode: 'rounds', seed });
     }, SEED);
-    if (await filePage.$('#modal [data-do="pick"]')) {
-      await filePage.click('#modal [data-do="pick"]:not([disabled])');
-      await filePage.click('#modal [data-do="ok"]');
+    for (let step = 0; step < 4; step++) {
+      if (await filePage.$('#modal .rd-story [data-do="storypick"]')) {
+        await filePage.click('#modal .rd-story [data-do="storypick"]:not([disabled])');
+        if (await filePage.$('#modal [data-do="ok"]')) await filePage.click('#modal [data-do="ok"]');
+        continue;
+      }
+      if (await filePage.$('#modal [data-do="pick"]')) {
+        await filePage.click('#modal [data-do="pick"]:not([disabled])');
+        if (await filePage.$('#modal [data-do="ok"]')) await filePage.click('#modal [data-do="ok"]');
+        continue;
+      }
+      break;
     }
     await filePage.waitForSelector('.rd-day');
+    await filePage.waitForFunction(() => {
+      const els = Array.from(document.querySelectorAll('img.px'));
+      return els.length > 0 && els.every((im) => im.complete && im.naturalWidth > 0);
+    }, { timeout: 3000 });
     const fileImgs = await filePage.$$eval('img.px', (els) => els.map((im) => ({ complete: im.complete, nw: im.naturalWidth })));
     await filePage.close();
     if (!fileImgs.length || fileImgs.some((x) => !x.complete || x.nw <= 0)) {
