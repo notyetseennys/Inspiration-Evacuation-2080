@@ -206,6 +206,8 @@
     friendsHead: '朋友們',
     sideHead: '你停在光譜的哪裡',
     friendStates: { taken: '被{species}收藏', hidden: '藏起來了', stayed: '留在浮城' },
+    giftLine: '留給你的贈物：{item}',   // 篩選日的收藏：見過最後一面（{item} 是物件名稱）
+    noteLine: '留給你的紙條：「{item}」', // 篩選日的收藏：沒有見到最後一面
   };
 
   // ---------- 角色線：每輪一章，每章四至五個人生選項（總規格 §14.3） ----------

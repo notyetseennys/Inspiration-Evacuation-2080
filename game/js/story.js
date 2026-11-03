@@ -190,7 +190,8 @@
     }
     if (f.atone) {
       const grams = s ? R.round1(Math.min(s.soul, f.atone)) : R.round1(f.atone);
-      out.push(['soul', '−' + grams + ' 克']);
+      // 靈魂已經是 0 克（例如覺醒的 AI 開局）時卸不下任何重量，不顯示「−0 克」（WO-15-13 審核）
+      if (grams > 0) out.push(['soul', '−' + grams + ' 克']);
     }
     if (f.card) {
       if (typeof f.card === 'string') {
@@ -210,7 +211,8 @@
     if (f.friend) {
       Object.keys(f.friend).forEach((npcId) => {
         const nDef = D.NPCS && D.NPCS.find((x) => x.id === npcId);
-        out.push(['note', (nDef ? nDef.name : npcId) + '熟絡 +' + f.friend[npcId]]);
+        // 名字和「熟絡」之間加冒號：名字以英文結尾時（Miu、阿 Ken）才不會黏在一起（WO-15-13 審核）
+        out.push(['note', (nDef ? nDef.name : npcId) + '：熟絡 +' + f.friend[npcId]]);
       });
     }
     if (f.chance) out.push(['note', '機會 ' + (f.chance > 0 ? '+' : '−') + Math.abs(f.chance)]);
@@ -242,7 +244,9 @@
     const out = buildFxTags(s, f, r);
     if (opt.extreme && opt.later) {
       const after = opt.later.after || 1;
-      const revTags = buildFxTags(s, opt.later.fx || {}, r + after).map((x) => x[1]).join('、');
+      // 摘要只有數值時看不出是甚麼：火花、靈魂加上名稱（WO-15-13 審核）
+      const NAME = { spark: '火花 ', soul: '靈魂 ' };
+      const revTags = buildFxTags(s, opt.later.fx || {}, r + after).map((x) => (NAME[x[0]] || '') + x[1]).join('、');
       const head = (D.STORY && D.STORY.text && D.STORY.text.reversalHead) || '物極必反';
       out.push(['note', head + '（' + after + ' 輪後）' + (revTags ? '：' + revTags : '')]);
     }

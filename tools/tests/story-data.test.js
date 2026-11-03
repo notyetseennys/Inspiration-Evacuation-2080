@@ -85,7 +85,7 @@ module.exports = (t) => {
     assert.ok(ST(), 'data-story.js 沒有載入');
     ['species', 'collectOrder', 'friends', 'astarNights', 'feed', 'text', 'lines'].forEach((k) => assert.ok(ST()[k], '缺少 D.STORY.' + k));
     const tx = ST().text;
-    ['astarHead', 'feedHead', 'fateHead', 'preview', 'lastMeet', 'hide', 'hideFail', 'storyHead', 'epilogueHead', 'friendsHead', 'sideHead', 'extreme', 'reversalHead', 'othersCount']
+    ['astarHead', 'feedHead', 'fateHead', 'preview', 'lastMeet', 'hide', 'hideFail', 'storyHead', 'epilogueHead', 'friendsHead', 'sideHead', 'extreme', 'reversalHead', 'othersCount', 'giftLine', 'noteLine']
       .forEach((k) => assert.ok(isText(tx[k]), '缺少 text.' + k));
     SIDES.forEach((k) => assert.ok(isText(tx.sides[k]), '缺少 text.sides.' + k));
     ['taken', 'hidden', 'stayed'].forEach((k) => assert.ok(isText(tx.friendStates[k]), '缺少 text.friendStates.' + k));
@@ -93,6 +93,7 @@ module.exports = (t) => {
     assert.ok(tx.hide.includes('{npc}') && tx.hide.includes('{cost}') && tx.hideFail.includes('{cost}'));
     assert.ok(!tx.hide.includes('$') && !tx.hideFail.includes('$'), 'hide、hideFail 的 {cost} 已經包括貨幣符號');
     assert.ok(tx.othersCount.includes('{n}'));
+    assert.ok(tx.giftLine.includes('{item}') && tx.noteLine.includes('{item}'), 'giftLine、noteLine 要有 {item}');
     assert.ok(D.CITIES && D.CITIES[D.CITY_DEFAULT], '缺少 D.CITIES 或預設城市');
     Object.keys(D.CITIES).forEach((id) => {
       const C = D.CITIES[id];

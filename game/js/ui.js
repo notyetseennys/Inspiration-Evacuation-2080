@@ -1518,9 +1518,11 @@
       if (!col.hidden && fdef) {
         if (col.met && fdef.gift && D().OBJ[fdef.gift]) {
           const obj = D().OBJ[fdef.gift];
-          giftHtml = '<div class="rr-gift">' + IE.Icons.obj(fdef.gift, 28) + '<span>留下遺物：<b>' + esc(obj.name) + '</b>（' + esc(obj.desc) + '）</span></div>';
+          const giftTx = (D().STORY && D().STORY.text && D().STORY.text.giftLine) || '留給你的贈物：{item}';
+          giftHtml = '<div class="rr-gift">' + IE.Icons.obj(fdef.gift, 28) + '<span>' + esc(giftTx).replace('{item}', '<b>' + esc(obj.name) + '</b>') + '（' + esc(obj.desc) + '）</span></div>';
         } else if (!col.met && fdef.note) {
-          giftHtml = '<div class="rr-gift"><span>留下便條：<b>「' + esc(fdef.note.name) + '」</b></span><span class="tags">' + tagsHtml(fdef.note.tags || []) + '</span></div>';
+          const noteTx = (D().STORY && D().STORY.text && D().STORY.text.noteLine) || '留給你的紙條：「{item}」';
+          giftHtml = '<div class="rr-gift"><span>' + esc(noteTx).replace('{item}', '<b>' + esc(fdef.note.name) + '</b>') + '</span><span class="tags">' + tagsHtml(fdef.note.tags || []) + '</span></div>';
         }
       }
       collectHtml = '<div class="rr-sec rr-collect ' + (col.hidden ? 'ok' : 'taken') + '">'

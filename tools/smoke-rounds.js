@@ -139,6 +139,15 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('角色線第 1 章 .rd-story 檢查不通過：' + JSON.stringify(stCheck));
     }
     await scanMoney('角色線第 1 章（.rd-story）', ['#modal .rd-story'], 1);
+    // WO-15-13 審核補上（工單第 5 節第 3 步）：章的視窗出現時重新載入、按「繼續」，仍然是同一章
+    const stIdBefore = await page.evaluate(() => window.__IE.Game.state.story.pending);
+    await page.reload();
+    await page.waitForSelector('[data-do="continue"]');
+    await page.click('[data-do="continue"]');
+    await page.waitForSelector('#modal .rd-story');
+    const stIdAfter = await page.evaluate(() => window.__IE.Game.state.story.pending);
+    if (!stIdBefore || stIdAfter !== stIdBefore) await fail('章的視窗重新載入之後應該是同一章：' + stIdBefore + ' → ' + stIdAfter);
+    ok('章的視窗重新載入、按「繼續」：仍然是同一章（' + stIdAfter + '）');
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
     const stMob = await page.evaluate(() => {
@@ -168,6 +177,9 @@ const URL = 'http://localhost:' + PORT + '/';
       const s = window.__IE.Game.state;
       return { logLen: s.story.log.length, laterLen: s.story.later.length, laterRound: s.story.later[0] && s.story.later[0].round };
     });
+    // WO-15-13 審核補上（工單第 5 節第 1 步）：回答了章的那一天不抽道德抉擇
+    const dilemmaToday = await page.evaluate(() => { const s = window.__IE.Game.state; return { dd: s.dilemmaDay, day: s.day, modal: !!document.querySelector('#modal [data-do="pick"]') }; });
+    if (dilemmaToday.dd === dilemmaToday.day || dilemmaToday.modal) await fail('回答了章的那一天不應該抽道德抉擇：' + JSON.stringify(dilemmaToday));
     if (stAfter.logLen !== 1 || stAfter.laterLen !== 1) {
       await fail('點選極端選項後 s.story.log / later 長度不正確：' + JSON.stringify(stAfter));
     }
@@ -819,6 +831,15 @@ const URL = 'http://localhost:' + PORT + '/';
     // 按繼續進入第 3 輪第 1 晚（s.night === 7），自動彈出 .rd-reversal（物極必反）
     await page.click('#modal .rd-review [data-do="next"]');
     await page.waitForSelector('#modal .rd-reversal');
+    // WO-15-13 審核補上（工單第 5 節第 4a 步）：反轉出現時重新載入、按「繼續」，反轉仍然在，而且沒有提早套用
+    const laterBefore = await page.evaluate(() => window.__IE.Game.state.story.later.length);
+    await page.reload();
+    await page.waitForSelector('[data-do="continue"]');
+    await page.click('[data-do="continue"]');
+    await page.waitForSelector('#modal .rd-reversal');
+    const laterAfterReload = await page.evaluate(() => window.__IE.Game.state.story.later.length);
+    if (laterBefore < 1 || laterAfterReload !== laterBefore) await fail('反轉的視窗重新載入之後應該仍然在：' + laterBefore + ' → ' + laterAfterReload);
+    ok('物極必反的視窗重新載入、按「繼續」：仍然在（未發生的反轉 ' + laterAfterReload + ' 則）');
     await checkAllImgs('物極必反視窗（.rd-reversal）');
     await scanMoney('物極必反視窗（.rd-reversal）', ['#modal .rd-reversal', '#hud'], 1);
     const rvBannerNw = await page.$eval('#modal .rd-reversal img.rv-banner', (im) => im.naturalWidth);
