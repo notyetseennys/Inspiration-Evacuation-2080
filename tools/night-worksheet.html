@@ -1,0 +1,325 @@
+<title>素材工作單</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+  /* 由 tools/night-worksheet.py 生成；資料來自 docs/art-prompts/night-painting.md 和 docs/music/night-stems.md */
+  :root {
+    --bg: #0d1020; --surface: #151a2e; --surface-2: #1c2340; --line: #2b3858; --skyline: #1f2945;
+    --fg: #e9ecf5; --muted: #9aa3b8; --accent: #ff4fb4; --accent-fg: #1a0612; --accent-2: #37c3d6;
+    --ok: #9be36b; --ok-fg: #10200a; --got: #37c3d6; --got-fg: #04161a;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4f1ea; --surface: #ffffff; --surface-2: #f1ede4; --line: #d9d2c3; --skyline: #d6d0c2;
+      --fg: #1a1d2b; --muted: #5a6074; --accent: #b8155f; --accent-fg: #ffffff; --accent-2: #0d7482;
+      --ok: #3a7a18; --ok-fg: #ffffff; --got: #0d7482; --got-fg: #ffffff;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f1ea; --surface: #ffffff; --surface-2: #f1ede4; --line: #d9d2c3; --skyline: #d6d0c2;
+    --fg: #1a1d2b; --muted: #5a6074; --accent: #b8155f; --accent-fg: #ffffff; --accent-2: #0d7482;
+    --ok: #3a7a18; --ok-fg: #ffffff; --got: #0d7482; --got-fg: #ffffff;
+    color-scheme: light;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif; font-size: 15px; line-height: 1.65; }
+  .wrap { max-width: 780px; margin: 0 auto; padding-block: 20px 96px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 24px; }
+  .mono, code, pre { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+  code { font-size: .9em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.3; margin: 0; }
+  h1 { font-size: 28px; }
+  h2 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ""; width: 10px; height: 10px; background: var(--accent); box-shadow: 10px 0 0 var(--accent-2); margin-right: 10px; flex: none; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  .skyline { display: block; width: 100%; height: 56px; color: var(--skyline); }
+  header { display: grid; gap: 10px; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; }
+  .stat b { font-size: 20px; }
+  .bar { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .3s; }
+  .tabs { display: flex; gap: 8px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .tabs button { flex: 1; }
+  .tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 700; }
+  section { display: grid; gap: 14px; }
+  ol.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; }
+  .note { border-left: 3px solid var(--accent-2); padding: 8px 12px; background: var(--surface); border-radius: 0 8px 8px 0; display: grid; gap: 6px; }
+  .phase { display: grid; gap: 10px; }
+  .phase > h3 { font-size: 17px; }
+  details.group { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  details.group > summary { cursor: pointer; list-style: none; padding: 12px 14px; display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  details.group > summary::-webkit-details-marker { display: none; }
+  details.group > summary::before { content: "▸"; color: var(--muted); }
+  details.group[open] > summary::before { content: "▾"; }
+  .gname { font-weight: 700; }
+  .gcount { margin-left: auto; color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .gbody { display: grid; gap: 10px; padding: 0 10px 12px; }
+  .card { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+  .card.done { border-color: var(--ok); }
+  .card.got { border-color: var(--got); opacity: .75; }
+  .card.flash { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+  .fname { font-weight: 600; font-size: 13.5px; word-break: break-all; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); white-space: nowrap; }
+  .dot { width: 9px; height: 9px; border-radius: 2px; }
+  pre.prompt { margin: 0; background: var(--surface-2); border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 170px; overflow: auto; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-size: 14px; min-height: 44px; padding: 0 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--fg); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+  button.is-done { background: var(--ok); border-color: var(--ok); color: var(--ok-fg); font-weight: 700; }
+  button.is-got { background: var(--got); border-color: var(--got); color: var(--got-fg); font-weight: 700; cursor: default; }
+  button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  details.setup { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  details.setup > summary { cursor: pointer; font-weight: 700; min-height: 28px; }
+  details.setup[open] > summary { margin-bottom: 10px; }
+  .next { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 400; font-size: 12px; letter-spacing: .06em; }
+  .toast { position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 7; }
+  .toast.show { opacity: 1; }
+  footer { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <svg class="skyline" viewBox="0 0 760 56" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="currentColor">
+        <rect x="0" y="22" width="46" height="34"/><rect x="52" y="8" width="38" height="48"/><rect x="96" y="28" width="60" height="28"/>
+        <rect x="162" y="14" width="34" height="42"/><rect x="202" y="30" width="72" height="26"/><rect x="280" y="4" width="40" height="52"/>
+        <rect x="326" y="24" width="56" height="32"/><rect x="388" y="12" width="36" height="44"/><rect x="430" y="32" width="64" height="24"/>
+        <rect x="500" y="18" width="44" height="38"/><rect x="550" y="6" width="34" height="50"/><rect x="590" y="26" width="70" height="30"/>
+        <rect x="666" y="16" width="40" height="40"/><rect x="712" y="30" width="48" height="26"/>
+      </g>
+      <g>
+        <rect x="62" y="16" width="5" height="5" fill="#ff6b5e"/><rect x="74" y="28" width="5" height="5" fill="#e8c25a"/>
+        <rect x="290" y="12" width="5" height="5" fill="#37c3d6"/><rect x="302" y="30" width="5" height="5" fill="#ff6b5e"/>
+        <rect x="398" y="22" width="5" height="5" fill="#9be36b"/><rect x="560" y="14" width="5" height="5" fill="#ff4fb4"/>
+        <rect x="572" y="34" width="5" height="5" fill="#f0883e"/><rect x="676" y="26" width="5" height="5" fill="#a78bfa"/>
+      </g>
+    </svg>
+    <div class="eyebrow">靈感撤離 2080・創作之夜・第七批</div>
+    <h1>素材工作單</h1>
+    <p class="muted">試做批已經通過，這裏是大量製作的全部清單。每一張圖、每一首歌的 prompt 都已經組好，可以直接複製。完成一項就按「標記為已完成」，進度只記在這部裝置上；已經上載到 GitHub 的標為「已收到」。</p>
+    <div class="stats">
+      <div class="stat"><span class="muted">畫</span><b id="artCount">0／0</b><div class="bar"><i id="artBar"></i></div></div>
+      <div class="stat"><span class="muted">歌</span><b id="songCount">0／0</b><div class="bar"><i id="songBar"></i></div></div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-art" aria-selected="true" aria-controls="art">畫：ChatGPT</button>
+    <button role="tab" id="tab-music" aria-selected="false" aria-controls="music">歌：Flow Music</button>
+  </div>
+
+  <section id="art" role="tabpanel" aria-labelledby="tab-art">
+    <h2>畫</h2>
+    <ol class="steps">
+      <li>開一個新對話，上載 <code>ref-city-night.png</code>、<code>ref-palette-v2.png</code>，再上載一張你最滿意的試做圖（例如 <code>np-duo-water-neon.png</code>）做風格樣板。</li>
+      <li>貼上「風格設定」，等 ChatGPT 回答「OK」。</li>
+      <li>之後每則訊息貼一張的 prompt。每張生兩、三次，揀最好的一張，按卡上的檔名存成 PNG。</li>
+      <li>一個對話做二、三十張之後，風格可能慢慢走樣，就開新對話，重做第 1、2 步。</li>
+    </ol>
+    <div class="note">
+      <p><b>試做之後改了甚麼</b></p>
+      <p class="muted">主體可以填滿畫面，不用理會比例（程式會統一大小）；除了天空，不要畫落下的雨；新加 3 張碼頭和 13 張複合情緒小景，45 種組合齊全。</p>
+    </div>
+    <details class="setup">
+      <summary>風格設定（每個新對話的第一則訊息）</summary>
+      <div style="display:grid;gap:10px">
+        <pre class="prompt" id="styleSetup" style="max-height:320px"></pre>
+        <div class="row"><button class="primary" data-copy="styleSetup">複製風格設定</button></div>
+      </div>
+    </details>
+    <div id="artPhases" style="display:grid;gap:18px"></div>
+  </section>
+
+  <section id="music" role="tabpanel" aria-labelledby="tab-music" hidden>
+    <h2>歌</h2>
+    <ol class="steps">
+      <li>在 Flow Music 的 <b>BPM 設定</b>填卡上的速度：這是唯一一定要準確的項目。</li>
+      <li>有「純音樂」的開關就打開（<code>vocal</code> 那一首除外）。</li>
+      <li>貼上 prompt。調和和弦寫在描述裏就可以，生成出來不同也沒有關係，程式會處理。</li>
+      <li>下載全部分軌的 zip，只把 zip 改名為卡上的名字。想多做一個版本，就在名字後面加 <code>-2</code>。</li>
+    </ol>
+    <div class="note">
+      <p><b>試做之後改了甚麼</b></p>
+      <p class="muted">只用文字生成就可以，不用上載樣板音軌。程式會把每首歌變速到同一個 BPM、移調到母曲的調、按鼓點對齊，再逐小節標出和弦。所以 BPM 一定要設定，其餘不用強求。</p>
+    </div>
+    <div id="songPhases" style="display:grid;gap:18px"></div>
+  </section>
+
+  <section id="upload">
+    <h2>上載</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>素材</th><th>上載到 <code>main</code> 分支的</th><th>備註</th></tr></thead>
+        <tbody>
+          <tr><td>畫（PNG）</td><td><code>art-src/night/</code></td><td>檔名照卡片</td></tr>
+          <tr><td>歌（分軌的 zip）</td><td><code>music-src/night/</code></td><td>不用解壓；GitHub 網頁每個檔案最大 25 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>每完成一期就在對話裏說一聲。我會先審核，再把素材放進原型：第一期的畫加 lo-fi 全套，就是第一個用真的畫和真的歌的完整一晚。</p>
+  </section>
+
+  <footer>
+    <span>規格全文：<code>docs/art-prompts/night-painting.md</code>（畫）、<code>docs/music/night-stems.md</code>（歌）。這一頁由 <code>tools/night-worksheet.py</code> 生成。</span>
+  </footer>
+</div>
+<button class="primary next" id="nextBtn">下一項未完成 ↓</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var DATA = /*DATA*/null;
+  var KEY = 'ie-night-assets-v1';
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  var texts = { styleSetup: DATA.style };
+  document.getElementById('styleSetup').textContent = DATA.style;
+
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function chip(label, color) {
+    var c = el('span', 'chip');
+    if (color) { var d = el('span', 'dot'); d.style.background = color; c.appendChild(d); }
+    c.appendChild(document.createTextNode(label));
+    return c;
+  }
+  var cards = {};
+  function card(it, chips, desc, settings) {
+    texts[it.id] = it.prompt;
+    var c = el('article', 'card'); c.id = 'card-' + it.id; c.dataset.id = it.id;
+    var head = el('div', 'card-head');
+    head.appendChild(el('span', 'fname mono', it.file));
+    chips.forEach(function (x) { head.appendChild(x); });
+    c.appendChild(head);
+    if (desc) c.appendChild(el('p', '', desc));
+    if (settings) c.appendChild(el('p', 'muted', settings));
+    c.appendChild(el('pre', 'prompt', it.prompt));
+    var row = el('div', 'row');
+    var cp = el('button', 'primary', '複製 prompt'); cp.setAttribute('data-copy', it.id);
+    var dn = el('button', '', ''); dn.setAttribute('data-done', it.id);
+    row.appendChild(cp); row.appendChild(dn); c.appendChild(row);
+    cards[it.id] = { el: c, btn: dn, it: it };
+    paint(it.id);
+    return c;
+  }
+  function isDone(id) { var c = cards[id]; return c.it.got || !!done[id]; }
+  function paint(id) {
+    var c = cards[id], it = c.it;
+    c.el.classList.toggle('got', !!it.got);
+    c.el.classList.toggle('done', !it.got && !!done[id]);
+    c.btn.className = it.got ? 'is-got' : (done[id] ? 'is-done' : '');
+    c.btn.textContent = it.got ? '已收到' : (done[id] ? '✓ 已完成' : '標記為已完成');
+    c.btn.disabled = !!it.got;
+    c.btn.setAttribute('aria-pressed', isDone(id) ? 'true' : 'false');
+  }
+
+  var groups = [];
+  function build(items, boxId, phaseName, mkChips, mkDesc, mkSettings) {
+    var box = document.getElementById(boxId);
+    var phases = {};
+    items.forEach(function (it) {
+      (phases[it.phase] = phases[it.phase] || {})[it.group] = (phases[it.phase][it.group] || []).concat([it]);
+    });
+    Object.keys(phases).sort().forEach(function (ph) {
+      var sec = el('div', 'phase');
+      var n = 0; Object.keys(phases[ph]).forEach(function (g) { n += phases[ph][g].length; });
+      sec.appendChild(el('h3', '', phaseName(+ph, phases[ph]) + '（' + n + '）'));
+      Object.keys(phases[ph]).forEach(function (g, gi) {
+        var list = phases[ph][g];
+        var d = el('details', 'group');
+        var s = el('summary');
+        s.appendChild(el('span', 'gname', g));
+        var cnt = el('span', 'gcount', '');
+        s.appendChild(cnt);
+        d.appendChild(s);
+        var body = el('div', 'gbody');
+        list.forEach(function (it) { body.appendChild(card(it, mkChips(it), mkDesc(it), mkSettings(it))); });
+        d.appendChild(body);
+        sec.appendChild(d);
+        groups.push({ list: list, cnt: cnt, d: d });
+      });
+      box.appendChild(sec);
+    });
+  }
+  build(DATA.art, 'artPhases',
+    function (ph) { return ph === 1 ? '第一期：每一幅畫都用得着的基本素材' : '第二期：令畫更特別的素材'; },
+    function (it) {
+      return [chip(it.cat)].concat(it.emos.map(function (k) { return chip(DATA.emo[k][0], DATA.emo[k][1]); }));
+    },
+    function (it) { return it.title; },
+    function () { return ''; });
+  build(DATA.songs, 'songPhases',
+    function (ph, g) { var name = Object.keys(g)[0]; return '第' + ['', '一', '二', '三'][ph] + '期：' + name; },
+    function (it) { return [chip(it.title)]; },
+    function (it) { return it.desc; },
+    function (it) { return it.settings; });
+
+  function progress() {
+    function count(list) { var n = 0; list.forEach(function (it) { if (isDone(it.id)) n++; }); return n; }
+    var a = count(DATA.art), s = count(DATA.songs);
+    document.getElementById('artCount').textContent = a + '／' + DATA.art.length;
+    document.getElementById('songCount').textContent = s + '／' + DATA.songs.length;
+    document.getElementById('artBar').style.width = (100 * a / DATA.art.length) + '%';
+    document.getElementById('songBar').style.width = (100 * s / DATA.songs.length) + '%';
+    groups.forEach(function (g) { g.cnt.textContent = count(g.list) + '／' + g.list.length; });
+  }
+  progress();
+
+  // 分頁
+  var tabs = { art: document.getElementById('tab-art'), music: document.getElementById('tab-music') };
+  function show(which) {
+    Object.keys(tabs).forEach(function (k) {
+      tabs[k].setAttribute('aria-selected', k === which ? 'true' : 'false');
+      document.getElementById(k).hidden = k !== which;
+    });
+  }
+  tabs.art.addEventListener('click', function () { show('art'); });
+  tabs.music.addEventListener('click', function () { show('music'); });
+  if (location.hash === '#music') show('music');
+
+  var toastT;
+  function toast(msg) {
+    var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 1600);
+  }
+  function selectText(node) { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    var cid = b.getAttribute('data-copy');
+    if (cid) {
+      var node = cid === 'styleSetup' ? document.getElementById('styleSetup') : b.closest('.card').querySelector('pre');
+      var fallback = function () { selectText(node); toast('已選取文字，請手動複製'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texts[cid]).then(function () { toast('已複製'); }, fallback);
+      else fallback();
+      return;
+    }
+    var did = b.getAttribute('data-done');
+    if (did && !cards[did].it.got) { done[did] = !done[did]; save(); paint(did); progress(); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', function () {
+    var list = document.getElementById('art').hidden ? DATA.songs : DATA.art;
+    for (var i = 0; i < list.length; i++) {
+      if (!isDone(list[i].id)) {
+        var c = cards[list[i].id].el;
+        c.closest('details').open = true;
+        c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        c.classList.add('flash'); setTimeout(function () { c.classList.remove('flash'); }, 1400);
+        return;
+      }
+    }
+    toast('這一頁全部完成了');
+  });
+})();
+</script>

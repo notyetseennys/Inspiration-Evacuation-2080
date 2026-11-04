@@ -161,7 +161,36 @@
       - 統一響度，轉 MP3，用 `night-music.json` 記錄每小節的時間和和弦；
       - 新的 `music.js` 按小節排程：同一筆盡量播原曲連續的小節（「起承承轉合」正好是原曲的 I–vi–IV–V–I）；倍率越高樂隊越滿；斷的地方歌停一停。
   - 試做批工作單（Artifact，可以逐段複製 prompt、試聽樣板音軌）：https://claude.ai/artifact/WMMxE6SuhgtRPxjgp4oXzZ（原檔不在倉庫；要更新就用 Artifact 的 read 取回再發佈）。
-  - **正在等兩批試做素材**（上載到 `main` 的 `art-src/night/` 和 `music-src/night/`）。收到之後先在原型裏組合給製作人看和聽，確定可行才大量生成。
+  - ~~正在等兩批試做素材~~（已收到，見下）（上載到 `main` 的 `art-src/night/` 和 `music-src/night/`）。收到之後先在原型裏組合給製作人看和聽，確定可行才大量生成。
+- **試做批審核（2026-11-04）**：製作人上載了 8 張畫（`main` 的 `art-src/night/`）和 lo-fi 3 首（`music-src/night/ns-lofi-{base,lead-warmth,vocal}-a.zip`，只用文字生成）。製作人要求大量製作，令遊戲「劃時代」。
+  - 畫：全部合格。
+    - 真正透明、風格統一、沒有文字。
+    - 正方形是 1254×1254；主體填滿畫面，沒有照比例。規格已改為「填滿畫面，程式統一大小」。
+    - `tools/art-night-preview.py` 組成「雨夜」（另有逐筆的四個階段）和「黃昏的家」，畫布 960×600。
+    - 程式自動找發光的像素，加光暈和水面長影；「合」之前燈未亮。
+    - 不做 64 色減色，因為霓虹會褪色。
+    - 發現缺碼頭，規格新加 3 張碼頭；複合情緒小景補齊 45 種。
+  - 歌：每首 4 條分軌（vocals、drums、bass、other，M4A，約 3 分鐘）。
+    - BPM 設定有效：`base` 85.01，其餘 86、87。調和和弦都沒有照指定的走。
+    - `tools/music-build.py` 處理成小節資料庫：
+      - 變速到 85；
+      - 按時間平均音高分佈移調到母曲的調（Krumhansl 的調性輪廓會誤判五度，所以不用它）；
+      - 主音由 V7→I 判斷；
+      - 按鼓點形狀對齊小節線（原本差 26–46 毫秒）；
+      - 逐小節標和弦。
+    - `tools/music-night-preview.py` 輸出四段示範：
+      - 找和弦路徑（`起承承轉合` = 母曲第 7、8、9、6、7 小節，I–iii–ii–V–I）；
+      - 層按和弦配對整句；
+      - 樂隊逐層加入；斷只剩鼓；轉之前上升，合有重擊；收工有掌聲。
+    - 響度約 −15.5 LUFS。**我沒有親耳聽過**，已請製作人留意色士風移調 +5 半音後的音色和接句。
+  - 審核頁（會動的畫、四段示範歌）：https://claude.ai/artifact/47WAdvjvSfuh5Kbe4GSYg4
+  - 素材工作單（同一個連結，已換成全部清單）：https://claude.ai/artifact/WMMxE6SuhgtRPxjgp4oXzZ
+    - 由 `tools/night-worksheet.py` 和 `tools/night-worksheet.html` 從兩份規格生成；
+    - 畫 154 張（第一期 89、第二期 65）、歌 48 首（每種風格 16 首）。
+    - 已上載的標為「已收到」。
+  - **下一步**：等第一期（基本素材 89 張和 lo-fi 全套 16 首）。收到之後做原型第五版：
+    - 第一個用真的畫和真的歌的完整一晚；
+    - 把 `art-night-preview.py` 和 `music-night-preview.py` 的做法搬進 `painter.js` 和 `music.js`。
   - 校準方法：知道答案的機械人約 96% 完成委託；隨機挑 25 個組合的機械人三晚的通過率約 99%、79%、36%。
 - 判斷好玩的標準：動手多於閱讀；規則看得見、結果要自己試；每個動作都有畫面、聲音和數字的回饋；白天的選擇為今晚做準備；每個畫面只有一個焦點。
 
@@ -234,4 +263,8 @@
 | `docs/art-prompts/night-painting.md`、`docs/music/night-stems.md` | 創作之夜的專業素材規格：畫（ChatGPT）和歌（Flow Music 分軌） |
 | `tools/music-guide.py`、`docs/music/guide/` | 給 Flow Music 上載改編的樣板音軌（準確的 BPM、調、四和弦循環） |
 | `tools/music-check.py` | 檢查分軌的速度、小節線和每一小節的和弦 |
+| `tools/music-build.py` | Flow Music 分軌 → 小節資料庫：變速、移調到母曲的調、按鼓點對齊、逐小節標和弦（`<名>.json`） |
+| `tools/music-night-preview.py` | 「玩家的歌」編曲引擎原型：和弦路徑、按和弦配對的層、斷、逐層加入；輸出示範音檔 |
+| `tools/art-night-preview.py` | 「玩家的畫」組合原型：裁切縮放、舞台、自動發光、倒影、「合」之前燈未亮；輸出合成圖和三層 |
+| `tools/night-worksheet.py`、`tools/night-worksheet.html` | 由兩份規格生成「素材工作單」網頁（每一項的 prompt 可複製、打勾） |
 | `.github/workflows/ci.yml` | CI |
