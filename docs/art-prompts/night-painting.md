@@ -147,6 +147,22 @@ Subject: <清單裏的英文主體>
 
 ## 五、審核結果
 
+### 5.0 第三期：名作插畫（58 張，2026-11-07）
+
+全部收到（上載在 `main` 的根目錄），1536×1024，不透明，沒有文字。
+
+- **普通名作 40 張**：質素很高，每張一個清楚的故事，畫風和第一、二期一致。
+- **傳說名作 18 張，畫風漂移了**：
+  - 鮮艷的紫粉色像素平均佔 28%。普通名作只有 6.3%，主角、小景、中景只有 2–4%。
+  - 亮度也高得多（0.62 對 0.43）。
+  - 很可能是同一個對話生成太多張之後的漂移。
+
+  這種「夢境」色調**保留**，作為傳說名作的標記。
+- **要重做的 4 張**：`famine`、`uprising`、`one`、`nightless` 的背景是一座浮空城堡，不是浮城的高腳唐樓，和世界觀不一致。
+  - 另外約 10 張重複了前景角落的百合花。
+  - 重做時寫明「浮城的高腳唐樓，不要城堡，不要百合花」（第六節 6.10）。
+- **用量**：傳說名作的條件來自主遊戲（靈魂、債務、朋友被帶走等），在創作之夜觸發不了，要為創作之夜重新設計條件。
+
 ### 5.1 第一、二期（154 張，2026-11-06）
 
 全部收到，全部可用。
@@ -215,7 +231,7 @@ Subject: <清單裏的英文主體>
 |---|---|---|
 | 第一期 | 每一幅畫都用得着的基本素材：天空、遠景、碼頭、中景、主角 | 89（7） |
 | 第二期 | 令畫更特別的素材：複合情緒小景、夥伴客串、前景 | 65（1） |
-| 第三期 | 名作插畫 58 張（甲 19、乙 21、丙 18）、夥伴重做 2 張 | 60（0） |
+| 第三期 | 名作插畫 58 張（甲 19、乙 21、丙 18）；重做 6 張（可選） | 64（58） |
 
 試做的 8 張已經包括在內，不用重做。
 
@@ -466,14 +482,24 @@ Subject: <清單裏的英文主體>
 | `np-work-aroundworld` | 環遊世界 | （特殊條件） | a small boat sailing out of the floating city toward a horizon of distant fictional lands, a hand-drawn map pinned to the mast |
 | `np-work-one` | 一 | （特殊條件） | a single brush stroke of light across the whole night sky above the city, the painter tiny on a rooftop |
 
-### 6.10 重做（第三期，2 張）
+### 6.10 重做（第三期，6 張，可選）
 
-其他 6 位夥伴都畫成有佈景的小場景，這兩張是單獨的人物，放在碼頭上一排小場景之間不統一。用新的檔名，舊的保留。
+用新的檔名（加 `-2`），舊的保留；程式有新版就用新版。
+
+- 夥伴 2 張：其他 6 位夥伴都畫成有佈景的小場景，這兩張是單獨的人物，放在碼頭上一排小場景之間不統一。
+- 傳說名作 4 張：背景畫了浮空城堡。
+  - 保留夢境般的紫粉色調；
+  - 改為浮城的高腳唐樓；
+  - 不要城堡，不要百合花。
 
 | 檔名 | 夥伴 | 主體 |
 |---|---|---|
 | `np-mate-mary-2` | 開糖水舖的 Mary 姐 | a small dessert stall diorama on the pier: a cheerful woman in an apron serving bowls of sweet soup, steam, stools, hanging bulbs, a pot on the stove |
 | `np-mate-yu-2` | 寫歌的小雨 | a small rooftop corner diorama on the pier: a young songwriter with an acoustic guitar on a stool, a notebook of songs, a tiny amp and string lights |
+| `np-work-famine-2` | 名作《斷糧》 | an empty floating market at dawn on the pier, every stall bare, a single grain of rice glowing on the wet planks, a child crouching to look at it, the Floating City's tenement towers on stilts in the pink dawn haze; dreamlike glow; no castles, no lilies |
+| `np-work-uprising-2` | 名作《起義》 | the whole Floating City raising lanterns at once from every window, balcony and boat of its tenement towers on stilts, the light pushing back a dark sky; dreamlike glow; no castles, no lilies |
+| `np-work-one-2` | 名作《一》 | a single brush stroke of light across the night sky above the tenement towers on stilts, the painter tiny on a rooftop holding a long brush; dreamlike glow; no castles, no lilies |
+| `np-work-nightless-2` | 名作《不夜城》 | the neon district seen from high above: dense tenement towers on stilts covered in pictogram neon signs, so bright that the sky has turned pink with no stars; no castles, no lilies, no waterfalls |
 
 ---
 

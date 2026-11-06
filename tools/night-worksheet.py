@@ -118,7 +118,8 @@ def art_items():
     # 6.10 重做
     for r in table(section(sec6, '### 6.10')):
         n = code(r[0])
-        add(3, '夥伴重做', '夥伴', n, r[2], '夥伴重做・%s' % r[1], [])
+        cat = '名作' if n.startswith('np-work-') else '夥伴'
+        add(3, '重做（可選）', cat, n, r[2], '重做・%s' % r[1], [])
     return style, items
 
 

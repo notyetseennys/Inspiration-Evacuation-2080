@@ -12,8 +12,11 @@
 同一張卡（按卡的 id）永遠對應同一張圖和同一個方向（素材沒有文字，所以可以左右鏡像，多一倍變化），
 卡面和畫裏的那一格可以是同一張圖。
 
+畫面的三個改進（預設開啟）：按天空統一色調、「轉」那一格的聚光、雨夜全畫下雨。
+
 用法：
   python3 tools/art-night-compose.py <素材資料夾> <出牌記錄.json> <輸出資料夾> [--render 12]
+  python3 tools/art-night-compose.py <素材資料夾> <出牌記錄.json> <輸出資料夾> --compare 1,4,22（改進前後的對比）
 出牌記錄由模擬或原型輸出：[{seed, night, colabs, strokes: [{id, roles, cards: [{id, tags, medium}], subject}]}]
 需要 numpy 和 Pillow。
 """
@@ -35,6 +38,11 @@ FAR = {'warmth': 'old', 'hunger': 'old', 'neon': 'neon', 'anger': 'neon', 'machi
 FRONT = {'warmth': 'lanterns', 'hope': 'leaves', 'water': 'rainglass', 'memory': 'window', 'rebel': 'cables',
          'machine': 'cables', 'guilt': 'window', 'anger': 'curtain', 'neon': 'neonframe', 'hunger': 'laundry'}
 GOLD_FULL = 3  # 一晚至少三筆完整的起承轉合，才配金框（模擬約 18% 的晚上）
+
+
+# 畫面的三個改進（tools/art-night-compose.py --compare 可以輸出改進前後的對比）
+OPTS = {'grade': True, 'spot': True, 'rain': True}
+LAYER_GRADE = {2: 0.35, 3: 0.35, 4: 0.30, 5: 0.22, 6: 0.18}  # 越遠越受天色影響
 
 
 def stable(s, n):
@@ -117,8 +125,36 @@ class Painting:
         self.sky = None
         self.items = []  # (層, 圖, x, y, 倒影的水線或 None, 發光強度)
         self.front = []
+        self.spot = None   # 「轉」那一格 (x, y, 寬, 高)
+        self.rain = False
+
+    def graded(self):
+        """按天空統一色調：建築、碼頭和小場景乘上天空的平均色（保留亮度），天越暗，物件也稍暗。"""
+        sky = np.array(self.sky).astype(float)[:HORIZON, :, :3]
+        amb = sky.reshape(-1, 3).mean(0)
+        tint = np.clip(amb / (amb.mean() + 1e-6), 0.72, 1.35)
+        sv = amb.mean() / 255
+        gain = float(np.clip(0.80 + 0.55 * sv, 0.84, 1.04))
+        out = []
+        for layer, im, x, y, wl, g in self.items:
+            k = LAYER_GRADE.get(layer, 0)
+            if k:
+                a = np.array(im).astype(float)
+                a[..., :3] *= ((1 - k) + k * tint) * (1 - k * (1 - gain) / 0.35)
+                im = Image.fromarray(a.clip(0, 255).astype(np.uint8))
+            out.append((layer, im, x, y, wl, g))
+        return out
 
     def render(self, lights=1.0):
+        orig_items = self.items
+        if OPTS['grade']:
+            self.items = self.graded()
+        try:
+            return self._render(lights, orig_items)
+        finally:
+            self.items = orig_items
+
+    def _render(self, lights, orig_items):
         base = self.sky.copy()
         hc = tuple(np.array(self.sky)[HORIZON - 4, :, :3].mean(0).astype(int))
         band = self.sky.crop((0, HORIZON - 140, W, HORIZON)).transpose(Image.FLIP_TOP_BOTTOM)
@@ -129,7 +165,10 @@ class Painting:
         water = Image.new('RGBA', (W, H), (0, 0, 0, 0))
         glow_src = Image.new('RGBA', (W, H), (0, 0, 0, 0))
         streak = np.zeros((H, W, 3))
-        for layer, im, x, y, wl, g in sorted(self.items, key=lambda t: t[0]):
+        src_of = {id(a): b for a, b in zip(self.items, orig_items)}
+        for item in sorted(self.items, key=lambda t: t[0]):
+            layer, im, x, y, wl, g = item
+            src = src_of.get(id(item), item)[1]
             base.alpha_composite(im, (x, y))
             if wl is not None:
                 r = tint(im.transpose(Image.FLIP_TOP_BOTTOM), hc, 0.25, 0.5)
@@ -137,12 +176,12 @@ class Painting:
                 ra[..., 3] *= np.linspace(0.7, 0, r.height)[:, None]
                 water.alpha_composite(Image.fromarray(ra.astype(np.uint8)), (x, wl))
             if g > 0:
-                e = emissive(im, strict=g < 1)
+                e = emissive(src, strict=g < 1)
                 if g != 1:
                     e = tint(e, (0, 0, 0), 0, g)
                 glow_src.alpha_composite(e, (x, y))
                 if wl is not None:
-                    es = np.array(emissive(im, True).transpose(Image.FLIP_TOP_BOTTOM)).astype(float)[..., :3]
+                    es = np.array(emissive(src, True).transpose(Image.FLIP_TOP_BOTTOM)).astype(float)[..., :3]
                     hgt = min(H - wl, es.shape[0] * 2)
                     if hgt > 0:
                         es = np.array(Image.fromarray(es.astype(np.uint8)).resize((es.shape[1], hgt), Image.BILINEAR)
@@ -168,6 +207,22 @@ class Painting:
         b = np.array(canvas).astype(float)[..., :3]
         out = 255 - (255 - b) * (255 - np.clip(glow, 0, 255)) / 255
         yy, xx = np.mgrid[0:H, 0:W]
+        if OPTS['spot'] and self.spot:
+            sx, sy, sw, sh = self.spot
+            cx, cy = sx + sw / 2, sy + sh * 0.55
+            m = np.exp(-(((xx - cx) / (sw * 0.75)) ** 2 + ((yy - cy) / (sh * 0.85)) ** 2))
+            out = out * (0.84 + 0.16 * m)[..., None] + np.array([255, 236, 200]) * (0.10 * m)[..., None]
+        if OPTS['rain'] and self.rain:
+            from PIL import ImageDraw
+            rng = np.random.default_rng(11)
+            layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+            d = ImageDraw.Draw(layer)
+            for _ in range(520):
+                x0, y0, ln = rng.uniform(-40, W), rng.uniform(-20, H), rng.uniform(9, 22)
+                d.line([(x0, y0), (x0 + ln * 0.22, y0 + ln)], fill=(205, 222, 240, int(rng.uniform(50, 110))), width=1)
+            ra = np.array(layer).astype(float)
+            al = ra[..., 3:] / 255
+            out = out * (1 - al) + ra[..., :3] * al
         v = np.clip(1 - 0.32 * (((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2) ** 1.5, 0.55, 1)
         return Image.fromarray((out * v[..., None]).clip(0, 255).astype(np.uint8))
 
@@ -220,6 +275,7 @@ def compose(A, night, used):
     top = max(0, round(0.60 * s.height) - HORIZON)
     P.sky = s.crop((0, top, W, top + H))
     picks.append(sky)
+    P.rain = sky == 'np-sky-water-1'  # 雨夜：全畫都下雨（天空以外的素材沒有畫雨）
     # 遠景兩排：配調（遠、淡）和主調（近）
     sec = (s1.get('subject') or {}).get('second') or emo
     hc = tuple(np.array(P.sky)[HORIZON - 4, :, :3].mean(0).astype(int))
@@ -307,6 +363,8 @@ def compose(A, night, used):
         for idx, (im, z, n2) in enumerate(ims):
             # 小場景本身已經畫了很多燈，光暈要輕，否則整排發白
             P.items.append((6 if z else 5, im, int(x), H + 2 - im.height, None, 0.35))
+            if z:
+                P.spot = (int(x), H + 2 - im.height, im.width, im.height)
             x += im.width * 0.94
             picks.append(n2)
         pier = 'np-stage-pier-%d' % (stable(str(night.get('seed')) + 'p', 3) + 1)
@@ -339,6 +397,25 @@ def main():
     used = collections.Counter()
     repeats = 0
     per = []
+    if '--compare' in sys.argv:
+        idx = [int(v) for v in sys.argv[sys.argv.index('--compare') + 1].split(',')]
+        for i in idx:
+            P, _ = compose(A, nights[i], collections.Counter())
+            imgs = []
+            for on in (False, True):
+                OPTS.update(grade=on, spot=on, rain=on)
+                img = P.render()
+                if getattr(P, 'gold', False):
+                    img = frame_gold(A, img)
+                imgs.append(img)
+            pair = Image.new('RGB', (W * 2 + 12, H), (20, 20, 28))
+            pair.paste(imgs[0], (0, 0))
+            pair.paste(imgs[1], (W + 12, 0))
+            pair.save(os.path.join(out, 'compare-%03d.png' % i))
+            imgs[1].save(os.path.join(out, 'after-%03d.png' % i))
+            imgs[0].save(os.path.join(out, 'before-%03d.png' % i))
+        print('對比：%s' % ', '.join(str(i) for i in idx))
+        return
     for i, night in enumerate(nights):
         P, picks = compose(A, night, used)
         c = collections.Counter(p for p in picks if not p.startswith(('np-far', 'np-stage')))
