@@ -107,7 +107,7 @@
     </svg>
     <div class="eyebrow">靈感撤離 2080・創作之夜・第七批</div>
     <h1>素材工作單</h1>
-    <p class="muted">試做批已經通過，這裏是大量製作的全部清單。每一張圖、每一首歌的 prompt 都已經組好，可以直接複製。完成一項就按「標記為已完成」，進度只記在這部裝置上；已經上載到 GitHub 的標為「已收到」。</p>
+    <p class="muted">這裏是大量製作的全部清單。每一張圖、每一首歌的 prompt 都已經組好，可以直接複製。完成一項就按「標記為已完成」，進度只記在這部裝置上；已經上載到 GitHub 的標為「已收到」。</p>
     <div class="stats">
       <div class="stat"><span class="muted">畫</span><b id="artCount">0／0</b><div class="bar"><i id="artBar"></i></div></div>
       <div class="stat"><span class="muted">歌</span><b id="songCount">0／0</b><div class="bar"><i id="songBar"></i></div></div>
@@ -128,8 +128,9 @@
       <li>一個對話做二、三十張之後，風格可能慢慢走樣，就開新對話，重做第 1、2 步。</li>
     </ol>
     <div class="note">
-      <p><b>試做之後改了甚麼</b></p>
-      <p class="muted">主體可以填滿畫面，不用理會比例（程式會統一大小）；除了天空，不要畫落下的雨；新加 3 張碼頭和 13 張複合情緒小景，45 種組合齊全。</p>
+      <p><b>現在做甚麼</b></p>
+      <p class="muted">第一、二期 154 張已經全部收到。第三期是名作插畫：58 個具名組合各一張，按玩家見到的次數分三批（常見、少見、傳說），先做常見的 19 張；另外重做兩位夥伴。</p>
+      <p class="muted">名作是一整幅畫（不透明），風格樣板可以用小景。主角這類單一人物，佈景要每張不同，不要每張都有同一支燈柱。上載請放在 <code>art-src/night/</code> 資料夾裏。</p>
     </div>
     <details class="setup">
       <summary>風格設定（每個新對話的第一則訊息）</summary>
@@ -253,7 +254,7 @@
     });
   }
   build(DATA.art, 'artPhases',
-    function (ph) { return ph === 1 ? '第一期：每一幅畫都用得着的基本素材' : '第二期：令畫更特別的素材'; },
+    function (ph) { return ['', '第一期：每一幅畫都用得着的基本素材', '第二期：令畫更特別的素材', '第三期：名作插畫和重做'][ph]; },
     function (it) {
       return [chip(it.cat)].concat(it.emos.map(function (k) { return chip(DATA.emo[k][0], DATA.emo[k][1]); }));
     },

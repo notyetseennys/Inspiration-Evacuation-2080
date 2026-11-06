@@ -4,7 +4,7 @@
 資料來源（唯一的來源，改規格就重新生成）：
 - docs/art-prompts/night-painting.md：第三節風格設定、第四節類別說明和結尾、第五節試做批、第六節全部清單。
 - docs/music/night-stems.md：第二節速度、第三節歌的清單、第四節 prompt。
-已經收到的素材（main 分支的 art-src/night/、music-src/night/）標為「已收到」。
+已經收到的素材（main 分支的 art-src/night/、根目錄的 np-*.png、music-src/night/）標為「已收到」。
 
 用法：python3 tools/night-worksheet.py <輸出的 html> [--received 檔名,檔名,...]
 不給 --received 就用 git 讀 origin/main 上已經有的檔案。
@@ -108,6 +108,17 @@ def art_items():
     for r in table(section(sec6, '### 6.8', '### 6.9')):
         n = code(r[0])
         add(2, '前景', '前景', n, r[1], '前景・%s' % n.replace('np-front-', ''), [])
+    # 6.9 名作插畫：三批，各有一個表
+    sec9 = section(sec6, '### 6.9', '### 6.10')
+    for part in sec9.split('#### ')[1:]:
+        label = part.split('\n', 1)[0].split('：')[1].split('（')[0]  # 常見、少見、傳說
+        for r in table(part):
+            n = code(r[0])
+            add(3, '名作・' + label, '名作', n, r[3], '名作《%s》・%s' % (r[1], r[2]), [])
+    # 6.10 重做
+    for r in table(section(sec6, '### 6.10')):
+        n = code(r[0])
+        add(3, '夥伴重做', '夥伴', n, r[2], '夥伴重做・%s' % r[1], [])
     return style, items
 
 
@@ -153,8 +164,8 @@ def received_from_git():
     got = set()
     for f in out:
         b = os.path.basename(f)
-        if f.startswith('art-src/night/') and b.endswith('.png'):
-            got.add('art-' + b[:-4])
+        if (f.startswith('art-src/night/') or ('/' not in f and b.startswith('np-'))) and b.endswith('.png'):
+            got.add('art-' + b[:-4])  # 第一、二期有 137 張上載了在根目錄
         if f.startswith('music-src/night/') and b.endswith('.zip'):
             got.add('song-' + re.sub(r'-a$', '', b[:-4]))
     return got
@@ -178,7 +189,7 @@ def main():
     na = sum(1 for i in art if not i['got'])
     ns = sum(1 for i in songs if not i['got'])
     print('%s：畫 %d 張（已收到 %d），歌 %d 首（已收到 %d）' % (out, len(art), len(art) - na, len(songs), len(songs) - ns))
-    for ph in (1, 2):
+    for ph in (1, 2, 3):
         print('  畫第 %d 期：%d 張' % (ph, sum(1 for i in art if i['phase'] == ph)))
 
 

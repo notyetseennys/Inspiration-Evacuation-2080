@@ -8,7 +8,7 @@
 
 這份文件說明四件事：素材怎樣變成玩家的畫、要生成甚麼、怎樣生成，以及收到之後怎樣處理。
 
-**試做批已經完成（2026-11-04），可以大量生成。** 第五節記錄試做的結果，第六節是分期的全部清單。
+**第一、二期的 154 張已經全部收到（2026-11-06），全部可用。** 第五節記錄審核的結果，第六節是分期的全部清單；第三期是名作插畫。
 
 ---
 
@@ -64,6 +64,10 @@
    - 素材本身的燈要畫出來，窗、燈籠、招牌、火都要發亮。
    - 不要畫大片的光暈和光束（程式會加，而且會閃爍、會動）。
    - 除了天空，不要畫落下的雨或雪（程式會加會動的雨）。
+9. **佈景要每張不同**：第一、二期的主角有 27 張都畫了同一支燈柱、同一個救生圈和同一盆繡球花。原因是風格樣板用了有佈景的小景，ChatGPT 把佈景也學了。
+   - 風格樣板只用來定畫風，最好用沒有佈景的圖，例如 `np-focal-water-1`。
+   - 每張的佈景在 prompt 裏寫清楚。
+   - 已經做好的不用重做：程式會左右鏡像，前排最多放三格，重複不明顯。
    - 整體是夜晚，環境光微弱。
 7. **風格**：16-bit 像素畫，方形像素在同一個格子上，最近鄰放大；沒有反鋸齒、沒有模糊、沒有筆觸、不要照片感、不要 3D。
 8. **沒有任何文字**：沒有中英文字、數字、商標、水印、簽名。招牌只用圖形，例如碗、星、音符、心形、箭咀。
@@ -132,7 +136,8 @@ Subject: <清單裏的英文主體>
 | 小景 | `special foreground vignette standing on the pier, square (1024x1024), a small story in one picture` | 甲 |
 | 夥伴 | `cameo of a recurring character standing on the pier, square (1024x1024)` | 甲 |
 | 碼頭 | `stage ground strip seen from the side, landscape 3:2 (1536x1024), only along the bottom fifth, its top surface a straight horizontal line, transparent above` | 甲 |
-| 前景 | `foreground frame overlay, landscape 3:2 (1536x1024), only along the edges, transparent centre` | `Same style and lighting as set at the start (transparent or #FF00FF background, no text).` |
+| 前景 | `foreground frame overlay, landscape 3:2 (1536x1024), only along the edges, transparent centre` |
+| 名作 | `masterpiece illustration, landscape 3:2 (1536x1024), one complete full-bleed scene that tells one story, cinematic composition, the most detailed piece of the set` | `Same style, palette and lighting as set at the start. Fill the whole image: no transparency, no text.` | `Same style and lighting as set at the start (transparent or #FF00FF background, no text).` |
 
 甲：`Same stage, scale, lighting and style as set at the start (transparent or #FF00FF background, base touching the bottom edge, no text).`
 
@@ -140,7 +145,35 @@ Subject: <清單裏的英文主體>
 
 ---
 
-## 五、試做批（已完成）
+## 五、審核結果
+
+### 5.1 第一、二期（154 張，2026-11-06）
+
+全部收到，全部可用。
+
+- **技術**：
+  - 全部有真正的透明背景（天空除外），尺寸一致，沒有文字。
+  - 137 張上載了在 `main` 的根目錄，17 張在 `art-src/night/`；程式兩邊都讀，下次請放在資料夾裏。
+- **畫風**：統一，細節豐富。小景和夥伴是一個個「小場景」（有自己的碼頭、牆、冷氣機、燈籠），每張都有故事。
+- **要處理的地方**（程式已經處理）：
+  - 中景和主角底部多數畫了一整條水面或地面。中景會切去這一條，倒影由程式畫；主角和小景保留自己的碼頭。
+  - 主角有 27 張重複同一套佈景（見第二節第 9 點）：程式按卡左右鏡像，前排最多放三格。
+  - 夥伴有 6 張是小場景、2 張是單獨的人物（Mary 姐、小雨）：第三期重做這兩張，舊的保留。
+- **組畫**（`tools/art-night-compose.py`）：用第四版的規則模擬 120 晚，每晚組成一幅畫。
+  - 第一筆：天空和兩排遠景；
+  - 第二筆：中景取起、轉、合三張；
+  - 第三筆：碼頭上一排小場景，取起、轉、合三張，加上這一晚出過手的夥伴；
+  - 第四筆：前景框。
+  - 同一幅畫裏沒有重複的素材；一晚三筆完整的起承轉合（約 18%）裱金框。
+- **用量**：120 晚裏有 50 張從未用過。原因在牌組，不在素材：
+  - 牌組裏沒有以「愧疚」為主調的素材；
+  - 「機械」佔了 26%；
+  - 45 種組合只出現了 21 種小景。
+
+  這要調整牌組（加愧疚的素材、平衡各情緒），不用加素材。
+- **具名組合**：120 晚裏有 117 晚至少打出一個，所以名作插畫是玩家最常見到的獎勵，列為第三期（第六節 6.9）。
+
+### 5.2 試做批（2026-11-04）
 
 製作人在 2026-11-04 上載了 8 張，全部合格：
 
@@ -176,13 +209,13 @@ Subject: <清單裏的英文主體>
 
 ## 六、全部清單
 
-分兩期生成，每一期完成就可以放進原型：
+分三期生成，每一期完成就可以放進原型：
 
 | 期 | 內容 | 張數（已有） |
 |---|---|---|
 | 第一期 | 每一幅畫都用得着的基本素材：天空、遠景、碼頭、中景、主角 | 89（7） |
 | 第二期 | 令畫更特別的素材：複合情緒小景、夥伴客串、前景 | 65（1） |
-| 第三期 | 名作插畫 | 之後再寫 |
+| 第三期 | 名作插畫 58 張（甲 19、乙 21、丙 18）、夥伴重做 2 張 | 60（0） |
 
 試做的 8 張已經包括在內，不用重做。
 
@@ -350,16 +383,104 @@ Subject: <清單裏的英文主體>
 | `np-front-crowd` | silhouettes of the backs of an audience's heads along the bottom |
 | `np-front-frame-gold` | an ornate golden picture frame around the whole image (for masterpieces) |
 
-### 6.9 名作插畫（第三期，之後再寫）
+### 6.9 名作插畫（第三期，58 張）
 
-一共 58 個具名組合，例如《地下樂隊》《浮城日記》《水淹童年》。每個組合一張完整的插畫，橫 3:2，作為名作的獎勵和收藏。這一批等第一至七類的素材確定之後才做，到時再寫 prompt。
+檔名 `np-work-<id>.png`，橫 3:2（1536×1024），畫滿整張，不透明。打出具名組合時，作品得到那個名字，名作插畫收進作品集。這是玩家最有成就感的時刻。
+
+名作來自 `game/js/data-craft.js` 的 58 個具名組合，按模擬的出現次數分三批（120 晚的模擬，見第五節）：
+
+- **第三期甲（19 張）**：出現 10 次以上，玩家最常見到，先做。
+- **第三期乙（21 張）**：少見；其中 11 個在模擬裏沒有出現，因為牌組裏沒有以「愧疚」為主調的素材，牌組調整之後就會出現。
+- **第三期丙（18 張）**：傳說名作，要特別條件，是收藏的終極目標。
+
+#### 第三期甲：常見（19 張）
+
+| 檔名 | 名作 | 情緒 | 主體 |
+|---|---|---|---|
+| `np-work-nostalgia` | 電子鄉愁 | 霓虹、機械、記憶 | an old robot sitting on a rooftop at night playing an old cassette player, holographic memories of the old city flickering around it |
+| `np-work-dinner` | 有錢人的晚餐 | 霓虹、飢餓、憤怒 | a lavish banquet in a glass sky-platform restaurant above the slums, while hungry people in small boats look up from the dark water below |
+| `np-work-fury` | 沉默的憤怒 | 憤怒×3 | a crowd standing completely silent in a rainy square, fists clenched, every face turned to a giant dark screen |
+| `np-work-algo` | 演算法之神 | 機械×2、霓虹 | a giant glowing AI face projected over the city skyline, crowds below bowing to their glowing phones |
+| `np-work-lovesong` | 末世情歌 | 人情、希望、記憶 | an elderly couple slow-dancing on a rooftop under string lights while the city floods below, an old radio on a crate |
+| `np-work-karaoke` | 卡拉 OK 之夜 | 霓虹、人情、記憶 | a family singing in a tiny karaoke room, a grandmother holding the microphone, the screen showing only music-note pictograms |
+| `np-work-ghost` | 舊城的鬼 | 水、記憶、機械 | a broken projector on a boat casting a ghostly hologram of the old city over the water, people in small boats watching in silence |
+| `np-work-recycle` | 回收的夢 | 機械、記憶、希望 | an old robot building a small rooftop garden out of scrap, plants growing from broken monitors and old keyboards |
+| `np-work-acidlove` | 酸雨情書 | 水、人情、憤怒 | two lovers sharing one umbrella in green acid rain, the umbrella smoking slightly, holding each other tight on an empty pier |
+| `np-work-rentday` | 交租日 | 飢餓、機械、憤怒 | a robot rent collector at a tenement door, a family counting coins on the floor, an empty fridge standing open |
+| `np-work-noodles` | 半夜的即食麵 | 飢餓、人情、霓虹 | two night-shift workers sharing instant noodles at a 24-hour convenience store counter, neon rain outside the window |
+| `np-work-overtime` | 加班到天光 | 機械×2、飢餓、霓虹 | an office floor at dawn, workers asleep on their desks among glowing screens, one still typing, the sunrise outside the window |
+| `np-work-future` | 未來考古學 | 機械、水、希望 | children in diving masks pulling an old smartphone from the seabed like treasure, sunbeams in the water |
+| `np-work-lullaby` | 搖籃曲 | 人情×2、記憶 | a mother singing to a baby in a tiny flat during a power cut, lit by one candle, a wall of old family photos behind them |
+| `np-work-neonsign` | 霓虹之下 | 霓虹×3 | a street canyon of endless pictogram neon signs, a lone figure looking up as colours rain down on them |
+| `np-work-band` | 地下樂隊 | 反叛、憤怒、人情 | an underground band playing in a flooded basement club, the crowd knee-deep in water raising their arms, the singer shouting with joy |
+| `np-work-blackhumor` | 黑色幽默 | 希望、憤怒 | a street clown juggling for a stern line of security robots, one robot's screen face accidentally showing a smile |
+| `np-work-letter` | 外星來信 | 希望、霓虹 | a girl on a rooftop antenna receiving a glowing letter beamed down from a saucer, neighbours peeking out of their windows |
+| `np-work-diary` | 浮城日記 | 水、霓虹、人情 | a young person writing a diary at a window seat above a flooded street, neon reflections dancing on the water, a cup of tea steaming |
+
+#### 第三期乙：少見（21 張）
+
+| 檔名 | 名作 | 情緒 | 主體 |
+|---|---|---|---|
+| `np-work-robodream` | 機械人的夢 | 機械、希望 | a small robot asleep at the end of a pier, a dream bubble above it showing it flying a kite over a green city |
+| `np-work-childhood` | 水淹童年 | 水、記憶、飢餓 | children fishing from the window of a half-flooded classroom, school desks floating around them, one lunch box shared between them |
+| `np-work-labeler` | 標註員之死 | 機械×3、反叛 | an exhausted data labeler slumped over a desk among walls of glowing screens full of picture tiles, a broken headset, a small rebel sticker pictogram on a monitor |
+| `np-work-archaeo` | 舊城考古 | 水×2、記憶×2 | divers with lamps exploring a drowned old cinema hall, fish swimming between the seats, the old projector still standing |
+| `np-work-rally` | 和平集會 | 人情、反叛、希望 | a peaceful candlelight vigil across the floating piers, thousands of small lights on the dark water |
+| `np-work-strike` | 罷工宣言 | 反叛×2、機械 | workers and robots sitting side by side on a giant halted conveyor belt, tools on the ground, a blank banner raised high |
+| `np-work-family` | 全家福 | 人情×3 | three generations squeezing onto a tiny balcony for a family photo, a small robot holding the camera |
+| `np-work-escape` | 逃離計劃 | 反叛、水、希望 | a homemade raft with a patched sail leaving the floating city at night, a family on it looking toward the horizon |
+| `np-work-drown` | 溺水的霓虹 | 水×2、霓虹×2 | a neon district half sunk in the sea, giant signs still flickering under the water surface, a lone boat gliding over them |
+| `np-work-dawn` | 黎明前 | 希望×2、反叛 | the first light of dawn behind a barricade of boats, tired protesters waking up, one of them raising a kite into the pink sky |
+| `np-work-confession` | 懺悔錄 | 愧疚、記憶 | an old man reading his own old diary aloud at a small grave by the sea, pages blowing away in the wind |
+| `np-work-absolve` | 告解 | 愧疚、人情 | an old phone booth on the pier used as a confession booth, a person crying inside, a child outside holding their hand through the broken glass |
+| `np-work-crime` | 罪與罰 | 愧疚×2、憤怒 | a person standing alone in heavy rain under a single streetlight, caught in the searchlight of a hovering police drone, a long shadow on the wet pier |
+| `np-work-starve` | 飢餓藝術家 | 飢餓×2、希望 | a thin painter in a tiny room covered floor to ceiling with paintings, an empty rice bowl on the floor, dawn light through the window |
+| `np-work-riot` | 暴動 | 憤怒×2、反叛×2 | a smoke-filled street at night full of open umbrellas, burning barricades, silhouettes facing a wall of hovering drones |
+| `np-work-alarm` | 鬧鐘響了 | 機械、飢餓 | a person waking up in a capsule bed as a robot alarm clock rings, a cold empty breakfast tray beside them |
+| `np-work-eulogy` | 悼詞 | 記憶×2、愧疚 | a small funeral boat covered in flowers drifting out to sea at dusk, friends on the pier holding lanterns |
+| `np-work-lies` | 謊言大全 | 霓虹×2、愧疚 | a smiling politician hologram on a giant screen with speech bubbles full of mask pictograms, a crowd below with covered mouths |
+| `np-work-tides` | 潮汐 | 水×3 | the whole floating city lifted by a giant spring tide under a huge moon, boats floating at rooftop height |
+| `np-work-sweatshop` | 血汗工廠 | 飢餓×2、機械×2 | long rows of workers and robots under harsh lights stitching glowing fabric, one tiny window showing the moon |
+| `np-work-debt` | 負債人生 | 飢餓、憤怒、愧疚 | a person dragging a heavy chain attached to a glowing red debt meter through a crowded night market |
+
+#### 第三期丙：傳說（18 張）
+
+| 檔名 | 名作 | 情緒 | 主體 |
+|---|---|---|---|
+| `np-work-g21` | 21 克 | 愧疚、希望 | a small soft light leaving a person's chest and floating up over the sea, the person smiling peacefully with eyes closed |
+| `np-work-lastart` | 最後的人類藝術 | （特殊條件） | the last human artist painting a huge mural by hand on the city's tallest tower, silent AI drones watching from all around |
+| `np-work-unreadable` | 外星人看不懂 | （特殊條件） | alien judges in a gallery staring at a human painting with confused faces, one of them holding it upside down |
+| `np-work-astarletter` | 給阿星的信 | 希望 | a child on the pier sending a letter folded into a glowing paper boat toward a mysterious star reflected on the sea |
+| `np-work-deluge` | 大洪水 | 水×5 | a colossal wave towering over the floating city, people on the rooftops holding hands, the moon behind the wave |
+| `np-work-blank` | 空白 | （特殊條件） | an empty canvas on an easel in the middle of a dark flooded gallery under a single spotlight, alien judges applauding it |
+| `np-work-lastpainting` | 欠債藝術家的最後一幅畫 | 飢餓 | a broke artist's final painting glowing in a pawn shop window among old radios and pots, the artist's empty coat on a hook |
+| `np-work-forthetaken` | 為所有被帶走的人 | 人情、記憶 | a sea of paper lanterns floating from the piers toward the horizon, one for every friend who was taken, the remaining friends lit warmly |
+| `np-work-sunkcity` | 沉沒之城 | 水×4 | the entire old city seen from underwater, streets, temples and towers drowned in blue silence, a whale swimming above |
+| `np-work-nightless` | 不夜城 | 霓虹×3 | the neon district seen from high above, so bright that the night sky has turned pink and there are no stars |
+| `np-work-classic` | 經典 | （特殊條件） | a future museum where one human painting of the floating city hangs alone, children of many alien species gathered in front of it |
+| `np-work-originalsin` | 原罪 | 愧疚×2 | a person standing in an endless hall of mirrors, every reflection holding a different mistake |
+| `np-work-singularity` | 奇點 | （特殊條件） | a human hand and a robot hand painting the same canvas together, their brush strokes merging into light |
+| `np-work-famine` | 斷糧 | 飢餓×3 | an empty market at dawn, every stall bare, a single grain of rice glowing on the ground, a child looking at it |
+| `np-work-uprising` | 起義 | 反叛×3 | the whole city raising lanterns at once from every window and boat, the light pushing back the darkness |
+| `np-work-reunion` | 大團圓 | 人情×3 | all the friends of the floating city around one long table on the pier for a feast, lanterns overhead |
+| `np-work-aroundworld` | 環遊世界 | （特殊條件） | a small boat sailing out of the floating city toward a horizon of distant fictional lands, a hand-drawn map pinned to the mast |
+| `np-work-one` | 一 | （特殊條件） | a single brush stroke of light across the whole night sky above the city, the painter tiny on a rooftop |
+
+### 6.10 重做（第三期，2 張）
+
+其他 6 位夥伴都畫成有佈景的小場景，這兩張是單獨的人物，放在碼頭上一排小場景之間不統一。用新的檔名，舊的保留。
+
+| 檔名 | 夥伴 | 主體 |
+|---|---|---|
+| `np-mate-mary-2` | 開糖水舖的 Mary 姐 | a small dessert stall diorama on the pier: a cheerful woman in an apron serving bowls of sweet soup, steam, stools, hanging bulbs, a pot on the stove |
+| `np-mate-yu-2` | 寫歌的小雨 | a small rooftop corner diorama on the pier: a young songwriter with an acoustic guitar on a stool, a notebook of songs, a tiny amp and string lights |
 
 ---
 
 ## 七、上載
 
 - 存成 PNG，按清單的檔名命名。
-- 上載到 `main` 分支的 `art-src/night/` 資料夾（和之前一樣，直接上載到 GitHub）。
+- 上載到 `main` 分支的 `art-src/night/` 資料夾（在 GitHub 網頁先進入這個資料夾，再按「Add file → Upload files」）。
 
 ## 八、收到之後（Claude）
 
@@ -382,4 +503,8 @@ Subject: <清單裏的英文主體>
    - 中景和遠景在水面有倒影：翻轉、調暗、越遠越淡；
    - 地平線附近的天色也倒映在水面。
 6. **會動**：分成背景（天和水）、前景（物件和碼頭）和發光三層輸出。網頁按行移動水面做水波，發光層閃爍，再加雨和蒸氣。
-7. **之後**：把這套做法搬進原型的 `painter.js`，並輸出素材清單 `night-art.json`，記錄每一張的底部錨點、大小和發光區。
+7. **按出牌記錄組畫**：`tools/art-night-compose.py`（第五節 5.1）。
+   - 每一層取哪一張、取起轉合哪幾張、前景框和金框的規則都寫在工具裏；
+   - 同一張卡永遠對應同一張圖、同一個方向（左右鏡像），所以卡面可以直接用畫裏那一格；
+   - 同時輸出用量統計，看哪些素材太常用、哪些從未用過。
+8. **之後**：把這套做法搬進原型的 `painter.js`，並輸出素材清單 `night-art.json`，記錄每一張的底部錨點、大小、發光區和自帶地面的高度。
