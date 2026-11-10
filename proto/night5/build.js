@@ -39,7 +39,7 @@ const title = head.match(/<title>[\s\S]*?<\/title>/)[0];
 const metaSides = head.match(/<meta name="claude:viewport-fit-sides"[^>]*>/)[0];
 const fonts = head.match(/<link rel="preconnect"[^>]*>|<link rel="stylesheet" href="https:\/\/fonts[^>]*>/g).join('\n');
 // 背景音樂：複製到輸出檔旁邊的 audio/（Artifact 以 files 一併發佈）
-const BGM = ['pixel-orbit'];
+const BGM = ['pixel-orbit', 'pixel-plaza', 'pixel-funk', 'subspace-overdrive'];
 const boot = '<script>window.IE=window.IE||{};IE.IMG=' + JSON.stringify(imgs) + ';IE.ART=' + JSON.stringify(art) + ';IE.MUSIC=' + JSON.stringify(music) + ';window.IE_BGM_BASE="audio/";' + (share ? 'window.IE_SHARE_BASE=' + JSON.stringify(share) + ';' : '') + '</script>';
 const out = [title, metaSides, fonts, '<style>\n' + css + '</style>', body, boot, '<script>\n' + js + '</script>'].join('\n') + '\n';
 

@@ -394,8 +394,7 @@
     sel = []; lastStruct = null; busy = false;
     Pt.blank(paintSeed());
     Mu.setNight(n.def);
-    if (BGM.el) { const old = BGM.el; BGM.fadeEl(old, 0, 500, () => old.pause()); BGM.el = null; BGM.name = null; }
-    Mu.bed(true);
+    BGM.play(n.def.bgm);
     $('nightNo').textContent = '第 ' + (run.night + 1) + ' 晚' + (n.def.boss ? '・外星評審之夜' : '');
     $('nightName').textContent = n.def.name;
     $('canvasFx').innerHTML = '';
@@ -505,8 +504,8 @@
         if (!st.again) lyric(card.name + '　' + ROLE[st.role], card.medium === 'paper');
         if (st.echo) { const pp = plan ? Pt.screenPoint(plan.at) : canvasCenter(); floatAt({ x: pp.x, y: pp.y - 30 }, '回響：再計一次', 'rule'); }
         if (!st.again) {
-          Mu.playSlotNow(art.sec, st.idx, speed > 1);
-          const barMs = speed > 1 ? 160 : Mu.slotDur() * 1000;
+          S.chip(st.idx + 3);
+          const barMs = speed > 1 ? 160 : 620;
           await Promise.all([plan ? Pt.drawPlan(plan, Math.max(200, barMs * 0.7)) : Promise.resolve(), wait(barMs * 0.97 * speed)]);
         } else { S.chip(st.idx + 3); Pt.glint(14); await wait(320); }
       } else if (st.t === 'blocked') {
@@ -574,7 +573,7 @@
         await wait(480);
       } else if (st.t === 'he') {
         if (art.close) await Pt.drawPlan(art.close, 260 / speed);
-        if (art.sec.tail && speed === 1) Mu.playTailNow(art.sec);
+        if (speed === 1) S.mult();
         const el = document.querySelector('#draft .lk.he');
         if (el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
         floatAt(el ? elCenter(el) : canvasCenter(), '合 ×' + st.xmult, 'xmult');
@@ -636,10 +635,8 @@
     n.log[n.log.length - 1].art = { sec: art.sec };
     const stopSkip = armSkip();
     hint('');
-    await Promise.all([Mu.prepare(art.sec, 3500), Pt.ready(2500)]);
-    Mu.duckBed(true);
+    await Pt.ready(2500);
     await animateSteps(res, art);
-    Mu.duckBed(false);
     collect(res);
     if (res.total > 0) await flyNumber('+' + fmt(res.total), $('scoreNum'));
     stopSkip();
@@ -661,7 +658,8 @@
     if (res.justPassed) { stampCanvas('達標', 'pass'); S.stamp(); setTimeout(() => { const st = document.querySelector('#canvasFx .stamp'); if (st) st.remove(); }, 1500); }
     const LAYERS = ['', '海上的建築', '碼頭上的人和事', '前景'];
     const nextLayer = LAYERS[n.log.length] ? '下一筆畫' + LAYERS[n.log.length] + '。' : '';
-    if (n.passed) hint('已經達標！繼續把作品完成：每多一筆，火花 +0.1。' + nextLayer, true);
+    const ng = P.nextGrade(n);
+    if (n.passed) hint((res.justPassed ? '已經達標！' : '') + (ng ? '再多 ' + fmt(n.target * ng.x - n.score) + ' 分就是' + ng.name + '。' : '已經是金獎！') + nextLayer, true);
     else if (n.plays === 1) hint('最後一筆！還差 ' + fmt(n.target - n.score) + ' 分。', true);
     else if (!tips('afterPlay')) hint('今晚還有 ' + n.plays + ' 筆，還差 ' + fmt(n.target - n.score) + ' 分。' + nextLayer);
   }
@@ -744,7 +742,7 @@
       + '<div class="framed work">' + (o.live ? '<canvas class="live-paint" width="320" height="200" aria-label="這一晚的畫"></canvas>' : '<img src="' + w.shot + '" alt="這一晚的畫">') + '<span class="cap"></span></div>'
       + '<div class="work-title"><span>《' + esc(w.title) + '》</span>' + (o.noRename ? '' : '<button type="button" class="ib rename" data-act="rename" title="為作品改名">✎</button>') + '</div>'
       + '<div class="work-meta">' + fmt(w.score) + (w.target ? ' / ' + fmt(w.target) : ' 分') + '</div>'
-      + '<div class="row"><button class="btn ghost" data-act="playWork">▶ 播放這首歌</button><button class="btn ghost" data-act="share">分享這件作品</button></div>'
+      + '<div class="row"><button class="btn hot" data-act="playWork">▶ 聽今晚的歌</button><button class="btn ghost" data-act="share">分享這件作品</button></div>'
       + '<div class="share-box" hidden><input type="text" readonly aria-label="分享連結"><small>把連結傳給朋友，打開就會重播這件作品（Artifact 要先在「分享」裏開放給對方）。</small></div>'
       + poemHtml(w) + creditHtml(w)
       + (o.quote !== false ? '<p class="quote">' + esc(J.name) + '：「' + esc(J.lines.clear) + '」</p>' : '')
@@ -754,7 +752,7 @@
   // ---------- 收工、失敗、獎勵、一局完 ----------
   async function nightClear(res) {
     const n = run.cur, J = P.JUDGES[n.def.judge];
-    stampCanvas('通過', 'pass'); S.stamp();
+    stampCanvas(P.gradeOf(n).name, 'pass'); S.stamp();
     await wait(240);
     S.clear(); say(J.lines.clear); nodJudge();
     burst(canvasCenter(), 44, ['#9be36b', '#ffc247', '#ffffff', '#37c3d6']);
@@ -773,7 +771,8 @@
     const fin = P.finishNight(run, w);
     const lines = [];
     if (unused) lines.push('達標之後加演 ' + unused + ' 筆，火花 +' + (0.1 * unused).toFixed(1));
-    if (n.score >= n.target * 2) lines.push('分數是目標的兩倍以上：火花 +0.2');
+    const gr = P.gradeOf(n);
+    if (gr.id === 'gold') lines.push('金獎（目標的 3.5 倍）：火花 +0.4'); else if (gr.id === 'silver') lines.push('銀獎（目標的 2 倍）：火花 +0.2');
     if (n.wishDone) lines.push('完成評審的委託：火花 +0.2');
     current = w;
     sheet(workSheet(w, { live: true, extra: (lines.length ? '<p class="bonus">' + lines.map(esc).join('<br>') + '<br>火花現在是 ×' + fin.spark.toFixed(1) + '</p>' : '')
@@ -883,7 +882,7 @@
     const b = $('sheet').querySelector('.btn.hot') || $('sheet').querySelector('button');
     if (b) setTimeout(() => b.focus({ preventScroll: true }), 30);
   }
-  function closeSheet() { if (playing) { playing.stop(); playing = null; Mu.stop(); } if (liveCanvas) { Pt.detach(liveCanvas); liveCanvas = null; } $('veil').hidden = true; $('sheet').innerHTML = ''; }
+  function closeSheet() { if (playing) { playing.stop(); playing = null; Mu.stop(); BGM.duck(false); } if (liveCanvas) { Pt.detach(liveCanvas); liveCanvas = null; } $('veil').hidden = true; $('sheet').innerHTML = ''; }
   function heroChoice(id) {
     const b = D.BACKGROUNDS[id], h = P.HEROES[id], c = C(h.colab);
     return '<button type="button" class="choice hero' + (id === hero ? ' on' : '') + '" data-act="hero" data-id="' + id + '"><img src="' + imgSrc(c.img) + '" alt=""><b>' + esc(b.name) + '</b><span>' + esc(h.blurb) + '</span><span class="part">火花 ×' + b.spark + '</span></button>';
@@ -994,7 +993,7 @@
   $('btnHelp').addEventListener('click', () => { if (!busy && run) showHelp(); });
   $('btnBook').addEventListener('click', () => { if (!busy) showBook(); });
   renderColBtn();
-  $('btnMute').addEventListener('click', () => { const m = !S.muted; S.setMuted(m); store.set('muted', m); $('btnMute').setAttribute('aria-pressed', String(m)); BGM.duck(m); Mu.duckBed(m); });
+  $('btnMute').addEventListener('click', () => { const m = !S.muted; S.setMuted(m); store.set('muted', m); $('btnMute').setAttribute('aria-pressed', String(m)); BGM.duck(m); });
   $('judgeWish').addEventListener('click', () => { const W = run && run.cur.def.wish ? recipeOf(run.cur.def.wish) : null; if (W && !busy) hint('評審想看《' + W.name + '》：' + wishHint(W.need) + '。'); });
   $('band').addEventListener('click', (e) => { const el = e.target.closest('.mate'); if (!el || busy) return; const c = C(run.colabs[Number(el.dataset.slot)]); if (c) hint(c.name + '（' + c.part + '）：' + c.desc); });
   $('sheet').addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (!b) return; S.unlock(); if (!BGM.el) BGM.play('pixel-orbit'); const fn = actions[b.dataset.act]; if (fn) fn(b); });

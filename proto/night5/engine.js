@@ -290,9 +290,9 @@
   // 三晚：場地、目標、評審（第 3 晚是外星評審之夜：規則對你不利）；調性給音樂用
   // 第五版：平衡的牌組情緒分散，分數比第四版低，目標按模擬重新校準（每筆試 25 個次序：約 85%、55%、35% 通過）
   const NIGHTS = [
-    { name: '社區小展', target: 10000, judges: ['conserve'], goodRule: true, key: 60, mode: 'major', bpm: 85, style: 'lofi' },
-    { name: '天台音樂會', target: 30000, judges: ['octo', 'myco'], key: 65, mode: 'major', bpm: 112, style: 'citypop' },
-    { name: '外星評審', target: 55000, judges: ['grey'], boss: true, key: 62, mode: 'minor', bpm: 100, style: 'synth' },
+    { name: '社區小展', target: 10000, judges: ['conserve'], goodRule: true, key: 60, mode: 'major', bpm: 85, style: 'lofi', bgm: 'pixel-plaza' },
+    { name: '天台音樂會', target: 30000, judges: ['octo', 'myco'], key: 65, mode: 'major', bpm: 112, style: 'citypop', bgm: 'pixel-funk' },
+    { name: '外星評審', target: 55000, judges: ['grey'], boss: true, key: 62, mode: 'minor', bpm: 100, style: 'synth', bgm: 'subspace-overdrive' },
   ];
   const BASE = { hand: 8, plays: 4, discards: 3, maxCards: 5, maxColabs: 4, hints: 3 };
   // 結構的等級：每升一級，這種結構 +40 籌碼、+4 倍率
@@ -538,9 +538,14 @@
     return true;
   }
   // 收工：火花的獎勵（每剩一筆 +0.1；分數達到目標兩倍 +0.2；完成委託 +0.2），記錄作品，進入下一晚
+  const GRADES = [{ id: 'gold', name: '金獎', x: 3.5 }, { id: 'silver', name: '銀獎', x: 2 }, { id: 'pass', name: '通過', x: 1 }];
+  const gradeOf = (n) => GRADES.find((g) => n.score >= n.target * g.x) || { id: 'none', name: '未達標', x: 0 };
+  const nextGrade = (n) => GRADES.slice().reverse().find((g) => n.score < n.target * g.x) || null;
   function finishNight(run, work) {
     const n = run.cur;
-    const bonus = r1(0.1 * (n.encore || 0) + (n.score >= n.target * 2 ? 0.2 : 0) + (n.wishDone ? 0.2 : 0));
+    // 評級：達標之後仍然有目標（銀獎 2 倍、金獎 3.5 倍），高手試遍次序的中位數大約是 3 至 5 倍
+    const g = gradeOf(n);
+    const bonus = r1(0.1 * (n.encore || 0) + (g.id === 'gold' ? 0.4 : g.id === 'silver' ? 0.2 : 0) + (n.wishDone ? 0.2 : 0));
     run.spark = r1(run.spark + bonus);
     run.nights.push({ name: n.def.name, score: n.score, target: n.target, judge: n.def.judge, work: work || null });
     run.night += 1;
@@ -613,7 +618,7 @@
 
   IE.Proto2 = IE.Proto3 = {
     rng, hash, WHEEL, STAR_CHIPS, BASE_CHIPS, NUMS, STRUCT, STRUCT_RANK, LINK_NAME, COLABS, COLAB_IDS, HEROES, JUDGES, NIGHTS, BASE, RECIPES,
-    PAIRS, SAME, FAMILY, pairOf, compoundOf, subjectOf, SUBJECT_BONUS, wdist, OBSTACLES, LEVEL, offers, takeOffer,
+    GRADES, gradeOf, nextGrade, PAIRS, SAME, FAMILY, pairOf, compoundOf, subjectOf, SUBJECT_BONUS, wdist, OBSTACLES, LEVEL, offers, takeOffer,
     rel, isCheng, analyze, roles, matchRecipes, newRun, startNight, preview, score, play, discard, finishNight, rewards, takeColab, takeCard, cardOf, makeCard,
     encodeWork, decodeWork, MEDIA_BONUS, MEDIA_NAME,
   };

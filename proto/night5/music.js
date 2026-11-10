@@ -223,13 +223,12 @@
   function bed(on) {
     bedOn = !!on;
     if (!ensure()) return;
-    if (bedOn) { loadBand().then(() => { bedNext = 0; bedTick(); duckBed(false); }); if (!bedTimer) bedTimer = setInterval(bedTick, 250); } else duckBed(true);
+    bedOn = false; duckBed(true); // 第五版修訂：選牌和計分時只用遊戲的配樂，分軌的歌留到收工後才播
   }
   function setNight(o) {
     const next = (o && o.style) || 'lofi';
     if (next !== style) { stopSources(); bufs.clear(); bedNext = 0; }
     style = next; used = new Set(); cursor = 0;
-    if (ensure()) loadBand();
   }
 
   IE.Music = { setNight, section, playSlotNow, playTailNow, song, stop, slotDur, ensure, prepare, bed, duckBed, beat: () => barLen() / 4, progression: bandPath, _dbg: () => ({ bufs: [...bufs.entries()].filter((e) => e[1].buf).length, live: live.length, style, bed: bedOn }) };
