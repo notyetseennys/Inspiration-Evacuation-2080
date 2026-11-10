@@ -89,18 +89,92 @@
     return Math.round(base * stMod * wMod * pMod * rMod);
   }
 
-  // ---------- 白天：生活卡 ----------
+  // ---------- 白天：差事與生活卡 ----------
+  function allDayDefs() {
+    return D.DAYCARDS16 ? D.DAYCARDS.concat(D.DAYCARDS16) : D.DAYCARDS;
+  }
+
+  function ensureGigs(s) {
+    if (!s || !on(s)) return [];
+    if (!Array.isArray(s.gigs)) s.gigs = [];
+    return s.gigs;
+  }
+
+  function isGigExpired(s, g) {
+    const keep = (D.ECON16 && D.ECON16.gigKeep) || 3;
+    return !g || ((s.night || 1) - (g.night || 1)) >= keep;
+  }
+
+  function addGig(s, c) {
+    if (!s || !on(s) || !c || !c.micro) return { ok: false };
+    const gigs = ensureGigs(s);
+    const max = (D.ECON16 && D.ECON16.gigMax) || 2;
+    if (gigs.length >= max) return { ok: false };
+    const gig = {
+      micro: c.micro,
+      from: c.from || 'round',
+      night: c.night != null ? c.night : (s.night || 1),
+    };
+    if (c.x != null) gig.x = c.x;
+    gigs.push(gig);
+    return { ok: true, gig };
+  }
+
+  function useGig(s, micro) {
+    if (!s || !on(s) || !micro) return null;
+    const gigs = ensureGigs(s);
+    const idx = gigs.findIndex((g) => g && g.micro === micro);
+    if (idx < 0) return null;
+    const used = gigs.splice(idx, 1)[0];
+    s.gigActive = micro;
+    if (s.offer && s.offer.gig === used) s.offer.gig = null;
+    return used;
+  }
+
+  function expireGigs(s) {
+    if (!s || !on(s)) return [];
+    const gigs = ensureGigs(s);
+    const expired = Array.isArray(s.pendingExpiredGigs) ? s.pendingExpiredGigs.slice() : [];
+    if (s.pendingExpiredGigs) s.pendingExpiredGigs = [];
+    const kept = [];
+    gigs.forEach((g) => {
+      if (isGigExpired(s, g)) expired.push(g);
+      else kept.push(g);
+    });
+    s.gigs = kept;
+    return expired;
+  }
+
+  function grantRoundGig(s) {
+    if (!s || !on(s)) return null;
+    ensureGigs(s);
+    if ((s.night - 1) % 3 !== 0) return null;
+    const workPool = D.DAYCARDS
+      .filter((c) => c.kind === 'work' && !(s.removed && s.removed[c.id]) && !R.worldClosed(s, c.id))
+      .map((c) => c.id);
+    if (!workPool.length) return null;
+    return addGig(s, { micro: R.pick(s, workPool), from: 'round' });
+  }
+
+  function initGigs(s) {
+    if (!s || !on(s)) return;
+    s.gigs = [];
+    s.pendingExpiredGigs = [];
+    grantRoundGig(s);
+  }
+
   function cardDef(id) {
-    if (id.startsWith('friend:')) return D.DAYCARDS.find((c) => c.id === 'friend');
-    if (id.startsWith('trip:')) return D.DAYCARDS.find((c) => c.id === 'trip');
-    return D.DAYCARDS.find((c) => c.id === id);
+    const defs = allDayDefs();
+    if (id.startsWith('friend:')) return defs.find((c) => c.id === 'friend');
+    if (id.startsWith('trip:')) return defs.find((c) => c.id === 'trip');
+    return defs.find((c) => c.id === id);
   }
 
   // 這一晚可以出現的全部卡 id（已展開 friend:<npc>、trip:<origin>）
   function cardList(s) {
     const out = [];
     const r = roundOf(s);
-    D.DAYCARDS.forEach((c) => {
+    allDayDefs().forEach((c) => {
       if (c.id === 'friend') {
         R.aliveNpcs(s).forEach((n) => out.push('friend:' + n.id));
       } else if (c.id === 'trip') {
@@ -112,31 +186,54 @@
     return out;
   }
 
-  function drawOfferIds(s) {
+  function drawOffer(s) {
     const all = cardList(s);
     const kOf = (id) => { const d = cardDef(id); return d ? d.kind : ''; };
+    const hasMicro = (id) => { const d = cardDef(id); return !!(d && d.micro); };
+    const gigs = ensureGigs(s).filter((g) => g && g.micro && !isGigExpired(s, g) && all.includes(g.micro));
     const pl = (s.night - 1) % 3 === 1 && IE.Story && IE.Story.plan ? IE.Story.plan(s) : null;
     const st = s && s.story;
     const plannedFriend = pl && pl.npc && R.aliveNpcs(s).some((n) => n.id === pl.npc) && !(st && st.taken && st.taken[pl.npc]) && !(st && st.hidden && st.hidden[pl.npc])
       ? 'friend:' + pl.npc
       : null;
-    // 某一格的種類沒有可用的卡（例如世界事件令全部工作停工）：改從其餘可用的卡抽，三張仍然不同
-    const others = (used) => all.filter((id) => !id.startsWith('trip:') && !used.includes(id));
-    const p1 = all.filter((id) => { const k = kOf(id); return k === 'work' || k === 'shady'; });
-    const c1 = R.pick(s, p1.length ? p1 : others(plannedFriend ? [plannedFriend] : []));
-    const p2 = all.filter((id) => { const k = kOf(id); return (k === 'life' || k === 'friend') && id !== c1; });
-    const c2 = plannedFriend || R.pick(s, p2.length ? p2 : others([c1]));
+    const nonMicro = (used) => all.filter((id) => !id.startsWith('trip:') && !hasMicro(id) && !used.includes(id));
+
+    const firstGig = gigs.length ? gigs[0] : null;
+    const p1 = all.filter((id) => {
+      const k = kOf(id);
+      return (k === 'friend' || k === 'volunteer' || k === 'rest') && id !== plannedFriend;
+    });
+    const c1 = firstGig
+      ? firstGig.micro
+      : R.pick(s, p1.length ? p1 : nonMicro([]));
+
+    const p2 = all.filter((id) => {
+      if (id === c1) return false;
+      const k = kOf(id);
+      if (k === 'friend') return true;
+      if (k === 'life') return !hasMicro(id) || gigs.some((g) => g.micro === id);
+      return false;
+    });
+    const c2 = (plannedFriend && plannedFriend !== c1)
+      ? plannedFriend
+      : R.pick(s, p2.length ? p2 : nonMicro([c1]));
+
     const tripDef = D.DAYCARDS.find((c) => c.id === 'trip');
     const trips = all.filter((id) => id.startsWith('trip:'));
-    const rest = others([c1, c2]);
-    const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !rest.length) ? R.pick(s, trips) : R.pick(s, rest);
-    return [c1, c2, c3].filter(Boolean);
+    const restPool = nonMicro([c1, c2]);
+    const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !restPool.length)
+      ? R.pick(s, trips)
+      : R.pick(s, restPool);
+
+    return { ids: [c1, c2, c3].filter(Boolean), gig: firstGig };
   }
 
-  // 回傳 s.offer；這一晚還沒有就按總規格 §7 的出牌規則產生
+  // 回傳 s.offer；這一晚還沒有就按總規格 §3.1 的出牌規則產生
   function offer(s) {
+    ensureGigs(s);
     if (s.offer && s.offer.night === s.night && Array.isArray(s.offer.ids) && s.offer.ids.length) return s.offer;
-    s.offer = { night: s.night, ids: drawOfferIds(s), rerolls: 0, chosen: null };
+    const drawn = drawOffer(s);
+    s.offer = { night: s.night, ids: drawn.ids, gig: drawn.gig, rerolls: 0, chosen: null };
     return s.offer;
   }
 
@@ -157,7 +254,9 @@
     if (s.cr < cost) return { ok: false, msg: '換一批要 $' + cost };
     s.cr -= cost;
     of.rerolls = (of.rerolls || 0) + 1;
-    of.ids = drawOfferIds(s);
+    const drawn = drawOffer(s);
+    of.ids = drawn.ids;
+    of.gig = drawn.gig;
     of.chosen = null;
     return { ok: true };
   }
@@ -178,6 +277,7 @@
         name: '找' + (npc ? npc.name : npcId) + '聊天',
         sub: form ? '聊聊近況，練習「' + form.name + '」的配色' : '和朋友聊聊近況',
         micro: null,
+        gig: null,
         fx: [['cr', cost ? '−$' + cost : '免費'], ['spark', '+0.4 起'], ['card', '人情'], ['note', '技法：' + (form ? form.name : '') + ' +1']],
         danger: 0,
         enabled: !reason,
@@ -197,10 +297,27 @@
         name: '出國：' + reg,
         sub: '飛往' + reg + '：機票、氣候附加費和邊境保證金。從五張當地素材中帶回兩張',
         micro: null,
+        gig: null,
         fx: [['cr', '−$' + cost], ['spark', '+' + D.ECON.tripSpark], ['card', reg + '素材 五選二（★' + D.ECON.tripStar + '）']],
         danger: 0,
         enabled: !reason,
         reason,
+      };
+    }
+    if (id === 'rest') {
+      const rDef = cardDef('rest') || { id: 'rest', kind: 'rest', name: '在家發呆', sub: '甚麼都不做。這在浮城是一種奢侈。' };
+      return {
+        id: 'rest',
+        kind: 'rest',
+        kindName: (D.ROUND_TEXT.kinds && D.ROUND_TEXT.kinds.rest) || '休息',
+        name: rDef.name || '在家發呆',
+        sub: rDef.sub || '甚麼都不做。這在浮城是一種奢侈。',
+        micro: null,
+        gig: null,
+        fx: [['spark', '+' + ((D.ECON16 && D.ECON16.restSpark) || 0.2)]],
+        danger: 0,
+        enabled: true,
+        reason: null,
       };
     }
     const def = cardDef(id) || { id, kind: 'work' };
@@ -215,6 +332,12 @@
     const reason = s.removed && s.removed[id]
       ? (id === 'smile' ? '已被 AI 情緒伴侶 2.0 取代' : '職位已被 AI 取代')
       : R.worldClosed(s, id) || null;
+    const of = s && s.offer && s.offer.night === s.night ? s.offer : null;
+    const gig = def.micro
+      ? ((of && Array.isArray(of.ids) && of.ids[0] === id && of.gig)
+        || (s && Array.isArray(s.gigs) ? s.gigs.find((g) => g && g.micro === def.micro && !isGigExpired(s, g)) : null)
+        || null)
+      : null;
     return {
       id,
       kind: def.kind,
@@ -222,6 +345,7 @@
       name: act ? act.name : id,
       sub: act ? act.sub : '',
       micro: def.micro || null,
+      gig,
       fx,
       danger,
       enabled: !reason,
@@ -256,11 +380,17 @@
   function choose(s, id, reply) {
     if (!s || s.phase !== 'day') return null;
     const of = offer(s);
+    if (of && of.chosen && s.over && IE.Cards) {
+      IE.Cards.autoPutDown(s);
+      afterDay(s);
+      return null;
+    }
     if (!of || !of.ids.includes(id)) return null;
     const info = cardInfo(s, id);
     if (!info.enabled) return null;
     if (info.micro) {
       of.chosen = id;
+      useGig(s, info.micro);
       return { micro: info.micro };
     }
     if (id.startsWith('friend:')) {
@@ -277,6 +407,11 @@
       if (((s.forms && s.forms[fid]) || 1) === lv0) {
         R.teach(s, npcId, 1, { line: (text, kind) => rep.lines.push({ text, kind: kind || '' }) });
       }
+      const npc = D.NPCS.find((n) => n.id === npcId);
+      const friendMicro = D.GIG_FRIEND && D.GIG_FRIEND[npcId];
+      if (friendMicro && D.ECON16 && R.rand(s) < D.ECON16.friendGig) {
+        addGig(s, { micro: friendMicro, from: 'friend', x: npc ? npc.name : npcId });
+      }
       afterDay(s);
       return rep;
     }
@@ -285,6 +420,14 @@
       const rep = R.applyVolunteer(s);
       afterDay(s);
       return rep;
+    }
+    if (id === 'rest') {
+      of.chosen = id;
+      const rep = R.report(s, '在家發呆');
+      const sp = R.addSpark(s, (D.ECON16 && D.ECON16.restSpark) || 0.2, true);
+      rep.line('甚麼都不做。這在浮城是一種奢侈。', 'good', sp, 'spark');
+      afterDay(s);
+      return rep.done();
     }
     if (id.startsWith('trip:')) {
       const origin = id.slice(5);
@@ -730,6 +873,20 @@
         if (c && c.wear > 0) c.wear = Math.max(0, c.wear - 1);
       });
     }
+    if ((s.night - 1) % 3 === 0) {
+      const gigs = ensureGigs(s);
+      const due = [];
+      const kept = [];
+      gigs.forEach((g) => {
+        if (isGigExpired(s, g)) due.push(g);
+        else kept.push(g);
+      });
+      if (due.length) {
+        s.pendingExpiredGigs = (s.pendingExpiredGigs || []).concat(due);
+        s.gigs = kept;
+      }
+      grantRoundGig(s);
+    }
   }
 
   function leaveShop(s) {
@@ -826,6 +983,10 @@
     sig3,
     target,
     rentOf,
+    initGigs,
+    addGig,
+    useGig,
+    expireGigs,
     offer,
     offerCost,
     rerollOffer,

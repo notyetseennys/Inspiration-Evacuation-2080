@@ -8612,7 +8612,37 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     stancePay: { comply: 1.3, resist: 0.6, care: 0.8 },
   };
 
-  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16 });
+  // 第十六期：差事固定文案（總規格 §3.5）
+  const GIG_TEXT = {
+    tag: '差事',
+    from: {
+      round: '人才發展局本季配給的工作',
+      story: '{x}',
+      friend: '{x}介紹的',
+    },
+    left: '還有 {n} 天',
+    expired: '「{x}」的差事過期了。系統已經把它分配給更積極的人。',
+    none: '今天沒有工作。這在浮城很正常。',
+  };
+
+  // 第十六期：每位朋友介紹的小遊戲（WO-16-02 §1）
+  const GIG_FRIEND = {
+    dj: 'busk',
+    ho: 'label',
+    ken: 'salvage',
+    miu: 'clinic',
+    fong: 'busk',
+    chan: 'dive',
+    yu: 'delivery',
+    mary: 'garden',
+  };
+
+  // 第十六期新增生活卡（獨立匯出以保持 spec.test.js 對第十五期 D.DAYCARDS 的既有檢查相容；rounds.js 合併讀取）
+  const DAYCARDS16 = [
+    { id: 'rest', kind: 'rest', name: '在家發呆', sub: '甚麼都不做。這在浮城是一種奢侈。' },
+  ];
+
+  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, DAYCARDS16, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16, GIG_TEXT, GIG_FRIEND });
 });
 
 // ---- js/data-cities.js ----
@@ -14259,6 +14289,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   };
   // 把評級與特別成就加到一份已完成的報告上
   function grade(s, kind, res, r) {
+    const isGig = !!(s && s.mode === 'rounds' && (s.gigActive === kind || (kind === 'ot' && s.gigActive === 'label')));
+    if (s && s.gigActive) s.gigActive = null;
     if (!PERF[kind] || !r || s.body <= 0) return r;
     const perf = PERF[kind](res || {});
     const rk = rankOf(perf);
@@ -14280,6 +14312,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     };
     line((res && res.auto ? '照舊做：' : '') + '評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
     if (T.crPct && r.deltas.cr > 0) { const b = Math.round(r.deltas.cr * T.crPct); s.cr += b; line('評級獎金', 'good', b, 'cr'); }
+    // 第十六期：經由差事做的小遊戲，收入乘 ECON16.gigPay
+    if (isGig && r.deltas.cr > 0 && D.ECON16 && D.ECON16.gigPay) {
+      const targetCr = Math.round(r.deltas.cr * D.ECON16.gigPay);
+      const extra = targetCr - r.deltas.cr;
+      if (extra !== 0) {
+        s.cr += extra;
+        if (extra > 0 && s.stats) s.stats.crEarned = (s.stats.crEarned || 0) + extra;
+        line('差事報酬', 'good', extra, 'cr');
+      }
+    }
     // 工作做得好不會令火花變旺（那是工作）；只有生活類的小遊戲會
     if (T.spark && (T.spark < 0 || LIFE.includes(kind))) { const v = R.addSpark(s, T.spark, true); if (v) line(T.spark > 0 ? '你對自己很滿意' : '你對自己很失望', T.spark > 0 ? 'good' : 'bad', v, 'spark'); }
     if (T.rating) s.rating = Math.max(1, Math.min(5, s.rating + T.rating));
@@ -14302,6 +14344,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (sp.rating) s.rating = Math.min(5, s.rating + sp.rating);
       if (sp.obj && R.rand(s) < 0.35) { const id = R.pick(s, sp.obj); if (R.gainObject(s, id, null)) r.objs.push(id); }
     });
+    // 第十六期：經由差事做的小遊戲，評級 B 或以上必定得到一張卡；A 為 ★2，S 為 ★3，SS 為 ★4（比原本星級高才改）
+    if (isGig) {
+      if (['B', 'A', 'S', 'SS'].includes(rk.id) && !r.cards.some((c) => c && !c.guilt)) {
+        gain(R.pick(s, POOL[kind]));
+      }
+      const minStar = { A: 2, S: 3, SS: 4 }[rk.id] || 0;
+      if (minStar > 0) {
+        r.cards.forEach((c) => {
+          if (!c || c.guilt) return;
+          const cur = IE.Create ? IE.Create.starOf(c) : (c.star || 1);
+          if (minStar > cur) c.star = minStar;
+        });
+      }
+    }
     r.deltas.spark = Math.round(r.deltas.spark * 10) / 10; r.deltas.soul = Math.round(r.deltas.soul * 10) / 10;
     return r;
   }
@@ -14549,6 +14605,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function apply(s, kind) {
     const res = result(s, kind);
     if (!res) return null;
+    if (s.mode === 'rounds' && IE.Rounds && IE.Rounds.useGig && !s.gigActive) {
+      IE.Rounds.useGig(s, kind);
+    }
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
     const rep = R.applyMicro(s, kind, res);
     if (s.mode === 'rounds' && IE.Cards) IE.Cards.autoPutDown(s);
@@ -15462,18 +15521,92 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return Math.round(base * stMod * wMod * pMod * rMod);
   }
 
-  // ---------- 白天：生活卡 ----------
+  // ---------- 白天：差事與生活卡 ----------
+  function allDayDefs() {
+    return D.DAYCARDS16 ? D.DAYCARDS.concat(D.DAYCARDS16) : D.DAYCARDS;
+  }
+
+  function ensureGigs(s) {
+    if (!s || !on(s)) return [];
+    if (!Array.isArray(s.gigs)) s.gigs = [];
+    return s.gigs;
+  }
+
+  function isGigExpired(s, g) {
+    const keep = (D.ECON16 && D.ECON16.gigKeep) || 3;
+    return !g || ((s.night || 1) - (g.night || 1)) >= keep;
+  }
+
+  function addGig(s, c) {
+    if (!s || !on(s) || !c || !c.micro) return { ok: false };
+    const gigs = ensureGigs(s);
+    const max = (D.ECON16 && D.ECON16.gigMax) || 2;
+    if (gigs.length >= max) return { ok: false };
+    const gig = {
+      micro: c.micro,
+      from: c.from || 'round',
+      night: c.night != null ? c.night : (s.night || 1),
+    };
+    if (c.x != null) gig.x = c.x;
+    gigs.push(gig);
+    return { ok: true, gig };
+  }
+
+  function useGig(s, micro) {
+    if (!s || !on(s) || !micro) return null;
+    const gigs = ensureGigs(s);
+    const idx = gigs.findIndex((g) => g && g.micro === micro);
+    if (idx < 0) return null;
+    const used = gigs.splice(idx, 1)[0];
+    s.gigActive = micro;
+    if (s.offer && s.offer.gig === used) s.offer.gig = null;
+    return used;
+  }
+
+  function expireGigs(s) {
+    if (!s || !on(s)) return [];
+    const gigs = ensureGigs(s);
+    const expired = Array.isArray(s.pendingExpiredGigs) ? s.pendingExpiredGigs.slice() : [];
+    if (s.pendingExpiredGigs) s.pendingExpiredGigs = [];
+    const kept = [];
+    gigs.forEach((g) => {
+      if (isGigExpired(s, g)) expired.push(g);
+      else kept.push(g);
+    });
+    s.gigs = kept;
+    return expired;
+  }
+
+  function grantRoundGig(s) {
+    if (!s || !on(s)) return null;
+    ensureGigs(s);
+    if ((s.night - 1) % 3 !== 0) return null;
+    const workPool = D.DAYCARDS
+      .filter((c) => c.kind === 'work' && !(s.removed && s.removed[c.id]) && !R.worldClosed(s, c.id))
+      .map((c) => c.id);
+    if (!workPool.length) return null;
+    return addGig(s, { micro: R.pick(s, workPool), from: 'round' });
+  }
+
+  function initGigs(s) {
+    if (!s || !on(s)) return;
+    s.gigs = [];
+    s.pendingExpiredGigs = [];
+    grantRoundGig(s);
+  }
+
   function cardDef(id) {
-    if (id.startsWith('friend:')) return D.DAYCARDS.find((c) => c.id === 'friend');
-    if (id.startsWith('trip:')) return D.DAYCARDS.find((c) => c.id === 'trip');
-    return D.DAYCARDS.find((c) => c.id === id);
+    const defs = allDayDefs();
+    if (id.startsWith('friend:')) return defs.find((c) => c.id === 'friend');
+    if (id.startsWith('trip:')) return defs.find((c) => c.id === 'trip');
+    return defs.find((c) => c.id === id);
   }
 
   // 這一晚可以出現的全部卡 id（已展開 friend:<npc>、trip:<origin>）
   function cardList(s) {
     const out = [];
     const r = roundOf(s);
-    D.DAYCARDS.forEach((c) => {
+    allDayDefs().forEach((c) => {
       if (c.id === 'friend') {
         R.aliveNpcs(s).forEach((n) => out.push('friend:' + n.id));
       } else if (c.id === 'trip') {
@@ -15485,31 +15618,54 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return out;
   }
 
-  function drawOfferIds(s) {
+  function drawOffer(s) {
     const all = cardList(s);
     const kOf = (id) => { const d = cardDef(id); return d ? d.kind : ''; };
+    const hasMicro = (id) => { const d = cardDef(id); return !!(d && d.micro); };
+    const gigs = ensureGigs(s).filter((g) => g && g.micro && !isGigExpired(s, g) && all.includes(g.micro));
     const pl = (s.night - 1) % 3 === 1 && IE.Story && IE.Story.plan ? IE.Story.plan(s) : null;
     const st = s && s.story;
     const plannedFriend = pl && pl.npc && R.aliveNpcs(s).some((n) => n.id === pl.npc) && !(st && st.taken && st.taken[pl.npc]) && !(st && st.hidden && st.hidden[pl.npc])
       ? 'friend:' + pl.npc
       : null;
-    // 某一格的種類沒有可用的卡（例如世界事件令全部工作停工）：改從其餘可用的卡抽，三張仍然不同
-    const others = (used) => all.filter((id) => !id.startsWith('trip:') && !used.includes(id));
-    const p1 = all.filter((id) => { const k = kOf(id); return k === 'work' || k === 'shady'; });
-    const c1 = R.pick(s, p1.length ? p1 : others(plannedFriend ? [plannedFriend] : []));
-    const p2 = all.filter((id) => { const k = kOf(id); return (k === 'life' || k === 'friend') && id !== c1; });
-    const c2 = plannedFriend || R.pick(s, p2.length ? p2 : others([c1]));
+    const nonMicro = (used) => all.filter((id) => !id.startsWith('trip:') && !hasMicro(id) && !used.includes(id));
+
+    const firstGig = gigs.length ? gigs[0] : null;
+    const p1 = all.filter((id) => {
+      const k = kOf(id);
+      return (k === 'friend' || k === 'volunteer' || k === 'rest') && id !== plannedFriend;
+    });
+    const c1 = firstGig
+      ? firstGig.micro
+      : R.pick(s, p1.length ? p1 : nonMicro([]));
+
+    const p2 = all.filter((id) => {
+      if (id === c1) return false;
+      const k = kOf(id);
+      if (k === 'friend') return true;
+      if (k === 'life') return !hasMicro(id) || gigs.some((g) => g.micro === id);
+      return false;
+    });
+    const c2 = (plannedFriend && plannedFriend !== c1)
+      ? plannedFriend
+      : R.pick(s, p2.length ? p2 : nonMicro([c1]));
+
     const tripDef = D.DAYCARDS.find((c) => c.id === 'trip');
     const trips = all.filter((id) => id.startsWith('trip:'));
-    const rest = others([c1, c2]);
-    const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !rest.length) ? R.pick(s, trips) : R.pick(s, rest);
-    return [c1, c2, c3].filter(Boolean);
+    const restPool = nonMicro([c1, c2]);
+    const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !restPool.length)
+      ? R.pick(s, trips)
+      : R.pick(s, restPool);
+
+    return { ids: [c1, c2, c3].filter(Boolean), gig: firstGig };
   }
 
-  // 回傳 s.offer；這一晚還沒有就按總規格 §7 的出牌規則產生
+  // 回傳 s.offer；這一晚還沒有就按總規格 §3.1 的出牌規則產生
   function offer(s) {
+    ensureGigs(s);
     if (s.offer && s.offer.night === s.night && Array.isArray(s.offer.ids) && s.offer.ids.length) return s.offer;
-    s.offer = { night: s.night, ids: drawOfferIds(s), rerolls: 0, chosen: null };
+    const drawn = drawOffer(s);
+    s.offer = { night: s.night, ids: drawn.ids, gig: drawn.gig, rerolls: 0, chosen: null };
     return s.offer;
   }
 
@@ -15530,7 +15686,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (s.cr < cost) return { ok: false, msg: '換一批要 $' + cost };
     s.cr -= cost;
     of.rerolls = (of.rerolls || 0) + 1;
-    of.ids = drawOfferIds(s);
+    const drawn = drawOffer(s);
+    of.ids = drawn.ids;
+    of.gig = drawn.gig;
     of.chosen = null;
     return { ok: true };
   }
@@ -15551,6 +15709,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         name: '找' + (npc ? npc.name : npcId) + '聊天',
         sub: form ? '聊聊近況，練習「' + form.name + '」的配色' : '和朋友聊聊近況',
         micro: null,
+        gig: null,
         fx: [['cr', cost ? '−$' + cost : '免費'], ['spark', '+0.4 起'], ['card', '人情'], ['note', '技法：' + (form ? form.name : '') + ' +1']],
         danger: 0,
         enabled: !reason,
@@ -15570,10 +15729,27 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         name: '出國：' + reg,
         sub: '飛往' + reg + '：機票、氣候附加費和邊境保證金。從五張當地素材中帶回兩張',
         micro: null,
+        gig: null,
         fx: [['cr', '−$' + cost], ['spark', '+' + D.ECON.tripSpark], ['card', reg + '素材 五選二（★' + D.ECON.tripStar + '）']],
         danger: 0,
         enabled: !reason,
         reason,
+      };
+    }
+    if (id === 'rest') {
+      const rDef = cardDef('rest') || { id: 'rest', kind: 'rest', name: '在家發呆', sub: '甚麼都不做。這在浮城是一種奢侈。' };
+      return {
+        id: 'rest',
+        kind: 'rest',
+        kindName: (D.ROUND_TEXT.kinds && D.ROUND_TEXT.kinds.rest) || '休息',
+        name: rDef.name || '在家發呆',
+        sub: rDef.sub || '甚麼都不做。這在浮城是一種奢侈。',
+        micro: null,
+        gig: null,
+        fx: [['spark', '+' + ((D.ECON16 && D.ECON16.restSpark) || 0.2)]],
+        danger: 0,
+        enabled: true,
+        reason: null,
       };
     }
     const def = cardDef(id) || { id, kind: 'work' };
@@ -15588,6 +15764,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const reason = s.removed && s.removed[id]
       ? (id === 'smile' ? '已被 AI 情緒伴侶 2.0 取代' : '職位已被 AI 取代')
       : R.worldClosed(s, id) || null;
+    const of = s && s.offer && s.offer.night === s.night ? s.offer : null;
+    const gig = def.micro
+      ? ((of && Array.isArray(of.ids) && of.ids[0] === id && of.gig)
+        || (s && Array.isArray(s.gigs) ? s.gigs.find((g) => g && g.micro === def.micro && !isGigExpired(s, g)) : null)
+        || null)
+      : null;
     return {
       id,
       kind: def.kind,
@@ -15595,6 +15777,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       name: act ? act.name : id,
       sub: act ? act.sub : '',
       micro: def.micro || null,
+      gig,
       fx,
       danger,
       enabled: !reason,
@@ -15629,11 +15812,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function choose(s, id, reply) {
     if (!s || s.phase !== 'day') return null;
     const of = offer(s);
+    if (of && of.chosen && s.over && IE.Cards) {
+      IE.Cards.autoPutDown(s);
+      afterDay(s);
+      return null;
+    }
     if (!of || !of.ids.includes(id)) return null;
     const info = cardInfo(s, id);
     if (!info.enabled) return null;
     if (info.micro) {
       of.chosen = id;
+      useGig(s, info.micro);
       return { micro: info.micro };
     }
     if (id.startsWith('friend:')) {
@@ -15650,6 +15839,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (((s.forms && s.forms[fid]) || 1) === lv0) {
         R.teach(s, npcId, 1, { line: (text, kind) => rep.lines.push({ text, kind: kind || '' }) });
       }
+      const npc = D.NPCS.find((n) => n.id === npcId);
+      const friendMicro = D.GIG_FRIEND && D.GIG_FRIEND[npcId];
+      if (friendMicro && D.ECON16 && R.rand(s) < D.ECON16.friendGig) {
+        addGig(s, { micro: friendMicro, from: 'friend', x: npc ? npc.name : npcId });
+      }
       afterDay(s);
       return rep;
     }
@@ -15658,6 +15852,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const rep = R.applyVolunteer(s);
       afterDay(s);
       return rep;
+    }
+    if (id === 'rest') {
+      of.chosen = id;
+      const rep = R.report(s, '在家發呆');
+      const sp = R.addSpark(s, (D.ECON16 && D.ECON16.restSpark) || 0.2, true);
+      rep.line('甚麼都不做。這在浮城是一種奢侈。', 'good', sp, 'spark');
+      afterDay(s);
+      return rep.done();
     }
     if (id.startsWith('trip:')) {
       const origin = id.slice(5);
@@ -16103,6 +16305,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         if (c && c.wear > 0) c.wear = Math.max(0, c.wear - 1);
       });
     }
+    if ((s.night - 1) % 3 === 0) {
+      const gigs = ensureGigs(s);
+      const due = [];
+      const kept = [];
+      gigs.forEach((g) => {
+        if (isGigExpired(s, g)) due.push(g);
+        else kept.push(g);
+      });
+      if (due.length) {
+        s.pendingExpiredGigs = (s.pendingExpiredGigs || []).concat(due);
+        s.gigs = kept;
+      }
+      grantRoundGig(s);
+    }
   }
 
   function leaveShop(s) {
@@ -16199,6 +16415,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     sig3,
     target,
     rentOf,
+    initGigs,
+    addGig,
+    useGig,
+    expireGigs,
     offer,
     offerCost,
     rerollOffer,
@@ -16257,6 +16477,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     };
     if (s.nightMod === undefined) s.nightMod = null; // { night, mult }
     if (s.rentMod === undefined) s.rentMod = null;   // { round, mult }
+    if (!Array.isArray(s.gigs)) s.gigs = [];
+    if (IE.Rounds && IE.Rounds.initGigs) IE.Rounds.initGigs(s);
     return s.story;
   }
 
@@ -16482,7 +16704,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return out;
   }
 
-  function applyStoryFx(s, f, rep, allowFlags) {
+  function applyStoryFx(s, f, rep, allowFlags, label) {
     if (!f) return;
     const st = ensure(s);
     if (f.cr) {
@@ -16497,6 +16719,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (f.card) {
       const cArg = typeof f.card === 'object' ? Object.assign({}, f.card, { tags: (f.card.tags || []).slice() }) : f.card;
       rep.gain(cArg);
+    }
+    if (typeof f.gig === 'string' && f.gig && IE.Rounds && IE.Rounds.addGig) {
+      IE.Rounds.addGig(s, { micro: f.gig, from: 'story', x: label || '' });
     }
     if (f.obj) {
       R.gainObject(s, f.obj, rep);
@@ -16569,7 +16794,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const rep = R.report(s, label, { kind: 'story', x: label });
     if (lineText) rep.line(lineText, '');
 
-    applyStoryFx(s, f, rep, true);
+    applyStoryFx(s, f, rep, true, label);
 
     const r = IE.Rounds.roundOf(s);
     st.done.push(ch.id);
@@ -16618,7 +16843,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const rep = R.report(s, title, { kind: 'story', x: title });
     list.forEach((item) => {
       if (item.text) rep.line(item.text, 'bad');
-      applyStoryFx(s, item.fx, rep, false);
+      applyStoryFx(s, item.fx, rep, false, title);
     });
     st.later = st.later.filter((x) => !x || x.round !== r);
     return rep.done();

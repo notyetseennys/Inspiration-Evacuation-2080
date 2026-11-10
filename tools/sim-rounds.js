@@ -116,6 +116,10 @@ function pickDayCard(s, strat) {
     return R.pick(s, infos).id;
   }
 
+  // 第十六期（WO-16-02）：有差事的卡就選它（照舊做）；沒有就照原本的偏好
+  const gigCard = infos.find((c) => c.gig && c.micro && (strat !== 'saint' || c.kind !== 'shady'));
+  if (gigCard) return gigCard.id;
+
   const rent = RD.rentOf(s);
   const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
   const tripCost = Math.round(D.ECON.tripCost * stMod);
@@ -128,7 +132,7 @@ function pickDayCard(s, strat) {
     return works.length ? works[0].id : infos[0].id;
   }
 
-  // liver：永遠選生活、朋友或出國卡（出國要錢足夠「本輪租金 + 旅費」；都沒有就睡懶覺）
+  // liver：永遠選生活、朋友或出國卡（出國要錢足夠「本輪租金 + 旅費」；都沒有就發呆或睡懶覺）
   if (strat === 'liver') {
     const topForms = topUsedForms(s);
     const friends = infos.filter((c) => c.kind === 'friend').sort((a, b) => {
@@ -138,20 +142,17 @@ function pickDayCard(s, strat) {
     });
     const trips = infos.filter((c) => c.kind === 'trip' && s.cr >= (TRIP_ANY ? tripCost : rent + tripCost));
     const lives = infos.filter((c) => c.kind === 'life').sort((a, b) => (LIFE_RANK[b.id] || 0) - (LIFE_RANK[a.id] || 0));
+    const restCard = infos.find((c) => c.kind === 'rest');
     if (trips.length) return trips[0].id;
     if (lives.length) return lives[0].id;
     if (friends.length) return friends[0].id;
+    if (restCard) return restCard.id;
     return null;
   }
 
-  // shameless：有虧心卡一定選；從不義工
+  // shameless：有虧心差事時選虧心卡；從不義工
   if (strat === 'shameless') {
-    let cur = infos;
-    while (!cur.some((c) => c.kind === 'shady') && (s.offerRerolls || 0) < 2 && s.cr >= RD.offerCost(s)) {
-      if (!RD.rerollOffer(s).ok) break;
-      cur = (RD.offer(s).ids || []).map((id) => RD.cardInfo(s, id)).filter((c) => c && c.enabled);
-    }
-    const shady = cur.filter((c) => c.kind === 'shady').sort((a, b) => (a.id === 'farm' ? -1 : 1) - (b.id === 'farm' ? -1 : 1));
+    const shady = infos.filter((c) => c.kind === 'shady').sort((a, b) => (a.id === 'farm' ? -1 : 1) - (b.id === 'farm' ? -1 : 1));
     if (shady.length) return shady[0].id;
   }
 
@@ -201,6 +202,8 @@ function pickDayCard(s, strat) {
   if (lives.length) return lives[0].id;
 
   if (cleanWorks.length) return cleanWorks[0].id;
+  const restCard = pool.find((c) => c.kind === 'rest');
+  if (restCard) return restCard.id;
   return null;
 }
 
@@ -246,6 +249,8 @@ function chooseStoryChapter(s, ch, strat) {
 
 function runDay(s, strat, metrics) {
   R.morning(s);
+  const expired = RD.expireGigs(s);
+  metrics.expiredGigs += expired.length;
   CARDS.autoPutDown(s);
   metrics.transitions++;
   const pl = STORY.plan(s);
@@ -294,6 +299,7 @@ function runDay(s, strat, metrics) {
       }
     }
     if (res && res.micro) {
+      metrics.micros++;
       AU.apply(s, res.micro);
       CARDS.autoPutDown(s);
       metrics.transitions++;
@@ -673,6 +679,8 @@ function runOne(bg, season, seed, strat) {
     shopBuys: 0,
     shopVisits: 0,
     dayChoices: 0,
+    micros: 0,
+    expiredGigs: 0,
     transitions: 0,
     extremes: 0,
     reversals: 0,
@@ -718,6 +726,7 @@ function runOne(bg, season, seed, strat) {
     lost: (s.lost || []).slice(),
     objectsCount: (s.objects || []).length,
     trips: (s.stats && s.stats.trips) || 0,
+    crEarned: (s.stats && s.stats.crEarned) || 0,
     chaptersDone: s.story && Array.isArray(s.story.done) ? s.story.done.length : 0,
     friendsTaken: s.story && s.story.taken ? Object.keys(s.story.taken).length : 0,
     friendsHidden: s.story && s.story.hidden ? Object.keys(s.story.hidden).length : 0,
@@ -810,6 +819,10 @@ function runStrategy(strat) {
   const avgTaken = avg((r) => r.friendsTaken);
   const avgHidden = avg((r) => r.friendsHidden);
   const avgTrips = avg((r) => r.trips);
+  const avgMicros = avg((r) => r.metrics.micros);
+  const avgExpired = avg((r) => r.metrics.expiredGigs);
+  const avgIncome = avg((r) => r.crEarned);
+  console.log(`  差事與工作: 平均每局小遊戲 ${avgMicros.toFixed(2)} 次 · 過期差事 ${avgExpired.toFixed(2)} 個 · 平均總收入 $${Math.round(avgIncome)}`);
   console.log(`  出國與故事線: 平均每局出國 ${avgTrips.toFixed(2)} 次 · 回答 ${avgChapters.toFixed(2)} 章角色線 · 極端選項 ${avgExtremes.toFixed(2)} 個 · 發生反轉 ${avgReversals.toFixed(2)} 次 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
   const formLine = FORM_KEYS
     .map((f) => `${f}:${totalPlays ? Math.round((formTotals[f] / totalPlays) * 100) : 0}%`)

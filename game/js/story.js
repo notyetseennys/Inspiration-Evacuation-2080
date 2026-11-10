@@ -28,6 +28,8 @@
     };
     if (s.nightMod === undefined) s.nightMod = null; // { night, mult }
     if (s.rentMod === undefined) s.rentMod = null;   // { round, mult }
+    if (!Array.isArray(s.gigs)) s.gigs = [];
+    if (IE.Rounds && IE.Rounds.initGigs) IE.Rounds.initGigs(s);
     return s.story;
   }
 
@@ -253,7 +255,7 @@
     return out;
   }
 
-  function applyStoryFx(s, f, rep, allowFlags) {
+  function applyStoryFx(s, f, rep, allowFlags, label) {
     if (!f) return;
     const st = ensure(s);
     if (f.cr) {
@@ -268,6 +270,9 @@
     if (f.card) {
       const cArg = typeof f.card === 'object' ? Object.assign({}, f.card, { tags: (f.card.tags || []).slice() }) : f.card;
       rep.gain(cArg);
+    }
+    if (typeof f.gig === 'string' && f.gig && IE.Rounds && IE.Rounds.addGig) {
+      IE.Rounds.addGig(s, { micro: f.gig, from: 'story', x: label || '' });
     }
     if (f.obj) {
       R.gainObject(s, f.obj, rep);
@@ -340,7 +345,7 @@
     const rep = R.report(s, label, { kind: 'story', x: label });
     if (lineText) rep.line(lineText, '');
 
-    applyStoryFx(s, f, rep, true);
+    applyStoryFx(s, f, rep, true, label);
 
     const r = IE.Rounds.roundOf(s);
     st.done.push(ch.id);
@@ -389,7 +394,7 @@
     const rep = R.report(s, title, { kind: 'story', x: title });
     list.forEach((item) => {
       if (item.text) rep.line(item.text, 'bad');
-      applyStoryFx(s, item.fx, rep, false);
+      applyStoryFx(s, item.fx, rep, false, title);
     });
     st.later = st.later.filter((x) => !x || x.round !== r);
     return rep.done();

@@ -97,6 +97,8 @@
   };
   // 把評級與特別成就加到一份已完成的報告上
   function grade(s, kind, res, r) {
+    const isGig = !!(s && s.mode === 'rounds' && (s.gigActive === kind || (kind === 'ot' && s.gigActive === 'label')));
+    if (s && s.gigActive) s.gigActive = null;
     if (!PERF[kind] || !r || s.body <= 0) return r;
     const perf = PERF[kind](res || {});
     const rk = rankOf(perf);
@@ -118,6 +120,16 @@
     };
     line((res && res.auto ? '照舊做：' : '') + '評級 ' + rk.id + '：' + rk.name + '（表現 ' + r.rank.perf + '%）', rk.id === 'D' ? 'bad' : rk.id === 'SS' || rk.id === 'S' ? 'legend' : 'good');
     if (T.crPct && r.deltas.cr > 0) { const b = Math.round(r.deltas.cr * T.crPct); s.cr += b; line('評級獎金', 'good', b, 'cr'); }
+    // 第十六期：經由差事做的小遊戲，收入乘 ECON16.gigPay
+    if (isGig && r.deltas.cr > 0 && D.ECON16 && D.ECON16.gigPay) {
+      const targetCr = Math.round(r.deltas.cr * D.ECON16.gigPay);
+      const extra = targetCr - r.deltas.cr;
+      if (extra !== 0) {
+        s.cr += extra;
+        if (extra > 0 && s.stats) s.stats.crEarned = (s.stats.crEarned || 0) + extra;
+        line('差事報酬', 'good', extra, 'cr');
+      }
+    }
     // 工作做得好不會令火花變旺（那是工作）；只有生活類的小遊戲會
     if (T.spark && (T.spark < 0 || LIFE.includes(kind))) { const v = R.addSpark(s, T.spark, true); if (v) line(T.spark > 0 ? '你對自己很滿意' : '你對自己很失望', T.spark > 0 ? 'good' : 'bad', v, 'spark'); }
     if (T.rating) s.rating = Math.max(1, Math.min(5, s.rating + T.rating));
@@ -140,6 +152,20 @@
       if (sp.rating) s.rating = Math.min(5, s.rating + sp.rating);
       if (sp.obj && R.rand(s) < 0.35) { const id = R.pick(s, sp.obj); if (R.gainObject(s, id, null)) r.objs.push(id); }
     });
+    // 第十六期：經由差事做的小遊戲，評級 B 或以上必定得到一張卡；A 為 ★2，S 為 ★3，SS 為 ★4（比原本星級高才改）
+    if (isGig) {
+      if (['B', 'A', 'S', 'SS'].includes(rk.id) && !r.cards.some((c) => c && !c.guilt)) {
+        gain(R.pick(s, POOL[kind]));
+      }
+      const minStar = { A: 2, S: 3, SS: 4 }[rk.id] || 0;
+      if (minStar > 0) {
+        r.cards.forEach((c) => {
+          if (!c || c.guilt) return;
+          const cur = IE.Create ? IE.Create.starOf(c) : (c.star || 1);
+          if (minStar > cur) c.star = minStar;
+        });
+      }
+    }
     r.deltas.spark = Math.round(r.deltas.spark * 10) / 10; r.deltas.soul = Math.round(r.deltas.soul * 10) / 10;
     return r;
   }
