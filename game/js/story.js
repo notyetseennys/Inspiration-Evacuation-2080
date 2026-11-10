@@ -337,7 +337,7 @@
     const f = opt.fx || {};
     const label = say(s, opt.label, f);
     const lineText = say(s, opt.line, f);
-    const rep = R.report(s, label);
+    const rep = R.report(s, label, { kind: 'story', x: label });
     if (lineText) rep.line(lineText, '');
 
     applyStoryFx(s, f, rep, true);
@@ -386,7 +386,7 @@
     const st = ensure(s);
     const r = IE.Rounds.roundOf(s);
     const title = (D.STORY && D.STORY.text && D.STORY.text.reversalHead) || '物極必反';
-    const rep = R.report(s, title);
+    const rep = R.report(s, title, { kind: 'story', x: title });
     list.forEach((item) => {
       if (item.text) rep.line(item.text, 'bad');
       applyStoryFx(s, item.fx, rep, false);
@@ -484,11 +484,15 @@
       }
     } else {
       if (fDef.note) {
+        const nDef = D.NPCS && D.NPCS.find((x) => x.id === npc);
+        const npcName = nDef ? nDef.name : npc;
         const noteCard = Object.assign({}, fDef.note, { tags: (fDef.note.tags || []).slice() });
-        R.addCard(s, noteCard);
+        R.addCard(s, noteCard, { kind: 'friend', x: npcName, npc });
       }
       addRepLine(rep, fDef.nomeet);
     }
+
+    if (IE.Cards) IE.Cards.relics(s, npc);
 
     if (pl.fate) {
       st.fates.push({ npc, species, night: s.night + 1, text: pl.fate });

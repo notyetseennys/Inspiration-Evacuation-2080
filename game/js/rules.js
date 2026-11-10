@@ -347,12 +347,13 @@
       const k = pick(s, keys);
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
-    bg.cards.forEach((id) => addCard(s, id));
+    const startOrg = s.mode === 'rounds' ? { kind: 'start' } : undefined;
+    bg.cards.forEach((id) => addCard(s, id, startOrg));
     // 時間旅人：帶著一件來自未來的極稀有素材
     // 扭蛋機的安慰獎：下一局帶著一件古董
-    ((opts.meta && opts.meta.nextStart) || []).forEach((id) => { if (D.CARDS[id]) addCard(s, id); });
-    if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
-    D.STARTER.forEach((id) => addCard(s, id));
+    ((opts.meta && opts.meta.nextStart) || []).forEach((id) => { if (D.CARDS[id]) addCard(s, id, startOrg); });
+    if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z), startOrg); }
+    D.STARTER.forEach((id) => addCard(s, id, startOrg));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
     // 扭蛋機的安慰獎：下一局多帶工具卡
     if (IE.Stages) for (let i = 0; i < ((opts.meta && opts.meta.nextTools) || 0); i++) IE.Stages.giveTool(s, IE.Stages.randomTool(s));
@@ -402,6 +403,8 @@
       s.roundLog = [];
       s.lost = [];
       s.chances = 3;
+      s.memory = s.memory || [];
+      if (typeof s.over !== 'boolean') s.over = false;
       // 五個外星評審之夜的規則在開局時全部選好：介面可以預告，之後讀取規則也不會動到隨機數
       if (IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
       if (IE.Story && IE.Story.init) IE.Story.init(s);
@@ -418,9 +421,20 @@
     if (c.rarity) card.rarity = c.rarity;
     return card;
   }
-  function addCard(s, idOrCard) {
+  function addCard(s, idOrCard, origin) {
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
     card.wear = card.wear || 0;
+    if (s.mode === 'rounds') {
+      if (IE.Cards) IE.Cards.ensure(s);
+      else { s.memory = s.memory || []; if (typeof s.over !== 'boolean') s.over = false; }
+      card.origin = IE.Cards ? IE.Cards.origin(s, origin) : null;
+      card.works = Array.isArray(card.works) ? card.works.slice() : [];
+      card.relic = !!card.relic;
+      s.cards.push(card);
+      const over = s.cards.length > (perk(s).deckMax || MAX_CARDS);
+      s.over = over;
+      return { card, dropped: null, over };
+    }
     s.cards.push(card);
     let dropped = null;
     // 素材庫滿了：丟掉用得最殘的一張（同樣殘就丟最舊的）
@@ -639,7 +653,8 @@
   }
   function applyLabel(s, res, o) {
     const ot = !!(o && o.ot);
-    const rep = report(s, ot ? '深夜加班：AI 數據標註' : 'AI 數據標註');
+    const jobName = ot ? '深夜加班：AI 數據標註' : 'AI 數據標註';
+    const rep = report(s, jobName, { kind: 'work', x: jobName });
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
     addSpark(s, -res.drain);
@@ -697,7 +712,7 @@
     };
   }
   function applySmile(s, res) {
-    const rep = report(s, '企業情緒陪伴');
+    const rep = report(s, '企業情緒陪伴', { kind: 'work', x: '企業情緒陪伴' });
     const tip = Math.round((res.satisfaction >= 0.8 ? 30 : res.satisfaction >= 0.6 ? 12 : 0) * socialTip(s));
     const fine = res.trapHits * 5;
     const cr = Math.round(res.cr) + tip - fine;
@@ -767,7 +782,7 @@
   }
   // res：{ relics: [卡 id 或前世作品], money, fish: { sardine, eel, grouper }, hits, drowned, lockers }
   function applyDive(s, res) {
-    const rep = report(s, '舊城潛水');
+    const rep = report(s, '舊城潛水', { kind: 'work', x: '舊城潛水' });
     const fish = res.fish || {};
     const cost = Math.round(diveBodyCost(s) + 5 * res.hits * calmMult(s) + (res.drowned ? 15 : 0));
     hurt(s, cost, 'dive', { hits: res.hits, drowned: !!res.drowned, lockers: res.lockers || 0 });
@@ -819,7 +834,7 @@
     };
   }
   function applyDelivery(s, res) {
-    const rep = report(s, '外送潛水');
+    const rep = report(s, '外送潛水', { kind: 'work', x: '外送潛水' });
     const cr = Math.round(res.cr);
     const body = Math.round((10 - seasonOf(s).outdoorBody) + 3 * res.hits * calmMult(s));
     s.cr += cr; s.stats.crEarned += cr;
@@ -862,7 +877,7 @@
     return { duration: 40, payMult: (perk(s).farmPay || 1) * worldPay(s, 'farm') * obeyPay(s), showFake: A(s, 'insight') >= 50 };
   }
   function applyFarm(s, res) {
-    const rep = report(s, '陰謀論內容農場');
+    const rep = report(s, '陰謀論內容農場', { kind: 'work', x: '陰謀論內容農場' });
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
     hurt(s, 4, 'farm');
@@ -889,7 +904,7 @@
       showTime: Math.max(0.28, 0.5 - 0.002 * A(s, 'rhythm')) };
   }
   function applyBusk(s, res) {
-    const rep = report(s, '街頭表演');
+    const rep = report(s, '街頭表演', { kind: 'work', x: '街頭表演' });
     const cr = Math.round(res.cr * (decorOn(s, 'stereo') ? 1.2 : 1));
     const body = 4 - seasonOf(s).outdoorBody;
     s.cr += cr; s.stats.crEarned += cr;
@@ -913,7 +928,7 @@
       maxPairs: A(s, 'tech') >= 60 ? 4 : 5 };
   }
   function applyClinic(s, res) {
-    const rep = report(s, '黑市義體診所');
+    const rep = report(s, '黑市義體診所', { kind: 'work', x: '黑市義體診所' });
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
     hurt(s, 5, 'clinic', { illegal: res.illegal });
@@ -992,7 +1007,7 @@
   function applyChat(s, npcId, reply) {
     const n = s.npcs.find((x) => x.id === npcId);
     const def = D.NPCS.find((x) => x.id === npcId);
-    const rep = report(s, '與' + def.name + '聊天');
+    const rep = report(s, '與' + def.name + '聊天', { kind: 'friend', x: def.name, npc: npcId });
     const cost = chatCost(s);
     const outdoor = seasonOf(s).outdoorBody;
     s.cr -= cost;
@@ -1052,7 +1067,7 @@
   }
   function applyEncounter(s, id, k) {
     const e = D.ENCOUNTERS.find((x) => x.id === id), o = e && e.opts[k];
-    const rep = report(s, '街頭奇遇');
+    const rep = report(s, '街頭奇遇', o ? { kind: 'story', x: o.label } : undefined);
     if (!o) return rep.done();
     s.encSeen = s.encSeen || {};
     s.encSeen[id] = (s.encSeen[id] || 0) + 1;
@@ -1065,7 +1080,7 @@
   function useFavor(s, id) {
     if (!favorReady(s, id)) return null;
     const C = D.CONTACT_BY[id];
-    const rep = report(s, C.title + '・' + C.name);
+    const rep = report(s, C.title + '・' + C.name, { kind: 'friend', x: C.name });
     s.contacts[id].used = s.day;
     s.stats.favors = (s.stats.favors || 0) + 1;
     rep.line(C.favor, 'good');
@@ -1073,7 +1088,7 @@
     return rep.done();
   }
   function applyVolunteer(s) {
-    const rep = report(s, '在避難所做義工');
+    const rep = report(s, '在避難所做義工', { kind: 'story', x: '在避難所做義工' });
     hurt(s, 6, 'volunteer');
     const sp = addSpark(s, 0.2);
     s.stats.volunteer++;
@@ -1088,7 +1103,7 @@
   }
   function applyRest(s) {
     if (s.trip && IE.World) return IE.World.tripRest(s);
-    const rep = report(s, '休息');
+    const rep = report(s, '休息', { kind: 'story', x: '休息' });
     const b = (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0);
     heal(s, b);
     s.restedToday = true;
@@ -1270,7 +1285,7 @@
         const pool = r < 0.03 ? D.ANTIQUES : r < 0.23 ? Object.keys(D.CARDS).filter((k) => k.startsWith('t_'))
           : Object.keys(D.CARDS).filter((k) => !D.CARDS[k].origin && !D.CARDS[k].rarity && !/^(b|x|c|v)_/.test(k));
         const card = pick(s, pool);
-        const res = addCard(s, card);
+        const res = s.mode === 'rounds' ? addCard(s, card, { kind: 'shop' }) : addCard(s, card);
         msg = '盲盒裡是：「' + D.CARDS[card].name + '」' + (r < 0.03 ? '（古董！）' : '') + (res.dropped ? '（丟掉了「' + res.dropped.name + '」）' : '');
         break;
       }
@@ -1364,7 +1379,7 @@
     const o = d.options[idx];
     s.usedDilemmas[d.id] = s.day;
     s.dilemma = null;
-    const rep = report(s, '抉擇：' + o.label);
+    const rep = report(s, '抉擇：' + o.label, { kind: 'story', x: o.label });
     if (o.cr) { s.cr += o.cr; rep.delta('cr', o.cr); }
     if (o.body) { if (o.body > 0) heal(s, o.body); else hurt(s, -o.body, d.id === 'rescue' ? 'rescue' : 'dilemma'); rep.delta('body', o.body); }
     if (o.spark) rep.delta('spark', addSpark(s, o.spark, true));
@@ -1405,7 +1420,10 @@
     if (fx.spark) addSpark(s, fx.spark, true);
     if (fx.crPct) s.cr = Math.round(s.cr * (1 + fx.crPct));
     if (fx.paranoia) addParanoia(s, fx.paranoia);
-    if (fx.card) addCard(s, fx.card);
+    if (fx.card) {
+      if (s.mode === 'rounds') addCard(s, fx.card, { kind: 'story', x: w.name });
+      else addCard(s, fx.card);
+    }
     if (fx.cond) addCond(s, fx.cond, null);
     if (id === 'aliens' && !ownsObject(s, 'alienradio')) gainObject(s, 'alienradio', null);
     if (fx.takeNpc) {
@@ -1879,7 +1897,7 @@
   }
 
   // ---------- 工具 ----------
-  function report(s, title) {
+  function report(s, title, defaultOrigin) {
     const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [], objs: [] };
     return {
       get review() { return r.review; }, set review(v) { r.review = v; },
@@ -1892,8 +1910,9 @@
       delta(stat, v) { r.deltas[stat] += v; },
       stat(k, v) { r.stats[k] = (r.stats[k] || 0) + v; },
       obj(id) { r.objs.push(id); },
-      gain(id) {
-        const res = addCard(s, id);
+      gain(id, origin) {
+        const org = s.mode === 'rounds' ? (origin !== undefined ? origin : defaultOrigin) : undefined;
+        const res = s.mode === 'rounds' ? addCard(s, id, org) : addCard(s, id);
         r.cards.push(res.card);
         if (res.dropped) r.dropped.push(res.dropped);
       },

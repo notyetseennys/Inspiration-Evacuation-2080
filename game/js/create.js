@@ -118,14 +118,21 @@
   }
 
   // ---------- 具名組合與 KPI ----------
+  // 五輪模式的 card.origin 為來歷物件；計分與組合判斷地區時取 D.CARDS[id].origin
+  function regView(c) {
+    if (!c || !c.origin || typeof c.origin !== 'object') return c;
+    const reg = c.id && D.CARDS[c.id] ? D.CARDS[c.id].origin : undefined;
+    return Object.assign({}, c, { origin: reg });
+  }
   // 具名組合要「純」：下筆的每一張素材，都要有組合要求的其中一個標籤（像同花一樣，要刻意湊）
   const pure = (r, sel) => sel.every((c) => c.tags.some((t) => r.need[t]));
   function matchRecipes(s, sel) {
     const counts = tagCounts(sel);
+    const selReg = sel.map(regView);
     return D.RECIPES.filter((r) => {
       const need = Object.keys(r.need);
       if (!need.length && !r.cond) return false;
-      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!need.length || pure(r, sel)) && (!r.cond || r.cond(s, sel));
+      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!need.length || pure(r, sel)) && (!r.cond || r.cond(s, selReg));
     });
   }
   const power = (r) => r.chips / 10 + r.mult * 10 + (Object.values(r.need).reduce((a, b) => a + b, 0)) * 0.5;
@@ -207,8 +214,11 @@
     // 具名組合只在成形的配色中觸發：一件有名字的作品，先要有完整的配色
     const recs = F.id === 'mix' ? [] : matchRecipes(s, sel);
     const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
-    const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct, media: F.media, mdistinct: F.mdistinct,
-      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held,
+    const selReg = sel.map(regView);
+    const scoringReg = F.scoring.map(regView);
+    const heldReg = held.map(regView);
+    const ctx = { s, sel: selReg, scoring: scoringReg, form: F.id, counts: F.counts, distinct: F.distinct, media: F.media, mdistinct: F.mdistinct,
+      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held: heldReg,
       roll: opt && opt.roll != null ? opt.roll : 0.5 };
     const times = (r) => (r === true ? 1 : r || 0);
     const noWear = schools.some((x) => x.def.noWear);
@@ -217,9 +227,10 @@
     F.scoring.forEach((c, i) => {
       // 外星評審的規則：某些素材不計分
       if (SR && SR.blocked(c)) { steps.push(snap({ t: 'blocked', uid: c.uid })); return; }
+      const cr = scoringReg[i];
       let reps = 1 + (c.mod === 'echo' ? 1 : 0) + (perkOf(s).allTwice ? 1 : 0);
-      objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, i)); });
-      schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, i, x.n)); });
+      objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(cr, ctx, i)); });
+      schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(cr, ctx, i, x.n)); });
       for (let r = 0; r < reps; r++) {
         const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
         chips += v;
@@ -228,18 +239,18 @@
         if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
         objs.forEach((o) => {
           if (!o.def.card) return;
-          const e = o.def.card(c, ctx);
+          const e = o.def.card(cr, ctx);
           if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
         });
         schools.forEach((x) => {
           if (!x.def.card) return;
-          const e = x.def.card(c, ctx, x.n);
+          const e = x.def.card(cr, ctx, x.n);
           if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
         });
       }
     });
     // 留在手牌、沒有打出的素材（例如魚缸）
-    held.forEach((c) => objs.forEach((o) => {
+    heldReg.forEach((c) => objs.forEach((o) => {
       if (!o.def.held) return;
       const e = o.def.held(c, ctx);
       if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
@@ -514,9 +525,18 @@
       if (P.unearth && before < 4 && c.wear >= 4 && !c.guilt && D.ANTIQUES && RL.rand(s) < P.unearth) {
         const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
         notes0.push('出土：「' + c.name + '」原來是「' + def.name + '」');
-        Object.assign(c, { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(c, { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? c.origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
       }
     });
+    if (s.mode === 'rounds' && IE.Cards && res.recipes && res.recipes.length) {
+      const scoredUids = SR
+        ? res.scoring.filter((u) => { const c = cardOf(s, u); return c && !SR.blocked(c); })
+        : res.scoring;
+      res.recipes.forEach((rid) => {
+        const rec = D.RECIPES.find((r) => r.id === rid);
+        if (rec) IE.Cards.noteWork(s, scoredUids, rec.name);
+      });
+    }
     const guilt = res.scoring.map((u) => cardOf(s, u)).filter((c) => c && c.guilt);
     let relief = 0;
     if (guilt.length) {
@@ -615,7 +635,8 @@
       const used = ses.used.map((u) => cardOf(s, u)).filter((c) => c && !c.guilt);
       if (used.length) {
         const c = RL.pick(s, used);
-        spore = RL.addCard(s, { id: 'spore', name: '孢子：' + c.name.slice(0, 8), tags: c.tags.slice(), value: Math.round(c.value * 0.7), medium: med(c), wear: 0 }).card;
+        const spDef = { id: 'spore', name: '孢子：' + c.name.slice(0, 8), tags: c.tags.slice(), value: Math.round(c.value * 0.7), medium: med(c), wear: 0 };
+        spore = (s.mode === 'rounds' ? RL.addCard(s, spDef, { kind: 'craft' }) : RL.addCard(s, spDef)).card;
       }
     }
     const tagCount = {};
@@ -752,7 +773,7 @@
         const c = cardOf(s, arg);
         if (!c || c.guilt || (c.id && c.id.startsWith('a_'))) return { ok: false, msg: '選一張普通素材' };
         const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
-        Object.assign(c, { id: nid, name: def.name + '（做舊）', tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(c, { id: nid, name: def.name + '（做舊）', tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? c.origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
         const g = RL.sin(s, 2, null);
         s.abilPeriod = Object.assign(s.abilPeriod || {}, { forge: periodOf(s) });
         msg = '做舊：它現在是一件「古董」了。靈魂 +' + g + ' 克';

@@ -229,15 +229,17 @@
     };
   }
 
-  // 白天完結：進入創作之夜，若在致命危險中喪生則進入結局
+  // 白天完結：進入創作之夜，若在致命危險中喪生則進入結局；超過素材庫上限時留在白天
   function afterDay(s) {
-    if (!s || s.phase !== 'day') return;
+    if (!s || s.phase !== 'day') return { ok: false };
     if (s.body <= 0) {
       s.ended = R.endingFor(s, 'death');
       s.phase = 'ended';
-      return;
+      return { ok: true };
     }
+    if (s.over) return { ok: false, msg: D.CARD_TEXT.overHead };
     s.phase = 'night';
+    return { ok: true };
   }
 
   // 睡懶覺：不選卡，恢復火花並進入晚上
@@ -320,7 +322,8 @@
     const i = typeof idx === 'string' ? t5.ids.indexOf(idx) : idx;
     if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
-    const res = R.addCard(s, t5.ids[i]);
+    const reg = (D.REGIONS && D.REGIONS[t5.origin]) || t5.origin;
+    const res = R.addCard(s, t5.ids[i], { kind: 'trip', x: reg });
     res.card.star = D.ECON.tripStar;
     if (t5.rep) {
       t5.rep.cards.push(res.card);
@@ -629,7 +632,7 @@
     if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
     if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
     const picked = s.pack.cards[i];
-    const res = R.addCard(s, picked.id);
+    const res = R.addCard(s, picked.id, { kind: 'shop' });
     res.card.star = picked.star;
     s.pack = null;
     return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
@@ -669,10 +672,9 @@
         medium: D.mediumOf(c),
         wear: 0,
       };
-      if (c.origin) copyDef.origin = c.origin;
       if (c.rarity) copyDef.rarity = c.rarity;
       if (c.mod) copyDef.mod = c.mod;
-      const res = R.addCard(s, copyDef);
+      const res = R.addCard(s, copyDef, { kind: 'craft' });
       res.card.star = copyDef.star;
       if (c.mod) res.card.mod = c.mod;
       s.pick = null;

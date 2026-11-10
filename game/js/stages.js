@@ -255,7 +255,7 @@
         const c = cards[0];
         const copy = Object.assign({}, c, { wear: 0, name: c.name + '（副本）', medium: med(c) });
         delete copy.uid;
-        const res = R.addCard(s, copy);
+        const res = s.mode === 'rounds' ? R.addCard(s, copy, { kind: 'craft' }) : R.addCard(s, copy);
         ses.hand.push(res.card.uid);
         msg = '複製了「' + c.name + '」';
         break;
@@ -275,7 +275,7 @@
         const merged = { id: 'collage', name: a.name.slice(0, 6) + '＋' + b.name.slice(0, 6), tags, value: Math.round((a.value + b.value) * 0.8), wear: 0, medium: med(a) };
         s.cards = s.cards.filter((c) => c.uid !== a.uid && c.uid !== b.uid);
         ses.hand = ses.hand.filter((u) => u !== a.uid && u !== b.uid);
-        const res = R.addCard(s, merged);
+        const res = s.mode === 'rounds' ? R.addCard(s, merged, { kind: 'craft' }) : R.addCard(s, merged);
         ses.hand.push(res.card.uid);
         msg = '拼貼成「' + merged.name + '」（' + merged.value + ' 籌碼）';
         break;
@@ -291,7 +291,7 @@
       case 'dream': {
         const pool = D.ANTIQUES.concat(Object.keys(D.CARDS).filter((k) => k.startsWith('t_')));
         const nid = R.pick(s, pool), def = D.CARDS[nid];
-        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? cards[0].origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
         msg = '「' + def.name + '」從夢裡出現了';
         break;
       }

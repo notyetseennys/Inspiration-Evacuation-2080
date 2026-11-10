@@ -167,7 +167,9 @@
     const res = result(s, kind);
     if (!res) return null;
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
-    return R.applyMicro(s, kind, res);
+    const rep = R.applyMicro(s, kind, res);
+    if (s.mode === 'rounds' && IE.Cards) IE.Cards.autoPutDown(s);
+    return rep;
   }
 
   IE.Auto = { KINDS, ORDER, target, can, record, result, apply, cap };

@@ -14,12 +14,12 @@ const path = require('path');
   'data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js',
   'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js',
   'data-abilities.js', 'data-stories.js', 'data-weather.js', 'data-contacts.js',
-  'data-rounds.js', 'data-cities.js', 'data-story.js', 'rules.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
+  'data-rounds.js', 'data-cities.js', 'data-story.js', 'rules.js', 'cards.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
   'stages.js', 'meta.js', 'dossier.js', 'rounds.js', 'story.js',
 ].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 
 const IE = globalThis.IE;
-const D = IE.DATA, R = IE.Rules, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
+const D = IE.DATA, R = IE.Rules, CARDS = IE.Cards, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
 
 // 支援 ECON 環境變數覆寫 D.ECON（供校準迭代使用）
 if (process.env.ECON) {
@@ -246,11 +246,13 @@ function chooseStoryChapter(s, ch, strat) {
 
 function runDay(s, strat, metrics) {
   R.morning(s);
+  CARDS.autoPutDown(s);
   metrics.transitions++;
   const pl = STORY.plan(s);
   const revs = STORY.reversals(s);
   if (revs.length) {
     STORY.reverse(s);
+    CARDS.autoPutDown(s);
     metrics.reversals += revs.length;
     metrics.transitions++;
   }
@@ -259,10 +261,12 @@ function runDay(s, strat, metrics) {
     const optIdx = chooseStoryChapter(s, ch, strat);
     if (ch.options[optIdx] && ch.options[optIdx].extreme) metrics.extremes++;
     STORY.choose(s, optIdx);
+    CARDS.autoPutDown(s);
     metrics.transitions++;
   } else if (R.drawDilemma(s)) {
     const opt = chooseDilemma(s, strat);
     R.resolveDilemma(s, opt);
+    CARDS.autoPutDown(s);
     metrics.transitions++;
   }
   RD.offer(s);
@@ -272,6 +276,7 @@ function runDay(s, strat, metrics) {
     RD.skipDay(s);
   } else {
     const res = RD.choose(s, id);
+    CARDS.autoPutDown(s);
     if (id.startsWith('friend:')) {
       const npcId = id.slice(7);
       const r = RD.roundOf(s);
@@ -290,6 +295,7 @@ function runDay(s, strat, metrics) {
     }
     if (res && res.micro) {
       AU.apply(s, res.micro);
+      CARDS.autoPutDown(s);
       metrics.transitions++;
     } else if (res && res.trip) {
       while (s.trip5 && Array.isArray(s.trip5.ids)) {
@@ -306,6 +312,7 @@ function runDay(s, strat, metrics) {
           pickIdx = rem[0].i;
         }
         if (!RD.tripPick(s, pickIdx)) break;
+        CARDS.autoPutDown(s);
       }
       metrics.transitions++;
     }
@@ -314,9 +321,11 @@ function runDay(s, strat, metrics) {
     const e = R.encounter(s);
     if (e) {
       R.applyEncounter(s, e.id, 0);
+      CARDS.autoPutDown(s);
       metrics.transitions++;
     }
   }
+  CARDS.autoPutDown(s);
   RD.afterDay(s);
   metrics.transitions++;
 }
@@ -353,6 +362,7 @@ function runNight(s, strat, metrics) {
       metrics.nightPlays[night].push(Math.max(...ses.log.map((x) => x.total)));
     }
     CR.finish(s);
+    CARDS.autoPutDown(s);
     metrics.transitions++;
     return;
   }
@@ -406,6 +416,7 @@ function runNight(s, strat, metrics) {
     metrics.nightPlays[night].push(Math.max(...ses.log.map((x) => x.total)));
   }
   CR.finish(s);
+  CARDS.autoPutDown(s);
   metrics.transitions++;
 }
 
@@ -493,6 +504,7 @@ function runShop(s, strat, metrics) {
         if (s.pack && s.pack.cards && s.pack.cards.length) {
           const idx = Math.floor(R.rand(s) * s.pack.cards.length);
           RD.packPick(s, idx);
+          CARDS.autoPutDown(s);
         }
         if (s.pick && s.pick.service) {
           const valid = s.cards.filter((c) => {
@@ -500,8 +512,12 @@ function runShop(s, strat, metrics) {
             if (s.pick.service === 'polish') return CR.starOf(c) < 5 && s.cr >= RD.price(s, 'service', c);
             return true;
           });
-          if (valid.length) RD.pickCard(s, R.pick(s, valid).uid);
-          else RD.cancelPick(s);
+          if (valid.length) {
+            RD.pickCard(s, R.pick(s, valid).uid);
+            CARDS.autoPutDown(s);
+          } else {
+            RD.cancelPick(s);
+          }
         }
       }
     }
@@ -604,7 +620,10 @@ function runShop(s, strat, metrics) {
       const b = RD.shopBuy(s, 'service');
       if (b && b.ok) {
         const p = RD.pickCard(s, cands[0].uid);
-        if (p && p.ok) metrics.shopBuys++;
+        if (p && p.ok) {
+          CARDS.autoPutDown(s);
+          metrics.shopBuys++;
+        }
         else RD.cancelPick(s);
       }
     }
@@ -637,6 +656,7 @@ function runShop(s, strat, metrics) {
           }
         }
         RD.packPick(s, bestIdx);
+        CARDS.autoPutDown(s);
       }
     }
   }
@@ -674,6 +694,7 @@ function runOne(bg, season, seed, strat) {
       const r = RD.roundOf(s);
       metrics.preReviewCr[r] = s.cr;
       RD.review(s);
+      CARDS.autoPutDown(s);
       metrics.transitions++;
     } else {
       break;
