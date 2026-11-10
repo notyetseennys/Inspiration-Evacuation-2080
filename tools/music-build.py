@@ -324,6 +324,11 @@ def main():
             tonic = orig['tonic']
         key_name = NAMES[tonic]
         tempo = args.bpm / orig['bpm']
+        # 速度被估成兩倍或一半（常見於只有敲擊的歌）：當作同一個速度，小節線仍然按目標 BPM 計
+        if tempo < 0.7:
+            tempo *= 2
+        elif tempo > 1.45:
+            tempo /= 2
         out_dir = os.path.join(args.out, name)
         os.makedirs(out_dir, exist_ok=True)
         done = {}

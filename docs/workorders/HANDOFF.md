@@ -212,6 +212,19 @@
   - `tools/art-night-compose.py` 新增三個畫面改進（預設開啟）：按天空統一色調、「轉」的聚光、雨夜全畫下雨；`--compare` 輸出改進前後。
   - 網頁版：組畫用的 154 張轉 WebP 約 6 MB，可以一次載入；名作每張約 320 KB，打出來才載入。
   - 研究頁（名作審核、改進前後、收集曲線、卡面和名作揭曉的示意、容量、改進清單）：https://claude.ai/artifact/KYfred4Sga5oyNiESycEaJ
+- **原型第五版「創作桌」（2026-11-10）**：製作人上載了 4 張重做的傳說名作和 44 首 Flow Music 的 zip（連試做共 47 首），要求全面更新、設計最好玩的「創作桌」機制、一步步令遊戲更上癮。
+  - 試玩：https://claude.ai/artifact/4E19mddVQPmLQFxw6CeJ1U　說明和分步路線：`proto/night5/README.md`。
+  - 真的畫（`painter.js`，即時組合，會動）、真的歌（`music.js`，分軌按起承轉合編成）、75 張有卡面的平衡牌組（`deck.js`）。
+  - 新規則：達標之後繼續畫完四筆；圖鑑（45 種複合情緒、40 個名作，存在裝置）；名作揭曉；「新」的標記；差一張的提示；獎勵優先給未發現的組合。
+  - 目標 10,000／30,000／55,000（每筆試 25 個次序：約 86–96%、55–84%、38–45%）。
+  - 素材：`tools/art-night-web.py`（WebP 212 張 20 MB）、`tools/music-night-web.py`（每首 24 小節，MP3 共 29.5 MB）。兩者不入 git。
+  - 音樂的問題：
+    - city pop 未有人聲（`ns-citypop-vocal.zip` 沒有上載），暫時用弦樂代替；
+    - `ns-synth-vocal.zip` 上載了在根目錄；
+    - lo-fi 的敲擊被估成兩倍速度，`music-build.py` 已修正；
+    - **我沒有親耳聽過**，移調最多 6 個半音，要製作人試聽。
+  - 兩位夥伴的重做（`np-mate-mary-2`、`np-mate-yu-2`）未上載，可選。
+  - **正在等製作人試玩和評分。** 下一步按 README 第四節：傳說名作的條件 → 每日題目 → 作品存圖 → 流派 → 展覽。
   - **下一步**：等第一期（基本素材 89 張和 lo-fi 全套 16 首）。收到之後做原型第五版：
     - 第一個用真的畫和真的歌的完整一晚；
     - 把 `art-night-preview.py` 和 `music-night-preview.py` 的做法搬進 `painter.js` 和 `music.js`。
@@ -294,4 +307,7 @@
 | `tools/night-simlog.js` | 用第四版的規則模擬多晚，輸出每晚四筆的出牌記錄（JSON） |
 | `tools/art-night-compose.py` | 按出牌記錄組畫（四筆四層、起轉合三格、鏡像、金框規則）並統計素材用量 |
 | `tools/night-collect-sim.js` | 收集進度的模擬：現在的牌組和平衡的牌組各自發現的組合和具名組合 |
+| `proto/night5/` | 原型第五版「創作桌」（真的畫和歌、平衡牌組、圖鑑；說明和分步路線在 `README.md`） |
+| `tools/art-night-web.py` | 原圖 → 網頁版素材（WebP）和 `night-art.json` |
+| `tools/music-night-web.py` | 小節資料庫 → 網頁版分軌（每首 24 小節的 MP3）和 `night-music.json` |
 | `.github/workflows/ci.yml` | CI |
