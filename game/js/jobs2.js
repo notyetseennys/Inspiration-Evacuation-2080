@@ -166,6 +166,65 @@
         });
       }
     }
+    // 第十六期（WO-16-03）：小遊戲的抉擇立場（只在五輪模式而且 res.stance 有效時套用）
+    const microKey = kind === 'ot' ? 'label' : kind;
+    const stance = (s && s.mode === 'rounds' && res && res.stance && D.ECON16 && D.ECON16.stancePay && D.ECON16.stancePay[res.stance] != null)
+      ? res.stance : null;
+    if (stance) {
+      if (r.deltas.cr > 0) {
+        const targetCr = Math.round(r.deltas.cr * D.ECON16.stancePay[stance]);
+        const diff = targetCr - r.deltas.cr;
+        if (diff !== 0) {
+          s.cr += diff;
+          if (s.stats) s.stats.crEarned = Math.max(0, (s.stats.crEarned || 0) + diff);
+          line('立場影響', diff > 0 ? 'good' : 'bad', diff, 'cr');
+        }
+      }
+      if (stance === 'comply') {
+        const sparkBefore = s.spark;
+        const g = R.sin(s, 1, null);
+        if (g) line((D.STANCE_TEXT && D.STANCE_TEXT.comply) || '你照做了。', 'sin', g, 'soul');
+        if (s.spark < sparkBefore) line('良知被磨損，你的感受力也變弱了', 'bad', R.round1(s.spark - sparkBefore), 'spark');
+      } else if (stance === 'care') {
+        const g = R.atone(s, 1, null);
+        if (g) line((D.STANCE_TEXT && D.STANCE_TEXT.care) || '你為了一個人，放棄了今天的成績。', 'good', -g, 'soul');
+      }
+      const stDef = D.STANCE && D.STANCE[microKey];
+      let stanceCard = null;
+      if (stDef && stDef[stance]) {
+        const removedUids = new Set(r.cards.filter((c) => c && !c.guilt).map((c) => c.uid));
+        if (removedUids.size > 0) {
+          s.cards = s.cards.filter((c) => !c || !removedUids.has(c.uid));
+          r.cards = r.cards.filter((c) => c && c.guilt);
+        }
+        const spec = Object.assign({}, stDef[stance], { tags: stDef[stance].tags.slice() });
+        const added = R.addCard(s, spec, { kind: 'work', x: r.title });
+        stanceCard = added && added.card;
+        if (stanceCard) {
+          const minStar = { A: 2, S: 3, SS: 4 }[rk.id] || 0;
+          const curStar = IE.Create ? IE.Create.starOf(stanceCard) : (stanceCard.star || 1);
+          if (minStar > curStar) stanceCard.star = minStar;
+          r.cards.push(stanceCard);
+        }
+        const maxDeck = IE.Cards && IE.Cards.deckMax ? IE.Cards.deckMax(s) : ((D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.deckMax) || D.CRAFT.deckMax);
+        s.over = s.cards.length > maxDeck;
+      }
+      const isAuto = !!(res && res.auto);
+      const officialLine = (stDef && stDef.lines && stDef.lines[stance]) || '';
+      const repLine = isAuto && D.STANCE_TEXT ? D.STANCE_TEXT.auto : officialLine;
+      if (repLine) {
+        r.lines.push({ text: repLine, kind: stance === 'comply' ? 'sin' : stance === 'care' ? 'good' : '', _stanceLine: true });
+      }
+      r.stance = {
+        id: stance,
+        auto: isAuto,
+        micro: microKey,
+        head: (D.STANCE_TEXT && D.STANCE_TEXT[stance]) || '',
+        autoText: isAuto && D.STANCE_TEXT ? D.STANCE_TEXT.auto : '',
+        line: officialLine,
+        card: stanceCard,
+      };
+    }
     r.deltas.spark = Math.round(r.deltas.spark * 10) / 10; r.deltas.soul = Math.round(r.deltas.soul * 10) / 10;
     return r;
   }

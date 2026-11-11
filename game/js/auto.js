@@ -159,6 +159,7 @@
     res = res || low;
     res.auto = true;
     res.autoRank = want;
+    if (s && s.mode === 'rounds') res.stance = 'comply';
     return res;
   }
 

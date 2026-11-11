@@ -183,9 +183,133 @@
       px(254, 56, 2, 58, b.color);
       ctx.restore();
     }
-    const pop = b.t < 0.15 ? 1.3 - b.t / 0.15 * 0.3 : 1;
+    const pop = (!reducedMotion() && b.t < 0.15) ? 1.3 - b.t / 0.15 * 0.3 : 1;
     P.text(b.text, 160, 64, { size: 18 * pop, align: 'center', weight: 900, color: b.color, stroke: '#0b0f1a', alpha });
     if (b.sub) P.text(b.sub, 160, 92, { size: 7.5, align: 'center', weight: 700, color: '#ffffff', stroke: '#0b0f1a', alpha });
+  }
+
+  function reducedMotion() {
+    return !!(P.reducedMotion || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
+  }
+
+  // ---------- 第十六期（WO-16-03）：小遊戲兩難與立場共用工具 ----------
+  const NPC_LOOK = {
+    ken:  { skin: '#e0a77a', hair: '#2b2140', shirt: '#ff4fb4' },
+    dj:   { skin: '#f2c6a0', hair: '#37c3d6', shirt: '#a77bff' },
+    ho:   { skin: '#f5d6c0', hair: '#cbd5f0', shirt: '#6b7a99' },
+    miu:  { skin: '#f2c6a0', hair: '#ff8a5c', shirt: '#38c6c0' },
+    fong: { skin: '#f5d6c0', hair: '#3b2a1e', shirt: '#ffc247' },
+    chan: { skin: '#c98d5e', hair: '#4a5568', shirt: '#5a6478' },
+    yu:   { skin: '#f2c6a0', hair: '#1e2a3b', shirt: '#9be36b' },
+    mary: { skin: '#e0a77a', hair: '#6b3a1e', shirt: '#ff8fb1' },
+  };
+  const PASSERSBY = [
+    { id: 'p1',  name: '四樓的陳婆婆',   skin: '#f2c6a0', hair: '#c9d1dc', shirt: '#6b7a99' },
+    { id: 'p2',  name: '送水學徒阿俊',   skin: '#e0a77a', hair: '#2b2140', shirt: '#37c3d6' },
+    { id: 'p3',  name: '舊街裁縫林姨',   skin: '#f5d6c0', hair: '#6b3a1e', shirt: '#ff8a5c' },
+    { id: 'p4',  name: '夜更保安老周',   skin: '#c98d5e', hair: '#4a5568', shirt: '#2a3350' },
+    { id: 'p5',  name: '天橋底少年阿樂', skin: '#f2c6a0', hair: '#1e2a3b', shirt: '#9be36b' },
+    { id: 'p6',  name: '代課老師阿敏',   skin: '#f5d6c0', hair: '#3b2a1e', shirt: '#a77bff' },
+    { id: 'p7',  name: '單車維修員強叔', skin: '#8e5b3a', hair: '#8d99b4', shirt: '#ffc247' },
+    { id: 'p8',  name: '實習護士小晴',   skin: '#f2c6a0', hair: '#2b2140', shirt: '#5fd4ff' },
+    { id: 'p9',  name: '渡輪水手阿海',   skin: '#c98d5e', hair: '#1b1b28', shirt: '#38c6c0' },
+    { id: 'p10', name: '天台養蜂人白叔', skin: '#e0a77a', hair: '#cbd5f0', shirt: '#8be28f' },
+    { id: 'p11', name: '收舊電器的阿萍', skin: '#f2c6a0', hair: '#6b3a1e', shirt: '#ff8fb1' },
+    { id: 'p12', name: '新搬來的租客阿哲', skin: '#e0a77a', hair: '#2b2140', shirt: '#8e9bb0' },
+  ];
+
+  function inRounds(s) {
+    return !!(s && s.mode === 'rounds');
+  }
+  function cash(s, v) {
+    const num = Math.round(v || 0);
+    return (IE.Rounds && IE.Rounds.on && IE.Rounds.on(s)) ? IE.Rounds.cash(s, num) : '$' + num;
+  }
+  function runRand(s) {
+    return (s && IE.Rules && IE.Rules.rand) ? IE.Rules.rand(s) : Math.random();
+  }
+  // 兩難出現時間：整個小遊戲時長的 40% 至 70%（使用局內亂數）
+  function dilemmaAt(s, duration) {
+    if (!inRounds(s)) return Infinity;
+    return duration * (0.4 + 0.3 * runRand(s));
+  }
+  // 從還在浮城的 D.NPCS 與路人表抽出指定人數（needFriend 為真時優先放入 1 位還在浮城的朋友）
+  function pickPeople(s, count, needFriend) {
+    const D = IE.DATA || {};
+    const friends = [];
+    if (s && Array.isArray(D.NPCS) && Array.isArray(s.npcs)) {
+      D.NPCS.forEach((def) => {
+        const stNpc = s.npcs.find((x) => x.id === def.id);
+        const taken = !!(s.story && s.story.taken && s.story.taken[def.id]);
+        if (stNpc && stNpc.alive !== false && !taken) {
+          const lk = NPC_LOOK[def.id] || PASSERSBY[0];
+          friends.push({
+            id: def.id,
+            name: def.name,
+            friend: true,
+            skin: lk.skin,
+            hair: lk.hair,
+            shirt: lk.shirt,
+            pal: { h: lk.hair, f: lk.skin, j: lk.shirt },
+          });
+        }
+      });
+    }
+    const out = [];
+    if (needFriend && friends.length) {
+      const fi = Math.floor(runRand(s) * friends.length);
+      out.push(friends[fi]);
+    }
+    const pool = PASSERSBY.map((p) => ({
+      id: p.id,
+      name: p.name,
+      friend: false,
+      skin: p.skin,
+      hair: p.hair,
+      shirt: p.shirt,
+      pal: { h: p.hair, f: p.skin, j: p.shirt },
+    }));
+    if (!needFriend && friends.length) {
+      friends.forEach((f) => pool.push(f));
+    }
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(runRand(s) * (i + 1));
+      const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    for (let i = 0; i < pool.length && out.length < count; i++) {
+      if (!out.some((x) => x.id === pool[i].id)) out.push(pool[i]);
+    }
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(runRand(s) * (i + 1));
+      const tmp = out[i]; out[i] = out[j]; out[j] = tmp;
+    }
+    return out;
+  }
+  function majorityStance(votes) {
+    const cnt = { comply: 0, resist: 0, care: 0 };
+    (votes || []).forEach((v) => { if (cnt[v] != null) cnt[v]++; });
+    const best = Math.max(cnt.comply, cnt.resist, cnt.care);
+    if (best <= 0) return 'comply';
+    const winners = ['comply', 'resist', 'care'].filter((k) => cnt[k] === best);
+    return winners.length === 1 ? winners[0] : 'comply';
+  }
+  function syncControls(spec) {
+    if (typeof document === 'undefined' || !spec) return;
+    Object.keys(spec).forEach((id) => {
+      const btn = document.querySelector('#panel [data-ctrl="' + id + '"]');
+      if (!btn) return;
+      const cfg = spec[id];
+      if (cfg.hidden != null) btn.hidden = !!cfg.hidden;
+      if (cfg.active != null) btn.classList.toggle('is-active', !!cfg.active);
+      if (cfg.label != null) {
+        const keyTxt = cfg.key != null ? ' <small>' + cfg.key + '</small>' : '';
+        const nextHtml = cfg.label + keyTxt;
+        if (btn._lastCtrlHtml !== nextHtml) {
+          btn.innerHTML = nextHtml;
+          btn._lastCtrlHtml = nextHtml;
+        }
+      }
+    });
   }
 
   // ---------- 廣告：沒有付費訂閱時，彈出來遮住畫面 ----------
@@ -315,7 +439,7 @@
     c.fillStyle = col; c.fillRect(44, 5, Math.round(38 * perf), 3);
     [0.3, 0.5, 0.7, 0.85, 0.95].forEach((t) => { c.fillStyle = '#0b0f1a'; c.fillRect(44 + Math.round(38 * t), 5, 1, 3); });
     c.fillStyle = col; c.fillRect(84, 2, 17, 9);
-    if (m._flash > 0) { c.fillStyle = 'rgba(255,255,255,' + (m._flash * 0.25) + ')'; c.fillRect(0, 0, 320, 180); }
+    if (m._flash > 0 && !reducedMotion()) { c.fillStyle = 'rgba(255,255,255,' + (m._flash * 0.25) + ')'; c.fillRect(0, 0, 320, 180); }
     m._rkText = { id: rk.id, col };
   }
   // 文字在像素畫面之後另外畫（高解像度）
@@ -323,7 +447,7 @@
     const r = m._rkText;
     if (!r) return;
     P.text(r.id, 92.5, 2.5, { size: 7, align: 'center', color: '#0b0f1a', weight: 900, font: 'pixel' });
-    if (m._flash > 0.2) P.text(r.id + '！', 160, 24, { size: 16, align: 'center', color: r.col, weight: 900, font: 'pixel', alpha: m._flash, stroke: '#0b0f1a' });
+    if (m._flash > 0.2 && !reducedMotion()) P.text(r.id + '！', 160, 24, { size: 16, align: 'center', color: r.col, weight: 900, font: 'pixel', alpha: m._flash, stroke: '#0b0f1a' });
   }
   function ender(st, getResult, onDone) {
     lastGetter = getResult;
@@ -334,10 +458,61 @@
     };
   }
 
+  // ---------- 結算畫面 .mg-stance.s-<stance>（掛接 IE.UI.reportModal） ----------
+  function stanceHtml(rep) {
+    const st = rep && rep.stance;
+    const UI = IE.UI;
+    if (!st || !UI) return '';
+    const esc = UI.esc;
+    const D = IE.DATA || {};
+    const head = st.head || (D.STANCE_TEXT && D.STANCE_TEXT[st.id]) || '';
+    const autoBadge = st.auto && st.autoText ? '<span class="mgs-auto">' + esc(st.autoText) + '</span>' : '';
+    const lineHtml = st.line ? '<p class="mgs-line">' + esc(st.line) + '</p>' : '';
+    const cardBox = st.card && UI.cardHtml ? '<div class="mgs-card">' + UI.cardHtml(st.card) + '</div>' : '';
+    return '<div class="mg-stance s-' + esc(st.id) + '">'
+      + '<div class="mgs-top"><strong class="mgs-head">' + esc(head) + '</strong>' + autoBadge + '</div>'
+      + lineHtml
+      + cardBox
+      + '</div>';
+  }
+  function wrapReportModal(ui) {
+    if (!ui || !ui.reportModal || ui._stanceWrapped) return;
+    const orig = ui.reportModal;
+    ui.reportModal = function (rep, btnLabel) {
+      const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
+      if (!isRounds || !rep || !rep.stance) return orig.call(this, rep, btnLabel);
+      const stCardUid = rep.stance.card && rep.stance.card.uid;
+      const viewRep = Object.assign({}, rep, {
+        cards: (rep.cards || []).filter((c) => !stCardUid || c.uid !== stCardUid),
+        lines: (rep.lines || []).filter((l) => !l || !l._stanceLine),
+      });
+      const base = orig.call(this, viewRep, btnLabel);
+      const block = stanceHtml(rep);
+      const ulIdx = base.indexOf('<ul class="lines">');
+      const at = ulIdx >= 0 ? ulIdx : base.lastIndexOf('<div class="btn-row">');
+      return at >= 0 ? base.slice(0, at) + block + base.slice(at) : base + block;
+    };
+    ui._stanceWrapped = true;
+  }
+  if (IE.UI) {
+    wrapReportModal(IE.UI);
+  } else {
+    let _ui = IE.UI;
+    Object.defineProperty(IE, 'UI', {
+      configurable: true,
+      enumerable: true,
+      get() { return _ui; },
+      set(v) { _ui = v; wrapReportModal(v); },
+    });
+  }
+
   const registry = {};
   IE.Micro = {
     META: MICRO_META,
-    C: { banner, drawBanner, adSystem, topBar, face, ender },
+    C: {
+      banner, drawBanner, adSystem, topBar, face, ender,
+      reducedMotion, inRounds, cash, dilemmaAt, pickPeople, majorityStance, syncControls, stanceHtml,
+    },
     register(kind, factory) { registry[kind] = factory; },
     create(kind, opts, onDone) {
       creatingKind = kind;

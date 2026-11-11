@@ -3,6 +3,7 @@
 // 檢查白天面板、換一批、小遊戲、創作桌（今晚目標、收工演出、結束面板）、市集（開包、技法課、工作室服務）、重新載入，確保沒有 JS 錯誤。
 // 用法：node tools/smoke-rounds.js
 'use strict';
+// 審核修正（2026-11-11）：按鈕高度一律用 offsetHeight 量。視窗打開時有縮放的動畫，getBoundingClientRect 在動畫途中會量到縮小了的高度（43px）。
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -237,7 +238,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(150);
     const stMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-story button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-story button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (stMob.sw > 390) await fail('手機 390px .rd-story 出現橫向捲動：scrollWidth=' + stMob.sw);
@@ -316,7 +317,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(100);
-    const stageH = await page.$eval('#stage canvas', (c) => Math.round(c.getBoundingClientRect().height));
+    const stageH = await page.$eval('#stage canvas', (c) => c.offsetHeight);
     const nameBottoms = await page.$$eval('.rd-day .rd-card .rd-name', (els) => els.map((e) => Math.round(e.getBoundingClientRect().bottom)));
     if (stageH < 300 || nameBottoms.length !== 3) {
       await fail('桌面 1280×800 的浮城畫面應至少 300px 高，並有三張生活卡：' + JSON.stringify({ stageH, nameBottoms }));
@@ -444,7 +445,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(150);
     const dayMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (dayMob.sw > 390) await fail('手機 390px 白天面板出現橫向捲動：scrollWidth=' + dayMob.sw);
@@ -495,7 +496,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(120);
     const deckMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-deck button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-deck button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (deckMob.sw > 390 || deckMob.minH < 44) {
@@ -528,7 +529,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(120);
     const cbMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .card-back button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .card-back button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (cbMob.sw > 390 || cbMob.minH < 44) {
@@ -609,7 +610,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(150);
     const ctMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#ctable .ct-actions .btn')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#ctable .ct-actions .btn')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (ctMob.sw > 390) await fail('手機 390px 創作台出現橫向捲動：scrollWidth=' + ctMob.sw);
@@ -754,7 +755,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(150);
     const shopMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-shop button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-shop button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (shopMob.sw > 390) await fail('手機 390px 市集出現橫向捲動：scrollWidth=' + shopMob.sw);
@@ -851,7 +852,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(120);
     const noGigMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (noGigMob.sw > 390 || noGigMob.minH < 44) {
@@ -902,7 +903,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(120);
     const overMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-over button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-over button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (overMob.sw > 390 || overMob.minH < 44) {
@@ -948,7 +949,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(120);
     const memMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-memory button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-memory button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (memMob.sw > 390 || memMob.minH < 44) {
@@ -1153,7 +1154,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(200);
     const revMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-review button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-review button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -1177,6 +1178,62 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('應進入「第 2 輪・第 4／15 晚」，實際：' + r2Title);
     }
     ok('按繼續進入：' + r2Title);
+
+    // WO-16-03：用差事開一次 label，中途觸發抗議照片兩難，結算畫面顯示 .mg-stance
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.gigs = [{ micro: 'label', from: 'round', night: s.night }];
+      s.offer = null;
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('.rd-day .rd-card[data-card="label"]');
+    await page.click('.rd-day .rd-card[data-card="label"]');
+    await page.waitForSelector('#modal [data-do="byhand"]');
+    await page.click('#modal [data-do="byhand"]');
+    await page.waitForFunction(() => !!(window.__IE.Game.micro && window.__IE.Game.micro.kind === 'label'));
+    await page.evaluate(() => {
+      const m = window.__IE.Game.micro;
+      // 審核修正：馬上觸發兩難。原來一路亂按「是」，隨機的題目錯得多時會在兩難出現之前就下班（結果是「照做」），測試時好時壞。
+      m._st.dilemmaAt = 0;
+      for (let i = 0; i < 600 && !(m._st.item && m._st.item.protest && m._st.item.y >= 24); i++) {
+        m.update(0.2);
+        if (m._st.item && !m._st.item.protest && m._st.item.y >= 24) m.control('yes', true);
+      }
+    });
+    await page.waitForSelector('#panel [data-ctrl="pass"]:not([hidden])');
+    // 審核修正：按鈕存在之後，在同一個 evaluate 裏等到抗議的照片可以作答才按「跳過」。
+    // 原來用 page.click，真實時間繼續走，照片可能已經超時換了下一張（在較慢的機器上不穩定）。
+    await page.evaluate(() => {
+      const m = window.__IE.Game.micro;
+      let passed = false;
+      for (let i = 0; i < 600 && window.__IE.Game.micro === m; i++) {
+        if (!passed && m._st.phase === 'play' && m._st.item && m._st.item.protest && m._st.item.y >= 24 && !(m._st.lock > 0)) {
+          m.control('pass', true); m.control('pass', false);
+          passed = m._st.protestSkipped >= 1;
+          continue;
+        }
+        m.update(0.25);
+        if (m._st.phase === 'play' && m._st.item && m._st.item.y >= 24) m.control('yes', true);
+      }
+    });
+    await page.waitForSelector('#modal .mg-stance');
+    await scanMoney('差事 label 結算（.mg-stance）', ['#modal'], 0);
+    const mgStanceCheck = await page.evaluate(() => {
+      const D = window.__IE.DATA;
+      const el = document.querySelector('#modal .mg-stance');
+      const txt = el ? el.textContent : '';
+      return {
+        hasCareCls: !!(el && el.classList.contains('s-care')),
+        hasHead: !!(D.STANCE_TEXT && txt.includes(D.STANCE_TEXT.care)),
+        hasLine: !!(D.STANCE && D.STANCE.label && txt.includes(D.STANCE.label.lines.care)),
+        hasCard: !!(D.STANCE && D.STANCE.label && txt.includes(D.STANCE.label.care.name)),
+      };
+    });
+    if (!mgStanceCheck.hasCareCls || !mgStanceCheck.hasHead || !mgStanceCheck.hasLine || !mgStanceCheck.hasCard) {
+      await fail('差事 label 結算畫面 .mg-stance 檢查不通過：' + JSON.stringify(mgStanceCheck));
+    }
+    await page.evaluate(() => { window.__IE.UI.closeModal(); });
+    ok('差事開 label：抗議兩難「跳過」掣正常，結算畫面有 .mg-stance.s-care、公文評語與立場卡');
 
     // WO-15-13 (7) & (3)：第 2 輪不藏朋友，進入第 2 輪篩選日（朋友被收藏），按繼續到第 3 輪第 1 晚觸發 .rd-reversal 與 .rd-fate
     const r2Npc = await page.evaluate(() => {
@@ -1245,7 +1302,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(150);
     const rvMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-reversal button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-reversal button')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (rvMob.sw > 390) await fail('手機 390px .rd-reversal 出現橫向捲動：scrollWidth=' + rvMob.sw);
@@ -1375,7 +1432,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(120);
     const fpMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .rd-floodpick [data-do="floodpick"]')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .rd-floodpick [data-do="floodpick"]')).map((b) => b.offsetHeight);
       return { sw, count: hs.length, minH: Math.min(...hs) };
     });
     if (fpMob.sw > 390) await fail('手機 390px .rd-floodpick 出現橫向捲動：scrollWidth=' + fpMob.sw);
@@ -1418,7 +1475,7 @@ const URL = 'http://localhost:' + PORT + '/';
     const foMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
       const btn = document.querySelector('#modal .rd-floodout [data-do="floodok"]');
-      return { sw, btnH: btn ? Math.round(btn.getBoundingClientRect().height) : 0, floor: window.__IE.Game.state.floor };
+      return { sw, btnH: btn ? btn.offsetHeight : 0, floor: window.__IE.Game.state.floor };
     });
     if (foMob.sw > 390 || foMob.btnH < 44 || foMob.floor !== 0) {
       await fail('手機 390px .rd-floodout 檢查不通過：' + JSON.stringify(foMob));
@@ -1536,7 +1593,7 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForTimeout(150);
     const endMob = await page.evaluate(() => {
       const sw = document.documentElement.scrollWidth;
-      const hs = Array.from(document.querySelectorAll('#modal .btn-row .btn, #panel .btn-row .btn')).map((b) => Math.round(b.getBoundingClientRect().height));
+      const hs = Array.from(document.querySelectorAll('#modal .btn-row .btn, #panel .btn-row .btn')).map((b) => b.offsetHeight);
       return { sw, minH: Math.min(...hs) };
     });
     if (endMob.sw > 390) await fail('手機 390px 結局畫面出現橫向捲動：scrollWidth=' + endMob.sw);
