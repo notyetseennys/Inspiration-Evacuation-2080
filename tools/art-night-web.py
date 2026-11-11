@@ -4,6 +4,7 @@
 - 天空：960×600，地平線在 y=340；記下天空的平均色（統一色調用）。
 - 遠景、碼頭、中景、主角、小景、夥伴：裁到主體；中景切去自帶的一整條水面；縮到這一類的顯示高度。
 - 前景：960×600。金框記下內框的位置。
+- 每張組畫素材另存一張光暈圖 <名稱>.glow.webp（四分之一大小，只留發光的像素），清單記 g:1。
 - 名作：寬 1280；有重做（-2）就用重做的版本，檔名不變。
 做法見 docs/art-prompts/night-painting.md 第八節。
 
@@ -43,6 +44,22 @@ def crisp(im):
 
 def scale(im, s):
     return im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
+
+
+def glow(im):
+    """發光的像素（和 proto/night5/painter.js 的 glowOf 相同）：縮到四分之一，不發光的變透明。
+    主遊戲用 file:// 開啟時不可以讀畫布像素，所以在這裏先算好。沒有發光像素就回傳 None。"""
+    q = im.convert('RGBA').resize((max(1, im.width // 4), max(1, im.height // 4)), Image.BILINEAR)
+    a = np.array(q).astype(float)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mx, mn = a[..., :3].max(-1), a[..., :3].min(-1)
+    lum = 0.299 * r + 0.587 * g + 0.114 * b
+    hot = (((mx > 205) & ((mx - mn) / (mx + 1) > 0.3) & (lum > 128)) | (lum > 225)) & (a[..., 3] >= 128)
+    if not hot.any():
+        return None
+    a[..., 3] = np.where(hot, a[..., 3], 0)
+    a[~hot, :3] = 0
+    return Image.fromarray(a.astype('uint8'), 'RGBA')
 
 
 def main():
@@ -98,6 +115,12 @@ def main():
         total += os.path.getsize(path)
         if cat != 'work':
             info.update(w=im.width, h=im.height)
+            gl_im = glow(im)
+            if gl_im is not None:
+                gpath = os.path.join(out, name + '.glow.webp')
+                gl_im.save(gpath, 'WEBP', quality=80, method=6)
+                total += os.path.getsize(gpath)
+                info['g'] = 1  # 有光暈圖 <名稱>.glow.webp
             meta['a'][name] = info
     meta['works'] = sorted(n[8:] for n in files if n.startswith('np-work-'))
     with open(os.path.join(out, 'night-art.json'), 'w') as f:
