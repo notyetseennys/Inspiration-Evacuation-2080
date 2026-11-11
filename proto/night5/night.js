@@ -387,12 +387,14 @@
   }
 
   // ---------- 一晚 ----------
+  // 世界在變：水位一晚比一晚高；第三晚是寒潮（下雪、水面結冰）
+  const sceneOf = (night) => ({ flood: [0.15, 0.6, 1][night] || 0, cold: night === 2 });
   const paintSeed = () => (run.seed * 31 + run.night * 7 + (run.retries || 0) * 101) % 1679616;
   function beginNight(showIntroSheet) {
     const n = P.startNight(run);
     n.played = {};
     sel = []; lastStruct = null; busy = false;
-    Pt.blank(paintSeed());
+    Pt.blank(paintSeed(), sceneOf(run.night));
     Mu.setNight(n.def);
     BGM.play(n.def.bgm);
     $('nightNo').textContent = '第 ' + (run.night + 1) + ' 晚' + (n.def.boss ? '・外星評審之夜' : '');
@@ -915,7 +917,7 @@
     const w0 = P.decodeWork(code);
     if (!w0) return false;
     const nd = P.NIGHTS[w0.night];
-    Pt.blank(w0.seed);
+    Pt.blank(w0.seed, sceneOf(w0.night));
     const sections = [], stanzas = [];
     const repair = w0.colabs.reduce((a, id) => a + ((C(id) && C(id).repair) || 0), 0);
     let title = null, motif = null;

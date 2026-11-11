@@ -255,6 +255,8 @@
 - 第十六期的工單放在 `docs/workorders/phase-16/`，總規格寫在 `phase-16/README.md`；`CLAUDE.md` 和本文件的「先讀」清單要一併更新。
 - 第十五期的驗收工具全部保留：`scanMoney`（票面價格）、圖片清單檢查、`sim-rounds.js` 的 `TRIP=any`；舊模式的 `sim.js 20` 基準仍然是 `/tmp/ie-scratch/sim-base-23e4501.txt`（如果不在，用 WO-15-10 合併之前的 commit 重新產生）。
 
+- **畫面大幅提升（2026-11-11，製作人要求）**：分兩步。（一）原型第五版加入水位（三晚 0.15、0.6、1）、寒潮（結冰、裂紋、下雪）、閃電、天空橫移、中景浮動、水面閃光，已經重新發布。（二）主遊戲：美術包 `game/art/`（154 張素材和 143 張光暈圖，4.2 MB，不內嵌到 `dist/`）和清單 `game/js/data-art.js` 已經提交；`tools/art-night-web.py` 會同時輸出光暈圖（因為 `file://` 不可以讀畫布像素）。工單 WO-16-08（浮城夜景）已經寫好，等 06。WO-16-09（創作之夜用真圖）未寫：要先由 Claude 寫好主遊戲 138 張卡對應素材的資料（`D.CARD_ART`），名作圖（17 MB）要不要放進倉庫等製作人決定。
+
 ## 6.1 審核 WO-15-11、13（故事線）時要特別留意
 
 - `data-story.js`、`data-cities.js`、`story-data.test.js`、`spec.test.js` 沒有被改（Gemini 只可以讀）。

@@ -81,9 +81,11 @@
   let raf = 0, lastT = 0;
   const main = mk(W, H), layer = mk(W, H), glowC = mk(W >> 2, H >> 2), waterC = mk(W, H - WATER_TOP);
   let vig = null;
-  function blank(seed) {
+  // opts.flood：0 至 1，水位（越高，水越接近建築和碼頭）；opts.cold：寒潮（下雪、水面結冰）
+  function blank(seed, opts) {
     seed0 = seed || 1;
-    sc = { sky: null, skyA: 0, far: [], mids: [], bays: [], pier: 'np-stage-pier-' + (seed0 % 3 + 1), pierA: 0, front: null, frontA: 0, lights: 0.4, lightsTo: 0.4,
+    const o = opts || {};
+    sc = { flood: Math.max(0, Math.min(1, o.flood || 0)), cold: !!o.cold, snow: [], cracks: null, bolt: 0, nextBolt: 4, glints: [], sky: null, skyA: 0, far: [], mids: [], bays: [], pier: 'np-stage-pier-' + (seed0 % 3 + 1), pierA: 0, front: null, frontA: 0, lights: 0.4, lightsTo: 0.4,
       fulls: 0, gold: 0, rain: false, sparks: [], marks: [], drops: [] };
     signText = '';
     asset(sc.pier);
@@ -169,7 +171,7 @@
       const tick = () => {
         const k = Math.min(1, (performance.now() - t0) / ms);
         plan.step(1 - Math.pow(1 - k, 3));
-        if (k < 1) requestAnimationFrame(tick); else res();
+        if (k < 1) requestAnimationFrame(tick); else { puff(plan.at); res(); }
       };
       tick(); loop();
     });
@@ -205,7 +207,8 @@
     const amb = (s.sky && A().sky[s.sky]) || [40, 46, 70];
     const sky = s.sky ? asset(s.sky) : null;
     if (sky && sky.ok && s.skyA > 0) {
-      g.globalAlpha = s.skyA; g.drawImage(sky.im, 0, 0, W, H);
+      const pan = still ? 0 : Math.sin(t * 0.06) * 9;
+      g.globalAlpha = s.skyA; g.drawImage(sky.im, -14 + pan, -6, W + 28, H + 12);
       // 天色在水面的倒影
       if (!sky.band) {
         const c = mk(W, 140), q = c.getContext('2d');
@@ -224,7 +227,7 @@
     if (s.mids.length) {
       s.mids.forEach((m) => { const o = asset(m.name); if (!o.ok || m.fl || m.a <= 0) return; const r = reflOf(o), w = o.im.width * m.s, h = o.im.height * m.s; g.globalAlpha = m.a; g.drawImage(r, m.x - w / 2, m.base, w, h); g.globalAlpha = 1; });
       lg.globalCompositeOperation = 'source-over'; lg.clearRect(0, 0, W, H);
-      s.mids.forEach((m) => { const o = asset(m.name); if (!o.ok) return; const w = o.im.width * m.s, h = o.im.height * m.s; drawItem(lg, o, m.x - w / 2, m.base - h, w, h, m.flip, m.a); });
+      s.mids.forEach((m, mi) => { const o = asset(m.name); if (!o.ok) return; const w = o.im.width * m.s, h = o.im.height * m.s; const bob = still ? 0 : m.fl ? Math.sin(t * 1.3 + mi) * 4 : Math.sin(t * 0.9 + mi * 2) * 0.8; drawItem(lg, o, m.x - w / 2, m.base - h + bob, w, h, m.flip, m.a); });
       lg.globalCompositeOperation = 'source-atop'; lg.fillStyle = 'rgba(' + amb[0] + ',' + amb[1] + ',' + amb[2] + ',0.2)'; lg.fillRect(0, 0, W, H);
       g.drawImage(layer, 0, 0);
     }
@@ -239,13 +242,38 @@
     });
     gg.globalAlpha = 1;
     // 水波：水面按行左右移
-    if (!still || true) {
+    if (!s.cold) {
       const wc = waterC.getContext('2d');
       wc.clearRect(0, 0, W, H - WATER_TOP); wc.drawImage(main, 0, WATER_TOP, W, H - WATER_TOP, 0, 0, W, H - WATER_TOP);
       for (let y = 0; y < H - WATER_TOP; y += 3) {
         const d = y / (H - WATER_TOP), dx = Math.sin(y * 0.21 + t * 2.2) * (0.6 + d * 2.6) + Math.sin(y * 0.05 - t * 1.1) * d * 1.6;
         g.drawImage(waterC, 0, y, W, 3, dx, WATER_TOP + y, W, 3);
       }
+    }
+    // 水位：水漲上來，淹過高腳和碼頭的下半（每晚更高）
+    if (s.flood > 0 && s.skyA > 0.3) {
+      const rise = Math.round(s.flood * 36), top = 404 - rise;
+      const wg = g.createLinearGradient(0, top, 0, 404 + 10);
+      const dark = 'rgba(' + Math.round(amb[0] * 0.35) + ',' + Math.round(amb[1] * 0.42) + ',' + Math.round(amb[2] * 0.55 + 14) + ',';
+      wg.addColorStop(0, dark + '0.62)'); wg.addColorStop(1, dark + '0.0)');
+      g.globalAlpha = s.skyA; g.fillStyle = wg; g.fillRect(0, top, W, rise + 14);
+      g.fillStyle = 'rgba(220,240,255,0.28)';
+      for (let x = 0; x < W; x += 6) { const yy = top + Math.sin(x * 0.06 + t * 1.8) * 1.4; g.fillRect(x, yy, 4, 1); }
+      g.globalAlpha = 1;
+    }
+    // 寒潮：水面結冰（不再有水波），冰上有裂紋
+    if (s.cold && s.skyA > 0.3) {
+      const top = 404 - Math.round(s.flood * 36);
+      g.fillStyle = 'rgba(200,228,255,' + (0.2 * s.skyA) + ')'; g.fillRect(0, top, W, H - top);
+      if (!s.cracks) { s.cracks = []; let r = seed0 * 9301 + 49297; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280; for (let i = 0; i < 26; i++) { const x = rnd() * W, y = top + 10 + rnd() * (H - top - 120), n = 3 + (rnd() * 4 | 0), pts = [[x, y]]; for (let k = 0; k < n; k++) pts.push([pts[k][0] + (rnd() - 0.5) * 90, pts[k][1] + (rnd() - 0.3) * 14]); s.cracks.push(pts); } }
+      g.strokeStyle = 'rgba(235,246,255,' + (0.3 * s.skyA) + ')'; g.lineWidth = 1; g.beginPath();
+      s.cracks.forEach((pts) => { g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((q) => g.lineTo(q[0], q[1])); });
+      g.stroke();
+    } else if (!still && s.skyA > 0.5) {
+      // 波光：水面上一閃一閃的短橫線
+      if (s.glints.length < 46) s.glints.push({ x: Math.random() * W, y: 414 + Math.random() * (H - 414 - 100), l: 0, w: 6 + Math.random() * 16 });
+      s.glints = s.glints.filter((q) => q.l < 1);
+      s.glints.forEach((q) => { q.l += 0.035; g.fillStyle = 'rgba(255,255,255,' + (0.3 * Math.sin(q.l * 3.14159)) + ')'; g.fillRect(q.x, q.y, q.w, 1); });
     }
     // 碼頭和前排的小場景
     if (s.pierA > 0 || s.bays.length) {
@@ -254,6 +282,14 @@
       s.bays.filter((b) => !b.z).concat(s.bays.filter((b) => b.z)).forEach((b) => { const o = asset(b.name); drawItem(lg, o, b.x, H + 2 - b.h, b.w, b.h, b.flip, b.a); });
       lg.globalCompositeOperation = 'source-atop'; lg.fillStyle = 'rgba(' + amb[0] + ',' + amb[1] + ',' + amb[2] + ',0.13)'; lg.fillRect(0, 0, W, H);
       g.drawImage(layer, 0, 0);
+      if (s.flood > 0.55 && s.pierA > 0) {
+        const hgt = Math.round((s.flood - 0.5) * 44), y0 = H - hgt;
+        const pg = g.createLinearGradient(0, y0, 0, H); pg.addColorStop(0, 'rgba(20,46,78,0.0)'); pg.addColorStop(0.35, 'rgba(20,46,78,0.5)'); pg.addColorStop(1, 'rgba(12,30,56,0.72)');
+        g.globalAlpha = s.pierA; g.fillStyle = pg; g.fillRect(0, y0, W, hgt);
+        g.fillStyle = s.cold ? 'rgba(235,246,255,0.45)' : 'rgba(220,240,255,0.3)';
+        for (let x = 0; x < W; x += 7) g.fillRect(x, y0 + hgt * 0.35 + (s.cold ? 0 : Math.sin(x * 0.05 + t * 2.1) * 1.5), 5, 1);
+        g.globalAlpha = 1;
+      }
       s.bays.forEach((b) => {
         const o = asset(b.name); if (!o.ok || b.a <= 0) return; const gl = glowOf(o); if (!gl) return;
         gg.globalAlpha = b.a * 0.4;
@@ -282,6 +318,17 @@
       s.drops.forEach((d) => { if (!still) { d.y += d.v / 20; d.x -= d.v / 20 * 0.2; if (d.y > H) { d.y = -20; d.x = Math.random() * (W + 120); } } g.moveTo(d.x, d.y); g.lineTo(d.x + d.l * 0.2, d.y - d.l); });
       g.stroke();
     }
+    // 閃電：戲劇性的風暴天空偶然一閃，全畫亮一下
+    if (!still && s.sky && /-(anger|rebel)-2$/.test(s.sky) && s.skyA > 0.9) {
+      if (t > s.nextBolt) { s.bolt = 1; s.nextBolt = t + 5 + Math.random() * 8; }
+      if (s.bolt > 0) { g.fillStyle = 'rgba(255,240,235,' + (0.22 * s.bolt) + ')'; g.fillRect(0, 0, W, H); s.bolt -= 0.22; }
+    }
+    // 寒潮：雪，比雨慢，左右飄；全畫偏冷
+    if (s.cold && s.skyA > 0.3) {
+      g.fillStyle = 'rgba(160,200,255,0.07)'; g.fillRect(0, 0, W, H);
+      if (!s.snow.length) for (let i = 0; i < 150; i++) s.snow.push({ x: Math.random() * W, y: Math.random() * H, v: 0.6 + Math.random() * 1.4, r: 1 + Math.random() * 2.2, p: Math.random() * 6.283 });
+      s.snow.forEach((f) => { if (!still) { f.y += f.v; f.x += Math.sin(t * 0.8 + f.p) * 0.5; if (f.y > H) { f.y = -4; f.x = Math.random() * W; } } g.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.3 * Math.sin(f.p)) + ')'; g.fillRect(f.x, f.y, f.r, f.r); });
+    }
     // 火花、記號
     s.marks.forEach((m) => { g.strokeStyle = 'rgba(224,70,70,0.85)'; g.lineWidth = 5; g.beginPath(); g.moveTo(m[0] - 22, m[1] - 22); g.lineTo(m[0] + 22, m[1] + 22); g.moveTo(m[0] + 22, m[1] - 22); g.lineTo(m[0] - 22, m[1] + 22); g.stroke(); });
     s.sparks = s.sparks.filter((p) => p.life > 0);
@@ -300,6 +347,9 @@
       g.fillStyle = '#120e0a'; g.fillRect(0, 0, W, H);
       g.drawImage(main, q[0] - pad, q[1] - pad, q[2] - q[0] + 2 * pad, q[3] - q[1] + 2 * pad);
       g.drawImage(gold.im, 0, 0, W, H);
+    } else if (cv !== [...targets][0] && lastT) {
+      const z = 1.03 + 0.03 * Math.sin(lastT / 1000 * 0.25);
+      g.drawImage(main, (W - W * z) / 2, (H - H * z) / 2, W * z, H * z);
     } else g.drawImage(main, 0, 0);
   }
   function loop() {
@@ -312,6 +362,8 @@
     };
     raf = requestAnimationFrame(step);
   }
+  // 一張素材畫好的一刻：一圈細碎的光
+  function puff(at) { if (!sc || !at) return; for (let i = 0; i < 16; i++) { const a = Math.random() * 6.283, v = 1 + Math.random() * 2.2; sc.sparks.push({ x: at[0], y: at[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.6, r: 2 + Math.random() * 2, life: 0.5 + Math.random() * 0.4, c: i % 3 ? '#fff3c4' : '#ffd65a' }); } }
   function glint(n) { if (!sc) return; for (let i = 0; i < (n || 40) / 2; i++) sc.sparks.push({ x: Math.random() * W, y: Math.random() * H * 0.8, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 2, r: 2 + Math.random() * 3, life: 0.6 + Math.random() * 0.6, c: '#ffd65a' }); }
   function spray(at, color) { if (!sc) return; const x = at ? at[0] : W / 2, y = at ? at[1] : H / 2; for (let i = 0; i < 40; i++) sc.sparks.push({ x: x + (Math.random() - 0.5) * 60, y: y + (Math.random() - 0.5) * 60, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, r: 3 + Math.random() * 4, life: 1, c: color || '#ff4fb4' }); }
   function strike(at) { if (sc) sc.marks.push(at ? [at[0], at[1]] : [W / 2, H / 2]); }
