@@ -11,8 +11,30 @@
   'use strict';
   const D = IE.DATA, RL = IE.Rules;
   const C = D.CRAFT;
+  const CLASSIC_FORM = {};
   const FORM = {};
-  D.FORMS.forEach((f) => { FORM[f.id] = f; });
+  D.FORMS.forEach((f) => { CLASSIC_FORM[f.id] = f; FORM[f.id] = f; });
+  const deskOn = (s) => !!(IE.Rounds && IE.Rounds.on(s) && IE.Desk);
+  function syncDeskForms() {
+    if (!D.DESK_FORM) return;
+    Object.keys(D.DESK_FORM).forEach((id) => {
+      if (!CLASSIC_FORM[id]) {
+        FORM[id] = D.DESK_FORM[id];
+      } else {
+        Object.defineProperty(FORM, id, {
+          configurable: true,
+          enumerable: true,
+          get() {
+            const gs = IE.Game && IE.Game.state;
+            return gs && deskOn(gs) ? D.DESK_FORM[id] : CLASSIC_FORM[id];
+          },
+        });
+      }
+    });
+  }
+  syncDeskForms();
+  const formOf = (s, id) => (deskOn(s) && D.DESK_FORM && D.DESK_FORM[id]) || CLASSIC_FORM[id] || (D.DESK_FORM && D.DESK_FORM[id]) || FORM[id];
+  const formsOf = (s) => (deskOn(s) && D.DESK_FORMS ? D.DESK_FORMS : D.FORMS);
   const r1 = (v) => Math.round(v * 10) / 10;
   const r2 = (v) => Math.round(v * 100) / 100;
   const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
@@ -26,6 +48,17 @@
   }
   // 作品形式由低至高（決定「差一張」提示是否算升級）
   const RANK = ['mix', 'adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono', 'paradox'];
+  const rankOf = (s) => (deskOn(s) ? IE.Desk.RANK : RANK);
+  function repairOf(s) {
+    if (!deskOn(s) || !Array.isArray(s.npcs)) return 0;
+    return Math.min(1, s.npcs.filter((n) => n && n.alive && n.friend >= 4).length);
+  }
+  function objDef(s, id) {
+    const base = D.OBJ[id];
+    if (!base || !deskOn(s)) return base;
+    const ov = D.DESK_REMAP && D.DESK_REMAP.objects && D.DESK_REMAP.objects[id];
+    return ov ? Object.assign({}, base, ov) : base;
+  }
   // ---------- 星級（第十四期）：素材的點數 ----------
   // 沒有標明星級的素材按籌碼換算；極稀有一律 ★5
   const STAR_CHIPS = [0, 10, 18, 28, 42, 60];
@@ -111,9 +144,20 @@
     const scoring = id !== 'mix' ? cards.slice() : n ? [cards.reduce((a, c) => (starOf(c) > starOf(a) || (starOf(c) === starOf(a) && c.value > a.value) ? c : a), cards[0])] : [];
     return { id, keys: pal, palette: pal, scoring, counts, distinct, media, mdistinct, same: n >= 5 && mdistinct === 1, label };
   }
-  const level = (s, id) => (s.forms && s.forms[id]) || 1;
+  function level(s, id) {
+    if (!s || !s.forms) return 1;
+    if (!deskOn(s)) return s.forms[id] || 1;
+    let lv = s.forms[id] || 1;
+    const fmap = D.DESK && D.DESK.formMap;
+    if (fmap) {
+      Object.keys(fmap).forEach((oldId) => {
+        if (oldId !== id && fmap[oldId] === id && s.forms[oldId] > 1) lv += s.forms[oldId] - 1;
+      });
+    }
+    return lv;
+  }
   function formStats(s, id) {
-    const f = FORM[id], l = level(s, id);
+    const f = formOf(s, id), l = level(s, id);
     return { chips: f.chips + (l - 1) * f.up[0], mult: f.mult + (l - 1) * f.up[1], level: l };
   }
 
@@ -164,9 +208,9 @@
   function activeObjects(s) {
     const ids = s.objects || [];
     return ids.map((id, i) => {
-      let def = D.OBJ[id];
+      let def = objDef(s, id);
       if (def && def.copy) {
-        const right = D.OBJ[ids[i + 1]];
+        const right = objDef(s, ids[i + 1]);
         def = right && !right.copy ? Object.assign({}, right, { id, copyOf: right.id }) : null;
       }
       return def ? { id, slot: i, def } : null;
@@ -196,6 +240,119 @@
   // ---------- 計分 ----------
   function scorePlay(s, uids, opt) {
     const sel = uids.map((u) => cardOf(s, u)).filter(Boolean);
+    if (deskOn(s)) {
+      const A = IE.Desk.analyze(sel, { repair: repairOf(s) });
+      const fs = formStats(s, A.id);
+      let chips = fs.chips, mult = fs.mult;
+      const steps = [{ t: 'form', form: A.id, level: fs.level, chips, mult, C: chips, M: mult }];
+      const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
+      const objs = SR && SR.noObjects ? [] : activeObjects(s);
+      const schools = activeSchools(s, objs);
+      const ses = s.session || {};
+      const recs = A.run.length < 2 ? [] : matchRecipes(s, A.run);
+      const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
+      const counts = tagCounts(A.run), distinct = Object.keys(counts).length;
+      const media = mediaCounts(A.run), mdistinct = Object.keys(media).length;
+      const ctx = { s, sel, scoring: A.run, form: A.id, counts, distinct, media, mdistinct,
+        discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held,
+        roll: opt && opt.roll != null ? opt.roll : 0.5 };
+      const times = (r) => (r === true ? 1 : r || 0);
+      const noWear = schools.some((x) => x.def.noWear);
+      const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
+      const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
+      let echoNext = 0;
+      const blockedUids = new Set();
+      IE.Desk.structSteps(A).forEach((st) => {
+        if (st.t === 'card') {
+          const c = A.run[st.idx];
+          if (SR && SR.blocked(c)) {
+            blockedUids.add(c.uid);
+            echoNext = 0;
+            steps.push(snap({ t: 'blocked', uid: c.uid, idx: st.idx, role: st.role }));
+            return;
+          }
+          const echoed = echoNext;
+          echoNext = 0;
+          let reps = 1 + echoed + (c.mod === 'echo' ? 1 : 0) + (perkOf(s).allTwice ? 1 : 0);
+          objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, st.idx)); });
+          schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, st.idx, x.n)); });
+          for (let r = 0; r < reps; r++) {
+            const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
+            chips += v;
+            steps.push(snap({ t: 'card', uid: c.uid, idx: st.idx, role: st.role, chips: v, again: r > 0, echo: r > 0 && r <= echoed }));
+            const mf = MOD_FX[c.mod];
+            if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
+            objs.forEach((o) => {
+              if (!o.def.card) return;
+              const e = o.def.card(c, ctx);
+              if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
+            });
+            schools.forEach((x) => {
+              if (!x.def.card) return;
+              const e = x.def.card(c, ctx, x.n);
+              if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
+            });
+          }
+        } else if (st.t === 'compound') {
+          if (blockedUids.has(st.uid)) return;
+          apply(st);
+          if (st.fam === 'echo') echoNext += st.echo || 1;
+          steps.push(snap(Object.assign({}, st)));
+        } else {
+          apply(st);
+          steps.push(snap(Object.assign({}, st)));
+        }
+      });
+      held.forEach((c) => objs.forEach((o) => {
+        if (!o.def.held) return;
+        const e = o.def.held(c, ctx);
+        if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
+      }));
+      const sorted = topRecipes(recs);
+      let primary = false;
+      sorted.forEach((r) => {
+        let m = r.mult;
+        if (!r.legend) { if (primary) m = r.mult / 2; primary = true; }
+        chips += r.chips; mult += m;
+        if (r.xmult) mult *= r.xmult;
+        steps.push(snap({ t: 'recipe', id: r.id, name: r.name, chips: r.chips, mult: m, xmult: r.xmult || 0, legend: !!r.legend, isNew: !s.discovered[r.id] }));
+      });
+      objs.forEach((o) => {
+        if (!o.def.play) return;
+        const e = o.def.play(ctx);
+        if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot }, e))); }
+      });
+      schools.forEach((x) => {
+        if (!x.def.play) return;
+        const e = x.def.play(ctx, x.n);
+        if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id }, e))); }
+      });
+      mult = Math.max(0, mult);
+      const ai = aiFactor(s, A.id, objs, schools);
+      const wm = (RL.worldMods(s).signalMult) || 1;
+      const tm = IE.World ? IE.World.tripMult(s) : 1;
+      const wt = RL.weatherTag ? RL.weatherTag(s, sel) : null, wx = wt ? wt.x : 1;
+      const sm = SR ? SR.mult(A.id, ctx.kpiMod, sel) : 1;
+      const sp = s.spark * (SR ? SR.sparkMult : 1);
+      if (ai !== 1) steps.push({ t: 'ai', x: ai });
+      if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
+      if (wm !== 1) steps.push({ t: 'world', x: wm });
+      if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
+      if (wt) steps.push({ t: 'weather', x: wx, name: wt.name });
+      if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
+      steps.push({ t: 'spark', x: sp });
+      const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx);
+      const total = Math.round(raw * ctx.kpiMod);
+      const relief = r1(A.run.reduce((a, c) => a + (c.grams || 0), 0));
+      const keys = Object.keys(counts).filter((t) => wpos(t) >= 0);
+      const runSet = new Set(A.run.map((c) => c.uid));
+      return {
+        form: A.id, level: fs.level, keys, scoring: A.run.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
+        ai, kpi: ctx.kpiMod, world: wm, spark: s.spark, raw, total, steps, recipes: sorted.map((r) => r.id), relief, schools: schools.map((x) => x.id),
+        links: A.links, roles: IE.Desk.roles(A), he: A.he, noise: sel.filter((c) => !runSet.has(c.uid)).map((c) => c.uid),
+        subject: IE.Desk.subjectOf(A.run), s: A.s, e: A.e,
+      };
+    }
     const F = detectForm(sel);
     const fs = formStats(s, F.id);
     let chips = fs.chips, mult = fs.mult;
@@ -289,6 +446,41 @@
   function preview(s, uids) {
     const sel = uids.map((u) => cardOf(s, u)).filter(Boolean);
     if (!sel.length) return null;
+    if (deskOn(s)) {
+      const rep = repairOf(s);
+      const A = IE.Desk.analyze(sel, { repair: rep });
+      const fs = formStats(s, A.id);
+      const all = A.run.length < 2 ? [] : matchRecipes(s, A.run);
+      const recs = topRecipes(all).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+      const est = scorePlay(s, uids, { roll: 0.5 });
+      const have = new Set(all.map((r) => r.id));
+      const ses = s.session;
+      const hints = [];
+      const rk = IE.Desk.RANK;
+      if (ses && uids.length < maxCards(s)) {
+        ses.hand.filter((u) => !uids.includes(u)).forEach((u) => {
+          const c = cardOf(s, u);
+          if (!c || forbidden(s, c)) return;
+          const A2 = IE.Desk.analyze(sel.concat(c), { repair: rep });
+          if (A2.run.length >= 2) {
+            matchRecipes(s, A2.run).filter((r) => !have.has(r.id) && !r.legend).forEach((r) => {
+              if (!hints.some((h) => h.recipe === r.id)) hints.push({ uid: u, card: c.name, recipe: r.id, name: (s.discovered[r.id] || known(r.id)) ? r.name : '？？？', power: power(r) });
+            });
+          }
+          if (A2.id !== 'single' && rk.indexOf(A2.id) > rk.indexOf(A.id) && rk.indexOf(A2.id) >= rk.indexOf('contrast') && !hints.some((h) => h.form === A2.id)) {
+            const f2 = formOf(s, A2.id);
+            hints.push({ uid: u, card: c.name, form: A2.id, name: f2.name, power: rk.indexOf(A2.id) * 10 });
+          }
+        });
+      }
+      hints.sort((a, b) => b.power - a.power);
+      return {
+        form: A.id, name: formOf(s, A.id).name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: A.run.map((c) => c.uid),
+        recipes: recs, ai: aiFactor(s, A.id, activeObjects(s), activeSchools(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
+        blocked: est.steps.filter((x) => x.t === 'blocked').length,
+        links: A.links, roles: IE.Desk.roles(A), he: A.he, noise: est.noise, subject: est.subject,
+      };
+    }
     const F = detectForm(sel);
     const fs = formStats(s, F.id);
     const all = F.id === 'mix' ? [] : matchRecipes(s, sel);
@@ -320,12 +512,317 @@
   }
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
 
+  // 快速篩選五輪模式手牌中的相連序列候選（避免在 8 張以上手牌逐一展開數千次完整 scorePlay）
+  const MED_LIST = ['paper', 'sound', 'image', 'body', 'data'];
+  let recipeFastCache = null;
+  function getRecipeFast() {
+    if (recipeFastCache) return recipeFastCache;
+    const tagKeys = Object.keys(D.TAGS || {});
+    const idxOf = (t) => tagKeys.indexOf(t);
+    const list = (D.RECIPES || []).map((r) => {
+      const needKeys = Object.keys(r.need || {});
+      let mask = 0;
+      const reqs = [];
+      needKeys.forEach((t) => {
+        const ti = idxOf(t);
+        if (ti >= 0) {
+          mask |= (1 << ti);
+          reqs.push([ti, r.need[t]]);
+        }
+      });
+      return { id: r.id, mask, reqs, hasNeed: needKeys.length > 0, cond: r.cond || null, chips: r.chips || 0, mult: r.mult || 0, xmult: r.xmult || 1, legend: !!r.legend, power: power(r) };
+    }).sort((a, b) => b.power - a.power);
+    recipeFastCache = { tagKeys, list };
+    return recipeFastCache;
+  }
+
+  function deskCandidates(s, cards, cap) {
+    const m = cards.length;
+    const N = D.DESK;
+    const repMax = repairOf(s);
+    const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
+    const objs = SR && SR.noObjects ? [] : activeObjects(s);
+    const schools = activeSchools(s, objs);
+    const noWear = schools.some((x) => x.def.noWear);
+    const allTwice = perkOf(s).allTwice ? 1 : 0;
+    const kpi = RL.kpi(s) || {};
+    const packaged = !!(s.session && s.session.packaged);
+    const kpiTag = kpi.tag || null;
+    const rawKpiMod = kpi.mod != null ? kpi.mod : 1;
+    const kpiMult = kpiTag ? (packaged ? Math.max(1, rawKpiMod) : rawKpiMod) : 1;
+    const kpiLean = !packaged && kpi.special === 'lean';
+
+    const rf = getRecipeFast();
+    const numTags = rf.tagKeys.length;
+    const handTagTotals = new Array(numTags).fill(0);
+
+    const blocked = new Array(m);
+    const vals = new Array(m);
+    const extraReps = new Array(m);
+    const modChips = new Array(m);
+    const modMult = new Array(m);
+    const modX = new Array(m);
+    const fam = new Array(m);
+    const medBit = new Array(m);
+    const wheelMask = new Array(m);
+    const wheelIdxs = new Array(m);
+    const allTagMask = new Array(m);
+    const allTagIdxs = new Array(m);
+    const hasKpi = new Array(m);
+    const sigs = new Array(m);
+
+    for (let i = 0; i < m; i++) {
+      const c = cards[i];
+      blocked[i] = !!(SR && SR.blocked(c));
+      vals[i] = SR && SR.extraWear && !noWear
+        ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c))
+        : cardValue(s, c);
+      extraReps[i] = (c.mod === 'echo' ? 1 : 0) + allTwice;
+      modChips[i] = c.mod === 'shine' ? 30 : 0;
+      modMult[i] = c.mod === 'burn' ? 4 : 0;
+      modX[i] = c.mod === 'tear' ? 1.5 : 1;
+      const cp = IE.Desk.compoundOf(c);
+      fam[i] = cp && cp.fam ? cp.fam.id : null;
+      const mi = MED_LIST.indexOf(med(c));
+      medBit[i] = 1 << (mi >= 0 ? mi : 0);
+      let wm = 0, atm = 0;
+      const wi = [], ati = [];
+      for (let t = 0; t < c.tags.length; t++) {
+        const tag = c.tags[t];
+        const p = wpos(tag);
+        if (p >= 0) { wm |= (1 << p); wi.push(p); }
+        const ai = rf.tagKeys.indexOf(tag);
+        if (ai >= 0) { atm |= (1 << ai); ati.push(ai); handTagTotals[ai]++; }
+      }
+      wheelMask[i] = wm;
+      wheelIdxs[i] = wi;
+      allTagMask[i] = atm;
+      allTagIdxs[i] = ati;
+      hasKpi[i] = kpiTag ? c.tags.includes(kpiTag) : false;
+      sigs[i] = c.tags.join(',') + '|' + med(c) + '|' + starOf(c) + '|' + (c.wear || 0) + '|' + (c.mod || '') + '|' + (c.guilt ? c.grams : 0) + '|' + (c.origin || '') + '|' + (c.rarity || '') + '|' + (c.id && c.id.startsWith('a_') ? 1 : 0);
+    }
+
+    const activeRecs = rf.list.filter((r) => !r.cond && r.hasNeed && r.reqs.every(([ti, cnt]) => handTagTotals[ti] >= cnt));
+
+    const relMat = new Array(m);
+    for (let i = 0; i < m; i++) {
+      relMat[i] = new Array(m);
+      for (let j = 0; j < m; j++) {
+        relMat[i][j] = i === j ? 'same' : IE.Desk.rel(cards[i], cards[j]);
+      }
+    }
+
+    const fsChips = {}, fsMult = {}, aiMap = {}, perStruct = {};
+    IE.Desk.RANK.forEach((id) => {
+      const fs = formStats(s, id);
+      fsChips[id] = fs.chips;
+      fsMult[id] = fs.mult;
+      aiMap[id] = aiFactor(s, id, objs, schools);
+      perStruct[id] = [];
+    });
+
+    const topOverall = [];
+    const topUnrepaired = [];
+    const tagCnt = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const fullTagCnt = new Array(numTags).fill(0);
+    const used = new Array(m).fill(false);
+    const seqIdx = [];
+    const seqLinks = [];
+
+    const pushTop = (arr, maxLen, uids, q) => {
+      if (arr.length < maxLen) {
+        arr.push({ uids, q });
+        if (arr.length > 1) arr.sort((a, b) => b.q - a.q || a.uids.length - b.uids.length);
+      } else if (q > arr[maxLen - 1].q || (q === arr[maxLen - 1].q && uids.length < arr[maxLen - 1].uids.length)) {
+        arr[maxLen - 1] = { uids, q };
+        arr.sort((a, b) => b.q - a.q || a.uids.length - b.uids.length);
+      }
+    };
+
+    const dfs = (repLeft) => {
+      const len = seqIdx.length;
+      if (len > 0) {
+        let zc = 0, firstZ = -1;
+        for (let p = 0; p < len - 1; p++) {
+          if (seqLinks[p] === 'zhuan') {
+            zc++;
+            if (firstZ < 0) firstZ = p;
+          }
+        }
+        const rl0 = len >= 2 ? seqLinks[0] : '';
+        const ltf = len >= 3 ? relMat[seqIdx[len - 1]][seqIdx[0]] : '';
+        const he = len >= 3 && (ltf === 'same' || ltf === 'near' || ltf === 'fix');
+        let common = wheelMask[seqIdx[0]];
+        for (let p = 1; p < len && common; p++) common &= wheelMask[seqIdx[p]];
+        const mono = len >= 3 && common !== 0;
+        let id;
+        if (len <= 1) id = 'single';
+        else if (len === 2) id = rl0 === 'zhuan' ? 'contrast' : 'pair';
+        else if (mono) id = 'mono';
+        else if (he && zc && rl0 !== 'zhuan' && len >= 4 && firstZ < len - 2) id = 'full';
+        else if (he && zc) id = 'loop';
+        else if (he) id = 'echo';
+        else if (zc) id = 'twist';
+        else id = 'flow';
+
+        let chips = fsChips[id], mult = fsMult[id], echoNext = 0, firstZhuan = true, medMask = 0, kpiHit = false;
+        for (let q = 0; q < 10; q++) tagCnt[q] = 0;
+        if (len >= 2 && activeRecs.length) {
+          for (let q = 0; q < numTags; q++) fullTagCnt[q] = 0;
+        }
+        for (let p = 0; p < len; p++) {
+          const ci = seqIdx[p];
+          if (hasKpi[ci]) kpiHit = true;
+          medMask |= medBit[ci];
+          const wi = wheelIdxs[ci];
+          for (let q = 0; q < wi.length; q++) tagCnt[wi[q]]++;
+          if (len >= 2 && activeRecs.length) {
+            const ati = allTagIdxs[ci];
+            for (let q = 0; q < ati.length; q++) fullTagCnt[ati[q]]++;
+          }
+          if (blocked[ci]) {
+            echoNext = 0;
+          } else {
+            const reps = 1 + echoNext + extraReps[ci];
+            echoNext = 0;
+            chips += (vals[ci] + modChips[ci]) * reps;
+            mult += modMult[ci] * reps;
+            if (modX[ci] !== 1) { for (let r = 0; r < reps; r++) mult *= modX[ci]; }
+            const fm = fam[ci];
+            if (fm === 'blend') mult += N.family.blend.mult;
+            else if (fm === 'layer') chips += N.family.layer.chips;
+            else if (fm === 'echo') echoNext += N.family.echo.echo || 1;
+            else if (fm === 'tension') mult *= N.family.tension.xmult;
+            else if (fm === 'paradox') mult *= N.family.paradox.xmult;
+          }
+          if (p < len - 1) {
+            const lk = seqLinks[p];
+            if (lk === 'near') mult += N.near;
+            else if (lk === 'same' || lk === 'fix') mult += N.same;
+            else if (lk === 'zhuan' && firstZhuan) { mult *= N.zhuan; firstZhuan = false; }
+          }
+        }
+        if (len >= 3) {
+          let mc = 0, mm = medMask;
+          while (mm) { mc += mm & 1; mm >>= 1; }
+          mult += mc === 1 ? N.media.pure : (N.media[mc] || 0);
+          let mx = 0;
+          for (let q = 0; q < 10; q++) if (tagCnt[q] > mx) mx = tagCnt[q];
+          mult += N.subject[mx > 5 ? 5 : mx] || 0;
+        }
+        if (he) mult *= N.he;
+        if (id === 'full' || id === 'mono') mult *= N.title;
+        if (len >= 2 && activeRecs.length) {
+          let regSeen = 0;
+          for (let ri = 0; ri < activeRecs.length; ri++) {
+            const rc = activeRecs[ri];
+            if (!rc.legend && regSeen >= 2) continue;
+            let ok = true;
+            for (let p = 0; p < len; p++) {
+              if ((allTagMask[seqIdx[p]] & rc.mask) === 0) { ok = false; break; }
+            }
+            if (!ok) continue;
+            for (let q = 0; q < rc.reqs.length; q++) {
+              if (fullTagCnt[rc.reqs[q][0]] < rc.reqs[q][1]) { ok = false; break; }
+            }
+            if (!ok) continue;
+            chips += rc.chips;
+            mult += !rc.legend && regSeen === 1 ? rc.mult / 2 : rc.mult;
+            if (rc.xmult !== 1) mult *= rc.xmult;
+            if (!rc.legend) regSeen++;
+          }
+        }
+        const kFactor = (kpiHit ? kpiMult : 1) * (kpiLean && len >= 4 ? 0.5 : 1);
+        const q = chips * mult * aiMap[id] * kFactor;
+
+        const bucket = perStruct[id];
+        const wantStruct = bucket.length < 5 || q > bucket[4].q;
+        const wantTop = topOverall.length < 18 || q > topOverall[17].q;
+        const wantUnrep = len < cap && repLeft === repMax && repMax === 0 && (topUnrepaired.length < 4 || q > topUnrepaired[3].q);
+        if (wantStruct || wantTop || wantUnrep) {
+          const uids = new Array(len);
+          for (let p = 0; p < len; p++) uids[p] = cards[seqIdx[p]].uid;
+          if (wantStruct) pushTop(bucket, 5, uids, q);
+          if (wantTop) pushTop(topOverall, 18, uids, q);
+          if (wantUnrep) pushTop(topUnrepaired, 4, uids.concat(), q);
+        }
+      }
+      if (len >= cap) return;
+      const seen = new Set();
+      const prevIdx = len ? seqIdx[len - 1] : -1;
+      for (let i = 0; i < m; i++) {
+        if (used[i] || seen.has(sigs[i])) continue;
+        let nextRep = repLeft;
+        let lk = '';
+        if (prevIdx >= 0) {
+          const r = relMat[prevIdx][i];
+          if (r === 'duan') {
+            if (repLeft <= 0) continue;
+            nextRep = repLeft - 1;
+            lk = 'fix';
+          } else {
+            lk = r;
+          }
+        }
+        seen.add(sigs[i]);
+        used[i] = true;
+        seqIdx.push(i);
+        if (prevIdx >= 0) seqLinks.push(lk);
+        dfs(nextRep);
+        if (prevIdx >= 0) seqLinks.pop();
+        seqIdx.pop();
+        used[i] = false;
+      }
+    };
+    dfs(repMax);
+
+    const out = [];
+    const seenKey = new Set();
+    const addCand = (uids) => {
+      const key = uids.join(',');
+      if (!seenKey.has(key)) { seenKey.add(key); out.push(uids); }
+    };
+    topOverall.forEach((x) => addCand(x.uids));
+    IE.Desk.RANK.forEach((id) => perStruct[id].forEach((x) => addCand(x.uids)));
+    topUnrepaired.forEach((tr) => {
+      const firstUid = tr.uids[0];
+      const firstI = cards.findIndex((c) => c.uid === firstUid);
+      const seen = new Set();
+      for (let i = 0; i < m; i++) {
+        if (tr.uids.includes(cards[i].uid) || seen.has(sigs[i])) continue;
+        if (firstI >= 0 && relMat[i][firstI] !== 'duan') continue;
+        seen.add(sigs[i]);
+        addCand([cards[i].uid].concat(tr.uids));
+      }
+    });
+    return { cands: out, perStruct };
+  }
+
   // ---------- 手牌建議（第九期：創作桌的指引） ----------
   // 試遍手牌裡所有可以下筆的組合，每種作品形式留下預計得分最高的一組。
   // 用的是真正的計分（物件、流派、KPI、評審規則都計在內），所以建議的分數和下筆後的分數一致。
   function suggest(s, uids, limit) {
     const cards = uids.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
     const k = Math.min(maxCards(s), cards.length);
+    if (deskOn(s)) {
+      const best = {};
+      const maxRep = repairOf(s);
+      const dc = deskCandidates(s, cards, Math.min(5, k));
+      dc.cands.forEach((ids) => {
+        const sc = scorePlay(s, ids, { roll: 0.5 });
+        const cur = best[sc.form];
+        if (!cur || sc.total > cur.est || (sc.total === cur.est && ids.length < cur.uids.length)) {
+          best[sc.form] = { form: sc.form, uids: ids, est: sc.total, keys: sc.keys, label: sc.subject ? sc.subject.name : '' };
+        }
+      });
+      return Object.values(best).filter((x) => x.est > 0).sort((a, b) => b.est - a.est).slice(0, limit || 4).map((x) => {
+        const sel = x.uids.map((u) => cardOf(s, u));
+        const A = IE.Desk.analyze(sel, { repair: maxRep });
+        const fs = formStats(s, x.form);
+        const recipes = (A.run.length < 2 ? [] : topRecipes(matchRecipes(s, A.run))).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+        return Object.assign(x, { name: formOf(s, x.form).name, level: fs.level, chips: fs.chips, mult: fs.mult, recipes });
+      });
+    }
     const best = {};
     const pick = [];
     let n = 0;
@@ -374,8 +871,18 @@
       const p = odds(want || match, toss.length);
       if (p < 0.12) return;
       const fs = formStats(s, goal);
-      out.push({ goal, name: FORM[goal].name, label, keep: keep.length, uids: toss.map((c) => c.uid), odds: Math.round(p * 100), value: p * fs.chips * fs.mult });
+      out.push({ goal, name: formOf(s, goal).name, label, keep: keep.length, uids: toss.map((c) => c.uid), odds: Math.round(p * 100), value: p * fs.chips * fs.mult });
     };
+    if (deskOn(s)) {
+      const counts = {};
+      hand.forEach((c) => c.tags.forEach((t) => { if (wpos(t) >= 0) counts[t] = (counts[t] || 0) + 1; }));
+      Object.keys(counts).forEach((t) => {
+        if (counts[t] >= 2 && counts[t] < 5) plan('mono', (c) => c.tags.includes(t), { tag: t });
+        const o = opposite(t);
+        if (counts[t] >= 2 && !counts[o]) plan('full', (c) => c.tags.includes(t) || c.tags.includes(o), { tag: o, from: t }, (c) => c.tags.includes(o));
+      });
+      return out.sort((a, b) => b.value - a.value).slice(0, limit || 2);
+    }
     // 單色：保留最多的一種情緒（只有那種情緒的素材），換走其他
     const single = {};
     hand.forEach((c) => { if (c.tags.length === 1) single[c.tags[0]] = (single[c.tags[0]] || 0) + 1; });
@@ -422,7 +929,7 @@
         handSize: E.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
         plays: (perk.playsSet || E.plays) + m.plays + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0),
         discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
-        discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
+        discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, passed: false, encore: 0, refund,
       };
       s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
       s.session.abil = { used: 0, bought: 0 };
@@ -565,12 +1072,31 @@
     notes.push(...notes0);
     res.notes = notes;
     ses.notes.push(...notes);
+    const isDesk = deskOn(s);
+    const passedBefore = isDesk && !!(ses.passed || (ses.stage && IE.Stages && IE.Stages.stageScore(ses) >= ses.stage.target));
     ses.total += res.total; ses.raw += res.raw;
     // 看得見的作品（第十四期）：每一筆都是一幅有編號的小畫，記在這一局的作品集裡
     s.workNo = (s.workNo || 0) + 1;
     res.art = { form: res.form, pal: res.keys.slice(), no: s.workNo, seed: (s.seed || 1) * 31 + s.workNo * 7919 + s.day, total: res.total, day: s.day };
+    if (isDesk) res.art.subject = res.subject;
     s.gallery = (s.gallery || []).concat([res.art]).slice(-40);
-    ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
+    const logEntry = { form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() };
+    if (isDesk) logEntry.subject = res.subject;
+    ses.log.push(logEntry);
+    if (passedBefore) {
+      ses.encore = (ses.encore || 0) + 1;
+      const encSp = RL.addSpark(s, 0.1, true);
+      s.spark = r2(s.spark);
+      res.encorePlay = ses.encore;
+      if (encSp) {
+        notes.push('加演：火花 +' + encSp);
+        ses.notes.push('加演：火花 +' + encSp);
+      }
+    }
+    if (isDesk && !ses.passed && ses.stage && IE.Stages && IE.Stages.stageScore(ses) >= ses.stage.target) {
+      ses.passed = true;
+      res.justPassed = true;
+    }
     ses.lastUids = uids.slice();
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
@@ -593,11 +1119,16 @@
     draw(s);
     return true;
   }
-  function workName(log) {
+  function workName(log, s) {
     const best = log.reduce((a, x) => (x.total > a.total ? x : a), log[0]);
     const rec = best.recipes.map((id) => D.RECIPES.find((r) => r.id === id)).filter(Boolean)
       .sort((a, b) => (b.legend ? 100 : 0) + b.mult - ((a.legend ? 100 : 0) + a.mult))[0];
     if (rec) return rec.name;
+    if (s && deskOn(s)) {
+      const fn = formOf(s, best.form).name;
+      const sn = best.subject && best.subject.name;
+      return sn ? fn + '・' + sn : fn;
+    }
     // 第十四期：沒有具名組合，就用最好一筆的作品標題
     if (best.art && IE.Artwork) return IE.Artwork.title(best.art.form, best.art.pal, best.art.no).replace(/^《|》$/g, '');
     const counts = {};
@@ -630,7 +1161,7 @@
     }
     const tagCount = {};
     ses.log.forEach((x) => x.tags.forEach((t) => { tagCount[t] = (tagCount[t] || 0) + 1; }));
-    const work = { day: s.day, quarter: s.quarter, name: workName(ses.log), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
+    const work = { day: s.day, quarter: s.quarter, name: workName(ses.log, s), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
       score: ses.total, raw: ses.raw, medium: D.BACKGROUNDS[s.bg].medium, n: ses.log.length, form: best.form };
     s.works.push(work);
     s.stats.works++;
@@ -718,6 +1249,10 @@
         res.encore = true; res.notes = []; res.fresh = [];
         ses.total += res.total; ses.raw += res.raw;
         ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: ses.lastUids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat(), encore: true });
+        if (deskOn(s) && !ses.passed && ses.stage && IE.Stages && IE.Stages.stageScore(ses) >= ses.stage.target) {
+          ses.passed = true;
+          res.justPassed = true;
+        }
         msg = '安哥！觀眾要求再唱一次（×0.4）';
         break;
       }
@@ -805,6 +1340,38 @@
     const ses = s.session;
     const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
     if (!hand.length) return null;
+    if (deskOn(s)) {
+      const maxN = Math.min(maxCards(s), hand.length);
+      let best = null;
+      const evalSeq = (uids) => {
+        const sc = scorePlay(s, uids);
+        if (!best || sc.total > best.total || (sc.total === best.total && uids.length < best.uids.length)) {
+          best = { uids: uids.slice(), total: sc.total, form: sc.form };
+        }
+        return sc;
+      };
+      if (hand.length <= 5) {
+        const seq = [];
+        const used = new Array(hand.length).fill(false);
+        const perm = () => {
+          if (seq.length) evalSeq(seq);
+          if (seq.length >= maxN) return;
+          for (let i = 0; i < hand.length; i++) {
+            if (used[i]) continue;
+            used[i] = true;
+            seq.push(hand[i].uid);
+            perm();
+            seq.pop();
+            used[i] = false;
+          }
+        };
+        perm();
+        return best;
+      }
+      const dc = deskCandidates(s, hand, Math.min(5, maxN));
+      dc.cands.forEach((uids) => evalSeq(uids));
+      return best;
+    }
     const cands = new Map();
     const maxN = maxCards(s);
     const add = (cards) => { const uids = cards.slice(0, maxN).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
@@ -848,6 +1415,7 @@
 
   IE.Create = {
     FORM, RANK, STAR_CHIPS, starOf, cardValue, polishCost, polishStar, opposite, wheelDist: wdist, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    syncDeskForms, formOf, formsOf, rankOf, repairOf, objDef, deskOn,
     isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });

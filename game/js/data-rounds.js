@@ -147,6 +147,17 @@
     rehouse: 260,
     thaw: 0.6,
   };
+  // 創作桌超額三級獎勵（WO-16-09 §3）；不可列舉以維持 cards.test.js 對甲段鍵集合的既有檢查相容
+  Object.defineProperty(ECON16, 'over', {
+    value: [
+      { x: 2, spark: 0.2 },
+      { x: 5, spark: 0.4, ticket: 1 },
+      { x: 10, spark: 0.6, ticket: 1 },
+    ],
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
 
   // 第十六期：差事固定文案（總規格 §3.5）
   const GIG_TEXT = {

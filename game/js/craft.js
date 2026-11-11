@@ -32,8 +32,12 @@
     const tags = c.tags.map((t) => '<span class="t tag-' + t + '" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
+    const ord = o.sel && o.pos >= 0 && IE.Rounds && IE.Rounds.on(s)
+      ? '<span class="cc-ord num" style="position:absolute;top:4px;left:6px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#ffd36b;color:#141824;font-weight:800;font-size:11px;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.45);pointer-events:none;z-index:2">' + (o.pos + 1) + '</span>'
+      : '';
     return '<button type="button" class="cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
       + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+      + ord
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'
@@ -51,7 +55,7 @@
     return '<span class="cc-med" style="--c:' + m.color + '" title="媒材：' + m.full + '">' + m.name + '</span>';
   }
   function objTile(id, slot) {
-    const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
+    const o = C().objDef(st && st.s, id), sc = o.school && D().SCHOOLS[o.school];
     const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
     return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '') + (fl ? ' ' + fl : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span><span class="od">' + esc(o.desc) + '</span>'
@@ -164,7 +168,8 @@
   // ---------- 開啟 ----------
   function open(s, onDone) {
     const meta = IE.Game.meta || {};
-    const needTut = !meta.craftTutorial;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const needTut = !isRounds && !meta.craftTutorial;
     if (needTut) meta.craftTutorial = true;
     st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
       fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0,
@@ -188,9 +193,9 @@
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
-      + '<div class="ct-wheel" aria-live="polite"></div>'
+      + '<div class="ct-wheel"' + (isRounds ? ' hidden' : '') + ' aria-live="polite"></div>'
       + '<p class="ct-hint"></p>'
-      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>配色表<small>● 這手牌配得出</small></summary><ol class="ct-flist"></ol></details>'
+      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>' + (isRounds ? '結構表' : '配色表<small>● 這手牌配得出</small>') + '</summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
       + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
@@ -220,9 +225,9 @@
       const sc = root && $('.ct-score');
       if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
     });
-    const resumed = IE.Rounds && IE.Rounds.on(s) && s.session.log.length > 0;
+    const resumed = isRounds && s.session.log.length > 0;
     if (stg && !resumed) showStageIntro(stg);
-    if (resumed && (IE.Rounds.cleared(s) || ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)))) endNight();
+    if (resumed && IE.Rounds.canFinish(s) && !canStillAct(s)) endNight();
   }
   function close(result) {
     fxStop();
@@ -362,7 +367,7 @@
     if (IE.Rounds && IE.Rounds.on(s)) {
       const kindName = D().ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)];
       $('.ct-sub').textContent = '第 ' + s.night + '／15 晚・' + kindName + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
-      $('[data-ct="leave"]').hidden = !ses.log.length;
+      $('[data-ct="leave"]').hidden = !IE.Rounds.canFinish(s);
     } else {
       $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
     }
@@ -384,14 +389,17 @@
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
-    pb.textContent = ses.plays > 0 ? '下筆（' + ses.plays + '）' : '完成今晚';
+    const finishReady = !!(IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s));
+    pb.textContent = ses.plays > 0 && !finishReady ? '下筆（' + ses.plays + '）' : '完成今晚';
     db.textContent = '改稿（' + ses.discards + '）';
-    pb.disabled = st.busy || (ses.plays > 0 && !st.sel.length);
+    pb.disabled = st.busy || (ses.plays > 0 && !finishReady && !st.sel.length);
     db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length);
     renderGuide();
     renderPreview();
     renderTutorial();
   }
+  const bossDesc = (s, b) => (s && IE.Rounds && IE.Rounds.on(s) && D().DESK_REMAP && D().DESK_REMAP.bossDesc && D().DESK_REMAP.bossDesc[b.id]) || b.desc;
+  const toolDesc = (s, t) => (s && IE.Rounds && IE.Rounds.on(s) && D().DESK_REMAP && D().DESK_REMAP.toolDesc && D().DESK_REMAP.toolDesc[t.id]) || t.desc;
   // 工具卡欄
   function renderTools() {
     const s = st.s, S = IE.Stages;
@@ -402,7 +410,7 @@
       const id = tools[i];
       if (!id) continue;
       const T = S.TOOL[id];
-      out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + T.desc) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
+      out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + toolDesc(s, T)) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
     }
     $('.ct-tools').innerHTML = out.join('');
   }
@@ -477,10 +485,11 @@
     await showTotal(r.res);
     $('.ct-played').innerHTML = '';
     $('.ct-total').hidden = true;
-    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
-      await showCleared(s.session);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (r.res && r.res.justPassed) await showCleared(s.session);
       st.busy = false;
-      await endNight();
+      render();
+      if (IE.Rounds.canFinish(s) && !canStillAct(s)) await endNight();
       return;
     }
     st.busy = false;
@@ -507,7 +516,7 @@
             + '<div class="si-por-wrap">' + (j ? J.img(b.id, 72) : '') + '</div>'
             + '<div class="si-jtxt">'
             + (j ? '<b class="si-jname">' + esc(j.name) + '</b><small class="si-jtitle">' + esc(j.title) + '</small>' : '')
-            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(b.desc) + '</span></div>'
+            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(bossDesc(st && st.s, b)) + '</span></div>'
             + (j ? '<p class="si-quote">' + esc(j.intro) + '</p>' : '')
             + '</div></div>';
         }).join('')
@@ -556,7 +565,7 @@
             + (j ? J.img(b.id, 44) : '')
             + '<div class="sb-jbody">'
             + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
-            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
+            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(bossDesc(s, b)) + '</span></div>'
             + '</div></div>';
         }).join('') + '</div>';
       } else {
@@ -566,7 +575,7 @@
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
       + '<div class="bar"><i style="width:' + Math.min(100, sc / g.target * 100) + '%"></i></div>'
       + extra
-      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
+      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(bossDesc(s, b)) + '</span>').join('') + '</div>' : '')
       + (sc >= g.target ? '<div class="sb-pass">已達標！</div>' : '');
   }
   function renderGoal(extra) {
@@ -641,13 +650,14 @@
     if (handCards().length && !explore()) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
     renderForms(explore() ? new Set() : new Set(sg.map((x) => x.form)));
   }
-  // 配色表：由高至低；這手牌配得出的會亮起；每一行有一個小圖示表示形狀
-  const FORM_GLYPH = { mix: '·', adj: '◠', triad: '△', split: 'Y', comp: '⟷', tetrad: '□', full: '✺', mono: '●', paradox: '◐' };
+  // 配色表／結構表：由高至低；這手牌配得出的會亮起；每一行有一個小圖示表示形狀
+  const FORM_GLYPH = { mix: '·', adj: '◠', triad: '△', split: 'Y', comp: '⟷', tetrad: '□', full: '✺', mono: '●', paradox: '◐',
+    single: '·', pair: '⌒', contrast: '⚡', flow: '〰', twist: '⤴', echo: '↺', loop: '◎' };
   function renderForms(can) {
     const s = st.s;
     const meta = IE.Game.meta || {};
-    $('.ct-flist').innerHTML = C().RANK.slice().reverse().map((id) => {
-      const f = C().FORM[id], fs = C().formStats(s, id);
+    $('.ct-flist').innerHTML = C().rankOf(s).slice().reverse().map((id) => {
+      const f = C().formOf(s, id), fs = C().formStats(s, id);
       const hide = f.secret && fs.level <= 1 && !(meta.forms && meta.forms[id]) && !(s.formsSeen && s.formsSeen[id]);
       return '<li class="fr' + (can.has(id) ? ' can' : '') + '" data-form="' + id + '" title="' + esc(hide ? '隱藏的配色' : f.desc + '。升級：' + f.teach) + '">'
         + '<b><i class="fg">' + (hide ? '？' : FORM_GLYPH[id] || '') + '</i>' + (hide ? '？？？' : esc(f.name)) + '</b><small>Lv.' + fs.level + '</small><span class="num">' + fs.chips + ' × ' + fs.mult + '</span>'
@@ -712,6 +722,8 @@
   function renderWheel(pv) {
     const s = st.s, el = $('.ct-wheel');
     if (!el) return;
+    if (explore()) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
     const W = D().WHEEL, T = D().TAGS;
     const sel = st.sel.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
     const F = C().detectForm(sel);
@@ -888,7 +900,7 @@
     else if (k === 's' || k === 'S') { nextSort(); render(); }
   }
   function objInfo(s, id) {
-    const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
+    const o = C().objDef(s, id), sc = o.school && D().SCHOOLS[o.school];
     const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
     return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc)
       + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '')
@@ -937,8 +949,12 @@
   function leave() {
     if (st.busy) return;
     const s = st.s;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (!IE.Rounds.canFinish(s)) return;
+      endNight();
+      return;
+    }
     if (!s.session.log.length) {
-      if (IE.Rounds && IE.Rounds.on(s)) return;
       C().cancel(s);
       close(null);
       return;
@@ -1144,20 +1160,28 @@
   }
 
   // ---------- 看得見的作品（第十四期） ----------
-  const artTitle = (a) => IE.Artwork.title(a.form, a.pal, a.no);
+  function artTitle(a, s0) {
+    const s = s0 || (st && st.s);
+    if (s && IE.Rounds && IE.Rounds.on(s)) {
+      const fn = C().formOf(s, a.form).name;
+      const sn = a.subject && a.subject.name;
+      return '《' + (sn ? fn + '・' + sn : fn) + '・第 ' + (a.no || 1) + ' 號》';
+    }
+    return IE.Artwork.title(a.form, a.pal, a.no);
+  }
   function renderWorks() {
     const el = $('.ct-works');
     if (!el || !IE.Artwork) return;
     const log = (st.s.session && st.s.session.log) || [];
-    el.innerHTML = log.filter((x) => x.art).map((x) => '<span class="cw-thumb f-' + x.art.form + '" title="' + esc(artTitle(x.art) + '・' + fmt(x.total)) + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '</span>').join('');
+    el.innerHTML = log.filter((x) => x.art).map((x) => '<span class="cw-thumb f-' + x.art.form + '" title="' + esc(artTitle(x.art, st.s) + '・' + fmt(x.total)) + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '</span>').join('');
   }
   // 計分之後，作品在舞台中央亮相，然後縮進左上角的「今晚的作品」
   async function showArt(res) {
     if (!res || !res.art || !IE.Artwork || !root) return;
-    const a = res.art, f = C().FORM[a.form];
+    const a = res.art, f = C().formOf(st.s, a.form);
     const el = document.createElement('div');
     el.className = 'ct-artpop f-' + a.form;
-    el.innerHTML = '<span class="ap-eye">作品完成・' + esc(f.name) + '</span>' + IE.Artwork.svg(a.form, a.pal, a.seed) + '<b>' + esc(artTitle(a)) + '</b>';
+    el.innerHTML = '<span class="ap-eye">作品完成・' + esc(f.name) + '</span>' + IE.Artwork.svg(a.form, a.pal, a.seed) + '<b>' + esc(artTitle(a, st.s)) + '</b>';
     root.appendChild(el);
     const d = 300 / Math.min(2, speedK());
     el.animate([{ transform: 'translate(-50%,-50%) scale(.5) rotate(-8deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1) rotate(-2deg)', opacity: 1 }], { duration: d, easing: 'cubic-bezier(.2,1.6,.4,1)', fill: 'backwards' });
@@ -1177,7 +1201,7 @@
   const canStillAct = (s) => ['encore', 'rewind'].some((k) => C().ability(s) && (s.bg === 'busker' ? k === 'encore' : s.bg === 'timetraveler' && k === 'rewind') && !C().abilityState(s, k));
   async function doPlay() {
     const s = st.s, ses = s.session;
-    if (!st.busy && ses.plays <= 0) { await endNight(); return; }
+    if (!st.busy && (ses.plays <= 0 || (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s) && !st.sel.length))) { await endNight(); return; }
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
     if (st.tutStep >= 0 && st.tutStep <= 2) st.tutStep = 3;
     st.busy = true; st.fast = false; st.chipN = 0;
@@ -1212,10 +1236,13 @@
     fx && (fx.burn = 0);
     await showArt(res);
     $('.ct-mult').classList.remove('burning', 'inferno');
-    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
-      await showCleared(ses);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (res && res.justPassed) await showCleared(ses);
       st.busy = false;
-      await endNight();
+      render();
+      root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+        { duration: 220, delay: i * 30, fill: 'backwards' }));
+      if (IE.Rounds.canFinish(s) && !canStillAct(s)) await endNight();
       return;
     }
     st.busy = false;
@@ -1225,16 +1252,15 @@
     if ((ses.plays <= 0 || !ses.hand.length) && !canStillAct(s)) await endNight();
   }
 
-  // 五輪模式：一筆過關時中央彈出「收工！」與提早收工獎金明細
+  // 五輪模式：達標時提示「已達標！」，之後每一筆為加演（火花 +0.1）
   async function showCleared(ses) {
     if (!root) return;
-    const RT = D().ROUND_TEXT, E = D().ECON;
     const el = document.createElement('div');
     el.className = 'ct-cleared' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
-    const earlyTxt = ses && ses.plays > 0 ? RT.early.replace('{n}', ses.plays).replace('{v}', E.earlyBonus) : '';
+    const encoreTxt = ses && ses.plays > 0 ? '還剩 ' + ses.plays + ' 筆：之後每一筆加演火花 +0.1' : '';
     el.innerHTML = ctCash('<div class="ct-cleared-card">'
-      + '<b>' + esc(RT.cleared) + '</b>'
-      + (earlyTxt ? '<p>' + esc(earlyTxt) + '</p>' : '')
+      + '<b>已達標！</b>'
+      + (encoreTxt ? '<p>' + esc(encoreTxt) + '</p>' : '')
       + '</div>');
     root.appendChild(el);
     A().sfx('combo');
@@ -1253,15 +1279,84 @@
     for (const x of res.steps) {
       if (!root) return;
       switch (x.t) {
-        case 'form':
-          $('.ct-form .fn').textContent = C().FORM[x.form].name;
+        case 'form': {
+          const fObj = C().formOf(s, x.form);
+          const isBase = x.form === 'mix' || x.form === 'single';
+          $('.ct-form .fn').textContent = fObj.name;
           $('.ct-form .fl').textContent = 'Lv.' + x.level;
           setBoxes(x.chips, x.mult);
           pulse(chipsEl); pulse(multEl);
-          if (x.form !== 'mix') { const wh = $('.ct-wheel'); if (wh) { pulse(wh.querySelector('svg')); wh.classList.add('flash'); setTimeout(() => wh && wh.classList.remove('flash'), 600); } tag(C().FORM[x.form].name + '・' + C().FORM[x.form].tag, 'form f-' + x.form); }
-          A().fx(x.form === 'mix' ? 'chip' : 'mult', x.form === 'mix' ? 0 : C().RANK.indexOf(x.form));
-          await wait(x.form === 'mix' ? 320 : 420);
+          if (!isBase) {
+            const wh = $('.ct-wheel');
+            if (wh && !wh.hidden && wh.querySelector('svg')) {
+              pulse(wh.querySelector('svg'));
+              wh.classList.add('flash');
+              setTimeout(() => wh && wh.classList.remove('flash'), 600);
+            }
+            tag(fObj.name + '・' + fObj.tag, 'form f-' + x.form);
+          }
+          A().fx(isBase ? 'chip' : 'mult', isBase ? 0 : Math.max(0, C().rankOf(s).indexOf(x.form)));
+          await wait(isBase ? 320 : 420);
           break;
+        }
+        case 'link': {
+          const lbl = x.kind === 'zhuan' ? (x.xmult ? '轉 ×' + x.xmult : '轉') : '承 +' + x.mult;
+          const uid = res.scoring && res.scoring[x.idx + 1 != null ? x.idx + 1 : x.idx];
+          const el = uid != null ? stageCard(uid) : null;
+          tag(lbl, x.xmult ? 'new' : 'recipe');
+          if (el) floatText(el, lbl, x.xmult ? 'xmult' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(4);
+          await wait(x.xmult ? 340 : 240);
+          break;
+        }
+        case 'compound': {
+          const el = x.uid != null ? stageCard(x.uid) : null;
+          const valTxt = x.chips ? '+' + x.chips + ' 籌碼' : x.mult ? '+' + x.mult + ' 倍率' : x.xmult ? '×' + x.xmult : '下一張再計一次';
+          tag(x.famName + '「' + x.name + '」　' + valTxt, x.xmult ? 'new' : 'recipe');
+          if (el) floatText(el, x.famName, x.xmult ? 'xmult' : x.chips ? 'chips' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(x.chips ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          await wait(260);
+          break;
+        }
+        case 'media': {
+          tag(x.name + '　+' + x.mult + ' 倍率', 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('mult', ++n);
+          await wait(260);
+          break;
+        }
+        case 'subject': {
+          tag('題材「' + x.name + '」　+' + x.mult + ' 倍率', 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('mult', ++n);
+          await wait(260);
+          break;
+        }
+        case 'he': {
+          tag('合 ×' + x.xmult, 'new');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('xmult', ++n);
+          shake(4);
+          await wait(340);
+          break;
+        }
+        case 'title': {
+          tag(x.name + ' ×' + x.xmult, 'legend');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('xmult', ++n);
+          shake(5);
+          await wait(360);
+          break;
+        }
         case 'card': {
           const el = stageCard(x.uid);
           const cObj = s.cards.find((c) => c.uid === x.uid);
@@ -1527,14 +1622,14 @@
     if (isRounds) {
       const RT = D().ROUND_TEXT, E = D().ECON;
       const earlyAmt = (g.playsLeft || 0) * E.earlyBonus;
-      const overkill = g.pass && g.score >= g.target * 2;
+      const ov = g.over || (g.pass && g.score >= g.target * 2 ? { x: 2, spark: E.overkillSpark } : null);
       const dots = '●'.repeat(Math.max(0, s.chances)) + '<i>' + '○'.repeat(Math.max(0, 3 - s.chances)) + '</i>';
       return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '過關' : '未達標') + '</span>'
         + '<b>第 ' + g.index + '／15 晚・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
         + quotes
         + (g.pass
           ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'
-            + (overkill ? '<small class="sr-overkill">超額兩倍：火花 +' + E.overkillSpark + (g.kind !== 'small' ? '・金色扭蛋券 +1' : '') + '</small>' : '')
+            + (ov ? '<small class="sr-overkill">超額 ' + ov.x + ' 倍：火花 +' + ov.spark + (ov.ticket ? '・金色扭蛋券 +' + ov.ticket : '') + '</small>' : '')
           : '<p class="sr-fail-msg">' + esc(RT.failed) + '</p>'
             + '<small class="sr-chances">' + esc(RT.chances) + '：<b class="sr-dots">' + dots + '</b>（火花 ' + E.failSpark + '）</small>')
         + '</div>';
@@ -1568,8 +1663,8 @@
       + '<div class="ct-end-score num">0</div>'
       + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
       + '<div class="ct-end-art">' + res.session.log.map((x, i) => (x.art && IE.Artwork
-        ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art)) + '</b><small>' + C().FORM[x.form].name + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
-        : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + C().FORM[x.form].name + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
+        ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art, s)) + '</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
+        : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
       + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
@@ -1616,13 +1711,14 @@
     return tags.length > 1 ? '需要' + tags.slice(0, -1).join('、') + '，還有一樣東西……' : '需要很多' + tags[0] + '……';
   }
   function codexHtml(s, meta) {
+    const isRounds = !!(s && IE.Rounds && IE.Rounds.on(s));
     const known = (id) => !!(s.discovered[id] || (meta.recipes && meta.recipes[id]));
-    const forms = D().FORMS.map((f) => {
+    const forms = C().formsOf(s).map((f) => {
       const seen = (s.formsSeen && s.formsSeen[f.id]) || (meta.forms && meta.forms[f.id]) || !f.secret;
       const st2 = C().formStats(s, f.id);
       return '<div class="recipe' + (seen ? '' : ' unknown') + '"><b>' + (seen ? f.name + ' Lv.' + st2.level : '？？？') + '</b>'
-        + '<span>' + (seen ? esc(f.tag + '：' + f.desc) : '一種隱藏的配色') + '</span>'
-        + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率・練習：' + esc(f.teach) + '</span>' : '') + '</div>';
+        + '<span>' + (seen ? esc(f.tag + (f.desc && f.desc !== f.tag ? '：' + f.desc : '')) : '一種隱藏的配色') + '</span>'
+        + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率' + (f.teach ? '・練習：' + esc(f.teach) : '') + '</span>' : '') + '</div>';
     }).join('');
     const nKnown = D().RECIPES.filter((r) => known(r.id)).length;
     const recipes = D().RECIPES.map((r) => {
@@ -1632,8 +1728,11 @@
         + '<span>' + (k ? esc(tags || '特殊條件') + (r.hint ? '：' + esc(r.hint) : '') : esc(recipeHint(r))) + '</span>'
         + '<span class="mute">+' + r.chips + ' 籌碼・+' + r.mult + ' 倍率' + (r.xmult ? '・×' + r.xmult : '') + '</span></div>';
     }).join('');
+    const formHead = isRounds
+      ? '<h3>結構（起承轉合）</h3><p class="mute" style="font-size:12px">按選取次序連接：相同情緒「承 +2」、相鄰情緒「承 +1」、相對情緒「轉 ×2」；最後一張連回第一張為「合 ×2」。</p>'
+      : '<h3>配色（情緒色輪）</h3><p class="mute" style="font-size:12px">色輪：人情 → 希望 → 水 → 記憶 → 反叛 → 機械 → 愧疚 → 憤怒 → 霓虹 → 飢餓 →（回到人情）。正對面是相反的情緒。</p>';
     return '<div class="modal wide"><h2>創作圖鑑</h2>'
-      + '<h3>配色（情緒色輪）</h3><p class="mute" style="font-size:12px">色輪：人情 → 希望 → 水 → 記憶 → 反叛 → 機械 → 愧疚 → 憤怒 → 霓虹 → 飢餓 →（回到人情）。正對面是相反的情緒。</p><div class="recipes">' + forms + '</div>'
+      + formHead + '<div class="recipes">' + forms + '</div>'
       + '<h3>具名組合（' + nKnown + '/' + D().RECIPES.length + '）</h3><div class="recipes">' + recipes + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
   }
