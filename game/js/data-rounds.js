@@ -139,5 +139,35 @@
     stancePay: { comply: 1.3, resist: 0.6, care: 0.8 },
   };
 
-  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16 });
+  // 第十六期：差事固定文案（總規格 §3.5）
+  const GIG_TEXT = {
+    tag: '差事',
+    from: {
+      round: '人才發展局本季配給的工作',
+      story: '{x}',
+      friend: '{x}介紹的',
+    },
+    left: '還有 {n} 天',
+    expired: '「{x}」的差事過期了。系統已經把它分配給更積極的人。',
+    none: '今天沒有工作。這在浮城很正常。',
+  };
+
+  // 第十六期：每位朋友介紹的小遊戲（WO-16-02 §1）
+  const GIG_FRIEND = {
+    dj: 'busk',
+    ho: 'label',
+    ken: 'salvage',
+    miu: 'clinic',
+    fong: 'busk',
+    chan: 'dive',
+    yu: 'delivery',
+    mary: 'garden',
+  };
+
+  // 第十六期新增生活卡（獨立匯出以保持 spec.test.js 對第十五期 D.DAYCARDS 的既有檢查相容；rounds.js 合併讀取）
+  const DAYCARDS16 = [
+    { id: 'rest', kind: 'rest', name: '在家發呆', sub: '甚麼都不做。這在浮城是一種奢侈。' },
+  ];
+
+  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, DAYCARDS16, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16, GIG_TEXT, GIG_FRIEND });
 });

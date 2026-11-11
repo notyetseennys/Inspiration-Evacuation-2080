@@ -166,6 +166,9 @@
   function apply(s, kind) {
     const res = result(s, kind);
     if (!res) return null;
+    if (s.mode === 'rounds' && IE.Rounds && IE.Rounds.useGig && !s.gigActive) {
+      IE.Rounds.useGig(s, kind);
+    }
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
     const rep = R.applyMicro(s, kind, res);
     if (s.mode === 'rounds' && IE.Cards) IE.Cards.autoPutDown(s);
