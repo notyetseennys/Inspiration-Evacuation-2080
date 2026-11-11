@@ -145,13 +145,14 @@
     s.cr -= o.price;
     s.antique.items.find((x) => x.id === id).sold = true;
     s.stats.antiqueTrades = (s.stats.antiqueTrades || 0) + 1;
-    const res = R.addCard(s, id);
+    const res = s.mode === 'rounds' ? R.addCard(s, id, { kind: 'shop' }) : R.addCard(s, id);
     return { ok: true, msg: '買下了「' + o.name + '」' + (res.dropped ? '（素材庫滿了，丟掉了「' + res.dropped.name + '」）' : '') };
   }
 
   // 古董商也收貨：旅行帶回來的素材特別值錢，極稀有素材更是天價（每天最多收兩件）
   function cardPrice(s, c) {
-    const k = c.rarity === 'legend' ? 4 : c.origin && c.origin !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
+    const reg = typeof c.origin === 'string' ? c.origin : (c.id && D.CARDS[c.id] ? D.CARDS[c.id].origin : undefined);
+    const k = c.rarity === 'legend' ? 4 : reg && reg !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
     return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).sellMult || 1)));
   }
   function sellCards(s) {
@@ -315,7 +316,7 @@
   function applySite(s, siteId) {
     const d = D.DEST[s.trip.dest];
     const st = d.sites.find((x) => x.id === siteId);
-    const rep = R.report(s, d.name + '・' + st.name);
+    const rep = R.report(s, d.name + '・' + st.name, { kind: 'trip', x: d.name });
     const n = s.trip.visits[st.id] = (s.trip.visits[st.id] || 0) + 1;
     s.stats.sites = (s.stats.sites || 0) + 1;
     s.stats.actions.site = (s.stats.actions.site || 0) + 1;

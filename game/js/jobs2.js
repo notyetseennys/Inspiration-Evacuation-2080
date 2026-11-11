@@ -111,7 +111,8 @@
     const shine = rk.id === 'SS' && !(res && res.auto) && IE.Create;
     const gain = (id) => {
       if (!D.CARDS[id]) return;
-      const x = R.addCard(s, id);
+      const org = s.mode === 'rounds' ? { kind: 'work', x: r.title } : undefined;
+      const x = org ? R.addCard(s, id, org) : R.addCard(s, id);
       if (shine && x.card) x.card.star = Math.min(5, IE.Create.starOf(x.card) + 1);
       r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped);
     };
@@ -163,7 +164,7 @@
   }
   const gardenConfig = (s) => ({ duration: 32, acid: s.season === 'acid', heat: s.season === 'heat', pigeons: 1 + (R.eventActive(s, 'famine') ? 1 : 0) });
   function applyGarden(s, res) {
-    const rep = R.report(s, '天台菜園');
+    const rep = R.report(s, '天台菜園', { kind: 'work', x: '天台菜園' });
     const h = n(res.harvest);
     R.hurt(s, 3, 'garden'); rep.delta('body', -3);
     rep.delta('spark', R.addSpark(s, 0.1 + 0.02 * h));
@@ -179,7 +180,7 @@
   }
   const salvageConfig = (s) => ({ floors: 12, swing: 1 + (R.eventActive(s, 'gentrify') ? 0.2 : 0), duration: 36 });
   function applySalvage(s, res) {
-    const rep = R.report(s, '拆樓打撈');
+    const rep = R.report(s, '拆樓打撈', { kind: 'work', x: '拆樓打撈' });
     const cr = Math.round(n(res.cr) * (R.eventActive(s, 'gentrify') ? 1.5 : 1));
     s.cr += cr; s.stats.crEarned += cr;
     rep.delta('cr', cr);
@@ -198,7 +199,7 @@
   }
   const haggleConfig = (s) => ({ customers: 6, insight: s.attr.insight, tourists: R.eventActive(s, 'tourists') || R.eventActive(s, 'nightmarket') });
   function applyHaggle(s, res) {
-    const rep = R.report(s, '夜市擺地攤');
+    const rep = R.report(s, '夜市擺地攤', { kind: 'work', x: '夜市擺地攤' });
     const cr = Math.round(n(res.total));
     s.cr += cr; s.stats.crEarned += cr; rep.delta('cr', cr);
     R.hurt(s, 4, 'haggle'); rep.delta('body', -4);

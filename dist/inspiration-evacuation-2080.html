@@ -8577,7 +8577,42 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     { id: 'copy', name: '複印', desc: '複製一張素材' },
   ];
 
-  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES });
+  // 第十六期：卡的來歷預設文案（總規格 §2.1）
+  const ORIGIN = {
+    start: '來浮城之前就帶在身上',
+    story: '第 {n} 晚之前：{x}',
+    work: '第 {n} 晚之前，做「{x}」的時候留下的',
+    trip: '第 {n} 晚之前，從{x}帶回來',
+    friend: '{x}給你的',
+    shop: '第 {n} 晚之後，在市集買的',
+    craft: '第 {n} 晚之後，自己做出來的',
+  };
+
+  // 第十六期：卡背、遺物與回憶文案（總規格 §2.5）
+  const CARD_TEXT = {
+    backHead: '這張卡的來歷',
+    worksHead: '它參與過的作品',
+    noWorks: '還沒有用它完成過具名的作品。',
+    relic: '遺物：給你這張卡的人已經不在浮城。',
+    relicKeep: '這是遺物，放不下。',
+    overHead: '素材庫放不下了',
+    overSub: '選一張放進回憶。放下的卡不會消失，但不能再用。',
+    memoryHead: '回憶',
+    memoryEmpty: '你還沒有放下過任何東西。',
+  };
+
+  // 第十六期：差事與立場數值常數（總規格 §3.4）
+  const ECON16 = {
+    restSpark: 0.2,
+    gigKeep: 3,
+    gigMax: 2,
+    friendGig: 0.25,
+    gigPay: 2.2,
+    startStarter: 2,
+    stancePay: { comply: 1.3, resist: 0.6, care: 0.8 },
+  };
+
+  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16 });
 });
 
 // ---- js/data-cities.js ----
@@ -11105,12 +11140,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const k = pick(s, keys);
       if (!s.kpis.includes(k)) s.kpis.push(k);
     }
-    bg.cards.forEach((id) => addCard(s, id));
+    const startOrg = s.mode === 'rounds' ? { kind: 'start' } : undefined;
+    bg.cards.forEach((id) => addCard(s, id, startOrg));
     // 時間旅人：帶著一件來自未來的極稀有素材
     // 扭蛋機的安慰獎：下一局帶著一件古董
-    ((opts.meta && opts.meta.nextStart) || []).forEach((id) => { if (D.CARDS[id]) addCard(s, id); });
-    if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z)); }
-    D.STARTER.forEach((id) => addCard(s, id));
+    ((opts.meta && opts.meta.nextStart) || []).forEach((id) => { if (D.CARDS[id]) addCard(s, id, startOrg); });
+    if (bg.perk.startRare) { const z = Object.keys(D.CARDS).filter((k) => D.CARDS[k].rarity === 'legend'); addCard(s, pick(s, z), startOrg); }
+    D.STARTER.forEach((id) => addCard(s, id, startOrg));
     s.objects.forEach((id) => { s.objSeen[id] = true; });
     // 扭蛋機的安慰獎：下一局多帶工具卡
     if (IE.Stages) for (let i = 0; i < ((opts.meta && opts.meta.nextTools) || 0); i++) IE.Stages.giveTool(s, IE.Stages.randomTool(s));
@@ -11160,6 +11196,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       s.roundLog = [];
       s.lost = [];
       s.chances = 3;
+      s.memory = s.memory || [];
+      if (typeof s.over !== 'boolean') s.over = false;
       // 五個外星評審之夜的規則在開局時全部選好：介面可以預告，之後讀取規則也不會動到隨機數
       if (IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
       if (IE.Story && IE.Story.init) IE.Story.init(s);
@@ -11176,9 +11214,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (c.rarity) card.rarity = c.rarity;
     return card;
   }
-  function addCard(s, idOrCard) {
+  function addCard(s, idOrCard, origin) {
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
     card.wear = card.wear || 0;
+    if (s.mode === 'rounds') {
+      if (IE.Cards) IE.Cards.ensure(s);
+      else { s.memory = s.memory || []; if (typeof s.over !== 'boolean') s.over = false; }
+      card.origin = IE.Cards ? IE.Cards.origin(s, origin) : null;
+      card.works = Array.isArray(card.works) ? card.works.slice() : [];
+      card.relic = !!card.relic;
+      s.cards.push(card);
+      const over = s.cards.length > (perk(s).deckMax || MAX_CARDS);
+      s.over = over;
+      return { card, dropped: null, over };
+    }
     s.cards.push(card);
     let dropped = null;
     // 素材庫滿了：丟掉用得最殘的一張（同樣殘就丟最舊的）
@@ -11397,7 +11446,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   function applyLabel(s, res, o) {
     const ot = !!(o && o.ot);
-    const rep = report(s, ot ? '深夜加班：AI 數據標註' : 'AI 數據標註');
+    const jobName = ot ? '深夜加班：AI 數據標註' : 'AI 數據標註';
+    const rep = report(s, jobName, { kind: 'work', x: jobName });
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
     addSpark(s, -res.drain);
@@ -11455,7 +11505,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     };
   }
   function applySmile(s, res) {
-    const rep = report(s, '企業情緒陪伴');
+    const rep = report(s, '企業情緒陪伴', { kind: 'work', x: '企業情緒陪伴' });
     const tip = Math.round((res.satisfaction >= 0.8 ? 30 : res.satisfaction >= 0.6 ? 12 : 0) * socialTip(s));
     const fine = res.trapHits * 5;
     const cr = Math.round(res.cr) + tip - fine;
@@ -11525,7 +11575,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   // res：{ relics: [卡 id 或前世作品], money, fish: { sardine, eel, grouper }, hits, drowned, lockers }
   function applyDive(s, res) {
-    const rep = report(s, '舊城潛水');
+    const rep = report(s, '舊城潛水', { kind: 'work', x: '舊城潛水' });
     const fish = res.fish || {};
     const cost = Math.round(diveBodyCost(s) + 5 * res.hits * calmMult(s) + (res.drowned ? 15 : 0));
     hurt(s, cost, 'dive', { hits: res.hits, drowned: !!res.drowned, lockers: res.lockers || 0 });
@@ -11577,7 +11627,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     };
   }
   function applyDelivery(s, res) {
-    const rep = report(s, '外送潛水');
+    const rep = report(s, '外送潛水', { kind: 'work', x: '外送潛水' });
     const cr = Math.round(res.cr);
     const body = Math.round((10 - seasonOf(s).outdoorBody) + 3 * res.hits * calmMult(s));
     s.cr += cr; s.stats.crEarned += cr;
@@ -11620,7 +11670,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return { duration: 40, payMult: (perk(s).farmPay || 1) * worldPay(s, 'farm') * obeyPay(s), showFake: A(s, 'insight') >= 50 };
   }
   function applyFarm(s, res) {
-    const rep = report(s, '陰謀論內容農場');
+    const rep = report(s, '陰謀論內容農場', { kind: 'work', x: '陰謀論內容農場' });
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
     hurt(s, 4, 'farm');
@@ -11647,7 +11697,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       showTime: Math.max(0.28, 0.5 - 0.002 * A(s, 'rhythm')) };
   }
   function applyBusk(s, res) {
-    const rep = report(s, '街頭表演');
+    const rep = report(s, '街頭表演', { kind: 'work', x: '街頭表演' });
     const cr = Math.round(res.cr * (decorOn(s, 'stereo') ? 1.2 : 1));
     const body = 4 - seasonOf(s).outdoorBody;
     s.cr += cr; s.stats.crEarned += cr;
@@ -11671,7 +11721,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       maxPairs: A(s, 'tech') >= 60 ? 4 : 5 };
   }
   function applyClinic(s, res) {
-    const rep = report(s, '黑市義體診所');
+    const rep = report(s, '黑市義體診所', { kind: 'work', x: '黑市義體診所' });
     const cr = Math.round(res.cr);
     s.cr += cr; s.stats.crEarned += cr;
     hurt(s, 5, 'clinic', { illegal: res.illegal });
@@ -11750,7 +11800,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function applyChat(s, npcId, reply) {
     const n = s.npcs.find((x) => x.id === npcId);
     const def = D.NPCS.find((x) => x.id === npcId);
-    const rep = report(s, '與' + def.name + '聊天');
+    const rep = report(s, '與' + def.name + '聊天', { kind: 'friend', x: def.name, npc: npcId });
     const cost = chatCost(s);
     const outdoor = seasonOf(s).outdoorBody;
     s.cr -= cost;
@@ -11810,7 +11860,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   function applyEncounter(s, id, k) {
     const e = D.ENCOUNTERS.find((x) => x.id === id), o = e && e.opts[k];
-    const rep = report(s, '街頭奇遇');
+    const rep = report(s, '街頭奇遇', o ? { kind: 'story', x: o.label } : undefined);
     if (!o) return rep.done();
     s.encSeen = s.encSeen || {};
     s.encSeen[id] = (s.encSeen[id] || 0) + 1;
@@ -11823,7 +11873,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function useFavor(s, id) {
     if (!favorReady(s, id)) return null;
     const C = D.CONTACT_BY[id];
-    const rep = report(s, C.title + '・' + C.name);
+    const rep = report(s, C.title + '・' + C.name, { kind: 'friend', x: C.name });
     s.contacts[id].used = s.day;
     s.stats.favors = (s.stats.favors || 0) + 1;
     rep.line(C.favor, 'good');
@@ -11831,7 +11881,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return rep.done();
   }
   function applyVolunteer(s) {
-    const rep = report(s, '在避難所做義工');
+    const rep = report(s, '在避難所做義工', { kind: 'story', x: '在避難所做義工' });
     hurt(s, 6, 'volunteer');
     const sp = addSpark(s, 0.2);
     s.stats.volunteer++;
@@ -11846,7 +11896,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   function applyRest(s) {
     if (s.trip && IE.World) return IE.World.tripRest(s);
-    const rep = report(s, '休息');
+    const rep = report(s, '休息', { kind: 'story', x: '休息' });
     const b = (s.floor === 0 ? 12 : 22) + (decorOn(s, 'bed') ? 3 : 0);
     heal(s, b);
     s.restedToday = true;
@@ -12028,7 +12078,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         const pool = r < 0.03 ? D.ANTIQUES : r < 0.23 ? Object.keys(D.CARDS).filter((k) => k.startsWith('t_'))
           : Object.keys(D.CARDS).filter((k) => !D.CARDS[k].origin && !D.CARDS[k].rarity && !/^(b|x|c|v)_/.test(k));
         const card = pick(s, pool);
-        const res = addCard(s, card);
+        const res = s.mode === 'rounds' ? addCard(s, card, { kind: 'shop' }) : addCard(s, card);
         msg = '盲盒裡是：「' + D.CARDS[card].name + '」' + (r < 0.03 ? '（古董！）' : '') + (res.dropped ? '（丟掉了「' + res.dropped.name + '」）' : '');
         break;
       }
@@ -12122,7 +12172,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const o = d.options[idx];
     s.usedDilemmas[d.id] = s.day;
     s.dilemma = null;
-    const rep = report(s, '抉擇：' + o.label);
+    const rep = report(s, '抉擇：' + o.label, { kind: 'story', x: o.label });
     if (o.cr) { s.cr += o.cr; rep.delta('cr', o.cr); }
     if (o.body) { if (o.body > 0) heal(s, o.body); else hurt(s, -o.body, d.id === 'rescue' ? 'rescue' : 'dilemma'); rep.delta('body', o.body); }
     if (o.spark) rep.delta('spark', addSpark(s, o.spark, true));
@@ -12163,7 +12213,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (fx.spark) addSpark(s, fx.spark, true);
     if (fx.crPct) s.cr = Math.round(s.cr * (1 + fx.crPct));
     if (fx.paranoia) addParanoia(s, fx.paranoia);
-    if (fx.card) addCard(s, fx.card);
+    if (fx.card) {
+      if (s.mode === 'rounds') addCard(s, fx.card, { kind: 'story', x: w.name });
+      else addCard(s, fx.card);
+    }
     if (fx.cond) addCond(s, fx.cond, null);
     if (id === 'aliens' && !ownsObject(s, 'alienradio')) gainObject(s, 'alienradio', null);
     if (fx.takeNpc) {
@@ -12637,7 +12690,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
 
   // ---------- 工具 ----------
-  function report(s, title) {
+  function report(s, title, defaultOrigin) {
     const r = { title, lines: [], deltas: { cr: 0, body: 0, spark: 0, soul: 0 }, stats: {}, cards: [], dropped: [], objs: [] };
     return {
       get review() { return r.review; }, set review(v) { r.review = v; },
@@ -12650,8 +12703,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       delta(stat, v) { r.deltas[stat] += v; },
       stat(k, v) { r.stats[k] = (r.stats[k] || 0) + v; },
       obj(id) { r.objs.push(id); },
-      gain(id) {
-        const res = addCard(s, id);
+      gain(id, origin) {
+        const org = s.mode === 'rounds' ? (origin !== undefined ? origin : defaultOrigin) : undefined;
+        const res = s.mode === 'rounds' ? addCard(s, id, org) : addCard(s, id);
         r.cards.push(res.card);
         if (res.dropped) r.dropped.push(res.dropped);
       },
@@ -12679,6 +12733,140 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     teach, gainObject, pickObjects, equipObject, unequipObject, moveObject, sellObject, marketItems, polishCard,
     actions, shop, buy, SHOP_CATS, morning, endDay, epitaph, endingFor, recordMeta,
     report, heal, outdoorHazard, applyMicro, MAX_CARDS,
+  };
+});
+
+// ---- js/cards.js ----
+// 《靈感撤離 2080》第十六期：卡的來歷、回憶、作品記錄與遺物規則（WO-16-01）。
+// 純邏輯，不涉及 DOM，瀏覽器與 Node 共用；只在五輪模式（s.mode === 'rounds'）生效。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+
+  function deckMax(s) {
+    const bg = s && D.BACKGROUNDS && D.BACKGROUNDS[s.bg];
+    return (bg && bg.perk && bg.perk.deckMax) || D.CRAFT.deckMax;
+  }
+
+  // 由 { kind, x, npc } 組成完整的來歷物件；空值時回傳 null
+  function origin(s, o) {
+    if (!o || !o.kind) return null;
+    const night = o.night != null ? o.night : ((s && s.night) || 0);
+    const tpl = (D.ORIGIN && D.ORIGIN[o.kind]) || '';
+    const text = o.text != null
+      ? String(o.text)
+      : tpl.replace(/\{n\}/g, String(night)).replace(/\{x\}/g, o.x != null ? String(o.x) : '');
+    return {
+      kind: o.kind,
+      night,
+      text,
+      npc: o.npc || null,
+    };
+  }
+
+  // 相容舊存檔：補齊 s.memory、s.over，以及每張卡的 works、relic、origin
+  function ensure(s) {
+    if (!s) return s;
+    if (!Array.isArray(s.memory)) s.memory = [];
+    if (typeof s.over !== 'boolean') s.over = false;
+    const isRounds = s.mode === 'rounds';
+    if (Array.isArray(s.cards)) {
+      s.cards.forEach((c) => {
+        if (!c) return;
+        if (!Array.isArray(c.works)) c.works = [];
+        if (typeof c.relic !== 'boolean') c.relic = false;
+        if (isRounds && (c.origin === undefined || typeof c.origin === 'string')) {
+          c.origin = null;
+        }
+      });
+    }
+    return s;
+  }
+
+  // 把一張卡由素材庫移進回憶（遺物不可放下）；回到上限或以下時清除 s.over
+  function putDown(s, uid) {
+    if (!s) return { ok: false, msg: '找不到這張素材' };
+    ensure(s);
+    const idx = s.cards.findIndex((c) => c && c.uid === uid);
+    if (idx < 0) return { ok: false, msg: '找不到這張素材' };
+    const card = s.cards[idx];
+    if (card.relic) return { ok: false, msg: D.CARD_TEXT.relicKeep };
+    s.cards.splice(idx, 1);
+    s.memory.push(card);
+    if (s.cards.length <= deckMax(s)) s.over = false;
+    return { ok: true, card };
+  }
+
+  // 模擬器與 IE.Auto 使用：超過上限時按舊自動丟棄規則選非遺物的卡放進回憶
+  function autoPutDown(s) {
+    if (!s || s.mode !== 'rounds') return [];
+    ensure(s);
+    const moved = [];
+    const max = deckMax(s);
+    if (s.cards.length <= max) {
+      s.over = false;
+      return moved;
+    }
+    s.over = true;
+    while (s.over && s.cards.length > max) {
+      const pool = s.cards.filter((c) => c && !c.relic);
+      if (!pool.length) break;
+      const candidates = pool.length > 1 && pool[pool.length - 1] === s.cards[s.cards.length - 1]
+        ? pool.slice(0, -1)
+        : pool;
+      let worst = candidates[0];
+      for (let i = 1; i < candidates.length; i++) {
+        const c = candidates[i];
+        if ((c.wear || 0) > (worst.wear || 0) || ((c.wear || 0) === (worst.wear || 0) && c.value < worst.value && (c.wear || 0) > 0)) {
+          worst = c;
+        }
+      }
+      const res = putDown(s, worst.uid);
+      if (!res.ok) break;
+      moved.push(res.card);
+    }
+    return moved;
+  }
+
+  // 夜晚打出具名組合時，把作品名記在計分卡的 works（不重複，最多 3 個，最新在最後）
+  function noteWork(s, uids, title) {
+    if (!s || !title || !Array.isArray(uids) || !uids.length) return;
+    ensure(s);
+    const set = new Set(uids);
+    s.cards.forEach((c) => {
+      if (!c || !set.has(c.uid)) return;
+      if (!Array.isArray(c.works)) c.works = [];
+      if (c.works.includes(title)) return;
+      c.works.push(title);
+      while (c.works.length > 3) c.works.shift();
+    });
+  }
+
+  // 朋友被收藏時，把該位朋友送的卡標記為遺物並回傳
+  function relics(s, npcId) {
+    if (!s || !npcId) return [];
+    ensure(s);
+    const out = [];
+    s.cards.forEach((c) => {
+      if (c && c.origin && c.origin.npc === npcId) {
+        c.relic = true;
+        out.push(c);
+      }
+    });
+    return out;
+  }
+
+  IE.Cards = {
+    origin,
+    putDown,
+    autoPutDown,
+    noteWork,
+    relics,
+    ensure,
   };
 });
 
@@ -12803,14 +12991,21 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
 
   // ---------- 具名組合與 KPI ----------
+  // 五輪模式的 card.origin 為來歷物件；計分與組合判斷地區時取 D.CARDS[id].origin
+  function regView(c) {
+    if (!c || !c.origin || typeof c.origin !== 'object') return c;
+    const reg = c.id && D.CARDS[c.id] ? D.CARDS[c.id].origin : undefined;
+    return Object.assign({}, c, { origin: reg });
+  }
   // 具名組合要「純」：下筆的每一張素材，都要有組合要求的其中一個標籤（像同花一樣，要刻意湊）
   const pure = (r, sel) => sel.every((c) => c.tags.some((t) => r.need[t]));
   function matchRecipes(s, sel) {
     const counts = tagCounts(sel);
+    const selReg = sel.map(regView);
     return D.RECIPES.filter((r) => {
       const need = Object.keys(r.need);
       if (!need.length && !r.cond) return false;
-      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!need.length || pure(r, sel)) && (!r.cond || r.cond(s, sel));
+      return need.every((t) => (counts[t] || 0) >= r.need[t]) && (!need.length || pure(r, sel)) && (!r.cond || r.cond(s, selReg));
     });
   }
   const power = (r) => r.chips / 10 + r.mult * 10 + (Object.values(r.need).reduce((a, b) => a + b, 0)) * 0.5;
@@ -12892,8 +13087,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     // 具名組合只在成形的配色中觸發：一件有名字的作品，先要有完整的配色
     const recs = F.id === 'mix' ? [] : matchRecipes(s, sel);
     const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
-    const ctx = { s, sel, scoring: F.scoring, form: F.id, counts: F.counts, distinct: F.distinct, media: F.media, mdistinct: F.mdistinct,
-      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held,
+    const selReg = sel.map(regView);
+    const scoringReg = F.scoring.map(regView);
+    const heldReg = held.map(regView);
+    const ctx = { s, sel: selReg, scoring: scoringReg, form: F.id, counts: F.counts, distinct: F.distinct, media: F.media, mdistinct: F.mdistinct,
+      discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held: heldReg,
       roll: opt && opt.roll != null ? opt.roll : 0.5 };
     const times = (r) => (r === true ? 1 : r || 0);
     const noWear = schools.some((x) => x.def.noWear);
@@ -12902,9 +13100,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     F.scoring.forEach((c, i) => {
       // 外星評審的規則：某些素材不計分
       if (SR && SR.blocked(c)) { steps.push(snap({ t: 'blocked', uid: c.uid })); return; }
+      const cr = scoringReg[i];
       let reps = 1 + (c.mod === 'echo' ? 1 : 0) + (perkOf(s).allTwice ? 1 : 0);
-      objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, i)); });
-      schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, i, x.n)); });
+      objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(cr, ctx, i)); });
+      schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(cr, ctx, i, x.n)); });
       for (let r = 0; r < reps; r++) {
         const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
         chips += v;
@@ -12913,18 +13112,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
         objs.forEach((o) => {
           if (!o.def.card) return;
-          const e = o.def.card(c, ctx);
+          const e = o.def.card(cr, ctx);
           if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
         });
         schools.forEach((x) => {
           if (!x.def.card) return;
-          const e = x.def.card(c, ctx, x.n);
+          const e = x.def.card(cr, ctx, x.n);
           if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
         });
       }
     });
     // 留在手牌、沒有打出的素材（例如魚缸）
-    held.forEach((c) => objs.forEach((o) => {
+    heldReg.forEach((c) => objs.forEach((o) => {
       if (!o.def.held) return;
       const e = o.def.held(c, ctx);
       if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
@@ -13199,9 +13398,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (P.unearth && before < 4 && c.wear >= 4 && !c.guilt && D.ANTIQUES && RL.rand(s) < P.unearth) {
         const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
         notes0.push('出土：「' + c.name + '」原來是「' + def.name + '」');
-        Object.assign(c, { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(c, { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? c.origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
       }
     });
+    if (s.mode === 'rounds' && IE.Cards && res.recipes && res.recipes.length) {
+      const scoredUids = SR
+        ? res.scoring.filter((u) => { const c = cardOf(s, u); return c && !SR.blocked(c); })
+        : res.scoring;
+      res.recipes.forEach((rid) => {
+        const rec = D.RECIPES.find((r) => r.id === rid);
+        if (rec) IE.Cards.noteWork(s, scoredUids, rec.name);
+      });
+    }
     const guilt = res.scoring.map((u) => cardOf(s, u)).filter((c) => c && c.guilt);
     let relief = 0;
     if (guilt.length) {
@@ -13300,7 +13508,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const used = ses.used.map((u) => cardOf(s, u)).filter((c) => c && !c.guilt);
       if (used.length) {
         const c = RL.pick(s, used);
-        spore = RL.addCard(s, { id: 'spore', name: '孢子：' + c.name.slice(0, 8), tags: c.tags.slice(), value: Math.round(c.value * 0.7), medium: med(c), wear: 0 }).card;
+        const spDef = { id: 'spore', name: '孢子：' + c.name.slice(0, 8), tags: c.tags.slice(), value: Math.round(c.value * 0.7), medium: med(c), wear: 0 };
+        spore = (s.mode === 'rounds' ? RL.addCard(s, spDef, { kind: 'craft' }) : RL.addCard(s, spDef)).card;
       }
     }
     const tagCount = {};
@@ -13437,7 +13646,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         const c = cardOf(s, arg);
         if (!c || c.guilt || (c.id && c.id.startsWith('a_'))) return { ok: false, msg: '選一張普通素材' };
         const nid = RL.pick(s, D.ANTIQUES), def = D.CARDS[nid];
-        Object.assign(c, { id: nid, name: def.name + '（做舊）', tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(c, { id: nid, name: def.name + '（做舊）', tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? c.origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
         const g = RL.sin(s, 2, null);
         s.abilPeriod = Object.assign(s.abilPeriod || {}, { forge: periodOf(s) });
         msg = '做舊：它現在是一件「古董」了。靈魂 +' + g + ' 克';
@@ -13675,13 +13884,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     s.cr -= o.price;
     s.antique.items.find((x) => x.id === id).sold = true;
     s.stats.antiqueTrades = (s.stats.antiqueTrades || 0) + 1;
-    const res = R.addCard(s, id);
+    const res = s.mode === 'rounds' ? R.addCard(s, id, { kind: 'shop' }) : R.addCard(s, id);
     return { ok: true, msg: '買下了「' + o.name + '」' + (res.dropped ? '（素材庫滿了，丟掉了「' + res.dropped.name + '」）' : '') };
   }
 
   // 古董商也收貨：旅行帶回來的素材特別值錢，極稀有素材更是天價（每天最多收兩件）
   function cardPrice(s, c) {
-    const k = c.rarity === 'legend' ? 4 : c.origin && c.origin !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
+    const reg = typeof c.origin === 'string' ? c.origin : (c.id && D.CARDS[c.id] ? D.CARDS[c.id].origin : undefined);
+    const k = c.rarity === 'legend' ? 4 : reg && reg !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
     return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).sellMult || 1)));
   }
   function sellCards(s) {
@@ -13845,7 +14055,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function applySite(s, siteId) {
     const d = D.DEST[s.trip.dest];
     const st = d.sites.find((x) => x.id === siteId);
-    const rep = R.report(s, d.name + '・' + st.name);
+    const rep = R.report(s, d.name + '・' + st.name, { kind: 'trip', x: d.name });
     const n = s.trip.visits[st.id] = (s.trip.visits[st.id] || 0) + 1;
     s.stats.sites = (s.stats.sites || 0) + 1;
     s.stats.actions.site = (s.stats.actions.site || 0) + 1;
@@ -14063,7 +14273,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const shine = rk.id === 'SS' && !(res && res.auto) && IE.Create;
     const gain = (id) => {
       if (!D.CARDS[id]) return;
-      const x = R.addCard(s, id);
+      const org = s.mode === 'rounds' ? { kind: 'work', x: r.title } : undefined;
+      const x = org ? R.addCard(s, id, org) : R.addCard(s, id);
       if (shine && x.card) x.card.star = Math.min(5, IE.Create.starOf(x.card) + 1);
       r.cards.push(x.card); if (x.dropped) r.dropped.push(x.dropped);
     };
@@ -14115,7 +14326,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   const gardenConfig = (s) => ({ duration: 32, acid: s.season === 'acid', heat: s.season === 'heat', pigeons: 1 + (R.eventActive(s, 'famine') ? 1 : 0) });
   function applyGarden(s, res) {
-    const rep = R.report(s, '天台菜園');
+    const rep = R.report(s, '天台菜園', { kind: 'work', x: '天台菜園' });
     const h = n(res.harvest);
     R.hurt(s, 3, 'garden'); rep.delta('body', -3);
     rep.delta('spark', R.addSpark(s, 0.1 + 0.02 * h));
@@ -14131,7 +14342,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   const salvageConfig = (s) => ({ floors: 12, swing: 1 + (R.eventActive(s, 'gentrify') ? 0.2 : 0), duration: 36 });
   function applySalvage(s, res) {
-    const rep = R.report(s, '拆樓打撈');
+    const rep = R.report(s, '拆樓打撈', { kind: 'work', x: '拆樓打撈' });
     const cr = Math.round(n(res.cr) * (R.eventActive(s, 'gentrify') ? 1.5 : 1));
     s.cr += cr; s.stats.crEarned += cr;
     rep.delta('cr', cr);
@@ -14150,7 +14361,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   const haggleConfig = (s) => ({ customers: 6, insight: s.attr.insight, tourists: R.eventActive(s, 'tourists') || R.eventActive(s, 'nightmarket') });
   function applyHaggle(s, res) {
-    const rep = R.report(s, '夜市擺地攤');
+    const rep = R.report(s, '夜市擺地攤', { kind: 'work', x: '夜市擺地攤' });
     const cr = Math.round(n(res.total));
     s.cr += cr; s.stats.crEarned += cr; rep.delta('cr', cr);
     R.hurt(s, 4, 'haggle'); rep.delta('body', -4);
@@ -14339,7 +14550,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const res = result(s, kind);
     if (!res) return null;
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
-    return R.applyMicro(s, kind, res);
+    const rep = R.applyMicro(s, kind, res);
+    if (s.mode === 'rounds' && IE.Cards) IE.Cards.autoPutDown(s);
+    return rep;
   }
 
   IE.Auto = { KINDS, ORDER, target, can, record, result, apply, cap };
@@ -14603,7 +14816,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         const c = cards[0];
         const copy = Object.assign({}, c, { wear: 0, name: c.name + '（副本）', medium: med(c) });
         delete copy.uid;
-        const res = R.addCard(s, copy);
+        const res = s.mode === 'rounds' ? R.addCard(s, copy, { kind: 'craft' }) : R.addCard(s, copy);
         ses.hand.push(res.card.uid);
         msg = '複製了「' + c.name + '」';
         break;
@@ -14623,7 +14836,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         const merged = { id: 'collage', name: a.name.slice(0, 6) + '＋' + b.name.slice(0, 6), tags, value: Math.round((a.value + b.value) * 0.8), wear: 0, medium: med(a) };
         s.cards = s.cards.filter((c) => c.uid !== a.uid && c.uid !== b.uid);
         ses.hand = ses.hand.filter((u) => u !== a.uid && u !== b.uid);
-        const res = R.addCard(s, merged);
+        const res = s.mode === 'rounds' ? R.addCard(s, merged, { kind: 'craft' }) : R.addCard(s, merged);
         ses.hand.push(res.card.uid);
         msg = '拼貼成「' + merged.name + '」（' + merged.value + ' 籌碼）';
         break;
@@ -14639,7 +14852,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       case 'dream': {
         const pool = D.ANTIQUES.concat(Object.keys(D.CARDS).filter((k) => k.startsWith('t_')));
         const nid = R.pick(s, pool), def = D.CARDS[nid];
-        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? cards[0].origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
         msg = '「' + def.name + '」從夢裡出現了';
         break;
       }
@@ -15389,15 +15602,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     };
   }
 
-  // 白天完結：進入創作之夜，若在致命危險中喪生則進入結局
+  // 白天完結：進入創作之夜，若在致命危險中喪生則進入結局；超過素材庫上限時留在白天
   function afterDay(s) {
-    if (!s || s.phase !== 'day') return;
+    if (!s || s.phase !== 'day') return { ok: false };
     if (s.body <= 0) {
       s.ended = R.endingFor(s, 'death');
       s.phase = 'ended';
-      return;
+      return { ok: true };
     }
+    if (s.over) return { ok: false, msg: D.CARD_TEXT.overHead };
     s.phase = 'night';
+    return { ok: true };
   }
 
   // 睡懶覺：不選卡，恢復火花並進入晚上
@@ -15480,7 +15695,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const i = typeof idx === 'string' ? t5.ids.indexOf(idx) : idx;
     if (!Number.isInteger(i) || i < 0 || i >= t5.ids.length || t5.picked.includes(i)) return null;
     t5.picked.push(i);
-    const res = R.addCard(s, t5.ids[i]);
+    const reg = (D.REGIONS && D.REGIONS[t5.origin]) || t5.origin;
+    const res = R.addCard(s, t5.ids[i], { kind: 'trip', x: reg });
     res.card.star = D.ECON.tripStar;
     if (t5.rep) {
       t5.rep.cards.push(res.card);
@@ -15789,7 +16005,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
     if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
     const picked = s.pack.cards[i];
-    const res = R.addCard(s, picked.id);
+    const res = R.addCard(s, picked.id, { kind: 'shop' });
     res.card.star = picked.star;
     s.pack = null;
     return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
@@ -15829,10 +16045,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         medium: D.mediumOf(c),
         wear: 0,
       };
-      if (c.origin) copyDef.origin = c.origin;
       if (c.rarity) copyDef.rarity = c.rarity;
       if (c.mod) copyDef.mod = c.mod;
-      const res = R.addCard(s, copyDef);
+      const res = R.addCard(s, copyDef, { kind: 'craft' });
       res.card.star = copyDef.star;
       if (c.mod) res.card.mod = c.mod;
       s.pick = null;
@@ -16351,7 +16566,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const f = opt.fx || {};
     const label = say(s, opt.label, f);
     const lineText = say(s, opt.line, f);
-    const rep = R.report(s, label);
+    const rep = R.report(s, label, { kind: 'story', x: label });
     if (lineText) rep.line(lineText, '');
 
     applyStoryFx(s, f, rep, true);
@@ -16400,7 +16615,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const st = ensure(s);
     const r = IE.Rounds.roundOf(s);
     const title = (D.STORY && D.STORY.text && D.STORY.text.reversalHead) || '物極必反';
-    const rep = R.report(s, title);
+    const rep = R.report(s, title, { kind: 'story', x: title });
     list.forEach((item) => {
       if (item.text) rep.line(item.text, 'bad');
       applyStoryFx(s, item.fx, rep, false);
@@ -16498,11 +16713,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       }
     } else {
       if (fDef.note) {
+        const nDef = D.NPCS && D.NPCS.find((x) => x.id === npc);
+        const npcName = nDef ? nDef.name : npc;
         const noteCard = Object.assign({}, fDef.note, { tags: (fDef.note.tags || []).slice() });
-        R.addCard(s, noteCard);
+        R.addCard(s, noteCard, { kind: 'friend', x: npcName, npc });
       }
       addRepLine(rep, fDef.nomeet);
     }
+
+    if (IE.Cards) IE.Cards.relics(s, npc);
 
     if (pl.fate) {
       st.fates.push({ npc, species, night: s.night + 1, text: pl.fate });

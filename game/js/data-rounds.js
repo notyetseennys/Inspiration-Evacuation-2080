@@ -104,5 +104,40 @@
     { id: 'copy', name: '複印', desc: '複製一張素材' },
   ];
 
-  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES });
+  // 第十六期：卡的來歷預設文案（總規格 §2.1）
+  const ORIGIN = {
+    start: '來浮城之前就帶在身上',
+    story: '第 {n} 晚之前：{x}',
+    work: '第 {n} 晚之前，做「{x}」的時候留下的',
+    trip: '第 {n} 晚之前，從{x}帶回來',
+    friend: '{x}給你的',
+    shop: '第 {n} 晚之後，在市集買的',
+    craft: '第 {n} 晚之後，自己做出來的',
+  };
+
+  // 第十六期：卡背、遺物與回憶文案（總規格 §2.5）
+  const CARD_TEXT = {
+    backHead: '這張卡的來歷',
+    worksHead: '它參與過的作品',
+    noWorks: '還沒有用它完成過具名的作品。',
+    relic: '遺物：給你這張卡的人已經不在浮城。',
+    relicKeep: '這是遺物，放不下。',
+    overHead: '素材庫放不下了',
+    overSub: '選一張放進回憶。放下的卡不會消失，但不能再用。',
+    memoryHead: '回憶',
+    memoryEmpty: '你還沒有放下過任何東西。',
+  };
+
+  // 第十六期：差事與立場數值常數（總規格 §3.4）
+  const ECON16 = {
+    restSpark: 0.2,
+    gigKeep: 3,
+    gigMax: 2,
+    friendGig: 0.25,
+    gigPay: 2.2,
+    startStarter: 2,
+    stancePay: { comply: 1.3, resist: 0.6, care: 0.8 },
+  };
+
+  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16 });
 });
