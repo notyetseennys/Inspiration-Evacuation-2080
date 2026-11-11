@@ -642,6 +642,61 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('#modal[hidden]', { state: 'attached' });
     ok('WO-16-04 卡背（創作桌手牌）：開啟 .card-back 且不觸發選卡');
 
+    // WO-16-10：創作桌版面檢查（畫布、稿紙、手牌、無色輪、一屏不捲動、三張卡兩個連接）
+    const dkDom = await page.evaluate(() => ({
+      hasCanvas: !!document.querySelector('#ctable .dk-canvas canvas'),
+      hasRow: !!document.querySelector('#ctable .dk-row'),
+      cardCount: document.querySelectorAll('#ctable .dk-hand .dk-card').length,
+      hasWheel: !!document.querySelector('#ctable .ct-wheel:not([hidden])'),
+    }));
+    if (!dkDom.hasCanvas || !dkDom.hasRow || dkDom.cardCount <= 0 || dkDom.hasWheel) {
+      await fail('WO-16-10：五輪創作桌應有 .dk-canvas canvas、.dk-row、.dk-hand .dk-card 且無色輪：' + JSON.stringify(dkDom));
+    }
+    ok('WO-16-10：創作桌具備 .dk-canvas canvas、.dk-row、.dk-hand .dk-card 且沒有色輪');
+
+    for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+      await page.setViewportSize(vp);
+      await page.waitForTimeout(120);
+      const fit = await page.evaluate(() => {
+        const ct = document.querySelector('#ctable');
+        const btns = Array.from(document.querySelectorAll('#ctable .dk-hand .dk-card, #ctable .dk-actions .btn:not([hidden])'));
+        const minW = Math.min(...btns.map((b) => b.offsetWidth));
+        const minH = Math.min(...btns.map((b) => b.offsetHeight));
+        return {
+          ctSh: ct.scrollHeight,
+          ctSw: ct.scrollWidth,
+          docSw: document.documentElement.scrollWidth,
+          ih: window.innerHeight,
+          iw: window.innerWidth,
+          minW,
+          minH,
+        };
+      });
+      if (fit.ctSh > fit.ih) {
+        await fail('WO-16-10：' + vp.width + '×' + vp.height + ' #ctable 超出一屏高度：scrollHeight=' + fit.ctSh + ' > ' + fit.ih);
+      }
+      if (fit.ctSw > fit.iw || fit.docSw > fit.iw) {
+        await fail('WO-16-10：' + vp.width + '×' + vp.height + ' 出現橫向捲動：' + JSON.stringify(fit));
+      }
+      if (fit.minW < 44 || fit.minH < 44) {
+        await fail('WO-16-10：' + vp.width + '×' + vp.height + ' 可按元素小於 44×44px：' + JSON.stringify(fit));
+      }
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    ok('WO-16-10：手機 390×844 與桌面 1280×800 一屏不捲動，無橫向捲動，按鈕與手牌皆 ≥ 44×44px');
+
+    const pick3Uids = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('#ctable .dk-hand .dk-card:not(.forbidden)'))
+        .slice(0, 3)
+        .map((el) => Number(el.dataset.uid));
+    });
+    if (pick3Uids.length < 3) await fail('WO-16-10：手牌可選素材不足三張');
+    for (const u of pick3Uids) await page.click('#ctable .dk-hand .dk-card[data-uid="' + u + '"]');
+    const linkCount3 = await page.$$eval('#ctable .dk-row .dk-link', (els) => els.length);
+    if (linkCount3 !== 2) await fail('WO-16-10：選三張卡之後 .dk-row 應有 2 個 .dk-link，實際：' + linkCount3);
+    for (const u of pick3Uids) await page.click('#ctable .dk-hand .dk-card[data-uid="' + u + '"]');
+    ok('WO-16-10：選三張卡之後 .dk-row 有兩個 .dk-link');
+
     // 收工演出只出現約一秒：用 MutationObserver 記下它曾經出現（WO-15-07 審核加入）
     await page.evaluate(() => {
       window.__sawCleared = false;
@@ -685,6 +740,21 @@ const URL = 'http://localhost:' + PORT + '/';
     const n1 = await page.evaluate(() => { const s = window.__IE.Game.state; const g = (s.nightLog || [])[s.nightLog.length - 1]; return { pass: !!(g && g.pass), saw: window.__sawCleared }; });
     if (n1.pass && !n1.saw) await fail('第 1 晚達標，但沒有出現收工演出 .ct-cleared');
     ok('創作桌下筆並進入結束面板（.ct-end）' + (n1.pass ? '；達標時出現過收工演出 .ct-cleared' : ''));
+    const dkWorkCheck = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const lastWork = (s.works || [])[s.works.length - 1];
+      const lastGal = (s.gallery || [])[s.gallery.length - 1];
+      return {
+        hasDkWork: !!document.querySelector('#ctable .dk-work'),
+        workStrokes: lastWork ? lastWork.n : 0,
+        stanzas: document.querySelectorAll('#ctable .dk-work .dk-stanza').length,
+        hasPaint: !!(lastGal && lastGal.paint && Array.isArray(lastGal.paint.strokes) && lastGal.paint.strokes.length === 4),
+      };
+    });
+    if (!dkWorkCheck.hasDkWork || dkWorkCheck.workStrokes !== 4 || dkWorkCheck.stanzas !== 4 || !dkWorkCheck.hasPaint) {
+      await fail('WO-16-10：下四筆之後應出現 .dk-work 並記錄 paint：' + JSON.stringify(dkWorkCheck));
+    }
+    ok('WO-16-10：下四筆之後出現 .dk-work，作品集記錄 paint（4 筆重畫資料）');
 
     // 7. 檢查 .ct-end 裡沒有 .ct-goal.end（本季訊號列）；按 [data-end="shop"]
     const hasEndGoal = await page.$('#ctable .ct-end .ct-goal.end');
@@ -1760,6 +1830,77 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     await filePage.close();
     ok('dist/inspiration-evacuation-2080.html（' + (distStat.size / 1024).toFixed(0) + ' KB < 4 MB）用 file:// 離線開啟時，' + fileImgs.length + ' 張圖片 naturalWidth > 0，並可完整玩到第 2 輪（' + distR2Title + '）');
+
+    // WO-16-10：IE.DATA.ART = null 時整晚可以玩完，沒有 JS 錯誤
+    const noArtPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const noArtErrors = [];
+    noArtPage.on('pageerror', (e) => noArtErrors.push(e.message));
+    noArtPage.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) noArtErrors.push(m.text()); });
+    await noArtPage.goto(URL);
+    await noArtPage.evaluate((seed) => {
+      localStorage.clear();
+      localStorage.setItem('ie2080.speed', '4');
+      localStorage.setItem('ie2080.noEncounter', '1');
+      localStorage.setItem('ie2080.seed', String(seed));
+    }, SEED);
+    await noArtPage.reload();
+    await noArtPage.evaluate(() => { window.__IE.DATA.ART = null; });
+    await noArtPage.click('[data-do="new"]');
+    await noArtPage.waitForSelector('.setup8 [data-do="start"]');
+    await noArtPage.click('.setup8 [data-do="start"]');
+    for (let step = 0; step < 6; step++) {
+      if (await noArtPage.$('#modal .rd-story [data-do="storypick"]')) {
+        await noArtPage.click('#modal .rd-story [data-do="storypick"]:not([disabled])');
+        if (await noArtPage.$('#modal [data-do="ok"]')) await noArtPage.click('#modal [data-do="ok"]');
+        continue;
+      }
+      if (await noArtPage.$('#modal [data-do="pick"]')) {
+        await noArtPage.click('#modal [data-do="pick"]:not([disabled])');
+        if (await noArtPage.$('#modal [data-do="ok"]')) await noArtPage.click('#modal [data-do="ok"]');
+        continue;
+      }
+      break;
+    }
+    await noArtPage.waitForSelector('.rd-day [data-do="skip"]');
+    await noArtPage.click('.rd-day [data-do="skip"]');
+    await noArtPage.waitForSelector('#modal [data-do="ok"]');
+    await noArtPage.click('#modal [data-do="ok"]');
+    await noArtPage.waitForSelector('#ctable .dk-hand .dk-card');
+    const noArtFallback = await noArtPage.evaluate(() => ({
+      hasSvg: !!document.querySelector('#ctable .dk-canvas .dk-svg-fallback:not([hidden]) svg'),
+      faceImgs: document.querySelectorAll('#ctable .dk-hand img.dk-face-im').length,
+    }));
+    if (!noArtFallback.hasSvg || noArtFallback.faceImgs !== 0) {
+      await noArtPage.close();
+      await fail('WO-16-10：IE.DATA.ART = null 時應退回 IE.Artwork.svg 且卡面不載入圖片：' + JSON.stringify(noArtFallback));
+    }
+    for (let p = 0; p < 6; p++) {
+      if (await noArtPage.$('#ctable .dk-work [data-end="shop"]')) break;
+      const uids = await noArtPage.evaluate(() => {
+        const b = window.__IE.Create.bestPlay(window.__IE.Game.state);
+        return b ? b.uids : [];
+      });
+      if (!uids.length) break;
+      for (const u of uids) await noArtPage.click('#ctable .dk-hand .dk-card[data-uid="' + u + '"]');
+      await noArtPage.click('#ctable [data-ct="play"]');
+      await noArtPage.waitForFunction(() => !!document.querySelector('#ctable .dk-work') || !window.__IE.Craft.isBusy(), null, { timeout: 15000 });
+    }
+    await noArtPage.waitForSelector('#ctable .dk-work [data-end="shop"]');
+    await noArtPage.click('#ctable .dk-work [data-end="shop"]');
+    await noArtPage.waitForSelector('#modal .rd-shop');
+    await noArtPage.close();
+    if (noArtErrors.length) await fail('WO-16-10：IE.DATA.ART = null 出現 JS 錯誤：\n' + noArtErrors.join('\n'));
+    ok('WO-16-10：IE.DATA.ART = null 時退回色塊作品並可完整玩完整晚，沒有 JS 錯誤');
+
+    // WO-16-10：craft.js 和 nightscene.js 沒有禁止的像素讀取 API
+    const bannedApi = 'getImage' + 'Data';
+    for (const relFile of ['game/js/craft.js', 'game/js/nightscene.js']) {
+      const srcTxt = fs.readFileSync(path.join(__dirname, '..', relFile), 'utf8');
+      if (srcTxt.includes(bannedApi)) {
+        await fail('WO-16-10：' + relFile + ' 不可以包含 ' + bannedApi);
+      }
+    }
+    ok('WO-16-10：craft.js 和 nightscene.js 沒有 ' + bannedApi);
 
     if (errors.length) await fail('有 JS 錯誤：\n' + errors.join('\n'));
     ok('沒有 JS 錯誤');

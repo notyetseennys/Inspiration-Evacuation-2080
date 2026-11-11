@@ -40,7 +40,7 @@ const inner = [title, metaSides, metaDesc, iconLink, fontLinks, '<style>\n' + cs
 const full = '<!doctype html>\n<html lang="zh-HK">\n<head>\n<meta charset="utf-8">\n'
   + '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
   + [title, metaSides, metaDesc, iconLink, fontLinks, '<style>\n' + css + '</style>'].filter(Boolean).join('\n')
-  + '\n</head>\n<body>\n' + body + '\n<script>window.IE_AUDIO_BASE = "../game/";</script>\n' + imgScript + '\n<script>\n' + js + '</script>\n</body>\n</html>\n';
+  + '\n</head>\n<body>\n' + body + '\n<script>window.IE_AUDIO_BASE = "../game/";window.IE_ART_BASE = "../game/";</script>\n' + imgScript + '\n<script>\n' + js + '</script>\n</body>\n</html>\n';
 
 const out = path.join(root, 'dist');
 fs.mkdirSync(out, { recursive: true });

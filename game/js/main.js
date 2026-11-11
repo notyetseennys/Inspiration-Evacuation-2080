@@ -101,7 +101,30 @@
       continue() { A.init(); Game.state = savedRun(); S.City.enter('hub'); resumeRun(); },
       new() { A.init(); store.del(KEY_RUN); showSetup(); },
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
-      collection() { music('archive'); UI.modal(UI.collectionModal(Game.meta), { close() { UI.closeModal(); music('title'); } }, { dismiss: () => music('title') }); },
+      collection() {
+        music('archive');
+        const galPainters = [];
+        const stopGal = () => { while (galPainters.length) galPainters.pop().stop(); };
+        UI.modal(UI.collectionModal(Game.meta), {
+          close() { stopGal(); UI.closeModal(); music('title'); },
+        }, { dismiss: () => { stopGal(); music('title'); } });
+        if (IE.NightScene && D.ART && D.ART.a) {
+          const gal = (Game.meta.gallery || []).slice().reverse();
+          document.querySelectorAll('#modal canvas.gal-paint[data-gal-i]').forEach((cv) => {
+            const item = gal[Number(cv.dataset.galI)];
+            if (!item || !item.paint) return;
+            const p = IE.NightScene.paint(cv, {
+              static: true,
+              onFallback() {
+                const wrap = cv.closest('.gal-paint-wrap');
+                if (wrap && IE.Artwork) wrap.outerHTML = IE.Artwork.svg(item.form, item.pal, item.seed);
+              },
+            });
+            p.replay(item.paint);
+            galPainters.push(p);
+          });
+        }
+      },
       gacha() { A.init(); openGacha(() => showTitle()); },
       history() { music('archive'); UI.modal(UI.historyModal(Game.meta), { close() { UI.closeModal(); music('title'); } }, { dismiss: () => music('title') }); },
       weekly() {

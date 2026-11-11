@@ -1063,10 +1063,21 @@
     const achHtml = '<h3>成就（' + Object.keys(achs).length + '/' + M.ACH.length + '）</h3><div class="recipes">' + M.ACH.map((a) => '<div class="recipe' + (achs[a.id] ? ' legend' : ' unknown') + '"><b>' + esc(a.name) + '</b><span class="mute">' + esc(a.desc) + '・' + a.t + ' 張扭蛋券</span></div>').join('') + '</div>';
     const nMemo = Math.min(M.MEMOS.length, M.levelOf(meta) - 1);
     const memoHtml = '<h3>外星 HR 內部備忘錄（' + nMemo + '/' + M.MEMOS.length + '）</h3><div class="memos">' + M.MEMOS.map((m, i) => classifiedMemoHtml(m, i, i < nMemo)).join('') + '</div>';
-    // 作品集（第十四期）：跨局保存最近的 24 件作品
+    // 作品集（第十四期／第十六期）：跨局保存最近的作品；五輪模式的夜景畫由 paint 記錄即時重畫
     const gal = (meta.gallery || []).slice().reverse();
-    const galHtml = '<h3>作品集（' + gal.length + '）</h3>' + (gal.length && IE.Artwork ? '<div class="gallery-wall">' + gal.map((a) => '<figure class="art-card f-' + a.form + '">' + IE.Artwork.svg(a.form, a.pal, a.seed)
-      + '<figcaption><b>' + esc(IE.Artwork.title(a.form, a.pal, a.no)) + '</b><small>' + esc(((IE.Create.FORM[a.form] || {}).name || '') + (a.who ? '・' + a.who : '') + '・') + '<span class="num">' + fmt(a.total || 0) + '</span></small></figcaption></figure>').join('') + '</div>'
+    const canPaintGal = !!(IE.NightScene && D().ART && D().ART.a);
+    const galHtml = '<h3>作品集（' + gal.length + '）</h3>' + (gal.length && IE.Artwork ? '<div class="gallery-wall">' + gal.map((a, gi) => {
+      const hasPaint = !!(canPaintGal && a && a.paint && Array.isArray(a.paint.strokes) && a.paint.strokes.length);
+      const artTitleTxt = a && a.paint && a.paint.title
+        ? '《' + String(a.paint.title).replace(/^《|》$/g, '') + '》'
+        : IE.Artwork.title(a.form, a.pal, a.seed);
+      const formObj = (IE.Desk && IE.Desk.STRUCT && IE.Desk.STRUCT[a.form]) || IE.Create.FORM[a.form] || {};
+      const pic = hasPaint
+        ? '<div class="gal-paint-wrap"><canvas class="gal-paint" width="960" height="600" data-gal-i="' + gi + '"></canvas></div>'
+        : IE.Artwork.svg(a.form, a.pal, a.seed);
+      return '<figure class="art-card f-' + a.form + (hasPaint ? ' has-paint' : '') + '">' + pic
+        + '<figcaption><b>' + esc(artTitleTxt) + '</b><small>' + esc((formObj.name || '') + (a.who ? '・' + a.who : '') + '・') + '<span class="num">' + fmt(a.total || 0) + '</span></small></figcaption></figure>';
+    }).join('') + '</div>'
       : '<p class="mute">還沒有作品。每一筆都會畫成一幅小畫，最好的會留在這裡。</p>');
     return '<div class="modal wide"><h2>收藏</h2>' + profileHtml(meta) + achHtml + galHtml + memoHtml + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
