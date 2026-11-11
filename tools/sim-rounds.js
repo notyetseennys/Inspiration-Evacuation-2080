@@ -15,11 +15,11 @@ const path = require('path');
   'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js',
   'data-abilities.js', 'data-stories.js', 'data-weather.js', 'data-contacts.js',
   'data-rounds.js', 'data-cities.js', 'data-story.js', 'rules.js', 'cards.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
-  'stages.js', 'meta.js', 'dossier.js', 'rounds.js', 'story.js',
+  'stages.js', 'meta.js', 'dossier.js', 'flood.js', 'rounds.js', 'story.js',
 ].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 
 const IE = globalThis.IE;
-const D = IE.DATA, R = IE.Rules, CARDS = IE.Cards, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
+const D = IE.DATA, R = IE.Rules, CARDS = IE.Cards, FLOOD = IE.Flood, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
 
 // 支援 ECON 環境變數覆寫 D.ECON（供校準迭代使用）
 if (process.env.ECON) {
@@ -177,7 +177,7 @@ function pickDayCard(s, strat) {
   }
 
   // 若牌庫已滿且最殘的一張是 ★4+ 主力牌，睡懶覺養火花並避免新拿到的 ★1 卡覆蓋主力牌
-  const deckCap = (D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.deckMax) || 12;
+  const deckCap = FLOOD && FLOOD.deckMax ? FLOOD.deckMax(s) : ((D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.deckMax) || 12);
   if (s.cards.length >= deckCap) {
     let worst = s.cards[0];
     s.cards.forEach((c) => {
@@ -248,7 +248,16 @@ function chooseStoryChapter(s, ch, strat) {
 }
 
 function runDay(s, strat, metrics) {
+  if (s.ended || s.phase === 'ended') return;
   R.morning(s);
+  if (FLOOD && Array.isArray(s.floodPick) && s.floodPick.length) {
+    if (strat === 'random') {
+      FLOOD.pick(s, R.pick(s, s.floodPick));
+    } else {
+      FLOOD.autoPick(s);
+    }
+    metrics.transitions++;
+  }
   const expired = RD.expireGigs(s);
   metrics.expiredGigs += expired.length;
   CARDS.autoPutDown(s);
@@ -502,6 +511,11 @@ function runShop(s, strat, metrics) {
       if (sh.service === 'copy' && s.cards.some((c) => !c.guilt) && s.cr >= RD.price(s, 'service')) cands.push('service');
       if (sh.service === 'polish' && s.cards.some((c) => !c.guilt && CR.starOf(c) < 5 && s.cr >= RD.price(s, 'service', c))) cands.push('service');
     }
+    if (FLOOD && FLOOD.services) {
+      FLOOD.services(s).forEach((fs) => {
+        if (fs.affordable) cands.push(fs.id);
+      });
+    }
     if (cands.length) {
       const slot = R.pick(s, cands);
       const b = RD.shopBuy(s, slot);
@@ -552,6 +566,27 @@ function runShop(s, strat, metrics) {
         metrics.shopBuys++;
         maybePromoteFromStash(s);
       }
+    }
+  }
+
+  // 1b. 水位與住所服務（WO-16-06）：沒有住所而且有錢就買 rehouse；有錢而且階段是 warn 或以上就買 moveup
+  if (FLOOD && FLOOD.services) {
+    if ((s.floor || 0) <= 0) {
+      const rh = FLOOD.services(s).find((x) => x.id === 'rehouse' && x.affordable);
+      if (rh) {
+        const b = RD.shopBuy(s, 'rehouse');
+        if (b && b.ok) {
+          CARDS.autoPutDown(s);
+          metrics.shopBuys++;
+        }
+      }
+    }
+    while ((s.floor || 0) > 0 && FLOOD.stage(s) !== 'dry') {
+      const mv = FLOOD.services(s).find((x) => x.id === 'moveup' && x.affordable);
+      if (!mv) break;
+      const b = RD.shopBuy(s, 'moveup');
+      if (!b || !b.ok) break;
+      metrics.shopBuys++;
     }
   }
 
@@ -641,7 +676,7 @@ function runShop(s, strat, metrics) {
     for (const pid of packs) {
       const slot = 'pack:' + pid;
       if (sh.bought.includes(slot)) continue;
-      const deckCap = (D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.deckMax) || 12;
+      const deckCap = FLOOD && FLOOD.deckMax ? FLOOD.deckMax(s) : ((D.BACKGROUNDS[s.bg] && D.BACKGROUNDS[s.bg].perk && D.BACKGROUNDS[s.bg].perk.deckMax) || 12);
       if (s.cards.length >= deckCap && pid !== 'far') {
         let worst = s.cards[0];
         s.cards.forEach((c) => {
@@ -730,6 +765,10 @@ function runOne(bg, season, seed, strat) {
     chaptersDone: s.story && Array.isArray(s.story.done) ? s.story.done.length : 0,
     friendsTaken: s.story && s.story.taken ? Object.keys(s.story.taken).length : 0,
     friendsHidden: s.story && s.story.hidden ? Object.keys(s.story.hidden).length : 0,
+    floodNights: (s.stats && s.stats.floodNights) || 0,
+    floodLostCards: (s.stats && s.stats.floodLostCards) || 0,
+    lostHome: ((s.stats && s.stats.lostHome) || 0) > 0 ? 1 : 0,
+    moves: (s.stats && s.stats.moves) || 0,
     estMin,
     metrics,
   };
@@ -822,7 +861,12 @@ function runStrategy(strat) {
   const avgMicros = avg((r) => r.metrics.micros);
   const avgExpired = avg((r) => r.metrics.expiredGigs);
   const avgIncome = avg((r) => r.crEarned);
+  const avgFloodNights = avg((r) => r.floodNights);
+  const avgFloodCards = avg((r) => r.floodLostCards);
+  const lostHomeRuns = results.filter((r) => r.lostHome > 0).length;
+  const avgMoves = avg((r) => r.moves);
   console.log(`  差事與工作: 平均每局小遊戲 ${avgMicros.toFixed(2)} 次 · 過期差事 ${avgExpired.toFixed(2)} 個 · 平均總收入 $${Math.round(avgIncome)}`);
+  console.log(`  水位與搬遷: 平均每局淹水 ${avgFloodNights.toFixed(2)} 晚 · 被水帶走 ${avgFloodCards.toFixed(2)} 張卡 · 失去住所 ${pct(lostHomeRuns)} · 平均搬遷 ${avgMoves.toFixed(2)} 次`);
   console.log(`  出國與故事線: 平均每局出國 ${avgTrips.toFixed(2)} 次 · 回答 ${avgChapters.toFixed(2)} 章角色線 · 極端選項 ${avgExtremes.toFixed(2)} 個 · 發生反轉 ${avgReversals.toFixed(2)} 次 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
   const formLine = FORM_KEYS
     .map((f) => `${f}:${totalPlays ? Math.round((formTotals[f] / totalPlays) * 100) : 0}%`)

@@ -321,6 +321,7 @@ module.exports = (t) => {
       overSub: '選一張放進回憶。放下的卡不會消失，但不能再用。',
       memoryHead: '回憶',
       memoryEmpty: '你還沒有放下過任何東西。',
+      lostFlood: '第 {n} 晚，水帶走的。',
     });
 
     assert.deepEqual(D.ECON16, {
@@ -331,6 +332,14 @@ module.exports = (t) => {
       gigPay: 2.2,
       startStarter: 2,
       stancePay: { comply: 1.3, resist: 0.6, care: 0.8 },
+      floodBody: 8,
+      floodSpark: 0.2,
+      homelessBody: 4,
+      homelessDeck: 2,
+      moveBase: 120,
+      moveStep: 40,
+      rehouse: 260,
+      thaw: 0.6,
     });
   });
 };

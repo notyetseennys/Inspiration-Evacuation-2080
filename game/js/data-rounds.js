@@ -126,9 +126,10 @@
     overSub: '選一張放進回憶。放下的卡不會消失，但不能再用。',
     memoryHead: '回憶',
     memoryEmpty: '你還沒有放下過任何東西。',
+    lostFlood: '第 {n} 晚，水帶走的。',
   };
 
-  // 第十六期：差事與立場數值常數（總規格 §3.4）
+  // 第十六期：差事、立場與水位數值常數（總規格 §3.4、§7.3）
   const ECON16 = {
     restSpark: 0.2,
     gigKeep: 3,
@@ -137,6 +138,14 @@
     gigPay: 2.2,
     startStarter: 2,
     stancePay: { comply: 1.3, resist: 0.6, care: 0.8 },
+    floodBody: 8,
+    floodSpark: 0.2,
+    homelessBody: 4,
+    homelessDeck: 2,
+    moveBase: 120,
+    moveStep: 40,
+    rehouse: 260,
+    thaw: 0.6,
   };
 
   // 第十六期：差事固定文案（總規格 §3.5）
@@ -169,5 +178,30 @@
     { id: 'rest', kind: 'rest', name: '在家發呆', sub: '甚麼都不做。這在浮城是一種奢侈。' },
   ];
 
-  Object.assign(D, { ECON, ROUND_TEXT, DAYCARDS, DAYCARDS16, PACKS, SERVICES, ORIGIN, CARD_TEXT, ECON16, GIG_TEXT, GIG_FRIEND });
+  // 第十六期：市集的水位與住所服務（總規格 §7.2，不改第十五期的 D.SERVICES）
+  const SERVICES16 = [
+    { id: 'moveup', name: '搬上一層', desc: '搬上 {f} 樓，連續淹水晚數歸零' },
+    { id: 'rehouse', name: '租回一個單位', desc: '租回 {f} 樓的單位，恢復素材庫上限' },
+  ];
+
+  // 第十六期：水位與淹水固定文案（總規格 §7.4）
+  const FLOOD_TEXT = {
+    bar: '水位 {w} 樓・你住 {f} 樓',
+    barHomeless: '水位 {w} 樓・你住天橋下',
+    warn: '水位局提示：水位距離閣下的單位不足一層。請自行評估。',
+    light: '水進了你家。水位局把這種情況歸類為「輕微滲漏」。',
+    mediumHead: '水要帶走一樣東西',
+    mediumSub: '水已經淹了兩晚。選一張留給它，其餘的你還抱得住。',
+    mediumDone: '「{x}」跟着水走了。它現在在回憶裏。',
+    heavy: '你的單位已經在水位以下。按天空區的新例，水位以下的樓層不再計入城市面積，所以你沒有失去任何地方。',
+    heavyObj: '走的時候來不及拿「{x}」。',
+    moveup: '你搬上了 {f} 樓。樓下的鄰居沒有搬。',
+    rehouse: '你租回了一個單位，在 {f} 樓。合約註明：水位上升不屬於業主的責任。',
+    pump: '抽水泵響了一整晚，水退了一點。',
+  };
+
+  Object.assign(D, {
+    ECON, ROUND_TEXT, DAYCARDS, DAYCARDS16, PACKS, SERVICES, SERVICES16,
+    ORIGIN, CARD_TEXT, ECON16, GIG_TEXT, GIG_FRIEND, FLOOD_TEXT,
+  });
 });

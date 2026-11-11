@@ -656,6 +656,39 @@
     UI.renderHud(s);
     A.setMode('city');
     A.setSpark(s.spark);
+    if (IE.Flood && IE.Flood.ensure) IE.Flood.ensure(s);
+    if (s.floodOut) {
+      save();
+      music('dilemma');
+      UI.setPanel('<p class="mute">' + UI.esc((D.FLOOD_TEXT && D.FLOOD_TEXT.heavy) || '失去住所') + '</p>');
+      UI.modal(UI.floodOutModal(s), {
+        floodok() {
+          s.floodOut = null;
+          A.sfx('wrong');
+          UI.closeModal();
+          UI.renderHud(s); save();
+          roundsDay();
+        },
+      });
+      return;
+    }
+    if (IE.Flood && Array.isArray(s.floodPick) && s.floodPick.length) {
+      save();
+      music('dilemma');
+      UI.setPanel('<p class="mute">' + UI.esc((D.FLOOD_TEXT && D.FLOOD_TEXT.mediumHead) || '水要帶走一樣東西') + '</p>');
+      UI.modal(UI.floodPickModal(s), {
+        floodpick(el) {
+          const r = IE.Flood.pick(s, Number(el.dataset.uid));
+          if (!r || !r.ok) { if (r && r.msg) UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+          if (r.msg) UI.toast(r.msg, 'bad');
+          A.sfx('wrong');
+          UI.closeModal();
+          UI.renderHud(s); save();
+          roundsDay();
+        },
+      });
+      return;
+    }
     const revs = IE.Story && IE.Story.reversals ? IE.Story.reversals(s) : [];
     if (revs.length) {
       save();
@@ -810,9 +843,13 @@
     if (s.pick) return roundsPick();
     UI.modal(UI.shopModal(s), {
       buy(el) {
-        const slot = el.dataset.slot || (el.closest('[data-slot]') && el.closest('[data-slot]').dataset.slot);
+        const slot = el.dataset.slot
+          || el.dataset.id
+          || (el.closest('[data-slot]') && el.closest('[data-slot]').dataset.slot)
+          || (el.closest('[data-id]') && el.closest('[data-id]').dataset.id);
         const r = IE.Rounds.shopBuy(s, slot);
         if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+        if ((slot === 'moveup' || slot === 'rehouse') && r.msg) UI.toast(r.msg, 'good');
         A.sfx(slot && slot.startsWith('relic:') ? 'pickup' : 'coin');
         save();
         roundsShop();

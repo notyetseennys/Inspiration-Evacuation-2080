@@ -1049,3 +1049,177 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   body.mode-rounds #stage:not(.playing) canvas { height: auto !important; width: 100% !important; }
 }
 .est-hidden { color: var(--muted, #8b95ad); font-style: italic; }
+
+/* ---------- 第十六期 WO-16-06：水位條、淹水提示、帶走素材與失去住所 ---------- */
+#hud .chip.rd-water {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+  border-color: rgba(141, 183, 214, 0.3);
+  color: #bfd4e6;
+  background: rgba(16, 30, 46, 0.65);
+}
+#hud .chip.rd-water .rw-txt {
+  position: relative;
+  z-index: 1;
+}
+#hud .chip.rd-water .rw-wave {
+  display: none;
+  position: absolute;
+  left: -100%;
+  right: -100%;
+  bottom: 0;
+  height: 100%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(63, 182, 217, 0.06) 0px,
+    rgba(63, 182, 217, 0.28) 18px,
+    rgba(63, 182, 217, 0.06) 36px
+  );
+}
+#hud .chip.rd-water.is-homeless {
+  border-color: rgba(240, 138, 60, 0.52);
+  color: #ffd1a3;
+  background: rgba(74, 38, 18, 0.55);
+}
+#hud .chip.rd-water.f-warn {
+  border-color: rgba(255, 203, 92, 0.72);
+  color: #ffdc85;
+  background: rgba(84, 58, 14, 0.55);
+}
+#hud .chip.rd-water.f-light {
+  border-color: rgba(63, 182, 217, 0.78);
+  color: #b7f1ff;
+  background: rgba(15, 62, 86, 0.68);
+}
+#hud .chip.rd-water.f-medium {
+  border-color: rgba(88, 212, 240, 0.92);
+  color: #e4fbff;
+  background: rgba(18, 82, 114, 0.78);
+  box-shadow: 0 0 10px rgba(63, 182, 217, 0.28);
+}
+#hud .chip.rd-water.f-heavy {
+  border-color: rgba(255, 107, 94, 0.88);
+  color: #ffe0dc;
+  background: rgba(108, 28, 38, 0.74);
+  box-shadow: 0 0 12px rgba(255, 107, 94, 0.3);
+}
+#hud .chip.rd-water.f-heavy .rw-wave {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 107, 94, 0.08) 0px,
+    rgba(63, 182, 217, 0.3) 20px,
+    rgba(255, 107, 94, 0.08) 40px
+  );
+}
+#hud .chip.rd-water.f-light .rw-wave,
+#hud .chip.rd-water.f-medium .rw-wave,
+#hud .chip.rd-water.f-heavy .rw-wave {
+  display: block;
+  animation: rdWaterWave 3.2s linear infinite;
+}
+@keyframes rdWaterWave {
+  from { transform: translateX(0); }
+  to { transform: translateX(36px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hud .chip.rd-water.f-light .rw-wave,
+  #hud .chip.rd-water.f-medium .rw-wave,
+  #hud .chip.rd-water.f-heavy .rw-wave {
+    animation: none;
+  }
+}
+
+.rd-day .rd-flood {
+  margin-top: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  border: 1px solid rgba(63, 182, 217, 0.35);
+  border-left: 3px solid #3fb6d9;
+  background: rgba(16, 48, 68, 0.52);
+  color: #d6f4ff;
+}
+.rd-day .rd-flood.f-warn {
+  border-color: rgba(255, 203, 92, 0.42);
+  border-left-color: #ffcb5c;
+  background: rgba(74, 52, 14, 0.46);
+  color: #ffe49e;
+}
+.rd-day .rd-flood.f-heavy {
+  border-color: rgba(255, 107, 94, 0.48);
+  border-left-color: #ff6b5e;
+  background: rgba(88, 24, 32, 0.48);
+  color: #ffd9d4;
+}
+.rd-day .rd-flood.f-pump {
+  border-color: rgba(155, 227, 107, 0.38);
+  border-left-color: #9be36b;
+  background: rgba(24, 56, 34, 0.44);
+  color: #dcffc4;
+}
+
+.rd-floodpick .fp-sub {
+  margin: 4px 0 12px;
+  font-size: 13.5px;
+}
+.rd-floodpick .fp-grid {
+  gap: 12px;
+}
+.rd-floodpick .fp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 6px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2a3756;
+  border-radius: 12px;
+}
+.rd-floodpick .fp-card .card {
+  height: auto;
+}
+.rd-floodpick .fp-card:hover {
+  border-color: #3fb6d9;
+  transform: translateY(-1px);
+}
+.rd-floodpick .fp-from {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--muted, #9aa8bf);
+  text-align: left;
+  padding: 0 4px;
+}
+.rd-floodout .fo-heavy {
+  margin: 8px 0;
+  line-height: 1.65;
+}
+.rd-floodout .fo-obj {
+  margin: 6px 0 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 107, 94, 0.12);
+  border: 1px solid rgba(255, 107, 94, 0.35);
+  color: #ffd4cf;
+  font-size: 13px;
+}
+.rd-floodout .btn-row .btn,
+.rs-flood-sec .rs-flood-srv .btn {
+  min-height: 44px;
+}
+@media (max-width: 720px) {
+  #hud .chip.rd-water {
+    font-size: 11.5px;
+    max-width: 100%;
+  }
+  .rd-floodpick .fp-grid {
+    grid-template-columns: 1fr;
+  }
+}

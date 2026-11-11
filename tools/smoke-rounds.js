@@ -24,7 +24,15 @@ const URL = 'http://localhost:' + PORT + '/';
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push(m.text()); });
 
   const closeDilemma = async () => {
-    for (let step = 0; step < 5; step++) {
+    for (let step = 0; step < 8; step++) {
+      if (await page.$('#modal .rd-floodout [data-do="floodok"]')) {
+        await page.click('#modal .rd-floodout [data-do="floodok"]');
+        continue;
+      }
+      if (await page.$('#modal .rd-floodpick [data-do="floodpick"]')) {
+        await page.click('#modal .rd-floodpick [data-do="floodpick"]');
+        continue;
+      }
       if (await page.$('#modal .rd-reversal [data-do="reverse"]')) {
         await page.click('#modal .rd-reversal [data-do="reverse"]');
         continue;
@@ -282,6 +290,20 @@ const URL = 'http://localhost:' + PORT + '/';
       await fail('五輪模式狀態列不應顯示狀態掣、手機掣或「身體」：' + JSON.stringify(hudCheck));
     }
     ok('狀態列：有 .chip.chances、.chip.night、.chip.rent；無狀態掣、手機掣與身體');
+
+    // WO-16-06 (1)：狀態列有 .rd-water，文字包含「水位」和「樓」
+    const waterHud0 = await page.evaluate(() => {
+      const el = document.querySelector('#hud .rd-water');
+      return {
+        exists: !!el,
+        cls: el ? el.className : '',
+        txt: el ? el.textContent.trim() : '',
+      };
+    });
+    if (!waterHud0.exists || !waterHud0.txt.includes('水位') || !waterHud0.txt.includes('樓')) {
+      await fail('狀態列 .rd-water 檢查不通過：' + JSON.stringify(waterHud0));
+    }
+    ok('狀態列水位條（.rd-water）：' + waterHud0.txt + '（class=' + waterHud0.cls + '）');
 
     // 18. 主畫面：浮城是主畫面（製作人 2026-11-03：「中間的主畫面好像太小了」）。
     // 舊規則「第一屏看到三張生活卡」（WO-15-08）取消：桌面 1280×800 的浮城畫面至少 300px 高，三張生活卡照樣存在
@@ -972,6 +994,160 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('第 3 輪白天面板：出現 .rd-fate（被收藏朋友的近況）與 collect-* 插圖（naturalWidth=' + fateNw + '），三張生活卡（卡名 bottom=' + r3NameBottoms.join(', ') + '）');
 
+    // WO-16-06 (2)-(4)：水位預警（.rd-flood）、連續淹兩晚（.rd-floodpick → s.memory 標記 lost === 'flood'）、第三晚失去住所（.rd-floodout）與市集服務（moveup / rehouse）、手機 390px 無橫向捲動
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.season = 'storm';
+      s.night = 7;
+      s.day = 28;
+      s.floor = 4;
+      s.water = s.floor - 0.5;
+      s.floodRun = 0;
+      s.flood = 'warn';
+      s.body = 100;
+      s.cr = 600;
+      s.phase = 'shop';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-shop [data-id="moveup"]');
+    await scanMoney('市集住所服務（moveup）', ['#modal .rd-shop .rs-flood-sec'], 1);
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day .rd-flood');
+    const warnCheck = await page.evaluate(() => {
+      const FT = window.__IE.DATA.FLOOD_TEXT;
+      const wEl = document.querySelector('#hud .rd-water');
+      const fEl = document.querySelector('.rd-day .rd-flood');
+      return {
+        waterCls: wEl ? wEl.className : '',
+        floodTxt: fEl ? fEl.textContent.trim() : '',
+        wantWarn: FT.warn,
+      };
+    });
+    if (!warnCheck.waterCls.includes('f-warn') || !warnCheck.floodTxt.includes(warnCheck.wantWarn)) {
+      await fail('水位差 0.5 進入下一晚後應出現 .rd-flood 預警與 .f-warn：' + JSON.stringify(warnCheck));
+    }
+    ok('水位預警（warn）：狀態列 .f-warn，白天面板顯示 .rd-flood 預警');
+
+    // 連續淹第 1 晚（light）
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.season = 'storm';
+      s.phase = 'shop';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-shop');
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day .rd-flood');
+    const lightCheck = await page.evaluate(() => {
+      const FT = window.__IE.DATA.FLOOD_TEXT;
+      const wEl = document.querySelector('#hud .rd-water');
+      const fEl = document.querySelector('.rd-day .rd-flood');
+      return {
+        floodRun: window.__IE.Game.state.floodRun,
+        waterCls: wEl ? wEl.className : '',
+        floodTxt: fEl ? fEl.textContent.trim() : '',
+        wantLight: FT.light,
+      };
+    });
+    if (lightCheck.floodRun !== 1 || !lightCheck.waterCls.includes('f-light') || !lightCheck.floodTxt.includes(lightCheck.wantLight)) {
+      await fail('淹水第 1 晚應為 light 並顯示滲漏文字：' + JSON.stringify(lightCheck));
+    }
+    ok('水位淹第 1 晚（light）：狀態列 .f-light，白天面板顯示輕微滲漏');
+
+    // 連續淹第 2 晚（medium）：出現 .rd-floodpick，不可按 Escape 關閉，點選一張後 s.memory 多一張 lost === 'flood' 的卡
+    const memBefore = await page.evaluate(() => (window.__IE.Game.state.memory || []).length);
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.season = 'storm';
+      s.night = 10;
+      s.day = 40;
+      s.phase = 'shop';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-shop');
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await page.waitForSelector('#modal .rd-floodpick [data-do="floodpick"][data-uid]');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(80);
+    const fpStillOpen = await page.$('#modal .rd-floodpick');
+    if (!fpStillOpen) await fail('.rd-floodpick 不應可按 Escape 關閉');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const fpMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-floodpick [data-do="floodpick"]')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, count: hs.length, minH: Math.min(...hs) };
+    });
+    if (fpMob.sw > 390) await fail('手機 390px .rd-floodpick 出現橫向捲動：scrollWidth=' + fpMob.sw);
+    if (fpMob.count !== 3 || fpMob.minH < 44) await fail('手機 .rd-floodpick 應有 3 張候選卡且按鈕高度 >= 44px：' + JSON.stringify(fpMob));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForTimeout(80);
+
+    await page.click('#modal .rd-floodpick [data-do="floodpick"][data-uid]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day');
+    const fpAfter = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const last = (s.memory || [])[s.memory.length - 1];
+      return {
+        memLen: (s.memory || []).length,
+        floodPick: s.floodPick,
+        lost: last ? last.lost : null,
+        lostNight: last ? last.lostNight : null,
+      };
+    });
+    if (fpAfter.memLen !== memBefore + 1 || fpAfter.floodPick !== null || fpAfter.lost !== 'flood' || !fpAfter.lostNight) {
+      await fail('.rd-floodpick 選卡後 s.memory 應多一張 lost === "flood" 的卡：' + JSON.stringify(fpAfter));
+    }
+    ok('水位連續淹兩晚（medium）：.rd-floodpick 三選一不可關閉，選卡後進入 s.memory（lost="flood"，第 ' + fpAfter.lostNight + ' 晚）');
+
+    // 連續淹第 3 晚（heavy）：出現 .rd-floodout，住到天橋下，市集出現 rehouse，手機 390px 無橫向捲動
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.season = 'storm';
+      s.night = 10;
+      s.day = 40;
+      s.phase = 'shop';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-shop');
+    await page.click('#modal .rd-shop [data-do="leave"]');
+    await page.waitForSelector('#modal .rd-floodout [data-do="floodok"]');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const foMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const btn = document.querySelector('#modal .rd-floodout [data-do="floodok"]');
+      return { sw, btnH: btn ? Math.round(btn.getBoundingClientRect().height) : 0, floor: window.__IE.Game.state.floor };
+    });
+    if (foMob.sw > 390 || foMob.btnH < 44 || foMob.floor !== 0) {
+      await fail('手機 390px .rd-floodout 檢查不通過：' + JSON.stringify(foMob));
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#modal .rd-floodout [data-do="floodok"]');
+    await closeDilemma();
+    await page.waitForSelector('.rd-day');
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.cr = 600;
+      s.phase = 'shop';
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('#modal .rd-shop [data-id="rehouse"]');
+    await scanMoney('市集住所服務（rehouse）', ['#modal .rd-shop .rs-flood-sec'], 1);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const rhMobSw = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (rhMobSw > 390) await fail('手機 390px 市集（含 rehouse）出現橫向捲動：scrollWidth=' + rhMobSw);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.click('#modal .rd-shop [data-id="rehouse"] [data-do="buy"]');
+    const rhFloor = await page.evaluate(() => window.__IE.Game.state.floor);
+    if (rhFloor <= 0) await fail('購買 rehouse 後應恢復樓層（> 0），實際：' + rhFloor);
+    ok('水位連續淹三晚（heavy）：失去住所（.rd-floodout）→ 住天橋下 → 市集購買 rehouse 搬回 ' + rhFloor + ' 樓，手機 390px 無橫向捲動');
+
     // 16. 把 s.cr = 0、s.soul = 25、s.phase = 'review'，進入篩選日：同時顯示兩項失敗，s.chances === 1
     await page.evaluate(() => {
       const s = window.__IE.Game.state;
@@ -1123,7 +1299,15 @@ const URL = 'http://localhost:' + PORT + '/';
     await filePage.click('[data-do="mode"][data-id="rounds"]');
     await filePage.click('[data-do="start"]');
     const closeFileDilemma = async () => {
-      for (let step = 0; step < 5; step++) {
+      for (let step = 0; step < 8; step++) {
+        if (await filePage.$('#modal .rd-floodout [data-do="floodok"]')) {
+          await filePage.click('#modal .rd-floodout [data-do="floodok"]');
+          continue;
+        }
+        if (await filePage.$('#modal .rd-floodpick [data-do="floodpick"]')) {
+          await filePage.click('#modal .rd-floodpick [data-do="floodpick"]');
+          continue;
+        }
         if (await filePage.$('#modal .rd-reversal [data-do="reverse"]')) {
           await filePage.click('#modal .rd-reversal [data-do="reverse"]');
           continue;
