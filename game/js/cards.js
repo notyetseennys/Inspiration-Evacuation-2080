@@ -9,6 +9,7 @@
   const D = IE.DATA;
 
   function deckMax(s) {
+    if (IE.Flood && IE.Flood.deckMax) return IE.Flood.deckMax(s);
     const bg = s && D.BACKGROUNDS && D.BACKGROUNDS[s.bg];
     return (bg && bg.perk && bg.perk.deckMax) || D.CRAFT.deckMax;
   }
@@ -120,6 +121,7 @@
   }
 
   IE.Cards = {
+    deckMax,
     origin,
     putDown,
     autoPutDown,

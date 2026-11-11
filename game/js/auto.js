@@ -171,7 +171,10 @@
     }
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
     const rep = R.applyMicro(s, kind, res);
-    if (s.mode === 'rounds' && IE.Cards) IE.Cards.autoPutDown(s);
+    if (s.mode === 'rounds') {
+      if (IE.Flood && IE.Flood.autoPick) IE.Flood.autoPick(s);
+      if (IE.Cards) IE.Cards.autoPutDown(s);
+    }
     return rep;
   }
 

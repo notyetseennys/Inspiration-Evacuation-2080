@@ -158,6 +158,7 @@
 
   function initGigs(s) {
     if (!s || !on(s)) return;
+    if (IE.Flood && IE.Flood.ensure) IE.Flood.ensure(s);
     s.gigs = [];
     s.pendingExpiredGigs = [];
     grantRoundGig(s);
@@ -230,6 +231,7 @@
 
   // 回傳 s.offer；這一晚還沒有就按總規格 §3.1 的出牌規則產生
   function offer(s) {
+    if (IE.Flood && IE.Flood.ensure) IE.Flood.ensure(s);
     ensureGigs(s);
     if (s.offer && s.offer.night === s.night && Array.isArray(s.offer.ids) && s.offer.ids.length) return s.offer;
     const drawn = drawOffer(s);
@@ -353,7 +355,11 @@
     };
   }
 
-  // 白天完結：進入創作之夜，若在致命危險中喪生則進入結局；超過素材庫上限時留在白天
+  function hasFloodPick(s) {
+    return !!(IE.Flood && s && Array.isArray(s.floodPick) && s.floodPick.length > 0);
+  }
+
+  // 白天完結：進入創作之夜，若在致命危險中喪生則進入結局；超過素材庫上限或尚未處理淹水帶走時留在白天
   function afterDay(s) {
     if (!s || s.phase !== 'day') return { ok: false };
     if (s.body <= 0) {
@@ -361,6 +367,7 @@
       s.phase = 'ended';
       return { ok: true };
     }
+    if (hasFloodPick(s)) return { ok: false, msg: (D.FLOOD_TEXT && D.FLOOD_TEXT.mediumHead) || '水要帶走一樣東西' };
     if (s.over) return { ok: false, msg: D.CARD_TEXT.overHead };
     s.phase = 'night';
     return { ok: true };
@@ -368,7 +375,7 @@
 
   // 睡懶覺：不選卡，恢復火花並進入晚上
   function skipDay(s) {
-    if (!s || s.phase !== 'day') return null;
+    if (!s || s.phase !== 'day' || hasFloodPick(s)) return null;
     const rep = R.report(s, '睡懶覺');
     const sp = R.addSpark(s, D.ECON.skipSpark, true);
     rep.line('今天甚麼都不做，睡了一整天', 'good', sp, 'spark');
@@ -378,7 +385,7 @@
 
   // 選一張生活卡
   function choose(s, id, reply) {
-    if (!s || s.phase !== 'day') return null;
+    if (!s || s.phase !== 'day' || hasFloodPick(s)) return null;
     const of = offer(s);
     if (of && of.chosen && s.over && IE.Cards) {
       IE.Cards.autoPutDown(s);
@@ -517,7 +524,7 @@
 
   // 開始夜晚創作（s.phase 必須是 'night'，否則回傳 null）
   function startNight(s) {
-    if (!s || !on(s) || s.phase !== 'night') return null;
+    if (!s || !on(s) || s.phase !== 'night' || hasFloodPick(s)) return null;
     return IE.Create.start(s, 'normal');
   }
 
@@ -613,6 +620,10 @@
       const arr = D.ECON.objReroll;
       const base = arr[Math.min(n, arr.length - 1)];
       return Math.round(base * mod);
+    }
+    if ((slot === 'moveup' || slot === 'rehouse') && IE.Flood && IE.Flood.services) {
+      const srv = IE.Flood.services(s).find((x) => x.id === slot);
+      return srv ? srv.cost : 0;
     }
     if (slot.startsWith('relic:')) return 0;
     return 0;
@@ -747,6 +758,12 @@
       sh.relic.taken = true;
       sh.bought.push(slot);
       return { ok: true, msg: '收下遺物「' + D.OBJ[id].name + '」' };
+    }
+
+    if ((slot === 'moveup' || slot === 'rehouse') && IE.Flood && IE.Flood.buy) {
+      const res = IE.Flood.buy(s, slot);
+      if (res && res.ok) sh.bought.push(slot + ':' + res.floor);
+      return res;
     }
 
     return { ok: false, msg: '無效的欄位' };
@@ -887,6 +904,9 @@
         s.gigs = kept;
       }
       grantRoundGig(s);
+    }
+    if (IE.Flood && IE.Flood.tick) {
+      IE.Flood.tick(s);
     }
   }
 

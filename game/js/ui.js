@@ -97,11 +97,20 @@
       const cur = (city && city.currency) || {};
       const chances = Math.max(0, s.chances == null ? 3 : s.chances);
       const rent = RD.rentOf(s);
+      const FT = D().FLOOD_TEXT || {};
+      const fStage = (s.floor <= 0 && s.flood === 'heavy')
+        ? 'heavy'
+        : (IE.Flood && IE.Flood.stage ? IE.Flood.stage(s) : 'dry');
+      const wStr = (s.water || 0).toFixed(1);
+      const waterTxt = (s.floor || 0) > 0
+        ? (FT.bar || '水位 {w} 樓・你住 {f} 樓').replace('{w}', wStr).replace('{f}', String(s.floor))
+        : (FT.barHomeless || '水位 {w} 樓・你住天橋下').replace('{w}', wStr);
       hud.innerHTML = RD.cashText(s, ''
         + '<div class="hud-top">'
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">第 ' + s.night + '／15 晚</span></div>'
         + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
         + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
+        + '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>'
         + '<div class="hud-btns">'
         + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
@@ -364,7 +373,7 @@
       + '<button class="inv-btn" type="button" data-do="objs" title="管理靈感物件"><span class="lbl">靈感物件</span>' + objs + '<span class="inv-empty">' + '<i></i>'.repeat(empty) + '</span><b class="num">' + s.objects.length + '/' + R().slotsOf(s) + '</b></button>'
       + '<button class="inv-btn" type="button" data-do="contacts" title="人脈：請城中的人幫忙"><span class="lbl">人脈</span><b class="num">' + Object.keys(s.contacts || {}).length + '</b>'
       + (Object.keys(s.contacts || {}).some((id) => R().favorReady(s, id)) ? '<span class="dot"></span>' : '') + '</button>'
-      + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</b></button>'
+      + '<button class="inv-btn" type="button" data-do="deck" title="查看素材庫"><span class="lbl">素材庫</span><b class="num">' + s.cards.length + '/' + (IE.Flood && IE.Flood.deckMax ? IE.Flood.deckMax(s) : (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS)) + '</b></button>'
       + '</div>';
   }
   // 遺物攤（第十一期）：關卡之夜之後
@@ -421,7 +430,7 @@
   function deckModal(s) {
     const C = IE.Create;
     const cards = s.cards.slice().sort((a, b) => C.starOf(b) - C.starOf(a) || (D().WHEEL || []).indexOf(a.tags[0]) - (D().WHEEL || []).indexOf(b.tags[0]));
-    const maxDeck = (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const maxDeck = IE.Cards && IE.Cards.deckMax ? IE.Cards.deckMax(s) : (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
     if (IE.Rounds && IE.Rounds.on(s)) {
       return '<div class="modal wide rd-deck"><h2>素材庫 ' + s.cards.length + ' / ' + maxDeck + '</h2>'
         + '<p class="mute" style="font-size:13px">每一張卡都是一段經歷。點選右上角「來歷」或長按卡片查看卡背。</p>'
@@ -1300,9 +1309,22 @@
     const rCost = RD.offerCost(s);
     const rerollTxt = T.reroll.replace('{cost}', fmt(rCost));
     const skipTxt = T.skip.replace('{v}', D().ECON.skipSpark);
-    const maxDeck = (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const maxDeck = IE.Cards && IE.Cards.deckMax ? IE.Cards.deckMax(s) : (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
     const memLen = Array.isArray(s.memory) ? s.memory.length : 0;
     const memTxt = ((D().CARD_TEXT && D().CARD_TEXT.memoryHead) || '回憶') + (memLen ? '（' + memLen + '）' : '');
+    const FT = D().FLOOD_TEXT || {};
+    const fStage = (s.floor <= 0 && s.flood === 'heavy')
+      ? 'heavy'
+      : (IE.Flood && IE.Flood.stage ? IE.Flood.stage(s) : 'dry');
+    let floodBannerHtml = '';
+    if (fStage === 'warn' && FT.warn) {
+      floodBannerHtml = '<div class="rd-flood f-warn">' + esc(FT.warn) + '</div>';
+    } else if ((fStage === 'light' || fStage === 'medium' || fStage === 'heavy') && FT.light) {
+      const pumpNote = s.floodPump && FT.pump ? ' ' + FT.pump : '';
+      floodBannerHtml = '<div class="rd-flood f-' + fStage + '">' + esc(FT.light + pumpNote) + '</div>';
+    } else if (s.floodPump && FT.pump) {
+      floodBannerHtml = '<div class="rd-flood f-pump">' + esc(FT.pump) + '</div>';
+    }
     return '<div class="rd-day">'
       + expHtml
       + '<div class="rd-top">'
@@ -1311,6 +1333,7 @@
       + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
       + '<span class="rd-rent">' + esc(rentLine) + '</span>'
       + '</div>'
+      + floodBannerHtml
       + bossAheadHtml
       + storyStripHtml
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
@@ -1375,6 +1398,43 @@
       + '<h2>' + esc(TX.reversalHead || '物極必反') + '</h2>'
       + items
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="reverse">承受後果</button></div>'
+      + '</div>';
+  }
+  function floodPickModal(s) {
+    const D_ = D(), FT = D_.FLOOD_TEXT || {}, T = D_.ROUND_TEXT;
+    const round = IE.Rounds.roundOf(s);
+    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const uids = Array.isArray(s.floodPick) ? s.floodPick : [];
+    const cards = uids.map((uid) => {
+      const c = (s.cards || []).find((x) => x && x.uid === uid);
+      if (!c) return '';
+      const fromLine = c.from && c.from.text ? '<span class="fp-from">' + esc(c.from.text) + '</span>' : '';
+      return '<button type="button" class="rp-card fp-card" data-do="floodpick" data-uid="' + c.uid + '">'
+        + cardHtml(c)
+        + fromLine
+        + '</button>';
+    }).join('');
+    return '<div class="modal wide rd-floodpick">'
+      + '<span class="eyebrow">' + esc(sub) + '</span>'
+      + '<h2>' + esc(FT.mediumHead || '水要帶走一樣東西') + '</h2>'
+      + '<p class="mute fp-sub">' + esc(FT.mediumSub || '') + '</p>'
+      + '<div class="rp-grid fp-grid">' + cards + '</div>'
+      + '</div>';
+  }
+  function floodOutModal(s) {
+    const D_ = D(), FT = D_.FLOOD_TEXT || {}, T = D_.ROUND_TEXT;
+    const round = IE.Rounds.roundOf(s);
+    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const out = s.floodOut || {};
+    const objHtml = out.obj && FT.heavyObj
+      ? '<p class="fo-obj">' + esc(FT.heavyObj.replace('{x}', out.obj)) + '</p>'
+      : '';
+    return '<div class="modal rd-floodout">'
+      + '<span class="eyebrow">' + esc(sub) + '</span>'
+      + '<h2>失去住所</h2>'
+      + '<p class="d-text fo-heavy">' + esc(FT.heavy || '') + '</p>'
+      + objHtml
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="floodok">繼續</button></div>'
       + '</div>';
   }
   function roundMicroModal(info, rank) {
@@ -1553,7 +1613,27 @@
       + '<div class="rs-grid rs-grid-3">' + serviceCell + techCell + toolCell + '</div>'
       + '</section>';
 
-    const maxDeck = (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const maxDeck = IE.Cards && IE.Cards.deckMax ? IE.Cards.deckMax(s) : (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    let floodSrvHtml = '';
+    if (IE.Flood && IE.Flood.services) {
+      const fSrvs = IE.Flood.services(s);
+      if (fSrvs.length) {
+        const FT = D_.FLOOD_TEXT || {};
+        const wStr = (s.water || 0).toFixed(1);
+        const locTxt = (s.floor || 0) > 0
+          ? (FT.bar || '水位 {w} 樓・你住 {f} 樓').replace('{w}', wStr).replace('{f}', String(s.floor))
+          : (FT.barHomeless || '水位 {w} 樓・你住天橋下').replace('{w}', wStr);
+        const fCells = fSrvs.map((fs) => '<div class="rs-item rs-flood-srv" data-id="' + fs.id + '" data-slot="' + fs.id + '">'
+          + '<div class="rs-txt"><span class="rs-cat">住所與水位（' + esc(locTxt) + '）</span><b>' + esc(fs.name) + '</b><span>' + esc(fs.desc) + '</span></div>'
+          + '<button class="btn' + (fs.affordable ? ' sea' : '') + '" type="button" data-do="buy" data-id="' + fs.id + '" data-slot="' + fs.id + '"' + (fs.affordable ? '' : ' disabled') + '>$' + fmt(fs.cost) + '</button>'
+          + '</div>').join('');
+        floodSrvHtml = '<section class="rs-sec rs-flood-sec">'
+          + '<div class="rs-sec-head"><h3>住所服務</h3></div>'
+          + '<div class="rs-grid">' + fCells + '</div>'
+          + '</section>';
+      }
+    }
+
     const shopBanner = IE.imgTag ? IE.imgTag('scene-market', 'rs-banner') : '';
     return '<div class="modal wide rd-shop">'
       + shopBanner
@@ -1567,6 +1647,7 @@
       + objHtml
       + packHtml
       + trioHtml
+      + floodSrvHtml
       + '<div class="btn-row rs-foot">'
       + '<button class="btn" type="button" data-do="objs">管理物件（' + (s.objects || []).length + '/' + R().slotsOf(s) + '）</button>'
       + '<button class="btn" type="button" data-do="deck">素材庫（' + (s.cards || []).length + '/' + maxDeck + '）</button>'
@@ -1702,7 +1783,7 @@
   }
   function overModal(s) {
     const D_ = D(), CT = D_.CARD_TEXT || {};
-    const maxDeck = (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const maxDeck = IE.Cards && IE.Cards.deckMax ? IE.Cards.deckMax(s) : (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
     const list = (s.cards || []).slice();
     const items = list.map((c) => {
       const actTxt = c.relic ? (CT.relicKeep || '這是遺物，放不下。') : '放進回憶';
@@ -1814,7 +1895,7 @@
     actionsPanel, invHtml, deckModal, stallModal, talkModal, encounterModal, contactsModal, chatPanel, controlsPanel, reportModal, settleModal, phoneModal, reviewModal,
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
-    dayPanel, storyModal, reversalModal, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
+    dayPanel, storyModal, reversalModal, floodPickModal, floodOutModal, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
     cardBackModal, overModal, memoryModal, findCardForBack, _stanceWrapped: true,
   };
 })(window.IE = window.IE || {});

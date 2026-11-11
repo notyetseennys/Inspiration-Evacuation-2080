@@ -432,7 +432,8 @@
       card.works = Array.isArray(card.works) ? card.works.slice() : [];
       card.relic = !!card.relic;
       s.cards.push(card);
-      const over = s.cards.length > (perk(s).deckMax || MAX_CARDS);
+      const max = IE.Flood && IE.Flood.deckMax ? IE.Flood.deckMax(s) : (perk(s).deckMax || MAX_CARDS);
+      const over = s.cards.length > max;
       s.over = over;
       return { card, dropped: null, over };
     }
