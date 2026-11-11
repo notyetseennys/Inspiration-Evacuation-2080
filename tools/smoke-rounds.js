@@ -19,12 +19,18 @@ const URL = 'http://localhost:' + PORT + '/';
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   // 固定新局的種子（SEED 環境變數可以更換），確保每次走同一條路
   const SEED = Number(process.env.SEED || 20801031);
+  const WANT_SHOTS_16_04 = !!(process.env.SHOTS || process.env.SHOTS_16_04 || process.argv.includes('--shots-16-04'));
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push(m.text()); });
 
   const closeDilemma = async () => {
-    for (let step = 0; step < 5; step++) {
+    for (let step = 0; step < 8; step++) {
+      if (await page.$('#modal .rd-over [data-do="putdown"]:not([disabled])')) {
+        await page.click('#modal .rd-over [data-do="putdown"]:not([disabled])');
+        await page.waitForTimeout(120);
+        continue;
+      }
       if (await page.$('#modal .rd-reversal [data-do="reverse"]')) {
         await page.click('#modal .rd-reversal [data-do="reverse"]');
         continue;
@@ -375,14 +381,42 @@ const URL = 'http://localhost:' + PORT + '/';
     ok('第 1 晚：錢 ' + hudLit.cash + '（遊戲數值 $' + hudLit.cr + '）、' + hudLit.rent);
     await scanMoney('第 1 晚的白天', ['#hud', '#panel'], 3);
     await checkAllImgs('第 1 晚的白天');
-    const dayImgs = await page.$$eval('.rd-day .rd-card', (cards) => cards.map((c) => {
-      const im = c.querySelector('img.px');
-      return im ? { src: im.getAttribute('src'), nw: im.naturalWidth } : null;
-    }));
-    if (dayImgs.length !== 3 || dayImgs.some((x) => !x || x.nw <= 0)) {
-      await fail('第 1 晚的白天：三張 .rd-card 都應有載入完成的 img.px（naturalWidth > 0）：' + JSON.stringify(dayImgs));
+    const dayImgs = await page.evaluate(() => {
+      const hasRestImg = !!(window.__IE.img && window.__IE.img('day-rest'));
+      return Array.from(document.querySelectorAll('.rd-day .rd-card')).map((c) => {
+        const id = c.getAttribute('data-card') || '';
+        const im = c.querySelector('img.px');
+        return {
+          id,
+          needImg: id !== 'rest' || hasRestImg,
+          src: im ? im.getAttribute('src') : null,
+          nw: im ? im.naturalWidth : 0,
+        };
+      });
+    });
+    if (dayImgs.length !== 3 || dayImgs.some((x) => x.needImg && (!x.src || x.nw <= 0))) {
+      await fail('第 1 晚的白天：有插圖的 .rd-card 都應載入完成（naturalWidth > 0）：' + JSON.stringify(dayImgs));
     }
-    ok('美術整合（第 1 晚的白天）：三張 .rd-card 都有插圖（' + dayImgs.map((x) => x.src).join('、') + '）');
+    ok('美術整合（第 1 晚的白天）：生活卡插圖檢查通過（' + dayImgs.map((x) => x.src || ('無圖:' + x.id)).join('、') + '）');
+
+    // WO-16-04 (4a)：第一輪第一天的生活卡有 .dc-gig，且沒有 .rd-nogig
+    const gigDay1 = await page.evaluate(() => {
+      const GT = window.__IE.DATA.GIG_TEXT;
+      const gigEl = document.querySelector('.rd-day .rd-card .dc-gig');
+      const noGig = document.querySelector('.rd-day .rd-nogig');
+      const txt = gigEl ? gigEl.textContent : '';
+      return {
+        hasGig: !!gigEl,
+        hasNoGig: !!noGig,
+        hasTag: txt.includes(GT.tag),
+        hasRoundFrom: txt.includes(GT.from.round),
+        txt,
+      };
+    });
+    if (!gigDay1.hasGig || gigDay1.hasNoGig || !gigDay1.hasTag || !gigDay1.hasRoundFrom) {
+      await fail('第 1 輪第 1 天應有 .dc-gig 且無 .rd-nogig：' + JSON.stringify(gigDay1));
+    }
+    ok('WO-16-04 差事（第 1 輪第 1 天）：生活卡顯示 .dc-gig（' + gigDay1.txt + '）');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
@@ -394,6 +428,26 @@ const URL = 'http://localhost:' + PORT + '/';
     if (dayMob.sw > 390) await fail('手機 390px 白天面板出現橫向捲動：scrollWidth=' + dayMob.sw);
     if (dayMob.minH < 44) await fail('手機白天面板按鈕高度不足 44px：minH=' + dayMob.minH);
     await page.setViewportSize({ width: 1280, height: 800 });
+
+    if (WANT_SHOTS_16_04) {
+      fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
+      await page.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast, #toasts').forEach((el) => { el.innerHTML = ''; });
+        const d = document.querySelector('.rd-day');
+        if (d) d.scrollIntoView({ block: 'end' });
+      });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-gig-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(() => {
+        const g = document.querySelector('.rd-day .rd-card .dc-gig');
+        if (g) g.scrollIntoView({ block: 'center' });
+      });
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-gig-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.evaluate(() => window.scrollTo(0, 0));
+    }
 
     if (process.env.SHOTS) {
       fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
@@ -411,6 +465,69 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     ok('白天面板：3 張生活卡、15 晚進度點');
+
+    // WO-16-04 (1)：開局的卡可以打開 .card-back，裏面有 D.CARD_TEXT.backHead 和 D.ORIGIN.start 的文字
+    await page.click('.rd-day [data-do="deck"]');
+    await page.waitForSelector('#modal .rd-deck');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const deckMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-deck button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (deckMob.sw > 390 || deckMob.minH < 44) {
+      await fail('手機 390px 素材庫版面或按鈕高度不通過：' + JSON.stringify(deckMob));
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const startCardUid = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const c = (s.cards || []).find((x) => x && x.from && x.from.kind === 'start');
+      return c ? c.uid : null;
+    });
+    if (startCardUid == null) await fail('找不到開局帶來的起始卡（from.kind === "start"）');
+    await page.click('#modal .rd-deck [data-do="cardback"][data-uid="' + startCardUid + '"]');
+    await page.waitForSelector('#modal .card-back');
+    const cbCheck = await page.evaluate(() => {
+      const D = window.__IE.DATA;
+      const el = document.querySelector('#modal .card-back');
+      const txt = el ? el.textContent : '';
+      return {
+        hasBackHead: txt.includes(D.CARD_TEXT.backHead),
+        hasStartOrigin: txt.includes(D.ORIGIN.start),
+        hasWorksHead: txt.includes(D.CARD_TEXT.worksHead),
+        txt,
+      };
+    });
+    if (!cbCheck.hasBackHead || !cbCheck.hasStartOrigin || !cbCheck.hasWorksHead) {
+      await fail('.card-back 缺少 backHead / ORIGIN.start / worksHead：' + JSON.stringify(cbCheck));
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const cbMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .card-back button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (cbMob.sw > 390 || cbMob.minH < 44) {
+      await fail('手機 390px .card-back 版面或按鈕高度不通過：' + JSON.stringify(cbMob));
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (WANT_SHOTS_16_04) {
+      fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-cardback-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-cardback-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(100);
+    }
+    await page.click('#modal .card-back [data-do="close"]');
+    await page.waitForSelector('#modal .rd-deck');
+    await page.click('#modal .rd-deck [data-do="close"]');
+    await page.waitForSelector('#modal[hidden]', { state: 'attached' });
+    ok('WO-16-04 卡背（開局卡）：顯示「' + (await page.evaluate(() => window.__IE.DATA.CARD_TEXT.backHead)) + '」與「' + (await page.evaluate(() => window.__IE.DATA.ORIGIN.start)) + '」');
 
     // 3. 按「換一批」：錢少了 ECON.offerReroll[0]
     const beforeCr = await page.evaluate(() => window.__IE.Game.state.cr);
@@ -489,6 +606,18 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-12-craft-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
+
+    // WO-16-04：創作桌手牌右上角 [data-do="cardback"] 可開啟 .card-back，且不與選卡點擊衝突
+    await page.evaluate(() => { const intro = document.querySelector('#ctable .ct-stage-intro'); if (intro) intro.remove(); });
+    await page.waitForSelector('#ctable .ct-hand .cc [data-do="cardback"]');
+    const handCbBefore = await page.$eval('#ctable .ct-hand .cc', (el) => el.classList.contains('sel'));
+    await page.click('#ctable .ct-hand .cc [data-do="cardback"]');
+    await page.waitForSelector('#modal .card-back');
+    const handCbAfter = await page.$eval('#ctable .ct-hand .cc', (el) => el.classList.contains('sel'));
+    if (handCbBefore !== handCbAfter) await fail('創作桌手牌按 [data-do="cardback"] 不應觸發選卡');
+    await page.click('#modal .card-back [data-do="close"]');
+    await page.waitForSelector('#modal[hidden]', { state: 'attached' });
+    ok('WO-16-04 卡背（創作桌手牌）：開啟 .card-back 且不觸發選卡');
 
     // 收工演出只出現約一秒：用 MutationObserver 記下它曾經出現（WO-15-07 審核加入）
     await page.evaluate(() => {
@@ -628,6 +757,11 @@ const URL = 'http://localhost:' + PORT + '/';
     await page.waitForSelector('#modal .rd-pack');
     const packCardN = await page.$$eval('#modal .rd-pack .rp-card', (els) => els.length);
     if (packCardN !== 3) await fail('.rd-pack 應有 3 張 .rp-card，現在有 ' + packCardN + ' 張');
+    // WO-16-04：市集開包 .rd-pack 上的 [data-do="cardback"] 可看卡背且不誤觸選卡
+    await page.click('#modal .rd-pack [data-do="cardback"]');
+    await page.waitForSelector('#modal .card-back');
+    await page.click('#modal .card-back [data-do="close"]');
+    await page.waitForSelector('#modal .rd-pack');
     if (process.env.SHOTS) {
       await page.waitForTimeout(200);
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-pack-desktop.png') });
@@ -660,6 +794,7 @@ const URL = 'http://localhost:' + PORT + '/';
     const cardsBurn = await page.evaluate(() => window.__IE.Game.state.cards.length);
     await page.click('#modal .rs-item[data-slot="service"] button:not([disabled])');
     await page.waitForSelector('#modal .rd-pick');
+    await page.waitForSelector('#modal .rd-pick [data-do="cardback"]');
     await page.click('#modal .rd-pick .cardpick:not([disabled])');
     await page.waitForSelector('#modal .rd-shop');
     const cardsBurned = await page.evaluate(() => window.__IE.Game.state.cards.length);
@@ -673,6 +808,168 @@ const URL = 'http://localhost:' + PORT + '/';
     const nightNow = await page.evaluate(() => window.__IE.Game.state.night);
     if (nightNow !== 2) await fail('離開市集後 s.night 應為 2，實際為 ' + nightNow);
     ok('離開市集回到白天面板（s.night === 2）');
+
+    // WO-16-04 (4b)：第 1 輪差事已在第 1 天用掉，第 2 天應出現 .rd-nogig 且無 .dc-gig
+    const noGigDay2 = await page.evaluate(() => {
+      const GT = window.__IE.DATA.GIG_TEXT;
+      const ng = document.querySelector('.rd-day .rd-nogig');
+      const gigEl = document.querySelector('.rd-day .dc-gig');
+      const txt = ng ? ng.textContent : '';
+      return {
+        hasNoGig: !!ng,
+        hasGig: !!gigEl,
+        matchesText: txt.includes(GT.none),
+        txt,
+      };
+    });
+    if (!noGigDay2.hasNoGig || noGigDay2.hasGig || !noGigDay2.matchesText) {
+      await fail('第 1 輪用掉差事後，下一天應顯示 .rd-nogig 且無 .dc-gig：' + JSON.stringify(noGigDay2));
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const noGigMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('.rd-day button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (noGigMob.sw > 390 || noGigMob.minH < 44) {
+      await fail('手機 390px 無差事白天面板版面或按鈕高度不通過：' + JSON.stringify(noGigMob));
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (WANT_SHOTS_16_04) {
+      fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
+      await page.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast, #toasts').forEach((el) => { el.innerHTML = ''; });
+        const d = document.querySelector('.rd-day');
+        if (d) d.scrollIntoView({ block: 'end' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-nogig-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(() => {
+        const ng = document.querySelector('.rd-day .rd-nogig');
+        if (ng) ng.scrollIntoView({ block: 'center' });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-nogig-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.evaluate(() => window.scrollTo(0, 0));
+    }
+    ok('WO-16-04 沒有差事的白天：顯示 .rd-nogig（「' + noGigDay2.txt + '」）');
+
+    // WO-16-04 (2) & (3) & (5)：塞滿素材庫超過上限 → .rd-over → [data-do="putdown"] → s.memory.length === 1 → [data-do="memory"] → .rd-memory，以及過期差事提示
+    const day2Snap = await page.evaluate(() => JSON.stringify(window.__IE.Game.state));
+    const putTarget = await page.evaluate(() => {
+      const s = window.__IE.Game.state, R = window.__IE.Rules, D = window.__IE.DATA;
+      const maxDeck = (D.BACKGROUNDS[s.bg].perk.deckMax || R.MAX_CARDS);
+      s.memory = [];
+      while (s.cards.length <= maxDeck) {
+        R.addCard(s, 'd_comic', { kind: 'shop' });
+      }
+      window.__IE.Game.roundsGo();
+      const first = s.cards.find((c) => c && !c.relic);
+      return { uid: first ? first.uid : null, name: first ? first.name : '', over: !!s.over, count: s.cards.length, maxDeck };
+    });
+    await page.waitForSelector('#modal .rd-over');
+    // 視窗不可以關閉（按 Escape 不會消失）
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(80);
+    if (!(await page.$('#modal .rd-over'))) await fail('.rd-over 視窗不應被 Escape 關閉');
+    await page.waitForSelector('#modal .rd-over [data-do="cardback"]');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const overMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-over button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (overMob.sw > 390 || overMob.minH < 44) {
+      await fail('手機 390px .rd-over 版面或按鈕高度不通過：' + JSON.stringify(overMob));
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (WANT_SHOTS_16_04) {
+      fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-over-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-over-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(100);
+    }
+    await page.click('#modal .rd-over [data-do="putdown"][data-uid="' + putTarget.uid + '"]');
+    await page.waitForSelector('#modal .rd-over', { state: 'detached', timeout: 4000 });
+    const afterPut = await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      const toasts = Array.from(document.querySelectorAll('#toasts .toast')).map((t) => t.textContent);
+      return { memLen: (s.memory || []).length, memName: s.memory[0] ? s.memory[0].name : '', over: !!s.over, toasts };
+    });
+    if (afterPut.memLen !== 1 || afterPut.memName !== putTarget.name || afterPut.over) {
+      await fail('按 [data-do="putdown"] 後 s.memory 或 s.over 狀態不正確：' + JSON.stringify(afterPut));
+    }
+    if (!afterPut.toasts.some((t) => t.includes('放進了回憶'))) {
+      await fail('按 [data-do="putdown"] 後應顯示放進回憶的提示文字：' + JSON.stringify(afterPut.toasts));
+    }
+    ok('WO-16-04 放下一張卡（.rd-over）：放下「' + putTarget.name + '」後視窗消失，s.memory.length === 1');
+
+    await page.click('.rd-day [data-do="memory"]');
+    await page.waitForSelector('#modal .rd-memory');
+    const memCheck = await page.evaluate((wantName) => {
+      const m = document.querySelector('#modal .rd-memory');
+      const txt = m ? m.textContent : '';
+      return { hasCard: txt.includes(wantName), hasCb: !!(m && m.querySelector('[data-do="cardback"]')), txt };
+    }, putTarget.name);
+    if (!memCheck.hasCard || !memCheck.hasCb) {
+      await fail('.rd-memory 應包含剛才放下的卡並可看卡背：' + JSON.stringify(memCheck));
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    const memMob = await page.evaluate(() => {
+      const sw = document.documentElement.scrollWidth;
+      const hs = Array.from(document.querySelectorAll('#modal .rd-memory button')).map((b) => Math.round(b.getBoundingClientRect().height));
+      return { sw, minH: Math.min(...hs) };
+    });
+    if (memMob.sw > 390 || memMob.minH < 44) {
+      await fail('手機 390px .rd-memory 版面或按鈕高度不通過：' + JSON.stringify(memMob));
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    if (WANT_SHOTS_16_04) {
+      fs.mkdirSync(path.join(__dirname, '..', 'docs', 'shots'), { recursive: true });
+      await page.evaluate(() => {
+        document.querySelectorAll('#toast, .toast, #ach-toast, #toasts').forEach((el) => { el.innerHTML = ''; });
+      });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-memory-desktop.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-16-04-memory-mobile.png') });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(100);
+    }
+    await page.click('#modal .rd-memory [data-do="close"]');
+    await page.waitForSelector('#modal[hidden]', { state: 'attached' });
+    ok('WO-16-04 回憶（.rd-memory）：顯示剛才放下的「' + putTarget.name + '」');
+
+    // WO-16-04 (5)：過期差事在白天面板最上面顯示 D.GIG_TEXT.expired，按一下消失
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.gigs.push({ micro: 'label', from: 'round', night: -5 });
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('.rd-day .rd-exp-gig[data-do="expdismiss"]');
+    const expTxt = await page.$eval('.rd-day .rd-exp-gig', (el) => el.textContent);
+    if (!expTxt.includes('差事過期了')) await fail('過期差事提示文字不正確：' + expTxt);
+    await page.click('.rd-day .rd-exp-gig[data-do="expdismiss"]');
+    await page.waitForSelector('.rd-day .rd-exp-gig', { state: 'detached' });
+    ok('WO-16-04 過期差事提示：顯示於白天面板頂部，按一下即消失');
+
+    // 還原第 2 晚狀態以繼續後續煙霧測試
+    await page.evaluate((raw) => {
+      window.__IE.Game.state = JSON.parse(raw);
+      window.__IE.Game.save();
+      window.__IE.Game.roundsGo();
+    }, day2Snap);
+    await page.waitForSelector('.rd-day');
 
     // 11b. 重新載入頁面，按「繼續」：仍然是第 2 晚的白天（WO-15-07 第 11 步，審核時補上）
     await page.reload();
@@ -1123,7 +1420,12 @@ const URL = 'http://localhost:' + PORT + '/';
     await filePage.click('[data-do="mode"][data-id="rounds"]');
     await filePage.click('[data-do="start"]');
     const closeFileDilemma = async () => {
-      for (let step = 0; step < 5; step++) {
+      for (let step = 0; step < 8; step++) {
+        if (await filePage.$('#modal .rd-over [data-do="putdown"]:not([disabled])')) {
+          await filePage.click('#modal .rd-over [data-do="putdown"]:not([disabled])');
+          await filePage.waitForTimeout(120);
+          continue;
+        }
         if (await filePage.$('#modal .rd-reversal [data-do="reverse"]')) {
           await filePage.click('#modal .rd-reversal [data-do="reverse"]');
           continue;

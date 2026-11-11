@@ -5351,6 +5351,586 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   body.mode-rounds #stage:not(.playing) canvas { height: auto !important; width: 100% !important; }
 }
 .est-hidden { color: var(--muted, #8b95ad); font-style: italic; }
+
+/* 第十六期 WO-16-04：卡背、放下一張卡、回憶與差事 */
+.card-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.card-slot > .rp-card,
+.card-slot > .cardpick {
+  width: 100%;
+  flex: 1 1 auto;
+}
+.card.has-cb {
+  position: relative;
+  padding-right: 44px;
+}
+.card-slot .card .c-name {
+  padding-right: 38px;
+}
+.cb-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  min-height: 20px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: #f6efe0;
+  background: rgba(16, 22, 36, 0.88);
+  border: 1px solid rgba(255, 226, 160, 0.55);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.cb-btn:hover,
+.cb-btn:focus-visible {
+  background: #ffe2a0;
+  color: #1b140c;
+  border-color: #fff;
+  outline: none;
+}
+.cp-grid .card-slot > .cb-btn {
+  top: 11px;
+  right: 11px;
+}
+.card-relic {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  color: #ffe0e3;
+  background: rgba(186, 38, 56, 0.36);
+  border: 1px solid rgba(255, 138, 152, 0.72);
+}
+.card.is-relic {
+  border-color: rgba(255, 148, 160, 0.62);
+}
+#ctable .ct-hand .cc.has-cb .cc-name {
+  padding-right: 34px;
+}
+#ctable .ct-hand .cc.has-cb > .cb-btn {
+  top: 12px;
+  right: 4px;
+  padding: 2px 5px;
+  min-height: 18px;
+  font-size: 10px;
+  color: #fff5de;
+  background: rgba(34, 24, 18, 0.88);
+  border-color: rgba(150, 110, 52, 0.78);
+}
+#ctable .ct-hand .cc.has-cb > .cb-btn:hover,
+#ctable .ct-hand .cc.has-cb > .cb-btn:focus-visible {
+  background: #ffd36b;
+  color: #1a1208;
+  border-color: #2a1f3a;
+}
+#ctable .ct-hand .cc.has-cb .cc-med {
+  top: 33px;
+  right: 4px;
+}
+#ctable .ct-hand .cc.has-cb .cc-mod {
+  top: 53px;
+  right: 4px;
+}
+#ctable .ct-hand .cc.has-cb > .card-relic {
+  position: absolute;
+  right: 4px;
+  bottom: 32px;
+  z-index: 3;
+  color: #fff;
+  background: #a82435;
+  border-color: #ffd0d6;
+}
+
+/* 素材庫（五輪模式） */
+.rd-deck .rd-deck-grid,
+.mem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 8px;
+  overflow-x: visible;
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: 2px;
+}
+.rd-deck .rd-deck-grid .card,
+.mem-grid .card {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 卡背：像一張寫了字的紙 */
+.modal.card-back {
+  width: min(460px, 100%);
+  background: linear-gradient(180deg, #1b2236, #121828);
+}
+.cb-paper {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 18px 18px 20px 24px;
+  border-radius: 8px;
+  color: #241c15;
+  background-color: #f5ecda;
+  background-image:
+    linear-gradient(90deg, transparent 15px, rgba(190, 74, 74, 0.24) 15px 16.5px, transparent 16.5px),
+    repeating-linear-gradient(180deg, transparent 0 27px, rgba(126, 96, 58, 0.15) 27px 28px),
+    radial-gradient(circle at 92% 10%, rgba(168, 128, 72, 0.12), transparent 48%);
+  border: 1px solid #d4c2a1;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.cb-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.cb-eyebrow {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #7c5830;
+}
+.cb-med {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #6a5742;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(112, 84, 48, 0.1);
+  border: 1px solid rgba(112, 84, 48, 0.24);
+}
+.cb-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 900;
+  color: #1b140e;
+  line-height: 1.3;
+}
+.cb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.cb-paper .c-star {
+  color: #8b5e1a;
+  text-shadow: none;
+  font-size: 12px;
+}
+.cb-region {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #165b6e;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: rgba(55, 195, 214, 0.16);
+}
+.cb-sec {
+  display: grid;
+  gap: 6px;
+}
+.cb-sec-from {
+  padding: 6px 2px 4px;
+  border-top: 1px dashed rgba(116, 88, 52, 0.32);
+  border-bottom: 1px dashed rgba(116, 88, 52, 0.32);
+}
+.cb-from {
+  margin: 0;
+  font-family: 'Noto Sans HK', sans-serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.72;
+  color: #2a1e14;
+  letter-spacing: 0.03em;
+  transform: rotate(-0.35deg);
+  transform-origin: left center;
+}
+.cb-sec-works h3 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #6e5233;
+}
+.cb-works {
+  margin: 0;
+  padding-left: 1.15em;
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #241b13;
+}
+.cb-noworks {
+  margin: 0;
+  font-size: 13px;
+  color: #6f5e4b;
+  font-style: italic;
+}
+.cb-relic {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #8e1e29;
+  background: rgba(168, 36, 53, 0.1);
+  border: 1.5px solid rgba(168, 36, 53, 0.55);
+}
+.cb-lost {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #23536d;
+}
+
+/* 放下一張卡（.rd-over） */
+.modal.rd-over {
+  border-color: rgba(255, 211, 107, 0.48);
+}
+.over-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.over-title {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.over-sub {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #ccd7ee;
+}
+.over-box {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 68px;
+  padding: 8px 10px 7px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #252019, #181510);
+  border: 1.5px solid #8c7550;
+  color: #e9dcc4;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.over-box .ob-lid {
+  display: block;
+  width: 34px;
+  height: 7px;
+  border-radius: 3px 3px 1px 1px;
+  background: #b59a6b;
+  border-bottom: 2px solid #3c3020;
+  transition: transform 0.16s ease;
+}
+.over-box .ob-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.over-box.receiving {
+  border-color: #ffd36b;
+  box-shadow: 0 0 18px rgba(255, 211, 107, 0.45);
+}
+.over-box.receiving .ob-lid {
+  transform: translateY(-3px) rotate(-8deg);
+}
+.over-pick {
+  min-height: 44px;
+}
+.over-pick.relic-locked .cp-act {
+  color: #ff9aa6;
+}
+@keyframes iePutIntoBox {
+  0% { transform: scale(1) translateY(0); opacity: 1; }
+  45% { transform: scale(0.88) translateY(-10px) rotate(-2deg); opacity: 0.85; }
+  100% { transform: scale(0.42) translateY(-34px) rotate(-5deg); opacity: 0; }
+}
+.card-slot.putting-down {
+  pointer-events: none;
+  animation: iePutIntoBox 0.22s cubic-bezier(.3, .05, .65, 1) forwards;
+}
+
+/* 回憶（.rd-memory） */
+.mem-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mem-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a9b4c9;
+}
+.mem-grid .card {
+  filter: grayscale(0.88) saturate(0.2);
+  opacity: 0.88;
+  background-color: #1a1e28;
+  border-color: #363e50;
+}
+.mem-grid .card > .cb-btn {
+  filter: none;
+}
+.mem-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* 差事（.dc-gig、.rd-nogig、過期提示、休息卡） */
+.rd-card.k-rest,
+.rd-kind.k-rest {
+  --kc: #9fb4d8;
+}
+.rd-card.has-gig {
+  border-color: rgba(255, 211, 107, 0.8);
+  box-shadow: inset 0 1px 0 var(--edge), 0 0 0 1px rgba(255, 211, 107, 0.28), 0 10px 24px rgba(0, 0, 0, 0.42);
+}
+.rd-card.has-gig:has(.dc-gig.warn) {
+  border-color: rgba(255, 92, 108, 0.88);
+  box-shadow: inset 0 1px 0 var(--edge), 0 0 0 1px rgba(255, 92, 108, 0.34), 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+.dc-gig {
+  display: grid;
+  gap: 3px;
+  margin: -2px -2px 2px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 206, 78, 0.28), rgba(255, 152, 36, 0.14));
+  border: 1.5px solid #ffd36b;
+  color: #fff4d4;
+}
+.dcg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+.dcg-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #191204;
+  background: #ffd36b;
+}
+.dcg-left {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffe2a0;
+}
+.dcg-from {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff0c4;
+}
+.dc-gig.warn {
+  background: linear-gradient(135deg, rgba(255, 77, 94, 0.34), rgba(214, 47, 67, 0.16));
+  border-color: #ff6b7a;
+  color: #ffe6e9;
+}
+.dc-gig.warn .dcg-tag {
+  color: #fff;
+  background: #ff4d5e;
+}
+.dc-gig.warn .dcg-left {
+  color: #ff9ea8;
+}
+.dc-gig.warn .dcg-from {
+  color: #ffdce0;
+}
+.rd-nogig {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(142, 156, 188, 0.1);
+  border: 1px dashed rgba(164, 180, 214, 0.38);
+  color: #c7d3eb;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.rd-exp-gig {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 14px;
+  border-radius: 11px;
+  background: linear-gradient(90deg, rgba(255, 77, 94, 0.22), rgba(255, 77, 94, 0.08));
+  border: 1px solid rgba(255, 110, 124, 0.58);
+  color: #ffe0e4;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+.rd-exp-gig:hover {
+  border-color: #ff8f9a;
+  background: linear-gradient(90deg, rgba(255, 77, 94, 0.3), rgba(255, 77, 94, 0.12));
+}
+.reg-close {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: #ffb3bc;
+  border: 1px solid rgba(255, 179, 188, 0.45);
+}
+
+/* 照舊做提示與小遊戲態度結算（.mg-stance） */
+.rd-auto-note {
+  margin: 0;
+  padding: 7px 11px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #5b73a8;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #b7c4df;
+}
+.mg-stance {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #2b3b5c;
+  background: rgba(15, 22, 38, 0.88);
+  min-width: 0;
+}
+.mg-stance.s-comply {
+  border-color: rgba(255, 138, 154, 0.48);
+  background: linear-gradient(180deg, rgba(255, 77, 94, 0.11), rgba(15, 22, 38, 0.92));
+}
+.mg-stance.s-resist {
+  border-color: rgba(55, 195, 214, 0.52);
+  background: linear-gradient(180deg, rgba(55, 195, 214, 0.12), rgba(15, 22, 38, 0.92));
+}
+.mg-stance.s-care {
+  border-color: rgba(155, 227, 107, 0.52);
+  background: linear-gradient(180deg, rgba(155, 227, 107, 0.13), rgba(15, 22, 38, 0.92));
+}
+.mgs-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.mgs-head {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+.mg-stance.s-comply .mgs-head { color: #ffb3bd; }
+.mg-stance.s-resist .mgs-head { color: #7fe3ff; }
+.mg-stance.s-care .mgs-head { color: #b8f294; }
+.mgs-auto {
+  font-size: 11.5px;
+  color: #a9b6d1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  max-width: 100%;
+}
+.mgs-line {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #eef3ff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(6, 10, 18, 0.55);
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+}
+.mg-stance.s-comply .mgs-line { border-left-color: #ff6f84; }
+.mg-stance.s-resist .mgs-line { border-left-color: #37c3d6; }
+.mg-stance.s-care .mgs-line { border-left-color: #9be36b; }
+.mgs-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.mgs-card > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .rd-btns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .rd-btns .btn {
+    flex: none;
+    width: 100%;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .rd-deck .rd-deck-grid,
+  .mem-grid,
+  .over-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cb-paper {
+    padding: 14px 14px 16px 20px;
+  }
+  .cb-from {
+    font-size: 15.5px;
+  }
+}
+@media (max-width: 350px) {
+  .rd-btns,
+  .rd-deck .rd-deck-grid,
+  .mem-grid,
+  .over-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-slot.putting-down {
+    animation: none !important;
+    opacity: 0;
+  }
+  .over-box .ob-lid {
+    transition: none !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -28184,14 +28764,29 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function tagsHtml(tags) {
     return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
   }
+  function cardBackBtnHtml(uid) {
+    const head = (D().CARD_TEXT && D().CARD_TEXT.backHead) || '這張卡的來歷';
+    return '<span class="cb-btn" role="button" tabindex="0" data-do="cardback" data-uid="' + esc(uid) + '" aria-label="查看卡背" title="' + esc(head) + '">來歷</span>';
+  }
+  function cardSlotHtml(innerBtnHtml, uid, extraCls) {
+    return '<div class="card-slot' + (extraCls ? ' ' + extraCls : '') + '" data-slot-uid="' + esc(uid) + '">'
+      + innerBtnHtml
+      + cardBackBtnHtml(uid)
+      + '</div>';
+  }
   function cardHtml(c, o) {
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
     const medKey = D().mediumOf ? D().mediumOf(c) : 'paper';
     const isForeign = !!(c.origin && c.origin !== 'home');
-    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    const relicTip = (D().CARD_TEXT && D().CARD_TEXT.relic) || '遺物：給你這張卡的人已經不在浮城。';
+    const withBack = !o.button && !!o.cardback;
+    const backUid = o.backUid != null ? o.backUid : c.uid;
+    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.relic ? ' is-relic' : '') + (withBack ? ' has-cb' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+      + (withBack ? cardBackBtnHtml(backUid) : '')
       + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
+      + (c.relic ? '<span class="card-relic" title="' + esc(relicTip) + '">遺物</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span>' + starHtml(c) + '</span>'
@@ -28357,7 +28952,61 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     wrap.hidden = true; wrap.innerHTML = ''; modalHandlers = {}; modalOpts = {};
   }
   const modalOpen = () => !$('#modal').hidden;
+  function openCardBack(rawUid) {
+    const s = IE.Game && IE.Game.state;
+    if (!s || !(IE.Rounds && IE.Rounds.on(s))) return false;
+    const card = findCardForBack(s, rawUid);
+    if (!card) return false;
+    IE.Audio.sfx('click');
+    const h = { close: closeModal };
+    const o = { dismiss: () => {} };
+    if (modalOpen() && $('#modal .card-back')) modal(cardBackModal(s, card), h, o);
+    else pushModal(cardBackModal(s, card), h, o);
+    return true;
+  }
   function bindDelegation() {
+    let lpTimer = 0, lpStart = null, suppressClickUntil = 0;
+    const clearLp = () => {
+      if (lpTimer) { clearTimeout(lpTimer); lpTimer = 0; }
+      lpStart = null;
+    };
+    document.addEventListener('pointerdown', (e) => {
+      clearLp();
+      if (e.button && e.button !== 0) return;
+      if (e.target.closest && e.target.closest('[data-do="cardback"]')) return;
+      const host = e.target.closest && e.target.closest('.card-slot[data-slot-uid], .card.has-cb, #ctable .ct-hand .cc.has-cb');
+      if (!host) return;
+      const cb = host.querySelector && host.querySelector('[data-do="cardback"]');
+      const uid = host.dataset.slotUid != null ? host.dataset.slotUid : (cb && cb.dataset.uid != null ? cb.dataset.uid : host.dataset.uid);
+      if (uid == null) return;
+      lpStart = { x: e.clientX, y: e.clientY };
+      lpTimer = setTimeout(() => {
+        lpTimer = 0;
+        lpStart = null;
+        if (openCardBack(uid)) suppressClickUntil = Date.now() + 900;
+      }, 460);
+    });
+    document.addEventListener('pointermove', (e) => {
+      if (!lpStart) return;
+      if (Math.hypot(e.clientX - lpStart.x, e.clientY - lpStart.y) > 10) clearLp();
+    });
+    document.addEventListener('pointerup', clearLp);
+    document.addEventListener('pointercancel', clearLp);
+    document.addEventListener('contextmenu', (e) => { if (Date.now() < suppressClickUntil) e.preventDefault(); });
+    document.addEventListener('click', (e) => {
+      if (Date.now() < suppressClickUntil) {
+        suppressClickUntil = 0;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      const cb = e.target.closest && e.target.closest('[data-do="cardback"]');
+      if (cb && cb.dataset.uid != null) {
+        e.preventDefault();
+        e.stopPropagation();
+        openCardBack(cb.dataset.uid);
+      }
+    }, true);
     const route = (root, getHandlers) => root.addEventListener('click', (e) => {
       const red = e.target.closest('.redact');
       if (red && root.contains(red)) { red.classList.toggle('revealed'); IE.Audio.sfx('click'); return; }
@@ -28520,12 +29169,19 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function deckModal(s) {
     const C = IE.Create;
     const cards = s.cards.slice().sort((a, b) => C.starOf(b) - C.starOf(a) || (D().WHEEL || []).indexOf(a.tags[0]) - (D().WHEEL || []).indexOf(b.tags[0]));
+    const maxDeck = (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      return '<div class="modal wide rd-deck"><h2>素材庫 ' + s.cards.length + ' / ' + maxDeck + '</h2>'
+        + '<p class="mute" style="font-size:13px">每一張卡都是一段經歷。點選右上角「來歷」或長按卡片查看卡背。</p>'
+        + '<div class="inv wrap rd-deck-grid">' + (cards.length ? cards.map((c) => cardHtml(c, { cardback: true })).join('') : '<span class="mute">還沒有素材。</span>') + '</div>'
+        + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
+    }
     const pol = (c) => {
       if (c.guilt) return '';
       const n = C.starOf(c), cost = C.polishCost(s, c);
       return n >= 5 ? '<span class="pol-max">★5</span>' : '<button class="btn mini pol" type="button" data-do="polish" data-uid="' + c.uid + '"' + (s.cr < cost ? ' disabled' : '') + '>打磨 ★' + (n + 1) + '・$' + cost + '</button>';
     };
-    return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</h2>'
+    return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + maxDeck + '</h2>'
       + '<p class="mute" style="font-size:13px">星級是素材的亮度：★1 至 ★5，籌碼 ' + C.STAR_CHIPS.slice(1).join('／') + '。花錢「打磨」可以升一星；但錢也要用來交租。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
       + '<div class="inv wrap pol-grid">' + (cards.length ? cards.map((c) => '<div class="pol-cell">' + cardHtml(c) + pol(c) + '</div>').join('') : '<span class="mute">還沒有素材。先去生活吧。</span>') + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
@@ -28604,6 +29260,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   // ---------- 報告 ----------
   // 五輪模式的貨幣名稱取自所在城市（docs/ECONOMY.md；第 7 區是浮城元）
+  let lastReport = null;
   function cityCurrency() {
     const s = IE.Game && IE.Game.state;
     const C = D().CITIES || {};
@@ -28619,7 +29276,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
   }
   function linesHtml(lines, isRounds) {
-    const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body') : (lines || []);
+    const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body' && !l._stanceLine) : (lines || []);
     if (!list.length) return '';
     return '<ul class="lines">' + list.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
       + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : isRounds && l.stat === 'cr' ? (l.v > 0 ? '+$' : l.v < 0 ? '−$' : '$') + fmt(Math.abs(l.v)) : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
@@ -28629,12 +29286,29 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (!keys.length) return '';
     return '<div class="stat-deltas">' + keys.map((k) => '<span class="sd' + (st[k] < 0 ? ' neg' : '') + '">' + D().STATS[k].name + ' ' + signed(st[k], 1) + '</span>').join('') + '</div>';
   }
-  function gainedHtml(rep) {
+  function stanceHtml(rep, isRounds) {
+    if (!isRounds || !rep || !rep.stance || !rep.stance.id) return '';
+    const st = rep.stance;
+    const head = st.head || (D().STANCE_TEXT && D().STANCE_TEXT[st.id]) || '';
+    const autoTxt = st.auto ? (st.autoText || (D().STANCE_TEXT && D().STANCE_TEXT.auto) || '') : '';
+    const line = st.line || ((D().STANCE && st.micro && D().STANCE[st.micro] && D().STANCE[st.micro].lines && D().STANCE[st.micro].lines[st.id]) || '');
+    const card = st.card ? '<div class="mgs-card">' + cardHtml(st.card, { cardback: true }) + '</div>' : '';
+    return '<div class="mg-stance s-' + esc(st.id) + '">'
+      + '<div class="mgs-top"><strong class="mgs-head">' + esc(head) + '</strong>'
+      + (autoTxt ? '<span class="mgs-auto">' + esc(autoTxt) + '</span>' : '')
+      + '</div>'
+      + (line ? '<p class="mgs-line">' + esc(line) + '</p>' : '')
+      + card
+      + '</div>';
+  }
+  function gainedHtml(rep, isRounds) {
     let h = '';
     if (rep.objs && rep.objs.length) h += '<h3>獲得靈感物件</h3><div class="gained">' + rep.objs.map((id) => '<div class="obj-row r-' + D().OBJ[id].rarity + '">' + IE.Icons.obj(id, 40)
       + '<div class="obj-txt"><b>' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span></div></div>').join('') + '</div>';
-    if (rep.cards.length) h += '<h3>獲得素材</h3><div class="gained">' + rep.cards.map((c) => cardHtml(c)).join('') + '</div>';
-    if (rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
+    const stUid = isRounds && rep.stance && rep.stance.card ? rep.stance.card.uid : null;
+    const cards = (rep.cards || []).filter((c) => c && (stUid == null || c.uid !== stUid));
+    if (cards.length) h += '<h3>獲得素材</h3><div class="gained">' + cards.map((c) => cardHtml(c, { cardback: !!isRounds })).join('') + '</div>';
+    if (!isRounds && rep.dropped && rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
   }
   function rankHtml(rk) {
@@ -28650,7 +29324,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   function reportModal(rep, btnLabel) {
     const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
-    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep)
+    lastReport = rep || null;
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + stanceHtml(rep, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep, isRounds)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -29316,10 +29991,31 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const storyStripHtml = (collectHtml || fateHtml || astarHtml || feedHtml)
       ? '<div class="rd-story-strip">' + collectHtml + fateHtml + astarHtml + feedHtml + '</div>'
       : '';
+    const expList = Array.isArray(s.expiredNotices) ? s.expiredNotices : [];
+    const expHtml = expList.map((txt, idx) => '<button type="button" class="rd-exp-gig" data-do="expdismiss" data-i="' + idx + '">'
+      + '<span class="reg-txt">' + esc(txt) + '</span>'
+      + '<small class="reg-close">關閉</small>'
+      + '</button>').join('');
+    const GT = D().GIG_TEXT || {};
     const of = RD.offer(s);
-    const cardsHtml = (of.ids || []).map((id) => {
-      const c = RD.cardInfo(s, id);
-      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '';
+    const offerInfos = (of.ids || []).map((id) => RD.cardInfo(s, id));
+    const hasGigToday = offerInfos.some((c) => !!(c && c.gig));
+    const cardsHtml = offerInfos.map((c) => {
+      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '', gigHtml = '';
+      if (c.gig) {
+        const gFrom = GT.from || {};
+        const fromStr = c.gig.from === 'round'
+          ? (gFrom.round || '人才發展局本季配給的工作')
+          : (gFrom[c.gig.from] || '{x}').replace(/\{x\}/g, c.gig.x != null ? String(c.gig.x) : '');
+        const keep = (D().ECON16 && D().ECON16.gigKeep) || 3;
+        const left = Math.max(1, keep - ((s.night || 1) - (c.gig.night != null ? c.gig.night : (s.night || 1))));
+        const leftStr = (GT.left || '還有 {n} 天').replace(/\{n\}/g, String(left));
+        gigHtml = '<div class="dc-gig' + (left <= 1 ? ' warn' : '') + '">'
+          + '<div class="dcg-row"><strong class="dcg-tag">' + esc(GT.tag || '差事') + '</strong>'
+          + '<span class="dcg-left">' + esc(leftStr) + '</span></div>'
+          + '<span class="dcg-from">' + esc(fromStr) + '</span>'
+          + '</div>';
+      }
       if (c.kind === 'friend') {
         const npcId = c.id.slice(7);
         const av = IE.imgTag ? IE.imgTag('friend-' + npcId, 'rd-avatar') : '';
@@ -29335,19 +30031,28 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       } else {
         banner = IE.imgTag ? IE.imgTag('day-' + c.id, 'rd-banner') : '';
       }
-      return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+      const kLabel = c.kindName || T.kinds[c.kind] || '休息';
+      return '<button class="rd-card k-' + c.kind + (c.gig ? ' has-gig' : '') + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+        + gigHtml
         + banner
-        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span>' + lastBadge + '</div>'
+        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(kLabel) + '</span>' + lastBadge + '</div>'
         + head
         + '<p class="rd-sub">' + esc(c.sub) + '</p>'
         + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
         + (c.reason ? '<span class="act-why rd-why">' + esc(c.reason) + '</span>' : '')
         + '</button>';
     }).join('');
+    const noGigHtml = !hasGigToday
+      ? '<div class="rd-nogig">' + esc(GT.none || '今天沒有工作。這在浮城很正常。') + '</div>'
+      : '';
     const rCost = RD.offerCost(s);
     const rerollTxt = T.reroll.replace('{cost}', fmt(rCost));
     const skipTxt = T.skip.replace('{v}', D().ECON.skipSpark);
+    const maxDeck = (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const memLen = Array.isArray(s.memory) ? s.memory.length : 0;
+    const memTxt = ((D().CARD_TEXT && D().CARD_TEXT.memoryHead) || '回憶') + (memLen ? '（' + memLen + '）' : '');
     return '<div class="rd-day">'
+      + expHtml
       + '<div class="rd-top">'
       + '<div class="rd-map-row"><div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div><span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
       + '<div class="rd-meta-row">'
@@ -29359,10 +30064,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
+      + noGigHtml
       + '<div class="rd-cards">' + cardsHtml + '</div>'
       + '<div class="rd-btns">'
       + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
       + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
+      + '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>'
+      + '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>'
       + '</div>'
       + '</div>';
   }
@@ -29419,11 +30127,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   function roundMicroModal(info, rank) {
     const T = D().ROUND_TEXT;
+    const kLabel = info.kindName || T.kinds[info.kind] || '工作';
+    const autoNote = D().STANCE_TEXT && D().STANCE_TEXT.auto
+      ? '<p class="rd-auto-note">' + esc(D().STANCE_TEXT.auto) + '</p>'
+      : '';
     return '<div class="modal rd-micro-modal">'
-      + '<span class="rd-kind k-' + info.kind + '">' + esc(T.kinds[info.kind]) + '</span>'
+      + '<span class="rd-kind k-' + info.kind + '">' + esc(kLabel) + '</span>'
       + '<h2>' + esc(info.name) + '</h2>'
       + '<p class="mute">' + esc(info.sub) + '</p>'
       + '<div class="fx big">' + fxHtml(info.fx) + '</div>'
+      + autoNote
       + '<div class="btn-row">'
       + '<button class="btn primary" type="button" data-do="byhand">' + esc(T.byHand) + '</button>'
       + '<button class="btn sea" type="button" data-do="byauto">' + esc(T.byAuto.replace('{rank}', rank)) + '</button>'
@@ -29435,8 +30148,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const cards = t5.ids.map((cid, i) => {
       const def = D().CARDS[cid];
       const picked = (t5.picked || []).includes(i);
-      const fake = { uid: i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
-      return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
+      const fake = { uid: 'trip:' + i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
+      const btn = '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
+      return cardSlotHtml(btn, 'trip:' + i);
     }).join('');
     const tripBanner = t5.origin && IE.imgTag ? IE.imgTag('trip-' + t5.origin, 'rt-banner') : '';
     return '<div class="modal wide rd-trip">'
@@ -29587,6 +30301,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="rs-grid rs-grid-3">' + serviceCell + techCell + toolCell + '</div>'
       + '</section>';
 
+    const maxDeck = (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
     const shopBanner = IE.imgTag ? IE.imgTag('scene-market', 'rs-banner') : '';
     return '<div class="modal wide rd-shop">'
       + shopBanner
@@ -29602,12 +30317,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + trioHtml
       + '<div class="btn-row rs-foot">'
       + '<button class="btn" type="button" data-do="objs">管理物件（' + (s.objects || []).length + '/' + R().slotsOf(s) + '）</button>'
+      + '<button class="btn" type="button" data-do="deck">素材庫（' + (s.cards || []).length + '/' + maxDeck + '）</button>'
       + '<button class="btn primary" type="button" data-do="leave">' + esc(T.leave) + '</button>'
       + '</div></div>';
   }
   function packModal(s) {
     const pk = s.pack || { name: '素材包', cards: [] };
-    const cards = (pk.cards || []).map((c, i) => '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>').join('');
+    const cards = (pk.cards || []).map((c, i) => {
+      const btn = '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>';
+      return cardSlotHtml(btn, 'pack:' + i);
+    }).join('');
     return '<div class="modal wide rd-pack">'
       + '<span class="eyebrow">開包・三選一</span>'
       + '<h2>' + esc(pk.name) + '</h2>'
@@ -29635,10 +30354,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       } else {
         label = c.guilt ? '不能複印' : '複印';
       }
-      return '<button type="button" class="cardpick" data-do="pickcard" data-uid="' + c.uid + '"' + (disabled ? ' disabled' : '') + '>'
+      const btn = '<button type="button" class="cardpick" data-do="pickcard" data-uid="' + c.uid + '"' + (disabled ? ' disabled' : '') + '>'
         + cardHtml(c)
         + '<span class="cp-act">' + esc(label) + '</span>'
         + '</button>';
+      return cardSlotHtml(btn, c.uid);
     }).join('');
     return '<div class="modal wide rd-pick">'
       + '<span class="eyebrow">工作室服務</span>'
@@ -29646,6 +30366,124 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<p class="mute" style="font-size:13px">點選一張素材。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
       + '<div class="cp-grid">' + items + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="cancelpick">取消</button></div>'
+      + '</div>';
+  }
+  // ---------- 第十六期：卡背、放下一張卡與回憶（WO-16-04） ----------
+  function findCardForBack(s, rawUid) {
+    if (!s || rawUid == null) return null;
+    const key = String(rawUid);
+    if (key.startsWith('pack:')) {
+      const i = Number(key.slice(5));
+      const pc = s.pack && Array.isArray(s.pack.cards) ? s.pack.cards[i] : null;
+      if (!pc) return null;
+      return Object.assign({}, pc, {
+        from: IE.Cards ? IE.Cards.origin(s, { kind: 'shop' }) : null,
+        works: [],
+        relic: false,
+      });
+    }
+    if (key.startsWith('trip:')) {
+      const i = Number(key.slice(5));
+      const t5 = s.trip5;
+      const cid = t5 && Array.isArray(t5.ids) ? t5.ids[i] : null;
+      const def = cid && D().CARDS && D().CARDS[cid];
+      if (!def) return null;
+      const reg = (D().REGIONS && D().REGIONS[t5.origin]) || t5.origin || '';
+      return {
+        uid: key,
+        id: cid,
+        star: D().ECON.tripStar,
+        name: def.name,
+        tags: def.tags.slice(),
+        value: def.value,
+        medium: D().mediumOf(def),
+        origin: def.origin,
+        rarity: def.rarity,
+        from: IE.Cards ? IE.Cards.origin(s, { kind: 'trip', x: reg }) : null,
+        works: [],
+        relic: false,
+      };
+    }
+    const inDeck = (s.cards || []).find((c) => c && String(c.uid) === key);
+    if (inDeck) return inDeck;
+    const inMem = (s.memory || []).find((c) => c && String(c.uid) === key);
+    if (inMem) return inMem;
+    if (lastReport) {
+      if (lastReport.stance && lastReport.stance.card && String(lastReport.stance.card.uid) === key) return lastReport.stance.card;
+      const inRep = (lastReport.cards || []).find((c) => c && String(c.uid) === key);
+      if (inRep) return inRep;
+    }
+    return null;
+  }
+  function cardBackModal(s, card) {
+    const D_ = D(), CT = D_.CARD_TEXT || {};
+    const medKey = D_.mediumOf ? D_.mediumOf(card) : 'paper';
+    const med = (D_.MEDIA && D_.MEDIA[medKey]) || { name: '紙', full: '紙本' };
+    const fromTxt = card && card.from && card.from.text ? String(card.from.text) : '';
+    const works = card && Array.isArray(card.works) ? card.works : [];
+    const regionTxt = card && card.origin && card.origin !== 'home' && D_.REGIONS && D_.REGIONS[card.origin]
+      ? '<span class="cb-region">' + esc(D_.REGIONS[card.origin]) + '</span>'
+      : '';
+    const lostTxt = card && card.lost === 'flood'
+      ? '<p class="cb-lost">' + esc((CT.lostFlood || '第 {n} 晚，水帶走的。').replace(/\{n\}/g, String(card.lostNight != null ? card.lostNight : ((s && s.night) || 1)))) + '</p>'
+      : '';
+    return '<div class="modal card-back">'
+      + '<div class="cb-paper">'
+      + '<div class="cb-top">'
+      + '<span class="cb-eyebrow">' + esc(CT.backHead || '這張卡的來歷') + '</span>'
+      + '<span class="cb-med">媒材：' + esc(med.full || med.name) + '</span>'
+      + '</div>'
+      + '<h2 class="cb-title">' + esc(card.name) + '</h2>'
+      + '<div class="cb-meta"><span class="tags">' + tagsHtml(card.tags || []) + '</span>' + starHtml(card) + regionTxt + '</div>'
+      + (fromTxt ? '<div class="cb-sec cb-sec-from"><p class="cb-from">' + esc(fromTxt) + '</p></div>' : '')
+      + '<div class="cb-sec cb-sec-works">'
+      + '<h3>' + esc(CT.worksHead || '它參與過的作品') + '</h3>'
+      + (works.length
+        ? '<ul class="cb-works">' + works.map((w) => '<li>《' + esc(w) + '》</li>').join('') + '</ul>'
+        : '<p class="cb-noworks">' + esc(CT.noWorks || '還沒有用它完成過具名的作品。') + '</p>')
+      + '</div>'
+      + (card.relic ? '<div class="cb-relic">' + esc(CT.relic || '遺物：給你這張卡的人已經不在浮城。') + '</div>' : '')
+      + lostTxt
+      + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div>'
+      + '</div>';
+  }
+  function overModal(s) {
+    const D_ = D(), CT = D_.CARD_TEXT || {};
+    const maxDeck = (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const list = (s.cards || []).slice();
+    const items = list.map((c) => {
+      const actTxt = c.relic ? (CT.relicKeep || '這是遺物，放不下。') : '放進回憶';
+      const btn = '<button type="button" class="cardpick over-pick' + (c.relic ? ' relic-locked' : '') + '" data-do="putdown" data-uid="' + c.uid + '"' + (c.relic ? ' disabled' : '') + '>'
+        + cardHtml(c)
+        + '<span class="cp-act">' + esc(actTxt) + '</span>'
+        + '</button>';
+      return cardSlotHtml(btn, c.uid, c.relic ? 'is-relic-slot' : '');
+    }).join('');
+    return '<div class="modal wide rd-over">'
+      + '<div class="over-head">'
+      + '<div class="over-title">'
+      + '<span class="eyebrow">' + s.cards.length + ' / ' + maxDeck + ' 張</span>'
+      + '<h2>' + esc(CT.overHead || '素材庫放不下了') + '</h2>'
+      + '<p class="over-sub">' + esc(CT.overSub || '選一張放進回憶。放下的卡不會消失，但不能再用。') + '</p>'
+      + '</div>'
+      + '<div class="over-box" aria-hidden="true"><i class="ob-lid"></i><span class="ob-lbl">' + esc(CT.memoryHead || '回憶') + '</span></div>'
+      + '</div>'
+      + '<div class="cp-grid over-grid">' + items + '</div>'
+      + '</div>';
+  }
+  function memoryModal(s) {
+    const CT = (D().CARD_TEXT) || {};
+    const mem = Array.isArray(s.memory) ? s.memory : [];
+    return '<div class="modal wide rd-memory">'
+      + '<div class="mem-head"><h2>' + esc(CT.memoryHead || '回憶') + '</h2>'
+      + (mem.length ? '<span class="mem-count">' + mem.length + ' 張</span>' : '')
+      + '</div>'
+      + (mem.length
+        ? '<p class="mute" style="font-size:13px">按放下的次序排列。點選右上角「來歷」或長按可以看卡背，不可以拿回來。</p>'
+          + '<div class="inv wrap mem-grid">' + mem.map((c) => cardHtml(c, { cardback: true })).join('') + '</div>'
+        : '<p class="mem-empty mute">' + esc(CT.memoryEmpty || '你還沒有放下過任何東西。') + '</p>')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div>'
       + '</div>';
   }
   function roundReviewModal(rep) {
@@ -29725,6 +30563,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
     dayPanel, storyModal, reversalModal, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
+    cardBackModal, overModal, memoryModal, findCardForBack, _stanceWrapped: true,
   };
 })(window.IE = window.IE || {});
 
@@ -31914,8 +32753,22 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         return afterAction(IE.World.leaveTrip(s));
     }
     if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
-    // 照舊做：熟手自動完成小遊戲
-    if (id.startsWith('auto:')) { const rep = IE.Auto.apply(s, id.slice(5)); if (rep) { A.sfx('click'); afterAction(rep); } }
+    // 照舊做：熟手自動完成小遊戲（五輪模式不經 autoPutDown，留給 .rd-over 讓玩家自己選）
+    if (id.startsWith('auto:')) {
+      const kind = id.slice(5);
+      if (IE.Rounds && IE.Rounds.on(s)) {
+        const res = IE.Auto.result(s, kind);
+        if (res) {
+          if (IE.Rounds.useGig && !s.gigActive) IE.Rounds.useGig(s, kind);
+          s.stats.autoDone = (s.stats.autoDone || 0) + 1;
+          A.sfx('click');
+          afterAction(R.applyMicro(s, kind, res));
+        }
+        return;
+      }
+      const rep = IE.Auto.apply(s, kind);
+      if (rep) { A.sfx('click'); afterAction(rep); }
+    }
   }
   // 地圖上的熱點
   IE.Maps.onPick = function (view, sp) {
@@ -32006,12 +32859,44 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     }, { dismiss: () => showHub() });
     render();
   }
+  function decorateCraftHand(s) {
+    if (!s || !(IE.Rounds && IE.Rounds.on(s))) return;
+    const hand = document.querySelector('#ctable .ct-hand');
+    if (!hand) return;
+    const CT = (D.CARD_TEXT) || {};
+    const backLbl = CT.backHead || '這張卡的來歷';
+    const relicLbl = CT.relic || '遺物：給你這張卡的人已經不在浮城。';
+    hand.querySelectorAll('.cc[data-uid]:not(.dark):not(.has-cb)').forEach((el) => {
+      el.classList.add('has-cb');
+      const uid = Number(el.dataset.uid);
+      const card = (s.cards || []).find((c) => c && c.uid === uid);
+      if (card && card.relic) {
+        const rel = document.createElement('span');
+        rel.className = 'card-relic';
+        rel.title = relicLbl;
+        rel.textContent = '遺物';
+        el.appendChild(rel);
+      }
+      const cb = document.createElement('span');
+      cb.className = 'cb-btn';
+      cb.setAttribute('role', 'button');
+      cb.setAttribute('tabindex', '0');
+      cb.setAttribute('aria-label', backLbl);
+      cb.title = backLbl;
+      cb.dataset.do = 'cardback';
+      cb.dataset.uid = String(el.dataset.uid);
+      cb.textContent = '來歷';
+      el.appendChild(cb);
+    });
+  }
   function openCraft() {
     const s = Game.state;
     // 關卡之夜和通宵用節奏更強的音樂
     const ses = s.session;
     music(ses && ses.stage && ses.stage.kind === 'boss' ? 'boss' : ses && (ses.stage || ses.mode === 'allnighter') ? 'stage' : 'create');
+    let handObs = null;
     IE.Craft.open(s, (res) => {
+      if (handObs) { handObs.disconnect(); handObs = null; }
       UI.renderHud(s); A.setSpark(s.spark); save();
       if (IE.Rounds && IE.Rounds.on(s)) { roundsGo(); return; }
       if (!res) { showHub(); return; }
@@ -32020,6 +32905,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (g && s.stageDone && s.stageDone[s.day] && R.stallOpen) return openStall(g.kind === 'boss', afterSlot);
       afterSlot();
     });
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      decorateCraftHand(s);
+      const hand = document.querySelector('#ctable .ct-hand');
+      if (hand && typeof MutationObserver !== 'undefined') {
+        handObs = new MutationObserver(() => decorateCraftHand(s));
+        handObs.observe(hand, { childList: true });
+      }
+    }
   }
   function openStall(boss, next) {
     const s = Game.state;
@@ -32165,9 +33058,95 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     });
     render();
   }
+  function maxDeckOf(s) {
+    const bg = s && D.BACKGROUNDS && D.BACKGROUNDS[s.bg];
+    return (bg && bg.perk && bg.perk.deckMax) || R.MAX_CARDS;
+  }
+  function needsPutDown(s) {
+    if (!s || !IE.Rounds || !IE.Rounds.on(s) || !IE.Cards) return false;
+    IE.Cards.ensure(s);
+    if (s.cards.length > maxDeckOf(s)) s.over = true;
+    if (!s.over || s.cards.length <= maxDeckOf(s)) {
+      s.over = false;
+      return false;
+    }
+    if (!s.cards.some((c) => c && !c.relic)) {
+      s.over = false;
+      return false;
+    }
+    return true;
+  }
+  let overBusy = false;
+  function openOverModal(after) {
+    const s = Game.state;
+    if (!needsPutDown(s)) {
+      if (after) after();
+      return;
+    }
+    overBusy = false;
+    UI.modal(UI.overModal(s), {
+      putdown(el) {
+        if (overBusy) return;
+        const uid = Number(el.dataset.uid);
+        const res = IE.Cards.putDown(s, uid);
+        if (!res || !res.ok) {
+          if (res && res.reason === 'relic') UI.toast((D.CARD_TEXT && D.CARD_TEXT.relicKeep) || '這是遺物，放不下。', 'bad');
+          A.sfx('wrong');
+          return;
+        }
+        overBusy = true;
+        A.sfx('card');
+        save();
+        const reduced = !!(
+          (IE.Pixel && IE.Pixel.reducedMotion) ||
+          (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+        );
+        const finish = () => {
+          overBusy = false;
+          UI.toast('你把「' + res.card.name + '」放進了回憶。');
+          if (needsPutDown(s)) {
+            openOverModal(after);
+            return;
+          }
+          UI.closeModal();
+          if (after) after();
+        };
+        if (reduced) {
+          finish();
+          return;
+        }
+        const slot = el.closest('.card-slot') || el;
+        slot.classList.add('putting-down');
+        const box = document.querySelector('#modal .over-box');
+        if (box) box.classList.add('receiving');
+        const spd = Math.max(1, Number(store.get('ie2080.speed')) || 1);
+        setTimeout(finish, Math.max(70, Math.round(240 / spd)));
+      },
+    });
+  }
+  function drainExpiredGigs(s) {
+    if (!s || !IE.Rounds || !IE.Rounds.on(s) || !IE.Rounds.expireGigs) return;
+    const exp = IE.Rounds.expireGigs(s);
+    if (!exp || !exp.length) return;
+    if (!Array.isArray(s.expiredNotices)) s.expiredNotices = [];
+    const tpl = (D.GIG_TEXT && D.GIG_TEXT.expired) || '「{x}」的差事過期了。系統已經把它分配給更積極的人。';
+    exp.forEach((g) => {
+      if (!g || !g.micro) return;
+      const info = IE.Rounds.cardInfo(s, g.micro);
+      const xName = (info && info.name) || g.micro;
+      s.expiredNotices.push(tpl.replace(/\{x\}/g, xName));
+    });
+  }
   function afterSlot() {
     const s = Game.state;
-    if (IE.Rounds && IE.Rounds.on(s)) { IE.Rounds.afterDay(s); return roundsGo(); }
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (s.body > 0 && needsPutDown(s)) {
+        save();
+        return openOverModal(() => { IE.Rounds.afterDay(s); roundsGo(); });
+      }
+      IE.Rounds.afterDay(s);
+      return roundsGo();
+    }
     if (s.body <= 0 && R.lastStand(s, null)) UI.toast('急救：你本來會倒下，但你替自己做了急救。', 'good');
     if (s.body <= 0) return finishRun(R.endingFor(s, 'death'));
     // 外賣潛水員「趕單」：留在同一個時段
@@ -32197,6 +33176,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (s.ended || s.phase === 'ended') return roundsGo();
     S.City.forceNight = false;
     R.morning(s);
+    drainExpiredGigs(s);
     if (IE.Story && IE.Story.plan) IE.Story.plan(s);
     setScene(S.City);
     renderViews(false);
@@ -32266,17 +33246,43 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         roundsDay();
       },
       skip() {
+        if (needsPutDown(s)) return openOverModal(() => roundsDay());
         const rep = IE.Rounds.skipDay(s);
         if (!rep) return;
         afterAction(rep);
       },
+      expdismiss(el) {
+        const idx = Number(el.dataset.i);
+        if (Array.isArray(s.expiredNotices) && idx >= 0 && idx < s.expiredNotices.length) {
+          s.expiredNotices.splice(idx, 1);
+          save();
+          roundsDay();
+        }
+      },
+      deck() {
+        UI.modal(UI.deckModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      },
+      memory() {
+        UI.modal(UI.memoryModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      },
     });
     ticketToasts();
     save();
+    if (needsPutDown(s)) {
+      openOverModal(() => {
+        if (s.offer && s.offer.night === s.night && s.offer.chosen && !s.gigActive && !s.trip5) {
+          IE.Rounds.afterDay(s);
+          roundsGo();
+        } else {
+          roundsDay();
+        }
+      });
+    }
   }
   function roundsChoose(id) {
     const s = Game.state;
     if (!s || s.phase !== 'day') return;
+    if (needsPutDown(s)) return openOverModal(() => roundsDay());
     const info = IE.Rounds.cardInfo(s, id);
     if (!info || !info.enabled) return;
     if (id.startsWith('friend:')) {
@@ -32355,6 +33361,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     save();
     if (s.pack) return roundsPack();
     if (s.pick) return roundsPick();
+    if (needsPutDown(s)) return openOverModal(() => roundsShop());
     UI.modal(UI.shopModal(s), {
       buy(el) {
         const slot = el.dataset.slot || (el.closest('[data-slot]') && el.closest('[data-slot]').dataset.slot);
@@ -32375,7 +33382,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         UI.closeModal();
         openObjects(() => roundsShop());
       },
+      deck() {
+        UI.pushModal(UI.deckModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      },
       leave() {
+        if (needsPutDown(s)) return openOverModal(() => roundsShop());
         const r = IE.Rounds.leaveShop(s);
         if (!r || !r.ok) { if (r && r.msg) UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
         UI.closeModal();
