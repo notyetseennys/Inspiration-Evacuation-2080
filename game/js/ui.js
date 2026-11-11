@@ -16,14 +16,29 @@
   function tagsHtml(tags) {
     return tags.map((t) => '<span class="tag tag-' + t + '" style="--c:' + D().TAGS[t].color + '">' + D().TAGS[t].name + '</span>').join('');
   }
+  function cardBackBtnHtml(uid) {
+    const head = (D().CARD_TEXT && D().CARD_TEXT.backHead) || '這張卡的來歷';
+    return '<span class="cb-btn" role="button" tabindex="0" data-do="cardback" data-uid="' + esc(uid) + '" aria-label="查看卡背" title="' + esc(head) + '">來歷</span>';
+  }
+  function cardSlotHtml(innerBtnHtml, uid, extraCls) {
+    return '<div class="card-slot' + (extraCls ? ' ' + extraCls : '') + '" data-slot-uid="' + esc(uid) + '">'
+      + innerBtnHtml
+      + cardBackBtnHtml(uid)
+      + '</div>';
+  }
   function cardHtml(c, o) {
     o = o || {};
     const tag = o.button ? 'button' : 'div';
     const attrs = o.button ? ' type="button" data-do="' + (o.action || 'card') + '" data-uid="' + c.uid + '"' : '';
     const medKey = D().mediumOf ? D().mediumOf(c) : 'paper';
     const isForeign = !!(c.origin && c.origin !== 'home');
-    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+    const relicTip = (D().CARD_TEXT && D().CARD_TEXT.relic) || '遺物：給你這張卡的人已經不在浮城。';
+    const withBack = !o.button && !!o.cardback;
+    const backUid = o.backUid != null ? o.backUid : c.uid;
+    return '<' + tag + ' class="card med-' + medKey + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.guilt ? ' guilt' : '') + (c.relic ? ' is-relic' : '') + (withBack ? ' has-cb' : '') + (c.rarity ? ' r-' + c.rarity : '') + (o.sel ? ' sel' : '') + '"' + attrs + (o.disabled ? ' disabled' : '') + '>'
+      + (withBack ? cardBackBtnHtml(backUid) : '')
       + (c.rarity === 'legend' ? '<span class="c-rar">極稀有</span>' : c.rarity === 'rare' ? '<span class="c-rar">稀有</span>' : '')
+      + (c.relic ? '<span class="card-relic" title="' + esc(relicTip) + '">遺物</span>' : '')
       + '<span class="c-name">' + esc(c.name) + '</span>'
       + (c.origin && c.origin !== 'home' && D().REGIONS ? '<span class="c-origin">' + esc(D().REGIONS[c.origin]) + '</span>' : '')
       + '<span class="c-foot"><span class="tags">' + tagsHtml(c.tags) + '</span>' + starHtml(c) + '</span>'
@@ -189,7 +204,61 @@
     wrap.hidden = true; wrap.innerHTML = ''; modalHandlers = {}; modalOpts = {};
   }
   const modalOpen = () => !$('#modal').hidden;
+  function openCardBack(rawUid) {
+    const s = IE.Game && IE.Game.state;
+    if (!s || !(IE.Rounds && IE.Rounds.on(s))) return false;
+    const card = findCardForBack(s, rawUid);
+    if (!card) return false;
+    IE.Audio.sfx('click');
+    const h = { close: closeModal };
+    const o = { dismiss: () => {} };
+    if (modalOpen() && $('#modal .card-back')) modal(cardBackModal(s, card), h, o);
+    else pushModal(cardBackModal(s, card), h, o);
+    return true;
+  }
   function bindDelegation() {
+    let lpTimer = 0, lpStart = null, suppressClickUntil = 0;
+    const clearLp = () => {
+      if (lpTimer) { clearTimeout(lpTimer); lpTimer = 0; }
+      lpStart = null;
+    };
+    document.addEventListener('pointerdown', (e) => {
+      clearLp();
+      if (e.button && e.button !== 0) return;
+      if (e.target.closest && e.target.closest('[data-do="cardback"]')) return;
+      const host = e.target.closest && e.target.closest('.card-slot[data-slot-uid], .card.has-cb, #ctable .ct-hand .cc.has-cb');
+      if (!host) return;
+      const cb = host.querySelector && host.querySelector('[data-do="cardback"]');
+      const uid = host.dataset.slotUid != null ? host.dataset.slotUid : (cb && cb.dataset.uid != null ? cb.dataset.uid : host.dataset.uid);
+      if (uid == null) return;
+      lpStart = { x: e.clientX, y: e.clientY };
+      lpTimer = setTimeout(() => {
+        lpTimer = 0;
+        lpStart = null;
+        if (openCardBack(uid)) suppressClickUntil = Date.now() + 900;
+      }, 460);
+    });
+    document.addEventListener('pointermove', (e) => {
+      if (!lpStart) return;
+      if (Math.hypot(e.clientX - lpStart.x, e.clientY - lpStart.y) > 10) clearLp();
+    });
+    document.addEventListener('pointerup', clearLp);
+    document.addEventListener('pointercancel', clearLp);
+    document.addEventListener('contextmenu', (e) => { if (Date.now() < suppressClickUntil) e.preventDefault(); });
+    document.addEventListener('click', (e) => {
+      if (Date.now() < suppressClickUntil) {
+        suppressClickUntil = 0;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      const cb = e.target.closest && e.target.closest('[data-do="cardback"]');
+      if (cb && cb.dataset.uid != null) {
+        e.preventDefault();
+        e.stopPropagation();
+        openCardBack(cb.dataset.uid);
+      }
+    }, true);
     const route = (root, getHandlers) => root.addEventListener('click', (e) => {
       const red = e.target.closest('.redact');
       if (red && root.contains(red)) { red.classList.toggle('revealed'); IE.Audio.sfx('click'); return; }
@@ -352,12 +421,19 @@
   function deckModal(s) {
     const C = IE.Create;
     const cards = s.cards.slice().sort((a, b) => C.starOf(b) - C.starOf(a) || (D().WHEEL || []).indexOf(a.tags[0]) - (D().WHEEL || []).indexOf(b.tags[0]));
+    const maxDeck = (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      return '<div class="modal wide rd-deck"><h2>素材庫 ' + s.cards.length + ' / ' + maxDeck + '</h2>'
+        + '<p class="mute" style="font-size:13px">每一張卡都是一段經歷。點選右上角「來歷」或長按卡片查看卡背。</p>'
+        + '<div class="inv wrap rd-deck-grid">' + (cards.length ? cards.map((c) => cardHtml(c, { cardback: true })).join('') : '<span class="mute">還沒有素材。</span>') + '</div>'
+        + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
+    }
     const pol = (c) => {
       if (c.guilt) return '';
       const n = C.starOf(c), cost = C.polishCost(s, c);
       return n >= 5 ? '<span class="pol-max">★5</span>' : '<button class="btn mini pol" type="button" data-do="polish" data-uid="' + c.uid + '"' + (s.cr < cost ? ' disabled' : '') + '>打磨 ★' + (n + 1) + '・$' + cost + '</button>';
     };
-    return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS) + '</h2>'
+    return '<div class="modal wide"><h2>素材庫 ' + s.cards.length + ' / ' + maxDeck + '</h2>'
       + '<p class="mute" style="font-size:13px">星級是素材的亮度：★1 至 ★5，籌碼 ' + C.STAR_CHIPS.slice(1).join('／') + '。花錢「打磨」可以升一星；但錢也要用來交租。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
       + '<div class="inv wrap pol-grid">' + (cards.length ? cards.map((c) => '<div class="pol-cell">' + cardHtml(c) + pol(c) + '</div>').join('') : '<span class="mute">還沒有素材。先去生活吧。</span>') + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div></div>';
@@ -436,6 +512,7 @@
 
   // ---------- 報告 ----------
   // 五輪模式的貨幣名稱取自所在城市（docs/ECONOMY.md；第 7 區是浮城元）
+  let lastReport = null;
   function cityCurrency() {
     const s = IE.Game && IE.Game.state;
     const C = D().CITIES || {};
@@ -451,7 +528,7 @@
     return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
   }
   function linesHtml(lines, isRounds) {
-    const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body') : (lines || []);
+    const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body' && !l._stanceLine) : (lines || []);
     if (!list.length) return '';
     return '<ul class="lines">' + list.map((l) => '<li class="' + l.kind + '"><span>' + esc(l.text) + '</span>'
       + (l.v != null ? '<span class="v">' + (l.stat === 'spark' || l.stat === 'para' ? signed(l.v, 1) : l.stat === 'soul' ? signed(l.v, 1) + '<small>克</small>' : isRounds && l.stat === 'cr' ? (l.v > 0 ? '+$' : l.v < 0 ? '−$' : '$') + fmt(Math.abs(l.v)) : signed(l.v)) + '</span>' : '') + '</li>').join('') + '</ul>';
@@ -461,12 +538,29 @@
     if (!keys.length) return '';
     return '<div class="stat-deltas">' + keys.map((k) => '<span class="sd' + (st[k] < 0 ? ' neg' : '') + '">' + D().STATS[k].name + ' ' + signed(st[k], 1) + '</span>').join('') + '</div>';
   }
-  function gainedHtml(rep) {
+  function stanceHtml(rep, isRounds) {
+    if (!isRounds || !rep || !rep.stance || !rep.stance.id) return '';
+    const st = rep.stance;
+    const head = st.head || (D().STANCE_TEXT && D().STANCE_TEXT[st.id]) || '';
+    const autoTxt = st.auto ? (st.autoText || (D().STANCE_TEXT && D().STANCE_TEXT.auto) || '') : '';
+    const line = st.line || ((D().STANCE && st.micro && D().STANCE[st.micro] && D().STANCE[st.micro].lines && D().STANCE[st.micro].lines[st.id]) || '');
+    const card = st.card ? '<div class="mgs-card">' + cardHtml(st.card, { cardback: true }) + '</div>' : '';
+    return '<div class="mg-stance s-' + esc(st.id) + '">'
+      + '<div class="mgs-top"><strong class="mgs-head">' + esc(head) + '</strong>'
+      + (autoTxt ? '<span class="mgs-auto">' + esc(autoTxt) + '</span>' : '')
+      + '</div>'
+      + (line ? '<p class="mgs-line">' + esc(line) + '</p>' : '')
+      + card
+      + '</div>';
+  }
+  function gainedHtml(rep, isRounds) {
     let h = '';
     if (rep.objs && rep.objs.length) h += '<h3>獲得靈感物件</h3><div class="gained">' + rep.objs.map((id) => '<div class="obj-row r-' + D().OBJ[id].rarity + '">' + IE.Icons.obj(id, 40)
       + '<div class="obj-txt"><b>' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span></div></div>').join('') + '</div>';
-    if (rep.cards.length) h += '<h3>獲得素材</h3><div class="gained">' + rep.cards.map((c) => cardHtml(c)).join('') + '</div>';
-    if (rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
+    const stUid = isRounds && rep.stance && rep.stance.card ? rep.stance.card.uid : null;
+    const cards = (rep.cards || []).filter((c) => c && (stUid == null || c.uid !== stUid));
+    if (cards.length) h += '<h3>獲得素材</h3><div class="gained">' + cards.map((c) => cardHtml(c, { cardback: !!isRounds })).join('') + '</div>';
+    if (!isRounds && rep.dropped && rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
   }
   function rankHtml(rk) {
@@ -482,7 +576,8 @@
   }
   function reportModal(rep, btnLabel) {
     const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
-    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep)
+    lastReport = rep || null;
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + stanceHtml(rep, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep, isRounds)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -1148,10 +1243,31 @@
     const storyStripHtml = (collectHtml || fateHtml || astarHtml || feedHtml)
       ? '<div class="rd-story-strip">' + collectHtml + fateHtml + astarHtml + feedHtml + '</div>'
       : '';
+    const expList = Array.isArray(s.expiredNotices) ? s.expiredNotices : [];
+    const expHtml = expList.map((txt, idx) => '<button type="button" class="rd-exp-gig" data-do="expdismiss" data-i="' + idx + '">'
+      + '<span class="reg-txt">' + esc(txt) + '</span>'
+      + '<small class="reg-close">關閉</small>'
+      + '</button>').join('');
+    const GT = D().GIG_TEXT || {};
     const of = RD.offer(s);
-    const cardsHtml = (of.ids || []).map((id) => {
-      const c = RD.cardInfo(s, id);
-      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '';
+    const offerInfos = (of.ids || []).map((id) => RD.cardInfo(s, id));
+    const hasGigToday = offerInfos.some((c) => !!(c && c.gig));
+    const cardsHtml = offerInfos.map((c) => {
+      let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '', gigHtml = '';
+      if (c.gig) {
+        const gFrom = GT.from || {};
+        const fromStr = c.gig.from === 'round'
+          ? (gFrom.round || '人才發展局本季配給的工作')
+          : (gFrom[c.gig.from] || '{x}').replace(/\{x\}/g, c.gig.x != null ? String(c.gig.x) : '');
+        const keep = (D().ECON16 && D().ECON16.gigKeep) || 3;
+        const left = Math.max(1, keep - ((s.night || 1) - (c.gig.night != null ? c.gig.night : (s.night || 1))));
+        const leftStr = (GT.left || '還有 {n} 天').replace(/\{n\}/g, String(left));
+        gigHtml = '<div class="dc-gig' + (left <= 1 ? ' warn' : '') + '">'
+          + '<div class="dcg-row"><strong class="dcg-tag">' + esc(GT.tag || '差事') + '</strong>'
+          + '<span class="dcg-left">' + esc(leftStr) + '</span></div>'
+          + '<span class="dcg-from">' + esc(fromStr) + '</span>'
+          + '</div>';
+      }
       if (c.kind === 'friend') {
         const npcId = c.id.slice(7);
         const av = IE.imgTag ? IE.imgTag('friend-' + npcId, 'rd-avatar') : '';
@@ -1167,19 +1283,28 @@
       } else {
         banner = IE.imgTag ? IE.imgTag('day-' + c.id, 'rd-banner') : '';
       }
-      return '<button class="rd-card k-' + c.kind + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+      const kLabel = c.kindName || T.kinds[c.kind] || '休息';
+      return '<button class="rd-card k-' + c.kind + (c.gig ? ' has-gig' : '') + (c.danger > 0 ? ' has-danger' : '') + '" type="button" data-do="card" data-card="' + esc(c.id) + '"' + (c.enabled ? '' : ' disabled') + '>'
+        + gigHtml
         + banner
-        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(T.kinds[c.kind]) + '</span>' + lastBadge + '</div>'
+        + '<div class="rd-card-top"><span class="rd-kind k-' + c.kind + '">' + esc(kLabel) + '</span>' + lastBadge + '</div>'
         + head
         + '<p class="rd-sub">' + esc(c.sub) + '</p>'
         + '<div class="fx rd-fx">' + fxHtml(c.fx) + '</div>'
         + (c.reason ? '<span class="act-why rd-why">' + esc(c.reason) + '</span>' : '')
         + '</button>';
     }).join('');
+    const noGigHtml = !hasGigToday
+      ? '<div class="rd-nogig">' + esc(GT.none || '今天沒有工作。這在浮城很正常。') + '</div>'
+      : '';
     const rCost = RD.offerCost(s);
     const rerollTxt = T.reroll.replace('{cost}', fmt(rCost));
     const skipTxt = T.skip.replace('{v}', D().ECON.skipSpark);
+    const maxDeck = (D().BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const memLen = Array.isArray(s.memory) ? s.memory.length : 0;
+    const memTxt = ((D().CARD_TEXT && D().CARD_TEXT.memoryHead) || '回憶') + (memLen ? '（' + memLen + '）' : '');
     return '<div class="rd-day">'
+      + expHtml
       + '<div class="rd-top">'
       + '<div class="rd-map-row"><div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div><span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
       + '<div class="rd-meta-row">'
@@ -1191,10 +1316,13 @@
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
+      + noGigHtml
       + '<div class="rd-cards">' + cardsHtml + '</div>'
       + '<div class="rd-btns">'
       + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
       + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
+      + '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>'
+      + '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>'
       + '</div>'
       + '</div>';
   }
@@ -1251,11 +1379,16 @@
   }
   function roundMicroModal(info, rank) {
     const T = D().ROUND_TEXT;
+    const kLabel = info.kindName || T.kinds[info.kind] || '工作';
+    const autoNote = D().STANCE_TEXT && D().STANCE_TEXT.auto
+      ? '<p class="rd-auto-note">' + esc(D().STANCE_TEXT.auto) + '</p>'
+      : '';
     return '<div class="modal rd-micro-modal">'
-      + '<span class="rd-kind k-' + info.kind + '">' + esc(T.kinds[info.kind]) + '</span>'
+      + '<span class="rd-kind k-' + info.kind + '">' + esc(kLabel) + '</span>'
       + '<h2>' + esc(info.name) + '</h2>'
       + '<p class="mute">' + esc(info.sub) + '</p>'
       + '<div class="fx big">' + fxHtml(info.fx) + '</div>'
+      + autoNote
       + '<div class="btn-row">'
       + '<button class="btn primary" type="button" data-do="byhand">' + esc(T.byHand) + '</button>'
       + '<button class="btn sea" type="button" data-do="byauto">' + esc(T.byAuto.replace('{rank}', rank)) + '</button>'
@@ -1267,8 +1400,9 @@
     const cards = t5.ids.map((cid, i) => {
       const def = D().CARDS[cid];
       const picked = (t5.picked || []).includes(i);
-      const fake = { uid: i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
-      return '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
+      const fake = { uid: 'trip:' + i, id: cid, star: D().ECON.tripStar, name: def.name, tags: def.tags, value: def.value, origin: def.origin, rarity: def.rarity };
+      const btn = '<button type="button" class="rp-card' + (picked ? ' sel' : '') + '" data-do="trippick" data-i="' + i + '"' + (picked ? ' disabled' : '') + '>' + cardHtml(fake) + '</button>';
+      return cardSlotHtml(btn, 'trip:' + i);
     }).join('');
     const tripBanner = t5.origin && IE.imgTag ? IE.imgTag('trip-' + t5.origin, 'rt-banner') : '';
     return '<div class="modal wide rd-trip">'
@@ -1419,6 +1553,7 @@
       + '<div class="rs-grid rs-grid-3">' + serviceCell + techCell + toolCell + '</div>'
       + '</section>';
 
+    const maxDeck = (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
     const shopBanner = IE.imgTag ? IE.imgTag('scene-market', 'rs-banner') : '';
     return '<div class="modal wide rd-shop">'
       + shopBanner
@@ -1434,12 +1569,16 @@
       + trioHtml
       + '<div class="btn-row rs-foot">'
       + '<button class="btn" type="button" data-do="objs">管理物件（' + (s.objects || []).length + '/' + R().slotsOf(s) + '）</button>'
+      + '<button class="btn" type="button" data-do="deck">素材庫（' + (s.cards || []).length + '/' + maxDeck + '）</button>'
       + '<button class="btn primary" type="button" data-do="leave">' + esc(T.leave) + '</button>'
       + '</div></div>';
   }
   function packModal(s) {
     const pk = s.pack || { name: '素材包', cards: [] };
-    const cards = (pk.cards || []).map((c, i) => '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>').join('');
+    const cards = (pk.cards || []).map((c, i) => {
+      const btn = '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>';
+      return cardSlotHtml(btn, 'pack:' + i);
+    }).join('');
     return '<div class="modal wide rd-pack">'
       + '<span class="eyebrow">開包・三選一</span>'
       + '<h2>' + esc(pk.name) + '</h2>'
@@ -1467,10 +1606,11 @@
       } else {
         label = c.guilt ? '不能複印' : '複印';
       }
-      return '<button type="button" class="cardpick" data-do="pickcard" data-uid="' + c.uid + '"' + (disabled ? ' disabled' : '') + '>'
+      const btn = '<button type="button" class="cardpick" data-do="pickcard" data-uid="' + c.uid + '"' + (disabled ? ' disabled' : '') + '>'
         + cardHtml(c)
         + '<span class="cp-act">' + esc(label) + '</span>'
         + '</button>';
+      return cardSlotHtml(btn, c.uid);
     }).join('');
     return '<div class="modal wide rd-pick">'
       + '<span class="eyebrow">工作室服務</span>'
@@ -1478,6 +1618,124 @@
       + '<p class="mute" style="font-size:13px">點選一張素材。現有 <b class="num">$' + fmt(s.cr) + '</b>。</p>'
       + '<div class="cp-grid">' + items + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="cancelpick">取消</button></div>'
+      + '</div>';
+  }
+  // ---------- 第十六期：卡背、放下一張卡與回憶（WO-16-04） ----------
+  function findCardForBack(s, rawUid) {
+    if (!s || rawUid == null) return null;
+    const key = String(rawUid);
+    if (key.startsWith('pack:')) {
+      const i = Number(key.slice(5));
+      const pc = s.pack && Array.isArray(s.pack.cards) ? s.pack.cards[i] : null;
+      if (!pc) return null;
+      return Object.assign({}, pc, {
+        from: IE.Cards ? IE.Cards.origin(s, { kind: 'shop' }) : null,
+        works: [],
+        relic: false,
+      });
+    }
+    if (key.startsWith('trip:')) {
+      const i = Number(key.slice(5));
+      const t5 = s.trip5;
+      const cid = t5 && Array.isArray(t5.ids) ? t5.ids[i] : null;
+      const def = cid && D().CARDS && D().CARDS[cid];
+      if (!def) return null;
+      const reg = (D().REGIONS && D().REGIONS[t5.origin]) || t5.origin || '';
+      return {
+        uid: key,
+        id: cid,
+        star: D().ECON.tripStar,
+        name: def.name,
+        tags: def.tags.slice(),
+        value: def.value,
+        medium: D().mediumOf(def),
+        origin: def.origin,
+        rarity: def.rarity,
+        from: IE.Cards ? IE.Cards.origin(s, { kind: 'trip', x: reg }) : null,
+        works: [],
+        relic: false,
+      };
+    }
+    const inDeck = (s.cards || []).find((c) => c && String(c.uid) === key);
+    if (inDeck) return inDeck;
+    const inMem = (s.memory || []).find((c) => c && String(c.uid) === key);
+    if (inMem) return inMem;
+    if (lastReport) {
+      if (lastReport.stance && lastReport.stance.card && String(lastReport.stance.card.uid) === key) return lastReport.stance.card;
+      const inRep = (lastReport.cards || []).find((c) => c && String(c.uid) === key);
+      if (inRep) return inRep;
+    }
+    return null;
+  }
+  function cardBackModal(s, card) {
+    const D_ = D(), CT = D_.CARD_TEXT || {};
+    const medKey = D_.mediumOf ? D_.mediumOf(card) : 'paper';
+    const med = (D_.MEDIA && D_.MEDIA[medKey]) || { name: '紙', full: '紙本' };
+    const fromTxt = card && card.from && card.from.text ? String(card.from.text) : '';
+    const works = card && Array.isArray(card.works) ? card.works : [];
+    const regionTxt = card && card.origin && card.origin !== 'home' && D_.REGIONS && D_.REGIONS[card.origin]
+      ? '<span class="cb-region">' + esc(D_.REGIONS[card.origin]) + '</span>'
+      : '';
+    const lostTxt = card && card.lost === 'flood'
+      ? '<p class="cb-lost">' + esc((CT.lostFlood || '第 {n} 晚，水帶走的。').replace(/\{n\}/g, String(card.lostNight != null ? card.lostNight : ((s && s.night) || 1)))) + '</p>'
+      : '';
+    return '<div class="modal card-back">'
+      + '<div class="cb-paper">'
+      + '<div class="cb-top">'
+      + '<span class="cb-eyebrow">' + esc(CT.backHead || '這張卡的來歷') + '</span>'
+      + '<span class="cb-med">媒材：' + esc(med.full || med.name) + '</span>'
+      + '</div>'
+      + '<h2 class="cb-title">' + esc(card.name) + '</h2>'
+      + '<div class="cb-meta"><span class="tags">' + tagsHtml(card.tags || []) + '</span>' + starHtml(card) + regionTxt + '</div>'
+      + (fromTxt ? '<div class="cb-sec cb-sec-from"><p class="cb-from">' + esc(fromTxt) + '</p></div>' : '')
+      + '<div class="cb-sec cb-sec-works">'
+      + '<h3>' + esc(CT.worksHead || '它參與過的作品') + '</h3>'
+      + (works.length
+        ? '<ul class="cb-works">' + works.map((w) => '<li>《' + esc(w) + '》</li>').join('') + '</ul>'
+        : '<p class="cb-noworks">' + esc(CT.noWorks || '還沒有用它完成過具名的作品。') + '</p>')
+      + '</div>'
+      + (card.relic ? '<div class="cb-relic">' + esc(CT.relic || '遺物：給你這張卡的人已經不在浮城。') + '</div>' : '')
+      + lostTxt
+      + '</div>'
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div>'
+      + '</div>';
+  }
+  function overModal(s) {
+    const D_ = D(), CT = D_.CARD_TEXT || {};
+    const maxDeck = (D_.BACKGROUNDS[s.bg].perk.deckMax || R().MAX_CARDS);
+    const list = (s.cards || []).slice();
+    const items = list.map((c) => {
+      const actTxt = c.relic ? (CT.relicKeep || '這是遺物，放不下。') : '放進回憶';
+      const btn = '<button type="button" class="cardpick over-pick' + (c.relic ? ' relic-locked' : '') + '" data-do="putdown" data-uid="' + c.uid + '"' + (c.relic ? ' disabled' : '') + '>'
+        + cardHtml(c)
+        + '<span class="cp-act">' + esc(actTxt) + '</span>'
+        + '</button>';
+      return cardSlotHtml(btn, c.uid, c.relic ? 'is-relic-slot' : '');
+    }).join('');
+    return '<div class="modal wide rd-over">'
+      + '<div class="over-head">'
+      + '<div class="over-title">'
+      + '<span class="eyebrow">' + s.cards.length + ' / ' + maxDeck + ' 張</span>'
+      + '<h2>' + esc(CT.overHead || '素材庫放不下了') + '</h2>'
+      + '<p class="over-sub">' + esc(CT.overSub || '選一張放進回憶。放下的卡不會消失，但不能再用。') + '</p>'
+      + '</div>'
+      + '<div class="over-box" aria-hidden="true"><i class="ob-lid"></i><span class="ob-lbl">' + esc(CT.memoryHead || '回憶') + '</span></div>'
+      + '</div>'
+      + '<div class="cp-grid over-grid">' + items + '</div>'
+      + '</div>';
+  }
+  function memoryModal(s) {
+    const CT = (D().CARD_TEXT) || {};
+    const mem = Array.isArray(s.memory) ? s.memory : [];
+    return '<div class="modal wide rd-memory">'
+      + '<div class="mem-head"><h2>' + esc(CT.memoryHead || '回憶') + '</h2>'
+      + (mem.length ? '<span class="mem-count">' + mem.length + ' 張</span>' : '')
+      + '</div>'
+      + (mem.length
+        ? '<p class="mute" style="font-size:13px">按放下的次序排列。點選右上角「來歷」或長按可以看卡背，不可以拿回來。</p>'
+          + '<div class="inv wrap mem-grid">' + mem.map((c) => cardHtml(c, { cardback: true })).join('') + '</div>'
+        : '<p class="mem-empty mute">' + esc(CT.memoryEmpty || '你還沒有放下過任何東西。') + '</p>')
+      + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">關閉</button></div>'
       + '</div>';
   }
   function roundReviewModal(rep) {
@@ -1557,5 +1815,6 @@
     titlePanel, stakeHtml, stakeBadgeHtml, dossierModal, dossierText, statsModal, statBars, helpModal, collectionModal, dilemmaModal, stayModal,
     rankHtml, placeModal, destModal, galleryModal, antiqueModal, decorModal, worldCodexHtml, storeModal, souvenirModal, rosterHtml,
     dayPanel, storyModal, reversalModal, roundMicroModal, roundTripModal, shopModal, packModal, pickModal, roundReviewModal,
+    cardBackModal, overModal, memoryModal, findCardForBack, _stanceWrapped: true,
   };
 })(window.IE = window.IE || {});

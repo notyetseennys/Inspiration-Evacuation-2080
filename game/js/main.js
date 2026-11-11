@@ -367,8 +367,22 @@
         return afterAction(IE.World.leaveTrip(s));
     }
     if (id.startsWith('site:')) return afterAction(IE.World.applySite(s, id.slice(5)));
-    // 照舊做：熟手自動完成小遊戲
-    if (id.startsWith('auto:')) { const rep = IE.Auto.apply(s, id.slice(5)); if (rep) { A.sfx('click'); afterAction(rep); } }
+    // 照舊做：熟手自動完成小遊戲（五輪模式不經 autoPutDown，留給 .rd-over 讓玩家自己選）
+    if (id.startsWith('auto:')) {
+      const kind = id.slice(5);
+      if (IE.Rounds && IE.Rounds.on(s)) {
+        const res = IE.Auto.result(s, kind);
+        if (res) {
+          if (IE.Rounds.useGig && !s.gigActive) IE.Rounds.useGig(s, kind);
+          s.stats.autoDone = (s.stats.autoDone || 0) + 1;
+          A.sfx('click');
+          afterAction(R.applyMicro(s, kind, res));
+        }
+        return;
+      }
+      const rep = IE.Auto.apply(s, kind);
+      if (rep) { A.sfx('click'); afterAction(rep); }
+    }
   }
   // 地圖上的熱點
   IE.Maps.onPick = function (view, sp) {
@@ -459,12 +473,44 @@
     }, { dismiss: () => showHub() });
     render();
   }
+  function decorateCraftHand(s) {
+    if (!s || !(IE.Rounds && IE.Rounds.on(s))) return;
+    const hand = document.querySelector('#ctable .ct-hand');
+    if (!hand) return;
+    const CT = (D.CARD_TEXT) || {};
+    const backLbl = CT.backHead || '這張卡的來歷';
+    const relicLbl = CT.relic || '遺物：給你這張卡的人已經不在浮城。';
+    hand.querySelectorAll('.cc[data-uid]:not(.dark):not(.has-cb)').forEach((el) => {
+      el.classList.add('has-cb');
+      const uid = Number(el.dataset.uid);
+      const card = (s.cards || []).find((c) => c && c.uid === uid);
+      if (card && card.relic) {
+        const rel = document.createElement('span');
+        rel.className = 'card-relic';
+        rel.title = relicLbl;
+        rel.textContent = '遺物';
+        el.appendChild(rel);
+      }
+      const cb = document.createElement('span');
+      cb.className = 'cb-btn';
+      cb.setAttribute('role', 'button');
+      cb.setAttribute('tabindex', '0');
+      cb.setAttribute('aria-label', backLbl);
+      cb.title = backLbl;
+      cb.dataset.do = 'cardback';
+      cb.dataset.uid = String(el.dataset.uid);
+      cb.textContent = '來歷';
+      el.appendChild(cb);
+    });
+  }
   function openCraft() {
     const s = Game.state;
     // 關卡之夜和通宵用節奏更強的音樂
     const ses = s.session;
     music(ses && ses.stage && ses.stage.kind === 'boss' ? 'boss' : ses && (ses.stage || ses.mode === 'allnighter') ? 'stage' : 'create');
+    let handObs = null;
     IE.Craft.open(s, (res) => {
+      if (handObs) { handObs.disconnect(); handObs = null; }
       UI.renderHud(s); A.setSpark(s.spark); save();
       if (IE.Rounds && IE.Rounds.on(s)) { roundsGo(); return; }
       if (!res) { showHub(); return; }
@@ -473,6 +519,14 @@
       if (g && s.stageDone && s.stageDone[s.day] && R.stallOpen) return openStall(g.kind === 'boss', afterSlot);
       afterSlot();
     });
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      decorateCraftHand(s);
+      const hand = document.querySelector('#ctable .ct-hand');
+      if (hand && typeof MutationObserver !== 'undefined') {
+        handObs = new MutationObserver(() => decorateCraftHand(s));
+        handObs.observe(hand, { childList: true });
+      }
+    }
   }
   function openStall(boss, next) {
     const s = Game.state;
@@ -618,9 +672,95 @@
     });
     render();
   }
+  function maxDeckOf(s) {
+    const bg = s && D.BACKGROUNDS && D.BACKGROUNDS[s.bg];
+    return (bg && bg.perk && bg.perk.deckMax) || R.MAX_CARDS;
+  }
+  function needsPutDown(s) {
+    if (!s || !IE.Rounds || !IE.Rounds.on(s) || !IE.Cards) return false;
+    IE.Cards.ensure(s);
+    if (s.cards.length > maxDeckOf(s)) s.over = true;
+    if (!s.over || s.cards.length <= maxDeckOf(s)) {
+      s.over = false;
+      return false;
+    }
+    if (!s.cards.some((c) => c && !c.relic)) {
+      s.over = false;
+      return false;
+    }
+    return true;
+  }
+  let overBusy = false;
+  function openOverModal(after) {
+    const s = Game.state;
+    if (!needsPutDown(s)) {
+      if (after) after();
+      return;
+    }
+    overBusy = false;
+    UI.modal(UI.overModal(s), {
+      putdown(el) {
+        if (overBusy) return;
+        const uid = Number(el.dataset.uid);
+        const res = IE.Cards.putDown(s, uid);
+        if (!res || !res.ok) {
+          if (res && res.reason === 'relic') UI.toast((D.CARD_TEXT && D.CARD_TEXT.relicKeep) || '這是遺物，放不下。', 'bad');
+          A.sfx('wrong');
+          return;
+        }
+        overBusy = true;
+        A.sfx('card');
+        save();
+        const reduced = !!(
+          (IE.Pixel && IE.Pixel.reducedMotion) ||
+          (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+        );
+        const finish = () => {
+          overBusy = false;
+          UI.toast('你把「' + res.card.name + '」放進了回憶。');
+          if (needsPutDown(s)) {
+            openOverModal(after);
+            return;
+          }
+          UI.closeModal();
+          if (after) after();
+        };
+        if (reduced) {
+          finish();
+          return;
+        }
+        const slot = el.closest('.card-slot') || el;
+        slot.classList.add('putting-down');
+        const box = document.querySelector('#modal .over-box');
+        if (box) box.classList.add('receiving');
+        const spd = Math.max(1, Number(store.get('ie2080.speed')) || 1);
+        setTimeout(finish, Math.max(70, Math.round(240 / spd)));
+      },
+    });
+  }
+  function drainExpiredGigs(s) {
+    if (!s || !IE.Rounds || !IE.Rounds.on(s) || !IE.Rounds.expireGigs) return;
+    const exp = IE.Rounds.expireGigs(s);
+    if (!exp || !exp.length) return;
+    if (!Array.isArray(s.expiredNotices)) s.expiredNotices = [];
+    const tpl = (D.GIG_TEXT && D.GIG_TEXT.expired) || '「{x}」的差事過期了。系統已經把它分配給更積極的人。';
+    exp.forEach((g) => {
+      if (!g || !g.micro) return;
+      const info = IE.Rounds.cardInfo(s, g.micro);
+      const xName = (info && info.name) || g.micro;
+      s.expiredNotices.push(tpl.replace(/\{x\}/g, xName));
+    });
+  }
   function afterSlot() {
     const s = Game.state;
-    if (IE.Rounds && IE.Rounds.on(s)) { IE.Rounds.afterDay(s); return roundsGo(); }
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (s.body > 0 && needsPutDown(s)) {
+        save();
+        return openOverModal(() => { IE.Rounds.afterDay(s); roundsGo(); });
+      }
+      IE.Rounds.afterDay(s);
+      return roundsGo();
+    }
     if (s.body <= 0 && R.lastStand(s, null)) UI.toast('急救：你本來會倒下，但你替自己做了急救。', 'good');
     if (s.body <= 0) return finishRun(R.endingFor(s, 'death'));
     // 外賣潛水員「趕單」：留在同一個時段
@@ -650,6 +790,7 @@
     if (s.ended || s.phase === 'ended') return roundsGo();
     S.City.forceNight = false;
     R.morning(s);
+    drainExpiredGigs(s);
     if (IE.Story && IE.Story.plan) IE.Story.plan(s);
     setScene(S.City);
     renderViews(false);
@@ -719,17 +860,43 @@
         roundsDay();
       },
       skip() {
+        if (needsPutDown(s)) return openOverModal(() => roundsDay());
         const rep = IE.Rounds.skipDay(s);
         if (!rep) return;
         afterAction(rep);
       },
+      expdismiss(el) {
+        const idx = Number(el.dataset.i);
+        if (Array.isArray(s.expiredNotices) && idx >= 0 && idx < s.expiredNotices.length) {
+          s.expiredNotices.splice(idx, 1);
+          save();
+          roundsDay();
+        }
+      },
+      deck() {
+        UI.modal(UI.deckModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      },
+      memory() {
+        UI.modal(UI.memoryModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      },
     });
     ticketToasts();
     save();
+    if (needsPutDown(s)) {
+      openOverModal(() => {
+        if (s.offer && s.offer.night === s.night && s.offer.chosen && !s.gigActive && !s.trip5) {
+          IE.Rounds.afterDay(s);
+          roundsGo();
+        } else {
+          roundsDay();
+        }
+      });
+    }
   }
   function roundsChoose(id) {
     const s = Game.state;
     if (!s || s.phase !== 'day') return;
+    if (needsPutDown(s)) return openOverModal(() => roundsDay());
     const info = IE.Rounds.cardInfo(s, id);
     if (!info || !info.enabled) return;
     if (id.startsWith('friend:')) {
@@ -808,6 +975,7 @@
     save();
     if (s.pack) return roundsPack();
     if (s.pick) return roundsPick();
+    if (needsPutDown(s)) return openOverModal(() => roundsShop());
     UI.modal(UI.shopModal(s), {
       buy(el) {
         const slot = el.dataset.slot || (el.closest('[data-slot]') && el.closest('[data-slot]').dataset.slot);
@@ -828,7 +996,11 @@
         UI.closeModal();
         openObjects(() => roundsShop());
       },
+      deck() {
+        UI.pushModal(UI.deckModal(s), { close: UI.closeModal }, { dismiss: () => {} });
+      },
       leave() {
+        if (needsPutDown(s)) return openOverModal(() => roundsShop());
         const r = IE.Rounds.leaveShop(s);
         if (!r || !r.ok) { if (r && r.msg) UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
         UI.closeModal();
