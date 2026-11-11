@@ -291,7 +291,7 @@
       case 'dream': {
         const pool = D.ANTIQUES.concat(Object.keys(D.CARDS).filter((k) => k.startsWith('t_')));
         const nid = R.pick(s, pool), def = D.CARDS[nid];
-        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: s.mode === 'rounds' ? cards[0].origin : def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
+        Object.assign(cards[0], { id: nid, name: def.name, tags: def.tags.slice(), value: def.value, origin: def.origin, rarity: def.rarity, wear: 0, medium: def.medium });
         msg = '「' + def.name + '」從夢裡出現了';
         break;
       }

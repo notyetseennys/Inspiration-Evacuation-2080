@@ -427,7 +427,8 @@
     if (s.mode === 'rounds') {
       if (IE.Cards) IE.Cards.ensure(s);
       else { s.memory = s.memory || []; if (typeof s.over !== 'boolean') s.over = false; }
-      card.origin = IE.Cards ? IE.Cards.origin(s, origin) : null;
+      // 來歷放在 card.from：card.origin 是出國素材的地區（字串），兩者不可以混用
+      card.from = IE.Cards ? IE.Cards.origin(s, origin) : null;
       card.works = Array.isArray(card.works) ? card.works.slice() : [];
       card.relic = !!card.relic;
       s.cards.push(card);

@@ -14,10 +14,10 @@ module.exports = (t) => {
     assert.deepEqual(s.memory, []);
     assert.equal(s.over, false);
     s.cards.forEach((c) => {
-      assert.ok(c.origin && typeof c.origin === 'object');
-      assert.equal(c.origin.kind, 'start');
-      assert.equal(c.origin.text, '來浮城之前就帶在身上');
-      assert.equal(c.origin.npc, null);
+      assert.ok(c.from && typeof c.from === 'object');
+      assert.equal(c.from.kind, 'start');
+      assert.equal(c.from.text, '來浮城之前就帶在身上');
+      assert.equal(c.from.npc, null);
       assert.deepEqual(c.works, []);
       assert.equal(c.relic, false);
     });
@@ -33,7 +33,8 @@ module.exports = (t) => {
     assert.equal(s.over, false);
     assert.deepEqual(s.cards[0].works, []);
     assert.equal(s.cards[0].relic, false);
-    assert.equal(s.cards[0].origin, null);
+    assert.equal(s.cards[0].origin, 'asia'); // 地區不受影響（來歷在 card.from）
+    assert.equal(s.cards[0].from !== undefined, true);
   });
 
   t.test('卡的來歷：故事的卡記下選項的名字和第幾晚', () => {
@@ -64,7 +65,7 @@ module.exports = (t) => {
       Story.choose(s, 0);
       const gained = s.cards.find((c) => c.name === '舊同事的謝意');
       assert.ok(gained);
-      assert.deepEqual(gained.origin, {
+      assert.deepEqual(gained.from, {
         kind: 'story',
         night: 4,
         text: '第 4 晚之前：把工作讓給舊同事',
@@ -77,13 +78,13 @@ module.exports = (t) => {
       s.offer.ids = ['label', 'friend:ho', 'trip:asia'];
       IE.Auto.apply(s, 'label');
       const workCard = s.cards[s.cards.length - 1];
-      assert.equal(workCard.origin.kind, 'work');
-      assert.equal(workCard.origin.night, 4);
-      assert.equal(workCard.origin.text, '第 4 晚之前，做「AI 數據標註」的時候留下的');
+      assert.equal(workCard.from.kind, 'work');
+      assert.equal(workCard.from.night, 4);
+      assert.equal(workCard.from.text, '第 4 晚之前，做「AI 數據標註」的時候留下的');
 
       Rounds.choose(s, 'trip:asia');
       const trip1 = Rounds.tripPick(s, 0);
-      assert.deepEqual(trip1.card.origin, {
+      assert.deepEqual(trip1.card.from, {
         kind: 'trip',
         night: 4,
         text: '第 4 晚之前，從亞洲帶回來',
@@ -96,7 +97,7 @@ module.exports = (t) => {
       const sh = Rounds.shopOpen(s);
       Rounds.shopBuy(s, 'pack:' + sh.packs[0]);
       const packRes = Rounds.packPick(s, 0);
-      assert.deepEqual(packRes.card.origin, {
+      assert.deepEqual(packRes.card.from, {
         kind: 'shop',
         night: 2,
         text: '第 2 晚之後，在市集買的',
@@ -104,7 +105,7 @@ module.exports = (t) => {
       });
       Rounds.shopBuy(s, 'service'); // night 2 服務為 copy
       const copyRes = Rounds.pickCard(s, s.cards[0].uid);
-      assert.deepEqual(copyRes.card.origin, {
+      assert.deepEqual(copyRes.card.from, {
         kind: 'craft',
         night: 2,
         text: '第 2 晚之後，自己做出來的',
@@ -250,12 +251,12 @@ module.exports = (t) => {
     R.applyChat(s, pl.npc);
     R.applyChat(s, otherNpc);
 
-    const friendCards = s.cards.filter((c) => c.origin && c.origin.npc === pl.npc);
-    const otherCards = s.cards.filter((c) => c.origin && c.origin.npc === otherNpc);
+    const friendCards = s.cards.filter((c) => c.from && c.from.npc === pl.npc);
+    const otherCards = s.cards.filter((c) => c.from && c.from.npc === otherNpc);
     assert.ok(friendCards.length >= 1);
     assert.ok(otherCards.length >= 1);
     friendCards.forEach((c) => {
-      assert.equal(c.origin.kind, 'friend');
+      assert.equal(c.from.kind, 'friend');
       assert.equal(c.relic, false);
     });
 
@@ -267,7 +268,7 @@ module.exports = (t) => {
     s.soul = 5;
     Rounds.review(s);
 
-    const afterFriendCards = s.cards.filter((c) => c.origin && c.origin.npc === pl.npc);
+    const afterFriendCards = s.cards.filter((c) => c.from && c.from.npc === pl.npc);
     assert.ok(afterFriendCards.length >= friendCards.length);
     afterFriendCards.forEach((c) => {
       assert.equal(c.relic, true);

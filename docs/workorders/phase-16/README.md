@@ -33,15 +33,17 @@
 
 ### 2.1 欄位
 
+> 名稱：卡本來就有 `card.origin`（字串，出國素材的地區，流派和介面都在用）。來歷放在 **`card.from`**，兩者不可以混用。`R.addCard` 的第三個參數和 `IE.Cards.origin()` 仍然叫 origin，但寫入的欄位是 `card.from`。（WO-16-01 審核時修正。）
+
 每張卡（`s.cards` 的元素）加上：
 
 ```js
-card.origin = { kind: 'story', night: 3, text: '把工作讓給舊同事的那一天', npc: null };
+card.from = { kind: 'story', night: 3, text: '把工作讓給舊同事的那一天', npc: null };
 card.works = [];   // 這張卡參與過的具名作品，最多記 3 個（最新的在最後）
 card.relic = false; // 送這張卡的朋友被收藏之後變成 true
 ```
 
-`origin.kind` 的值和預設的文字 `D.ORIGIN[kind]`（`{n}` 是第幾晚，`{x}` 是來源的名字）：
+`from.kind` 的值和預設的文字 `D.ORIGIN[kind]`（`{n}` 是第幾晚，`{x}` 是來源的名字）：
 
 | kind | 來源 | `D.ORIGIN[kind]` |
 |---|---|---|
@@ -54,7 +56,7 @@ card.relic = false; // 送這張卡的朋友被收藏之後變成 true
 | `craft` | 複製、合併 | `第 {n} 晚之後，自己做出來的` |
 
 - `R.addCard(s, idOrCard, origin)` 加第三個參數。`origin` 可以只給 `{ kind, x, npc }`，`night` 和 `text` 由 `IE.Cards.origin(s, o)` 補上（`night` 取 `s.night`，沒有就是 0）。
-- 不給 `origin` 時（舊模式、舊存檔）：`card.origin` 是 `null`，介面不顯示來歷。
+- 不給 `origin` 時（舊模式、舊存檔）：`card.from` 是 `null`，介面不顯示來歷。
 - 故事的卡：`x` 取那個選項的 `label`。
 
 ### 2.2 回憶：不再自動丟棄
@@ -73,7 +75,7 @@ card.relic = false; // 送這張卡的朋友被收藏之後變成 true
 
 ### 2.4 遺物
 
-朋友被收藏時（`IE.Story` 處理收藏的地方），`IE.Cards.relics(s, npcId)` 把 `origin.npc === npcId` 的卡設為 `relic = true`，回傳這些卡。
+朋友被收藏時（`IE.Story` 處理收藏的地方），`IE.Cards.relics(s, npcId)` 把 `from.npc === npcId` 的卡設為 `relic = true`，回傳這些卡。
 
 ### 2.5 文字 `D.CARD_TEXT`
 
@@ -119,7 +121,7 @@ card.relic = false; // 送這張卡的朋友被收藏之後變成 true
 工作少了，每一次的分量要重：
 
 - 收入：`R.applyMicro` 的收入乘 `ECON16.gigPay`。
-- 素材：評級 B 或以上必定得到一張卡（原本要看評級和機率）；A 是 ★2，S 是 ★3，SS 是 ★4。卡的 `origin` 是 `{ kind: 'work', x: 小遊戲的名字 }`。
+- 素材：評級 B 或以上必定得到一張卡（原本要看評級和機率）；A 是 ★2，S 是 ★3，SS 是 ★4。卡的來歷（`from`）是 `{ kind: 'work', x: 小遊戲的名字 }`。
 
 ### 3.4 數值 `D.ECON16`（暫定，WO-16-05 校準）
 
@@ -215,7 +217,7 @@ card.relic = false; // 送這張卡的朋友被收藏之後變成 true
   - `fx.gig: '<micro>'`：得到一個差事（§3.2）；
   - `fx.lose: 'pick'`：玩家自己選一張卡放進回憶（用 §2.2 的介面，標題用那一章的文字）；
   - `fx.lose: { npc: '<id>' }`：失去那位朋友給的卡（沒有就不發生）。
-- 開局的卡：五輪模式開局只有角色的 `bg.cards`，加上從 `D.STARTER` 按次序取的 `ECON16.startStarter` 張；每張的 `origin.kind` 是 `start`。第一輪的目標按新的牌組用 `tools/sim-rounds.js` 重新校準（WO-16-05）。
+- 開局的卡：五輪模式開局只有角色的 `bg.cards`，加上從 `D.STARTER` 按次序取的 `ECON16.startStarter` 張；每張的 `from.kind` 是 `start`。第一輪的目標按新的牌組用 `tools/sim-rounds.js` 重新校準（WO-16-05）。
 - 收藏朋友時可以交出一張卡換時間：這是第十六期乙段的內容，等甲段試玩之後才定。
 
 ---
@@ -226,7 +228,7 @@ class 名稱和 `data-do` 不可以改名（煙霧測試會用）。
 
 | 元件 | class／屬性 | 內容 |
 |---|---|---|
-| 卡背 | `.card-back`，由卡上的 `[data-do="cardback"][data-uid]` 打開 | `D.CARD_TEXT.backHead`、`origin.text`、`worksHead` 和作品名字（沒有就 `noWorks`）、遺物的說明 |
+| 卡背 | `.card-back`，由卡上的 `[data-do="cardback"][data-uid]` 打開 | `D.CARD_TEXT.backHead`、`from.text`、`worksHead` 和作品名字（沒有就 `noWorks`）、遺物的說明 |
 | 遺物的標記 | 卡上的 `.card-relic` | 一個小印，`title` 是 `D.CARD_TEXT.relic` |
 | 放下一張卡 | `.rd-over`，卡是 `[data-do="putdown"][data-uid]` | `overHead`、`overSub`，列出全部卡（遺物停用）；不可以關閉 |
 | 回憶 | `.rd-memory`，由白天面板的 `[data-do="memory"]` 打開 | `memoryHead`，回憶裏的卡（灰色，可以看卡背）；沒有就 `memoryEmpty` |

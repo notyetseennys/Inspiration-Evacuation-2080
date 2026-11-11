@@ -151,8 +151,7 @@
 
   // 古董商也收貨：旅行帶回來的素材特別值錢，極稀有素材更是天價（每天最多收兩件）
   function cardPrice(s, c) {
-    const reg = typeof c.origin === 'string' ? c.origin : (c.id && D.CARDS[c.id] ? D.CARDS[c.id].origin : undefined);
-    const k = c.rarity === 'legend' ? 4 : reg && reg !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
+    const k = c.rarity === 'legend' ? 4 : c.origin && c.origin !== 'home' ? 1.5 : c.rarity === 'rare' ? 2 : 1;
     return Math.max(5, Math.round(c.value * k * Math.max(0.3, 1 - 0.12 * (c.wear || 0)) * (R.eventActive(s, 'crash') ? 0.6 : 1) * (perk(s).sellMult || 1)));
   }
   function sellCards(s) {

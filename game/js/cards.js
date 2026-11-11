@@ -29,7 +29,7 @@
     };
   }
 
-  // 相容舊存檔：補齊 s.memory、s.over，以及每張卡的 works、relic、origin
+  // 相容舊存檔：補齊 s.memory、s.over，以及每張卡的 works、relic、from（來歷）
   function ensure(s) {
     if (!s) return s;
     if (!Array.isArray(s.memory)) s.memory = [];
@@ -40,9 +40,7 @@
         if (!c) return;
         if (!Array.isArray(c.works)) c.works = [];
         if (typeof c.relic !== 'boolean') c.relic = false;
-        if (isRounds && (c.origin === undefined || typeof c.origin === 'string')) {
-          c.origin = null;
-        }
+        if (isRounds && c.from === undefined) c.from = null;
       });
     }
     return s;
@@ -113,7 +111,7 @@
     ensure(s);
     const out = [];
     s.cards.forEach((c) => {
-      if (c && c.origin && c.origin.npc === npcId) {
+      if (c && c.from && c.from.npc === npcId) {
         c.relic = true;
         out.push(c);
       }

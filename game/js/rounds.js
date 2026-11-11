@@ -674,6 +674,7 @@
       };
       if (c.rarity) copyDef.rarity = c.rarity;
       if (c.mod) copyDef.mod = c.mod;
+      if (c.origin) copyDef.origin = c.origin;
       const res = R.addCard(s, copyDef, { kind: 'craft' });
       res.card.star = copyDef.star;
       if (c.mod) res.card.mod = c.mod;
