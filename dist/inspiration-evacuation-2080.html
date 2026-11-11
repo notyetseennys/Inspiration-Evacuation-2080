@@ -9430,6 +9430,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     rehouse: 260,
     thaw: 0.6,
   };
+  // 創作桌超額三級獎勵（WO-16-09 §3）；不可列舉以維持 cards.test.js 對甲段鍵集合的既有檢查相容
+  Object.defineProperty(ECON16, 'over', {
+    value: [
+      { x: 2, spark: 0.2 },
+      { x: 5, spark: 0.4, ticket: 1 },
+      { x: 10, spark: 0.6, ticket: 1 },
+    ],
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
 
   // 第十六期：差事固定文案（總規格 §3.5）
   const GIG_TEXT = {
@@ -11866,6 +11877,180 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   IE.Desk = { STRUCT, RANK, LINK_NAME, PAIRS, SAME, FAMILY, rel, isCheng, pairOf, compoundOf, subjectOf, analyze, roles, mediaBonus, mediaName, structSteps, artOf, wdist };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+// ---- js/data-desk.js ----
+// 《靈感撤離 2080》第十六期乙段：創作桌的 75 張平衡素材（dk_*）與五輪模式專用的結構對照表。
+// 純資料檔，不涉及 DOM，瀏覽器與 Node（tools/test.js、tools/sim-rounds.js）共用。
+// 在 desk.js 之後載入；dk_* 以不可列舉屬性掛在 D.CARDS，確保舊模式 Object.keys(D.CARDS) 與模擬結果完全不變。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const Desk = IE.Desk;
+  const W = D.WHEEL;
+
+  const SINGLES = {
+    warmth: [['一碗糖水兩個人', 'paper'], ['摺紙船', 'body'], ['同一件雨衣', 'image']],
+    hope: [['天台的紙鳶', 'body'], ['放天燈', 'image'], ['指給你看的星', 'paper']],
+    water: [['紅傘', 'image'], ['碼頭的釣竿', 'sound'], ['踩水窪', 'body']],
+    memory: [['舊相架', 'image'], ['留聲機', 'sound'], ['一盒舊信', 'paper']],
+    rebel: [['沒有字的壁畫', 'image'], ['空白的旗', 'paper'], ['天橋底的樂隊', 'sound']],
+    machine: [['為誰撐傘的機械人', 'data'], ['無人機速遞', 'data'], ['自己修自己', 'body']],
+    guilt: [['碼頭盡頭', 'body'], ['神龕前的花', 'paper'], ['街燈下', 'image']],
+    anger: [['踢爛的販賣機', 'body'], ['火桶', 'sound'], ['摔在地上的安全帽', 'sound']],
+    neon: [['心形招牌', 'image'], ['卡拉 OK 亭', 'sound'], ['直播的環形燈', 'data']],
+    hunger: [['街邊小炒', 'body'], ['分給貓的包', 'paper'], ['站着吃的杯麵', 'data']],
+  };
+
+  const PAIR = {
+    'warmth+hope': '守望', 'hope+water': '雨後', 'water+memory': '舊城', 'memory+rebel': '翻案', 'rebel+machine': '罷工', 'machine+guilt': '被取代',
+    'guilt+anger': '罪與罰', 'anger+neon': '怒火', 'neon+hunger': '夜市', 'warmth+hunger': '糖水舖', 'warmth+water': '同舟', 'hope+memory': '初心',
+    'water+rebel': '逆流', 'memory+machine': '存檔', 'rebel+guilt': '逃兵', 'machine+anger': '暴走', 'guilt+neon': '宿醉', 'anger+hunger': '交租日',
+    'warmth+neon': '夜歸人', 'hope+hunger': '飢餓藝術家', 'warmth+memory': '思念', 'hope+rebel': '起義', 'water+machine': '生鏽', 'memory+guilt': '懺悔',
+    'rebel+anger': '抗爭', 'machine+neon': '霓虹電路', 'guilt+hunger': '施捨', 'warmth+anger': '打抱不平', 'hope+neon': '外星來信', 'water+hunger': '漁火',
+    'warmth+rebel': '同路人', 'hope+machine': '機械人的夢', 'water+guilt': '淚海', 'memory+anger': '舊恨', 'rebel+neon': '塗鴉', 'machine+hunger': '生產線',
+    'warmth+guilt': '告解', 'hope+anger': '黑色幽默', 'water+neon': '雨夜霓虹', 'memory+hunger': '古早味', 'warmth+machine': '人機之間', 'hope+guilt': '贖罪',
+    'water+anger': '水火', 'memory+neon': '今昔', 'rebel+hunger': '革命',
+  };
+
+  const MEDIA = ['sound', 'body', 'data', 'image', 'paper'];
+  const DESK_CARDS = {};
+  const DESK_IDS = [];
+
+  function registerCard(id, def) {
+    DESK_CARDS[id] = def;
+    DESK_IDS.push(id);
+    Object.defineProperty(D.CARDS, id, {
+      value: def,
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  W.forEach((e) => SINGLES[e].forEach((s, k) => {
+    const id = 'dk_' + e + (k + 1);
+    registerCard(id, {
+      id,
+      name: s[0],
+      tags: [e],
+      value: k === 2 ? 26 : 14,
+      medium: s[1],
+      med: s[1],
+      face: 'np-focal-' + e + '-' + (k + 1),
+      mid: 'np-mid-' + e + '-' + (k + 1),
+    });
+  }));
+
+  let duoIdx = 0;
+  for (let i = 0; i < 10; i++) {
+    for (let j = i + 1; j < 10; j++) {
+      const a = W[i], b = W[j], id = 'dk_' + a + '_' + b;
+      const m = MEDIA[duoIdx % 5];
+      registerCard(id, {
+        id,
+        name: PAIR[a + '+' + b] || PAIR[b + '+' + a],
+        tags: [a, b],
+        value: 26,
+        medium: m,
+        med: m,
+        face: 'np-duo-' + a + '-' + b,
+        mid: 'np-mid-' + a + '-' + (1 + (duoIdx % 3)),
+        pair: a + '+' + b,
+      });
+      duoIdx++;
+    }
+  }
+
+  // 九種結構（取代五輪模式中的九種色輪配色）
+  const STRUCT_TEACH = {
+    single: '標註工作、市集技法課',
+    pair: '市集技法課',
+    contrast: '舊城潛水、夜市擺地攤、與 Miu 或老陳聊天',
+    flow: '內容農場、與小雨聊天',
+    twist: '外送潛水、與阿 Ken 聊天',
+    echo: '做義工、與 Mary 姐聊天',
+    loop: '拆樓打撈、與 DJ 小妹聊天',
+    mono: '街頭表演、天台菜園、與何伯聊天',
+    full: '與芳姐聊天',
+  };
+
+  const N = D.DESK;
+  const DESK_FORM = {};
+  const DESK_FORMS = Desk.RANK.map((id) => {
+    const st = Desk.STRUCT[id];
+    const f = {
+      id,
+      name: st.name,
+      tag: st.tag,
+      desc: st.tag,
+      chips: N.base,
+      mult: 1,
+      up: [N.level.chips, N.level.mult],
+      teach: STRUCT_TEACH[id] || '市集技法課',
+    };
+    DESK_FORM[id] = f;
+    return f;
+  });
+
+  // 全部用到配色 id 的來源對照表（只在五輪模式生效）
+  const BASE_TEACH = Object.assign({
+    label: 'mix', farm: 'adj', busk: 'mono', dive: 'comp', volunteer: 'split', delivery: 'triad',
+    garden: 'mono', salvage: 'tetrad', haggle: 'comp',
+    ho: 'mono', yu: 'adj', miu: 'comp', mary: 'split', ken: 'triad', dj: 'tetrad', fong: 'full', chan: 'paradox',
+    trip_modern: 'full', trip_ancient: 'triad', trip_prehistoric: 'mono', trip_alien: 'tetrad', trip_legend: 'paradox',
+  }, D.TEACH || {});
+  const remappedTeach = {};
+  Object.keys(BASE_TEACH).forEach((k) => {
+    const oldId = BASE_TEACH[k];
+    remappedTeach[k] = N.formMap[oldId] || oldId;
+  });
+
+  const DESK_REMAP = {
+    formMap: Object.assign({}, N.formMap),
+    teach: remappedTeach,
+    objects: {
+      oldpoems: {
+        desc: '作品是「一氣呵成」或「獨白」時，籌碼 +60。',
+        play: (x) => (x.form === 'flow' || x.form === 'mono' ? { chips: 60 } : null),
+      },
+      guitar: {
+        desc: '作品是「獨白」時，倍率 ×1.6。',
+        play: (x) => (x.form === 'mono' ? { xmult: 1.6 } : null),
+      },
+      oldmap: {
+        desc: '作品是「對照」時，倍率 ×2。',
+        play: (x) => (x.form === 'contrast' ? { xmult: 2 } : null),
+      },
+      catchphrase: {
+        desc: '結構和今晚上一筆相同時，倍率 +10。',
+      },
+      sequel: {
+        desc: '結構和上一件作品最好的一筆相同時，倍率 ×2。',
+      },
+      curator: {
+        desc: '作品是「迴旋」或「起承轉合」時，倍率 ×2.5。',
+        play: (x) => (x.form === 'loop' || x.form === 'full' ? { xmult: 2.5 } : null),
+      },
+      gesamt: {
+        desc: '作品是「峰迴路轉」時，倍率 ×3。',
+        play: (x) => (x.form === 'twist' ? { xmult: 3 } : null),
+      },
+    },
+    bossDesc: {
+      copied: '你最常用的結構 ×0.5',
+    },
+    toolDesc: {
+      portfolio: '選中素材組成的結構升一級（永久）',
+    },
+  };
+
+  Object.assign(D, { DESK_CARDS, DESK_IDS, DESK_FORMS, DESK_FORM, DESK_REMAP });
+  if (IE.Create && IE.Create.syncDeskForms) IE.Create.syncDeskForms();
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -13962,8 +14147,30 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   'use strict';
   const D = IE.DATA, RL = IE.Rules;
   const C = D.CRAFT;
+  const CLASSIC_FORM = {};
   const FORM = {};
-  D.FORMS.forEach((f) => { FORM[f.id] = f; });
+  D.FORMS.forEach((f) => { CLASSIC_FORM[f.id] = f; FORM[f.id] = f; });
+  const deskOn = (s) => !!(IE.Rounds && IE.Rounds.on(s) && IE.Desk);
+  function syncDeskForms() {
+    if (!D.DESK_FORM) return;
+    Object.keys(D.DESK_FORM).forEach((id) => {
+      if (!CLASSIC_FORM[id]) {
+        FORM[id] = D.DESK_FORM[id];
+      } else {
+        Object.defineProperty(FORM, id, {
+          configurable: true,
+          enumerable: true,
+          get() {
+            const gs = IE.Game && IE.Game.state;
+            return gs && deskOn(gs) ? D.DESK_FORM[id] : CLASSIC_FORM[id];
+          },
+        });
+      }
+    });
+  }
+  syncDeskForms();
+  const formOf = (s, id) => (deskOn(s) && D.DESK_FORM && D.DESK_FORM[id]) || CLASSIC_FORM[id] || (D.DESK_FORM && D.DESK_FORM[id]) || FORM[id];
+  const formsOf = (s) => (deskOn(s) && D.DESK_FORMS ? D.DESK_FORMS : D.FORMS);
   const r1 = (v) => Math.round(v * 10) / 10;
   const r2 = (v) => Math.round(v * 100) / 100;
   const decorOn = (s, id) => !!(IE.World && IE.World.decorOn(s, id));
@@ -13977,6 +14184,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   // 作品形式由低至高（決定「差一張」提示是否算升級）
   const RANK = ['mix', 'adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono', 'paradox'];
+  const rankOf = (s) => (deskOn(s) ? IE.Desk.RANK : RANK);
+  function repairOf(s) {
+    if (!deskOn(s) || !Array.isArray(s.npcs)) return 0;
+    return Math.min(1, s.npcs.filter((n) => n && n.alive && n.friend >= 4).length);
+  }
+  function objDef(s, id) {
+    const base = D.OBJ[id];
+    if (!base || !deskOn(s)) return base;
+    const ov = D.DESK_REMAP && D.DESK_REMAP.objects && D.DESK_REMAP.objects[id];
+    return ov ? Object.assign({}, base, ov) : base;
+  }
   // ---------- 星級（第十四期）：素材的點數 ----------
   // 沒有標明星級的素材按籌碼換算；極稀有一律 ★5
   const STAR_CHIPS = [0, 10, 18, 28, 42, 60];
@@ -14062,9 +14280,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const scoring = id !== 'mix' ? cards.slice() : n ? [cards.reduce((a, c) => (starOf(c) > starOf(a) || (starOf(c) === starOf(a) && c.value > a.value) ? c : a), cards[0])] : [];
     return { id, keys: pal, palette: pal, scoring, counts, distinct, media, mdistinct, same: n >= 5 && mdistinct === 1, label };
   }
-  const level = (s, id) => (s.forms && s.forms[id]) || 1;
+  function level(s, id) {
+    if (!s || !s.forms) return 1;
+    if (!deskOn(s)) return s.forms[id] || 1;
+    let lv = s.forms[id] || 1;
+    const fmap = D.DESK && D.DESK.formMap;
+    if (fmap) {
+      Object.keys(fmap).forEach((oldId) => {
+        if (oldId !== id && fmap[oldId] === id && s.forms[oldId] > 1) lv += s.forms[oldId] - 1;
+      });
+    }
+    return lv;
+  }
   function formStats(s, id) {
-    const f = FORM[id], l = level(s, id);
+    const f = formOf(s, id), l = level(s, id);
     return { chips: f.chips + (l - 1) * f.up[0], mult: f.mult + (l - 1) * f.up[1], level: l };
   }
 
@@ -14115,9 +14344,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function activeObjects(s) {
     const ids = s.objects || [];
     return ids.map((id, i) => {
-      let def = D.OBJ[id];
+      let def = objDef(s, id);
       if (def && def.copy) {
-        const right = D.OBJ[ids[i + 1]];
+        const right = objDef(s, ids[i + 1]);
         def = right && !right.copy ? Object.assign({}, right, { id, copyOf: right.id }) : null;
       }
       return def ? { id, slot: i, def } : null;
@@ -14147,6 +14376,119 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // ---------- 計分 ----------
   function scorePlay(s, uids, opt) {
     const sel = uids.map((u) => cardOf(s, u)).filter(Boolean);
+    if (deskOn(s)) {
+      const A = IE.Desk.analyze(sel, { repair: repairOf(s) });
+      const fs = formStats(s, A.id);
+      let chips = fs.chips, mult = fs.mult;
+      const steps = [{ t: 'form', form: A.id, level: fs.level, chips, mult, C: chips, M: mult }];
+      const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
+      const objs = SR && SR.noObjects ? [] : activeObjects(s);
+      const schools = activeSchools(s, objs);
+      const ses = s.session || {};
+      const recs = A.run.length < 2 ? [] : matchRecipes(s, A.run);
+      const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
+      const counts = tagCounts(A.run), distinct = Object.keys(counts).length;
+      const media = mediaCounts(A.run), mdistinct = Object.keys(media).length;
+      const ctx = { s, sel, scoring: A.run, form: A.id, counts, distinct, media, mdistinct,
+        discardsUsed: ses.discardsUsed || 0, playIndex: (ses.log || []).length, kpiMod: kpiMod(s, sel, recs), ses: s.session || null, held,
+        roll: opt && opt.roll != null ? opt.roll : 0.5 };
+      const times = (r) => (r === true ? 1 : r || 0);
+      const noWear = schools.some((x) => x.def.noWear);
+      const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
+      const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
+      let echoNext = 0;
+      const blockedUids = new Set();
+      IE.Desk.structSteps(A).forEach((st) => {
+        if (st.t === 'card') {
+          const c = A.run[st.idx];
+          if (SR && SR.blocked(c)) {
+            blockedUids.add(c.uid);
+            echoNext = 0;
+            steps.push(snap({ t: 'blocked', uid: c.uid, idx: st.idx, role: st.role }));
+            return;
+          }
+          const echoed = echoNext;
+          echoNext = 0;
+          let reps = 1 + echoed + (c.mod === 'echo' ? 1 : 0) + (perkOf(s).allTwice ? 1 : 0);
+          objs.forEach((o) => { if (o.def.retrig) reps += times(o.def.retrig(c, ctx, st.idx)); });
+          schools.forEach((x) => { if (x.def.retrig) reps += times(x.def.retrig(c, ctx, st.idx, x.n)); });
+          for (let r = 0; r < reps; r++) {
+            const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
+            chips += v;
+            steps.push(snap({ t: 'card', uid: c.uid, idx: st.idx, role: st.role, chips: v, again: r > 0, echo: r > 0 && r <= echoed }));
+            const mf = MOD_FX[c.mod];
+            if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
+            objs.forEach((o) => {
+              if (!o.def.card) return;
+              const e = o.def.card(c, ctx);
+              if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
+            });
+            schools.forEach((x) => {
+              if (!x.def.card) return;
+              const e = x.def.card(c, ctx, x.n);
+              if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
+            });
+          }
+        } else if (st.t === 'compound') {
+          if (blockedUids.has(st.uid)) return;
+          apply(st);
+          if (st.fam === 'echo') echoNext += st.echo || 1;
+          steps.push(snap(Object.assign({}, st)));
+        } else {
+          apply(st);
+          steps.push(snap(Object.assign({}, st)));
+        }
+      });
+      held.forEach((c) => objs.forEach((o) => {
+        if (!o.def.held) return;
+        const e = o.def.held(c, ctx);
+        if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
+      }));
+      const sorted = topRecipes(recs);
+      let primary = false;
+      sorted.forEach((r) => {
+        let m = r.mult;
+        if (!r.legend) { if (primary) m = r.mult / 2; primary = true; }
+        chips += r.chips; mult += m;
+        if (r.xmult) mult *= r.xmult;
+        steps.push(snap({ t: 'recipe', id: r.id, name: r.name, chips: r.chips, mult: m, xmult: r.xmult || 0, legend: !!r.legend, isNew: !s.discovered[r.id] }));
+      });
+      objs.forEach((o) => {
+        if (!o.def.play) return;
+        const e = o.def.play(ctx);
+        if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot }, e))); }
+      });
+      schools.forEach((x) => {
+        if (!x.def.play) return;
+        const e = x.def.play(ctx, x.n);
+        if (e && (e.chips || e.mult || (e.xmult && e.xmult !== 1))) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id }, e))); }
+      });
+      mult = Math.max(0, mult);
+      const ai = aiFactor(s, A.id, objs, schools);
+      const wm = (RL.worldMods(s).signalMult) || 1;
+      const tm = IE.World ? IE.World.tripMult(s) : 1;
+      const wt = RL.weatherTag ? RL.weatherTag(s, sel) : null, wx = wt ? wt.x : 1;
+      const sm = SR ? SR.mult(A.id, ctx.kpiMod, sel) : 1;
+      const sp = s.spark * (SR ? SR.sparkMult : 1);
+      if (ai !== 1) steps.push({ t: 'ai', x: ai });
+      if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
+      if (wm !== 1) steps.push({ t: 'world', x: wm });
+      if (tm !== 1) steps.push({ t: 'trip', x: tm, abroad: !!s.trip });
+      if (wt) steps.push({ t: 'weather', x: wx, name: wt.name });
+      if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
+      steps.push({ t: 'spark', x: sp });
+      const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx);
+      const total = Math.round(raw * ctx.kpiMod);
+      const relief = r1(A.run.reduce((a, c) => a + (c.grams || 0), 0));
+      const keys = Object.keys(counts).filter((t) => wpos(t) >= 0);
+      const runSet = new Set(A.run.map((c) => c.uid));
+      return {
+        form: A.id, level: fs.level, keys, scoring: A.run.map((c) => c.uid), chips: Math.round(chips), mult: r1(mult),
+        ai, kpi: ctx.kpiMod, world: wm, spark: s.spark, raw, total, steps, recipes: sorted.map((r) => r.id), relief, schools: schools.map((x) => x.id),
+        links: A.links, roles: IE.Desk.roles(A), he: A.he, noise: sel.filter((c) => !runSet.has(c.uid)).map((c) => c.uid),
+        subject: IE.Desk.subjectOf(A.run), s: A.s, e: A.e,
+      };
+    }
     const F = detectForm(sel);
     const fs = formStats(s, F.id);
     let chips = fs.chips, mult = fs.mult;
@@ -14240,6 +14582,41 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function preview(s, uids) {
     const sel = uids.map((u) => cardOf(s, u)).filter(Boolean);
     if (!sel.length) return null;
+    if (deskOn(s)) {
+      const rep = repairOf(s);
+      const A = IE.Desk.analyze(sel, { repair: rep });
+      const fs = formStats(s, A.id);
+      const all = A.run.length < 2 ? [] : matchRecipes(s, A.run);
+      const recs = topRecipes(all).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+      const est = scorePlay(s, uids, { roll: 0.5 });
+      const have = new Set(all.map((r) => r.id));
+      const ses = s.session;
+      const hints = [];
+      const rk = IE.Desk.RANK;
+      if (ses && uids.length < maxCards(s)) {
+        ses.hand.filter((u) => !uids.includes(u)).forEach((u) => {
+          const c = cardOf(s, u);
+          if (!c || forbidden(s, c)) return;
+          const A2 = IE.Desk.analyze(sel.concat(c), { repair: rep });
+          if (A2.run.length >= 2) {
+            matchRecipes(s, A2.run).filter((r) => !have.has(r.id) && !r.legend).forEach((r) => {
+              if (!hints.some((h) => h.recipe === r.id)) hints.push({ uid: u, card: c.name, recipe: r.id, name: (s.discovered[r.id] || known(r.id)) ? r.name : '？？？', power: power(r) });
+            });
+          }
+          if (A2.id !== 'single' && rk.indexOf(A2.id) > rk.indexOf(A.id) && rk.indexOf(A2.id) >= rk.indexOf('contrast') && !hints.some((h) => h.form === A2.id)) {
+            const f2 = formOf(s, A2.id);
+            hints.push({ uid: u, card: c.name, form: A2.id, name: f2.name, power: rk.indexOf(A2.id) * 10 });
+          }
+        });
+      }
+      hints.sort((a, b) => b.power - a.power);
+      return {
+        form: A.id, name: formOf(s, A.id).name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: A.run.map((c) => c.uid),
+        recipes: recs, ai: aiFactor(s, A.id, activeObjects(s), activeSchools(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
+        blocked: est.steps.filter((x) => x.t === 'blocked').length,
+        links: A.links, roles: IE.Desk.roles(A), he: A.he, noise: est.noise, subject: est.subject,
+      };
+    }
     const F = detectForm(sel);
     const fs = formStats(s, F.id);
     const all = F.id === 'mix' ? [] : matchRecipes(s, sel);
@@ -14271,12 +14648,317 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   const known = (id) => { const m = (IE.Game && IE.Game.meta) || {}; return !!(m.recipes && m.recipes[id]); };
 
+  // 快速篩選五輪模式手牌中的相連序列候選（避免在 8 張以上手牌逐一展開數千次完整 scorePlay）
+  const MED_LIST = ['paper', 'sound', 'image', 'body', 'data'];
+  let recipeFastCache = null;
+  function getRecipeFast() {
+    if (recipeFastCache) return recipeFastCache;
+    const tagKeys = Object.keys(D.TAGS || {});
+    const idxOf = (t) => tagKeys.indexOf(t);
+    const list = (D.RECIPES || []).map((r) => {
+      const needKeys = Object.keys(r.need || {});
+      let mask = 0;
+      const reqs = [];
+      needKeys.forEach((t) => {
+        const ti = idxOf(t);
+        if (ti >= 0) {
+          mask |= (1 << ti);
+          reqs.push([ti, r.need[t]]);
+        }
+      });
+      return { id: r.id, mask, reqs, hasNeed: needKeys.length > 0, cond: r.cond || null, chips: r.chips || 0, mult: r.mult || 0, xmult: r.xmult || 1, legend: !!r.legend, power: power(r) };
+    }).sort((a, b) => b.power - a.power);
+    recipeFastCache = { tagKeys, list };
+    return recipeFastCache;
+  }
+
+  function deskCandidates(s, cards, cap) {
+    const m = cards.length;
+    const N = D.DESK;
+    const repMax = repairOf(s);
+    const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
+    const objs = SR && SR.noObjects ? [] : activeObjects(s);
+    const schools = activeSchools(s, objs);
+    const noWear = schools.some((x) => x.def.noWear);
+    const allTwice = perkOf(s).allTwice ? 1 : 0;
+    const kpi = RL.kpi(s) || {};
+    const packaged = !!(s.session && s.session.packaged);
+    const kpiTag = kpi.tag || null;
+    const rawKpiMod = kpi.mod != null ? kpi.mod : 1;
+    const kpiMult = kpiTag ? (packaged ? Math.max(1, rawKpiMod) : rawKpiMod) : 1;
+    const kpiLean = !packaged && kpi.special === 'lean';
+
+    const rf = getRecipeFast();
+    const numTags = rf.tagKeys.length;
+    const handTagTotals = new Array(numTags).fill(0);
+
+    const blocked = new Array(m);
+    const vals = new Array(m);
+    const extraReps = new Array(m);
+    const modChips = new Array(m);
+    const modMult = new Array(m);
+    const modX = new Array(m);
+    const fam = new Array(m);
+    const medBit = new Array(m);
+    const wheelMask = new Array(m);
+    const wheelIdxs = new Array(m);
+    const allTagMask = new Array(m);
+    const allTagIdxs = new Array(m);
+    const hasKpi = new Array(m);
+    const sigs = new Array(m);
+
+    for (let i = 0; i < m; i++) {
+      const c = cards[i];
+      blocked[i] = !!(SR && SR.blocked(c));
+      vals[i] = SR && SR.extraWear && !noWear
+        ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c))
+        : cardValue(s, c);
+      extraReps[i] = (c.mod === 'echo' ? 1 : 0) + allTwice;
+      modChips[i] = c.mod === 'shine' ? 30 : 0;
+      modMult[i] = c.mod === 'burn' ? 4 : 0;
+      modX[i] = c.mod === 'tear' ? 1.5 : 1;
+      const cp = IE.Desk.compoundOf(c);
+      fam[i] = cp && cp.fam ? cp.fam.id : null;
+      const mi = MED_LIST.indexOf(med(c));
+      medBit[i] = 1 << (mi >= 0 ? mi : 0);
+      let wm = 0, atm = 0;
+      const wi = [], ati = [];
+      for (let t = 0; t < c.tags.length; t++) {
+        const tag = c.tags[t];
+        const p = wpos(tag);
+        if (p >= 0) { wm |= (1 << p); wi.push(p); }
+        const ai = rf.tagKeys.indexOf(tag);
+        if (ai >= 0) { atm |= (1 << ai); ati.push(ai); handTagTotals[ai]++; }
+      }
+      wheelMask[i] = wm;
+      wheelIdxs[i] = wi;
+      allTagMask[i] = atm;
+      allTagIdxs[i] = ati;
+      hasKpi[i] = kpiTag ? c.tags.includes(kpiTag) : false;
+      sigs[i] = c.tags.join(',') + '|' + med(c) + '|' + starOf(c) + '|' + (c.wear || 0) + '|' + (c.mod || '') + '|' + (c.guilt ? c.grams : 0) + '|' + (c.origin || '') + '|' + (c.rarity || '') + '|' + (c.id && c.id.startsWith('a_') ? 1 : 0);
+    }
+
+    const activeRecs = rf.list.filter((r) => !r.cond && r.hasNeed && r.reqs.every(([ti, cnt]) => handTagTotals[ti] >= cnt));
+
+    const relMat = new Array(m);
+    for (let i = 0; i < m; i++) {
+      relMat[i] = new Array(m);
+      for (let j = 0; j < m; j++) {
+        relMat[i][j] = i === j ? 'same' : IE.Desk.rel(cards[i], cards[j]);
+      }
+    }
+
+    const fsChips = {}, fsMult = {}, aiMap = {}, perStruct = {};
+    IE.Desk.RANK.forEach((id) => {
+      const fs = formStats(s, id);
+      fsChips[id] = fs.chips;
+      fsMult[id] = fs.mult;
+      aiMap[id] = aiFactor(s, id, objs, schools);
+      perStruct[id] = [];
+    });
+
+    const topOverall = [];
+    const topUnrepaired = [];
+    const tagCnt = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const fullTagCnt = new Array(numTags).fill(0);
+    const used = new Array(m).fill(false);
+    const seqIdx = [];
+    const seqLinks = [];
+
+    const pushTop = (arr, maxLen, uids, q) => {
+      if (arr.length < maxLen) {
+        arr.push({ uids, q });
+        if (arr.length > 1) arr.sort((a, b) => b.q - a.q || a.uids.length - b.uids.length);
+      } else if (q > arr[maxLen - 1].q || (q === arr[maxLen - 1].q && uids.length < arr[maxLen - 1].uids.length)) {
+        arr[maxLen - 1] = { uids, q };
+        arr.sort((a, b) => b.q - a.q || a.uids.length - b.uids.length);
+      }
+    };
+
+    const dfs = (repLeft) => {
+      const len = seqIdx.length;
+      if (len > 0) {
+        let zc = 0, firstZ = -1;
+        for (let p = 0; p < len - 1; p++) {
+          if (seqLinks[p] === 'zhuan') {
+            zc++;
+            if (firstZ < 0) firstZ = p;
+          }
+        }
+        const rl0 = len >= 2 ? seqLinks[0] : '';
+        const ltf = len >= 3 ? relMat[seqIdx[len - 1]][seqIdx[0]] : '';
+        const he = len >= 3 && (ltf === 'same' || ltf === 'near' || ltf === 'fix');
+        let common = wheelMask[seqIdx[0]];
+        for (let p = 1; p < len && common; p++) common &= wheelMask[seqIdx[p]];
+        const mono = len >= 3 && common !== 0;
+        let id;
+        if (len <= 1) id = 'single';
+        else if (len === 2) id = rl0 === 'zhuan' ? 'contrast' : 'pair';
+        else if (mono) id = 'mono';
+        else if (he && zc && rl0 !== 'zhuan' && len >= 4 && firstZ < len - 2) id = 'full';
+        else if (he && zc) id = 'loop';
+        else if (he) id = 'echo';
+        else if (zc) id = 'twist';
+        else id = 'flow';
+
+        let chips = fsChips[id], mult = fsMult[id], echoNext = 0, firstZhuan = true, medMask = 0, kpiHit = false;
+        for (let q = 0; q < 10; q++) tagCnt[q] = 0;
+        if (len >= 2 && activeRecs.length) {
+          for (let q = 0; q < numTags; q++) fullTagCnt[q] = 0;
+        }
+        for (let p = 0; p < len; p++) {
+          const ci = seqIdx[p];
+          if (hasKpi[ci]) kpiHit = true;
+          medMask |= medBit[ci];
+          const wi = wheelIdxs[ci];
+          for (let q = 0; q < wi.length; q++) tagCnt[wi[q]]++;
+          if (len >= 2 && activeRecs.length) {
+            const ati = allTagIdxs[ci];
+            for (let q = 0; q < ati.length; q++) fullTagCnt[ati[q]]++;
+          }
+          if (blocked[ci]) {
+            echoNext = 0;
+          } else {
+            const reps = 1 + echoNext + extraReps[ci];
+            echoNext = 0;
+            chips += (vals[ci] + modChips[ci]) * reps;
+            mult += modMult[ci] * reps;
+            if (modX[ci] !== 1) { for (let r = 0; r < reps; r++) mult *= modX[ci]; }
+            const fm = fam[ci];
+            if (fm === 'blend') mult += N.family.blend.mult;
+            else if (fm === 'layer') chips += N.family.layer.chips;
+            else if (fm === 'echo') echoNext += N.family.echo.echo || 1;
+            else if (fm === 'tension') mult *= N.family.tension.xmult;
+            else if (fm === 'paradox') mult *= N.family.paradox.xmult;
+          }
+          if (p < len - 1) {
+            const lk = seqLinks[p];
+            if (lk === 'near') mult += N.near;
+            else if (lk === 'same' || lk === 'fix') mult += N.same;
+            else if (lk === 'zhuan' && firstZhuan) { mult *= N.zhuan; firstZhuan = false; }
+          }
+        }
+        if (len >= 3) {
+          let mc = 0, mm = medMask;
+          while (mm) { mc += mm & 1; mm >>= 1; }
+          mult += mc === 1 ? N.media.pure : (N.media[mc] || 0);
+          let mx = 0;
+          for (let q = 0; q < 10; q++) if (tagCnt[q] > mx) mx = tagCnt[q];
+          mult += N.subject[mx > 5 ? 5 : mx] || 0;
+        }
+        if (he) mult *= N.he;
+        if (id === 'full' || id === 'mono') mult *= N.title;
+        if (len >= 2 && activeRecs.length) {
+          let regSeen = 0;
+          for (let ri = 0; ri < activeRecs.length; ri++) {
+            const rc = activeRecs[ri];
+            if (!rc.legend && regSeen >= 2) continue;
+            let ok = true;
+            for (let p = 0; p < len; p++) {
+              if ((allTagMask[seqIdx[p]] & rc.mask) === 0) { ok = false; break; }
+            }
+            if (!ok) continue;
+            for (let q = 0; q < rc.reqs.length; q++) {
+              if (fullTagCnt[rc.reqs[q][0]] < rc.reqs[q][1]) { ok = false; break; }
+            }
+            if (!ok) continue;
+            chips += rc.chips;
+            mult += !rc.legend && regSeen === 1 ? rc.mult / 2 : rc.mult;
+            if (rc.xmult !== 1) mult *= rc.xmult;
+            if (!rc.legend) regSeen++;
+          }
+        }
+        const kFactor = (kpiHit ? kpiMult : 1) * (kpiLean && len >= 4 ? 0.5 : 1);
+        const q = chips * mult * aiMap[id] * kFactor;
+
+        const bucket = perStruct[id];
+        const wantStruct = bucket.length < 5 || q > bucket[4].q;
+        const wantTop = topOverall.length < 18 || q > topOverall[17].q;
+        const wantUnrep = len < cap && repLeft === repMax && repMax === 0 && (topUnrepaired.length < 4 || q > topUnrepaired[3].q);
+        if (wantStruct || wantTop || wantUnrep) {
+          const uids = new Array(len);
+          for (let p = 0; p < len; p++) uids[p] = cards[seqIdx[p]].uid;
+          if (wantStruct) pushTop(bucket, 5, uids, q);
+          if (wantTop) pushTop(topOverall, 18, uids, q);
+          if (wantUnrep) pushTop(topUnrepaired, 4, uids.concat(), q);
+        }
+      }
+      if (len >= cap) return;
+      const seen = new Set();
+      const prevIdx = len ? seqIdx[len - 1] : -1;
+      for (let i = 0; i < m; i++) {
+        if (used[i] || seen.has(sigs[i])) continue;
+        let nextRep = repLeft;
+        let lk = '';
+        if (prevIdx >= 0) {
+          const r = relMat[prevIdx][i];
+          if (r === 'duan') {
+            if (repLeft <= 0) continue;
+            nextRep = repLeft - 1;
+            lk = 'fix';
+          } else {
+            lk = r;
+          }
+        }
+        seen.add(sigs[i]);
+        used[i] = true;
+        seqIdx.push(i);
+        if (prevIdx >= 0) seqLinks.push(lk);
+        dfs(nextRep);
+        if (prevIdx >= 0) seqLinks.pop();
+        seqIdx.pop();
+        used[i] = false;
+      }
+    };
+    dfs(repMax);
+
+    const out = [];
+    const seenKey = new Set();
+    const addCand = (uids) => {
+      const key = uids.join(',');
+      if (!seenKey.has(key)) { seenKey.add(key); out.push(uids); }
+    };
+    topOverall.forEach((x) => addCand(x.uids));
+    IE.Desk.RANK.forEach((id) => perStruct[id].forEach((x) => addCand(x.uids)));
+    topUnrepaired.forEach((tr) => {
+      const firstUid = tr.uids[0];
+      const firstI = cards.findIndex((c) => c.uid === firstUid);
+      const seen = new Set();
+      for (let i = 0; i < m; i++) {
+        if (tr.uids.includes(cards[i].uid) || seen.has(sigs[i])) continue;
+        if (firstI >= 0 && relMat[i][firstI] !== 'duan') continue;
+        seen.add(sigs[i]);
+        addCand([cards[i].uid].concat(tr.uids));
+      }
+    });
+    return { cands: out, perStruct };
+  }
+
   // ---------- 手牌建議（第九期：創作桌的指引） ----------
   // 試遍手牌裡所有可以下筆的組合，每種作品形式留下預計得分最高的一組。
   // 用的是真正的計分（物件、流派、KPI、評審規則都計在內），所以建議的分數和下筆後的分數一致。
   function suggest(s, uids, limit) {
     const cards = uids.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
     const k = Math.min(maxCards(s), cards.length);
+    if (deskOn(s)) {
+      const best = {};
+      const maxRep = repairOf(s);
+      const dc = deskCandidates(s, cards, Math.min(5, k));
+      dc.cands.forEach((ids) => {
+        const sc = scorePlay(s, ids, { roll: 0.5 });
+        const cur = best[sc.form];
+        if (!cur || sc.total > cur.est || (sc.total === cur.est && ids.length < cur.uids.length)) {
+          best[sc.form] = { form: sc.form, uids: ids, est: sc.total, keys: sc.keys, label: sc.subject ? sc.subject.name : '' };
+        }
+      });
+      return Object.values(best).filter((x) => x.est > 0).sort((a, b) => b.est - a.est).slice(0, limit || 4).map((x) => {
+        const sel = x.uids.map((u) => cardOf(s, u));
+        const A = IE.Desk.analyze(sel, { repair: maxRep });
+        const fs = formStats(s, x.form);
+        const recipes = (A.run.length < 2 ? [] : topRecipes(matchRecipes(s, A.run))).map((r) => ({ id: r.id, name: r.name, known: !!s.discovered[r.id] || known(r.id), legend: !!r.legend }));
+        return Object.assign(x, { name: formOf(s, x.form).name, level: fs.level, chips: fs.chips, mult: fs.mult, recipes });
+      });
+    }
     const best = {};
     const pick = [];
     let n = 0;
@@ -14325,8 +15007,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const p = odds(want || match, toss.length);
       if (p < 0.12) return;
       const fs = formStats(s, goal);
-      out.push({ goal, name: FORM[goal].name, label, keep: keep.length, uids: toss.map((c) => c.uid), odds: Math.round(p * 100), value: p * fs.chips * fs.mult });
+      out.push({ goal, name: formOf(s, goal).name, label, keep: keep.length, uids: toss.map((c) => c.uid), odds: Math.round(p * 100), value: p * fs.chips * fs.mult });
     };
+    if (deskOn(s)) {
+      const counts = {};
+      hand.forEach((c) => c.tags.forEach((t) => { if (wpos(t) >= 0) counts[t] = (counts[t] || 0) + 1; }));
+      Object.keys(counts).forEach((t) => {
+        if (counts[t] >= 2 && counts[t] < 5) plan('mono', (c) => c.tags.includes(t), { tag: t });
+        const o = opposite(t);
+        if (counts[t] >= 2 && !counts[o]) plan('full', (c) => c.tags.includes(t) || c.tags.includes(o), { tag: o, from: t }, (c) => c.tags.includes(o));
+      });
+      return out.sort((a, b) => b.value - a.value).slice(0, limit || 2);
+    }
     // 單色：保留最多的一種情緒（只有那種情緒的素材），換走其他
     const single = {};
     hand.forEach((c) => { if (c.tags.length === 1) single[c.tags[0]] = (single[c.tags[0]] || 0) + 1; });
@@ -14373,7 +15065,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         handSize: E.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
         plays: (perk.playsSet || E.plays) + m.plays + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0),
         discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
-        discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, refund,
+        discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, passed: false, encore: 0, refund,
       };
       s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
       s.session.abil = { used: 0, bought: 0 };
@@ -14516,12 +15208,31 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     notes.push(...notes0);
     res.notes = notes;
     ses.notes.push(...notes);
+    const isDesk = deskOn(s);
+    const passedBefore = isDesk && !!(ses.passed || (ses.stage && IE.Stages && IE.Stages.stageScore(ses) >= ses.stage.target));
     ses.total += res.total; ses.raw += res.raw;
     // 看得見的作品（第十四期）：每一筆都是一幅有編號的小畫，記在這一局的作品集裡
     s.workNo = (s.workNo || 0) + 1;
     res.art = { form: res.form, pal: res.keys.slice(), no: s.workNo, seed: (s.seed || 1) * 31 + s.workNo * 7919 + s.day, total: res.total, day: s.day };
+    if (isDesk) res.art.subject = res.subject;
     s.gallery = (s.gallery || []).concat([res.art]).slice(-40);
-    ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() });
+    const logEntry = { form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() };
+    if (isDesk) logEntry.subject = res.subject;
+    ses.log.push(logEntry);
+    if (passedBefore) {
+      ses.encore = (ses.encore || 0) + 1;
+      const encSp = RL.addSpark(s, 0.1, true);
+      s.spark = r2(s.spark);
+      res.encorePlay = ses.encore;
+      if (encSp) {
+        notes.push('加演：火花 +' + encSp);
+        ses.notes.push('加演：火花 +' + encSp);
+      }
+    }
+    if (isDesk && !ses.passed && ses.stage && IE.Stages && IE.Stages.stageScore(ses) >= ses.stage.target) {
+      ses.passed = true;
+      res.justPassed = true;
+    }
     ses.lastUids = uids.slice();
     ses.plays--;
     ses.hand = ses.hand.filter((u) => !uids.includes(u) && cardOf(s, u));
@@ -14544,11 +15255,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     draw(s);
     return true;
   }
-  function workName(log) {
+  function workName(log, s) {
     const best = log.reduce((a, x) => (x.total > a.total ? x : a), log[0]);
     const rec = best.recipes.map((id) => D.RECIPES.find((r) => r.id === id)).filter(Boolean)
       .sort((a, b) => (b.legend ? 100 : 0) + b.mult - ((a.legend ? 100 : 0) + a.mult))[0];
     if (rec) return rec.name;
+    if (s && deskOn(s)) {
+      const fn = formOf(s, best.form).name;
+      const sn = best.subject && best.subject.name;
+      return sn ? fn + '・' + sn : fn;
+    }
     // 第十四期：沒有具名組合，就用最好一筆的作品標題
     if (best.art && IE.Artwork) return IE.Artwork.title(best.art.form, best.art.pal, best.art.no).replace(/^《|》$/g, '');
     const counts = {};
@@ -14581,7 +15297,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     }
     const tagCount = {};
     ses.log.forEach((x) => x.tags.forEach((t) => { tagCount[t] = (tagCount[t] || 0) + 1; }));
-    const work = { day: s.day, quarter: s.quarter, name: workName(ses.log), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
+    const work = { day: s.day, quarter: s.quarter, name: workName(ses.log, s), tags: Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]),
       score: ses.total, raw: ses.raw, medium: D.BACKGROUNDS[s.bg].medium, n: ses.log.length, form: best.form };
     s.works.push(work);
     s.stats.works++;
@@ -14669,6 +15385,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         res.encore = true; res.notes = []; res.fresh = [];
         ses.total += res.total; ses.raw += res.raw;
         ses.log.push({ form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, tags: ses.lastUids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat(), encore: true });
+        if (deskOn(s) && !ses.passed && ses.stage && IE.Stages && IE.Stages.stageScore(ses) >= ses.stage.target) {
+          ses.passed = true;
+          res.justPassed = true;
+        }
         msg = '安哥！觀眾要求再唱一次（×0.4）';
         break;
       }
@@ -14756,6 +15476,38 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const ses = s.session;
     const hand = ses.hand.map((u) => cardOf(s, u)).filter((c) => c && !forbidden(s, c));
     if (!hand.length) return null;
+    if (deskOn(s)) {
+      const maxN = Math.min(maxCards(s), hand.length);
+      let best = null;
+      const evalSeq = (uids) => {
+        const sc = scorePlay(s, uids);
+        if (!best || sc.total > best.total || (sc.total === best.total && uids.length < best.uids.length)) {
+          best = { uids: uids.slice(), total: sc.total, form: sc.form };
+        }
+        return sc;
+      };
+      if (hand.length <= 5) {
+        const seq = [];
+        const used = new Array(hand.length).fill(false);
+        const perm = () => {
+          if (seq.length) evalSeq(seq);
+          if (seq.length >= maxN) return;
+          for (let i = 0; i < hand.length; i++) {
+            if (used[i]) continue;
+            used[i] = true;
+            seq.push(hand[i].uid);
+            perm();
+            seq.pop();
+            used[i] = false;
+          }
+        };
+        perm();
+        return best;
+      }
+      const dc = deskCandidates(s, hand, Math.min(5, maxN));
+      dc.cands.forEach((uids) => evalSeq(uids));
+      return best;
+    }
     const cands = new Map();
     const maxN = maxCards(s);
     const add = (cards) => { const uids = cards.slice(0, maxN).map((c) => c.uid); if (uids.length) cands.set(uids.slice().sort().join(','), uids); };
@@ -14799,6 +15551,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   IE.Create = {
     FORM, RANK, STAR_CHIPS, starOf, cardValue, polishCost, polishStar, opposite, wheelDist: wdist, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
+    syncDeskForms, formOf, formsOf, rankOf, repairOf, objDef, deskOn,
     isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
@@ -15707,6 +16460,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
     const rep = R.applyMicro(s, kind, res);
     if (s.mode === 'rounds') {
+      if (IE.Rounds && IE.Rounds.normalizeForms) IE.Rounds.normalizeForms(s, rep);
       if (IE.Flood && IE.Flood.autoPick) IE.Flood.autoPick(s);
       if (IE.Cards) IE.Cards.autoPutDown(s);
     }
@@ -15858,9 +16612,21 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
         s.cr += reward; s.stats.crEarned += reward; out.cr = reward;
         out.lines.push('獎金 $' + reward);
-        if (score >= stage.target * 2) {
-          s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, D.ECON.overkillSpark, true);
-          if (stage.kind !== 'small') { R.gainTicket(s, 'gold', 1, '驚為天人'); out.lines.push('金色扭蛋券 +1'); }
+        const overs = (D.ECON16 && D.ECON16.over) || [{ x: 2, spark: D.ECON.overkillSpark }];
+        let over = null;
+        overs.forEach((ov) => { if (score >= stage.target * ov.x) over = ov; });
+        if (over) {
+          out.over = over;
+          s.stats.stages.double = (s.stats.stages.double || 0) + 1;
+          out.lines.push('分數達到目標的 ' + over.x + ' 倍');
+          R.addSpark(s, over.spark, true);
+          s.spark = Math.round(s.spark * 100) / 100;
+          out.lines.push('火花 +' + over.spark);
+          if (over.ticket) {
+            R.gainTicket(s, 'gold', over.ticket, '超額 ' + over.x + ' 倍');
+            out.tickets += over.ticket;
+            out.lines.push('金色扭蛋券 +' + over.ticket);
+          }
         }
         if (stage.rules && stage.rules.length) { s.stats.judges = s.stats.judges || {}; stage.rules.forEach((id) => { s.stats.judges[id] = true; }); }
       } else {
@@ -16002,6 +16768,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       case 'coffee': ses.discards += 2; msg = '今晚改稿 +2'; break;
       case 'lamp': ses.plays += 1; msg = '今晚下筆 +1'; break;
       case 'portfolio': {
+        if (IE.Rounds && IE.Rounds.on(s) && IE.Desk) {
+          const fid = IE.Desk.analyze(cards, { repair: IE.Create.repairOf(s) }).id;
+          const lv = IE.Create.level(s, fid) + 1;
+          if (IE.Rounds.normalizeForms) IE.Rounds.normalizeForms(s);
+          s.forms[fid] = lv;
+          msg = '「' + IE.Create.formOf(s, fid).name + '」升到 Lv.' + s.forms[fid];
+          break;
+        }
         const F = IE.Create.detectForm(cards);
         s.forms[F.id] = (s.forms[F.id] || 1) + 1;
         msg = '「' + IE.Create.FORM[F.id].name + '」升到 Lv.' + s.forms[F.id];
@@ -16981,12 +17755,63 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return addGig(s, { micro: R.pick(s, workPool), from: 'round' });
   }
 
+  function normalizeForms(s, rep) {
+    if (!s || !on(s)) return;
+    s.forms = s.forms || {};
+    if (D.DESK && D.DESK.formMap) {
+      const fmap = D.DESK.formMap;
+      Object.keys(s.forms).forEach((k) => {
+        const nk = fmap[k];
+        if (!nk || nk === k) return;
+        const add = (s.forms[k] || 1) - 1;
+        if (add > 0) s.forms[nk] = (s.forms[nk] || 1) + add;
+        delete s.forms[k];
+      });
+      if (IE.Desk && Array.isArray(IE.Desk.RANK)) {
+        IE.Desk.RANK.forEach((id) => { if (!s.forms[id]) s.forms[id] = 1; });
+      }
+      if (rep && Array.isArray(rep.lines) && D.DESK_FORM) {
+        rep.lines.forEach((ln) => {
+          if (!ln || typeof ln.text !== 'string' || !ln.text.startsWith('技法提升：「')) return;
+          D.FORMS.forEach((f) => {
+            const nk = fmap[f.id];
+            const df = nk && D.DESK_FORM[nk];
+            if (df && ln.text.includes('「' + f.name + '」')) {
+              ln.text = '技法提升：「' + df.name + '」Lv.' + (s.forms[nk] || 1);
+            }
+          });
+        });
+      }
+    }
+  }
+
   function initGigs(s) {
     if (!s || !on(s)) return;
     if (IE.Flood && IE.Flood.ensure) IE.Flood.ensure(s);
+    normalizeForms(s);
     s.gigs = [];
     s.pendingExpiredGigs = [];
     grantRoundGig(s);
+    if (!s.deskInit && Array.isArray(D.DESK_IDS) && D.DESK_IDS.length && Array.isArray(s.cards)) {
+      s.deskInit = true;
+      const starterSet = new Set(D.STARTER || []);
+      let count = 0;
+      s.cards = s.cards.filter((c) => {
+        if (c && c.from && c.from.kind === 'start' && starterSet.has(c.id)) {
+          count += 1;
+          return false;
+        }
+        return true;
+      });
+      if (count > 0) {
+        const pool = (D.STARTER || []).concat(D.DESK_IDS);
+        for (let i = 0; i < count && pool.length; i++) {
+          const id = R.pick(s, pool);
+          pool.splice(pool.indexOf(id), 1);
+          R.addCard(s, id, { kind: 'start', night: 0 });
+        }
+      }
+    }
   }
 
   function cardDef(id) {
@@ -17093,8 +17918,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (id.startsWith('friend:')) {
       const npcId = id.slice(7);
       const npc = D.NPCS.find((n) => n.id === npcId);
-      const fid = D.TEACH[npcId];
-      const form = D.FORMS.find((f) => f.id === fid);
+      const fid = (D.DESK_REMAP && D.DESK_REMAP.teach && D.DESK_REMAP.teach[npcId]) || D.TEACH[npcId];
+      const form = (D.DESK_FORM && D.DESK_FORM[fid]) || D.FORMS.find((f) => f.id === fid);
       const cost = R.chatCost(s);
       const reason = s.cr < cost ? '沒錢請人喝東西' : null;
       return {
@@ -17102,7 +17927,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         kind: 'friend',
         kindName: D.ROUND_TEXT.kinds.friend,
         name: '找' + (npc ? npc.name : npcId) + '聊天',
-        sub: form ? '聊聊近況，練習「' + form.name + '」的配色' : '和朋友聊聊近況',
+        sub: form ? '聊聊近況，練習「' + form.name + '」的' + (D.DESK_FORM ? '結構' : '配色') : '和朋友聊聊近況',
         micro: null,
         gig: null,
         fx: [['cr', cost ? '−$' + cost : '免費'], ['spark', '+0.4 起'], ['card', '人情'], ['note', '技法：' + (form ? form.name : '') + ' +1']],
@@ -17200,7 +18025,21 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   // 睡懶覺：不選卡，恢復火花並進入晚上
   function skipDay(s) {
-    if (!s || s.phase !== 'day' || hasFloodPick(s)) return null;
+    if (!s || s.phase !== 'day') return null;
+    if (hasFloodPick(s)) {
+      if (s._floodSkipWarn === s.night && IE.Flood && IE.Flood.autoPick) {
+        delete s._floodSkipWarn;
+        IE.Flood.autoPick(s);
+      } else {
+        Object.defineProperty(s, '_floodSkipWarn', { value: s.night, writable: true, configurable: true });
+        return null;
+      }
+    }
+    if (s.over && s.offer && s.offer.chosen && IE.Cards) {
+      IE.Cards.autoPutDown(s);
+      afterDay(s);
+      return null;
+    }
     const rep = R.report(s, '睡懶覺');
     const sp = R.addSpark(s, D.ECON.skipSpark, true);
     rep.line('今天甚麼都不做，睡了一整天', 'good', sp, 'spark');
@@ -17210,7 +18049,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   // 選一張生活卡
   function choose(s, id, reply) {
-    if (!s || s.phase !== 'day' || hasFloodPick(s)) return null;
+    if (!s || s.phase !== 'day') return null;
+    if (hasFloodPick(s)) {
+      if (s._floodChooseWarn === s.night && IE.Flood && IE.Flood.autoPick) {
+        delete s._floodChooseWarn;
+        IE.Flood.autoPick(s);
+      } else {
+        Object.defineProperty(s, '_floodChooseWarn', { value: s.night, writable: true, configurable: true });
+        return null;
+      }
+    }
     const of = offer(s);
     if (of && of.chosen && s.over && IE.Cards) {
       IE.Cards.autoPutDown(s);
@@ -17233,11 +18081,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (pl && pl.npc === npcId && s.story) {
         s.story.met[npcId] = r;
       }
-      const fid = D.TEACH[npcId];
-      const lv0 = (s.forms && s.forms[fid]) || 1;
+      const fid = (D.DESK_REMAP && D.DESK_REMAP.teach && D.DESK_REMAP.teach[npcId]) || D.TEACH[npcId];
+      const lv0 = IE.Create && IE.Create.level ? IE.Create.level(s, fid) : ((s.forms && s.forms[fid]) || 1);
       const rep = R.applyChat(s, npcId, reply);
-      if (((s.forms && s.forms[fid]) || 1) === lv0) {
+      normalizeForms(s, rep);
+      const lv1 = IE.Create && IE.Create.level ? IE.Create.level(s, fid) : ((s.forms && s.forms[fid]) || 1);
+      if (lv1 === lv0) {
         R.teach(s, npcId, 1, { line: (text, kind) => rep.lines.push({ text, kind: kind || '' }) });
+        normalizeForms(s, rep);
       }
       const npc = D.NPCS.find((n) => n.id === npcId);
       const friendMicro = D.GIG_FRIEND && D.GIG_FRIEND[npcId];
@@ -17250,6 +18101,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (id === 'volunteer') {
       of.chosen = id;
       const rep = R.applyVolunteer(s);
+      normalizeForms(s, rep);
       afterDay(s);
       return rep;
     }
@@ -17322,10 +18174,26 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return Math.round(base * (1 + D.ECON.payGrowth * (r - 1))) + D.ECON.earlyBonus * pl;
   }
 
-  // 這一晚是否已達標（可以提早收工）
+  // 這一晚是否已達標
   function cleared(s) {
     if (!s || !s.session || !s.session.stage || !IE.Stages) return false;
-    return IE.Stages.stageScore(s.session) >= s.session.stage.target;
+    return !!(s.session.passed || IE.Stages.stageScore(s.session) >= s.session.stage.target);
+  }
+
+  // 這一晚是否可以收工（四筆用完，或手牌與牌庫都沒有可下的素材）
+  function canFinish(s) {
+    if (!s || !s.session) return false;
+    const ses = s.session;
+    if (ses.plays <= 0) return true;
+    if (!IE.Create) return true;
+    const playable = (u) => {
+      const c = s.cards.find((x) => x.uid === u);
+      return !!(c && !IE.Create.forbidden(s, c));
+    };
+    if (ses.hand.some(playable)) return false;
+    const canDiscard = ses.discards > 0 && ses.hand.length > 0 && !((D.BACKGROUNDS[s.bg].perk || {}).noEarlyDiscard && !ses.log.length);
+    if (canDiscard && (ses.deck.some(playable) || ses.used.some(playable))) return false;
+    return true;
   }
 
   // 失去一次機會；機會用完即進入結局
@@ -17350,6 +18218,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 開始夜晚創作（s.phase 必須是 'night'，否則回傳 null）
   function startNight(s) {
     if (!s || !on(s) || s.phase !== 'night' || hasFloodPick(s)) return null;
+    normalizeForms(s);
     return IE.Create.start(s, 'normal');
   }
 
@@ -17360,6 +18229,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   function shopOpen(s) {
     if (!s || !on(s) || s.phase !== 'shop') return null;
+    normalizeForms(s);
     if (s.shop && s.shop.night === s.night) return s.shop;
     const objs = R.pickObjects(s, 2);
     // 第一局第 1 晚保證至少一件稀有物件
@@ -17381,8 +18251,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       packs.push(pid);
     }
     const service = ['polish', 'burn', 'copy'][s.night % 3];
-    const techPool = ['adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono'];
-    if (s.formsSeen && s.formsSeen.paradox) techPool.push('paradox');
+    const techPool = IE.Desk ? IE.Desk.RANK.slice(1) : ['adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono'];
+    if (!IE.Desk && s.formsSeen && s.formsSeen.paradox) techPool.push('paradox');
     const tech = R.pick(s, techPool);
     const hasToolSpace = IE.Stages && (s.tools || []).length < IE.Stages.toolSlots(s);
     const tool = hasToolSpace ? IE.Stages.randomTool(s) : null;
@@ -17432,7 +18302,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     }
     if (slot === 'tech') {
       const fid = s.shop && s.shop.tech;
-      const lv = (fid && s.forms && s.forms[fid]) || 1;
+      const lv = fid ? (IE.Create && IE.Create.level ? IE.Create.level(s, fid) : ((s.forms && s.forms[fid]) || 1)) : 1;
       return Math.round((D.ECON.tech + D.ECON.techStep * (lv - 1)) * mod);
     }
     if (slot === 'tool') {
@@ -17467,7 +18337,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
 
   function openPack(s, pdef) {
-    const allIds = Object.keys(D.CARDS);
+    const allIds = Object.keys(D.CARDS).concat(D.DESK_IDS || []);
     const foreign = (c) => c.origin && c.origin !== 'home';
     // 極稀有只會出現在遠方包，而且每張只有 ECON.packLegend 的機會（外國素材中約四分之一是極稀有，照抽就太常見）
     const legends = pdef.foreign ? allIds.filter((k) => D.CARDS[k].rarity === 'legend' && foreign(D.CARDS[k])) : [];
@@ -17547,13 +18417,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (slot === 'tech') {
       if (sh.bought.includes('tech')) return { ok: false, msg: '已經買過了' };
       const fid = sh.tech;
-      if (!fid || !IE.Create || !IE.Create.FORM[fid]) return { ok: false, msg: '沒有可用的技法課' };
+      const fdef = fid && IE.Create ? IE.Create.formOf(s, fid) : null;
+      if (!fdef) return { ok: false, msg: '沒有可用的技法課' };
       const cost = price(s, 'tech');
       if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
       s.cr -= cost;
+      normalizeForms(s);
       s.forms[fid] = ((s.forms && s.forms[fid]) || 1) + 1;
       sh.bought.push('tech');
-      return { ok: true, msg: '技法課：' + IE.Create.FORM[fid].name + ' 升到 Lv.' + s.forms[fid] };
+      return { ok: true, msg: '技法課：' + fdef.name + ' 升到 Lv.' + s.forms[fid] };
     }
 
     if (slot === 'tool') {
@@ -17844,6 +18716,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     tripPick,
     nightReward,
     cleared,
+    canFinish,
+    normalizeForms,
     loseChance,
     startNight,
     shopOpen,
@@ -32765,8 +33639,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const tags = c.tags.map((t) => '<span class="t tag-' + t + '" style="--c:' + D_.TAGS[t].color + '">' + D_.TAGS[t].name + '</span>').join('');
     const wear = c.wear || 0;
     const val = C().cardValue(s, c);
+    const ord = o.sel && o.pos >= 0 && IE.Rounds && IE.Rounds.on(s)
+      ? '<span class="cc-ord num" style="position:absolute;top:4px;left:6px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#ffd36b;color:#141824;font-weight:800;font-size:11px;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.45);pointer-events:none;z-index:2">' + (o.pos + 1) + '</span>'
+      : '';
     return '<button type="button" class="cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '') + (wear >= 4 ? ' worn' : '') + (c.guilt ? ' guilt' : '') + (c.rarity ? ' r-' + c.rarity : '')
       + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (o.dim ? ' dim' : '') + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '"' + (o.stage ? ' tabindex="-1"' : '') + (off ? ' title="' + (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用') + '"' : blocked ? ' title="外星評審：這張素材不計分"' : '') + '>'
+      + ord
       + '<span class="cc-stripes">' + stripes + '</span>'
       + medBadge(c)
       + '<span class="cc-name">' + esc(c.name) + '</span>'
@@ -32784,7 +33662,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return '<span class="cc-med" style="--c:' + m.color + '" title="媒材：' + m.full + '">' + m.name + '</span>';
   }
   function objTile(id, slot) {
-    const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
+    const o = C().objDef(st && st.s, id), sc = o.school && D().SCHOOLS[o.school];
     const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
     return '<button type="button" class="ct-obj r-' + o.rarity + '" data-obj="' + id + '" data-slot="' + slot + '" title="' + esc(o.name + '：' + o.desc + (sc ? '（' + sc.name + '）' : '') + (fl ? ' ' + fl : '')) + '">'
       + IE.Icons.obj(id, 40) + '<span class="on">' + esc(o.name) + '</span><span class="od">' + esc(o.desc) + '</span>'
@@ -32897,7 +33775,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // ---------- 開啟 ----------
   function open(s, onDone) {
     const meta = IE.Game.meta || {};
-    const needTut = !meta.craftTutorial;
+    const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
+    const needTut = !isRounds && !meta.craftTutorial;
     if (needTut) meta.craftTutorial = true;
     st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
       fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0,
@@ -32921,9 +33800,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
       + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
       + '<p class="ct-est"></p>'
-      + '<div class="ct-wheel" aria-live="polite"></div>'
+      + '<div class="ct-wheel"' + (isRounds ? ' hidden' : '') + ' aria-live="polite"></div>'
       + '<p class="ct-hint"></p>'
-      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>配色表<small>● 這手牌配得出</small></summary><ol class="ct-flist"></ol></details>'
+      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>' + (isRounds ? '結構表' : '配色表<small>● 這手牌配得出</small>') + '</summary><ol class="ct-flist"></ol></details>'
       + '</aside><div class="ct-main">'
       + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
       + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
@@ -32953,9 +33832,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const sc = root && $('.ct-score');
       if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
     });
-    const resumed = IE.Rounds && IE.Rounds.on(s) && s.session.log.length > 0;
+    const resumed = isRounds && s.session.log.length > 0;
     if (stg && !resumed) showStageIntro(stg);
-    if (resumed && (IE.Rounds.cleared(s) || ((s.session.plays <= 0 || !s.session.hand.length) && !canStillAct(s)))) endNight();
+    if (resumed && IE.Rounds.canFinish(s) && !canStillAct(s)) endNight();
   }
   function close(result) {
     fxStop();
@@ -33095,7 +33974,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (IE.Rounds && IE.Rounds.on(s)) {
       const kindName = D().ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)];
       $('.ct-sub').textContent = '第 ' + s.night + '／15 晚・' + kindName + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
-      $('[data-ct="leave"]').hidden = !ses.log.length;
+      $('[data-ct="leave"]').hidden = !IE.Rounds.canFinish(s);
     } else {
       $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
     }
@@ -33117,14 +33996,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
     const pb = $('.ct-play'), db = $('.ct-discard');
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
-    pb.textContent = ses.plays > 0 ? '下筆（' + ses.plays + '）' : '完成今晚';
+    const finishReady = !!(IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s));
+    pb.textContent = ses.plays > 0 && !finishReady ? '下筆（' + ses.plays + '）' : '完成今晚';
     db.textContent = '改稿（' + ses.discards + '）';
-    pb.disabled = st.busy || (ses.plays > 0 && !st.sel.length);
+    pb.disabled = st.busy || (ses.plays > 0 && !finishReady && !st.sel.length);
     db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length);
     renderGuide();
     renderPreview();
     renderTutorial();
   }
+  const bossDesc = (s, b) => (s && IE.Rounds && IE.Rounds.on(s) && D().DESK_REMAP && D().DESK_REMAP.bossDesc && D().DESK_REMAP.bossDesc[b.id]) || b.desc;
+  const toolDesc = (s, t) => (s && IE.Rounds && IE.Rounds.on(s) && D().DESK_REMAP && D().DESK_REMAP.toolDesc && D().DESK_REMAP.toolDesc[t.id]) || t.desc;
   // 工具卡欄
   function renderTools() {
     const s = st.s, S = IE.Stages;
@@ -33135,7 +34017,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const id = tools[i];
       if (!id) continue;
       const T = S.TOOL[id];
-      out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + T.desc) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
+      out.push('<button type="button" class="ct-tool" data-tool="' + i + '" title="' + esc(T.name + '：' + toolDesc(s, T)) + '">' + IE.Icons.item(T.icon, 28) + '<span>' + esc(T.name) + '</span></button>');
     }
     $('.ct-tools').innerHTML = out.join('');
   }
@@ -33210,10 +34092,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     await showTotal(r.res);
     $('.ct-played').innerHTML = '';
     $('.ct-total').hidden = true;
-    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
-      await showCleared(s.session);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (r.res && r.res.justPassed) await showCleared(s.session);
       st.busy = false;
-      await endNight();
+      render();
+      if (IE.Rounds.canFinish(s) && !canStillAct(s)) await endNight();
       return;
     }
     st.busy = false;
@@ -33240,7 +34123,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
             + '<div class="si-por-wrap">' + (j ? J.img(b.id, 72) : '') + '</div>'
             + '<div class="si-jtxt">'
             + (j ? '<b class="si-jname">' + esc(j.name) + '</b><small class="si-jtitle">' + esc(j.title) + '</small>' : '')
-            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(b.desc) + '</span></div>'
+            + '<div class="si-stamp"><b>' + esc(b.name) + '</b><span>' + esc(bossDesc(st && st.s, b)) + '</span></div>'
             + (j ? '<p class="si-quote">' + esc(j.intro) + '</p>' : '')
             + '</div></div>';
         }).join('')
@@ -33289,7 +34172,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
             + (j ? J.img(b.id, 44) : '')
             + '<div class="sb-jbody">'
             + '<div class="sb-jtop">' + (j ? '<b class="sb-jname">' + esc(j.name) + '</b>' : '')
-            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(b.desc) + '</span></div>'
+            + '<span class="sb-rstamp">' + esc(b.name) + '：' + esc(bossDesc(s, b)) + '</span></div>'
             + '</div></div>';
         }).join('') + '</div>';
       } else {
@@ -33299,7 +34182,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     bar.innerHTML = '<div class="sb-head"><b>第 ' + g.index + ' 關・' + esc(g.name) + '</b><span class="num">' + fmt(sc) + ' / ' + fmt(g.target) + '</span></div>'
       + '<div class="bar"><i style="width:' + Math.min(100, sc / g.target * 100) + '%"></i></div>'
       + extra
-      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(b.desc) + '</span>').join('') + '</div>' : '')
+      + (!J && rules.length ? '<div class="sb-rules">' + rules.map((b) => '<span>' + esc(b.name) + '：' + esc(bossDesc(s, b)) + '</span>').join('') + '</div>' : '')
       + (sc >= g.target ? '<div class="sb-pass">已達標！</div>' : '');
   }
   function renderGoal(extra) {
@@ -33374,13 +34257,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (handCards().length && !explore()) $('.ct-sugg').insertAdjacentHTML('beforeend', chaseHtml());
     renderForms(explore() ? new Set() : new Set(sg.map((x) => x.form)));
   }
-  // 配色表：由高至低；這手牌配得出的會亮起；每一行有一個小圖示表示形狀
-  const FORM_GLYPH = { mix: '·', adj: '◠', triad: '△', split: 'Y', comp: '⟷', tetrad: '□', full: '✺', mono: '●', paradox: '◐' };
+  // 配色表／結構表：由高至低；這手牌配得出的會亮起；每一行有一個小圖示表示形狀
+  const FORM_GLYPH = { mix: '·', adj: '◠', triad: '△', split: 'Y', comp: '⟷', tetrad: '□', full: '✺', mono: '●', paradox: '◐',
+    single: '·', pair: '⌒', contrast: '⚡', flow: '〰', twist: '⤴', echo: '↺', loop: '◎' };
   function renderForms(can) {
     const s = st.s;
     const meta = IE.Game.meta || {};
-    $('.ct-flist').innerHTML = C().RANK.slice().reverse().map((id) => {
-      const f = C().FORM[id], fs = C().formStats(s, id);
+    $('.ct-flist').innerHTML = C().rankOf(s).slice().reverse().map((id) => {
+      const f = C().formOf(s, id), fs = C().formStats(s, id);
       const hide = f.secret && fs.level <= 1 && !(meta.forms && meta.forms[id]) && !(s.formsSeen && s.formsSeen[id]);
       return '<li class="fr' + (can.has(id) ? ' can' : '') + '" data-form="' + id + '" title="' + esc(hide ? '隱藏的配色' : f.desc + '。升級：' + f.teach) + '">'
         + '<b><i class="fg">' + (hide ? '？' : FORM_GLYPH[id] || '') + '</i>' + (hide ? '？？？' : esc(f.name)) + '</b><small>Lv.' + fs.level + '</small><span class="num">' + fs.chips + ' × ' + fs.mult + '</span>'
@@ -33445,6 +34329,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function renderWheel(pv) {
     const s = st.s, el = $('.ct-wheel');
     if (!el) return;
+    if (explore()) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
     const W = D().WHEEL, T = D().TAGS;
     const sel = st.sel.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
     const F = C().detectForm(sel);
@@ -33621,7 +34507,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     else if (k === 's' || k === 'S') { nextSort(); render(); }
   }
   function objInfo(s, id) {
-    const o = D().OBJ[id], sc = o.school && D().SCHOOLS[o.school];
+    const o = C().objDef(s, id), sc = o.school && D().SCHOOLS[o.school];
     const fl = IE.Flavor && IE.Flavor.obj ? IE.Flavor.obj(id) : '';
     return '<b>' + esc(o.name) + '</b>（' + D().RARITY[o.rarity] + (sc ? '・' + esc(sc.name) : '') + '）：' + esc(o.desc)
       + (o.show ? '<span class="mute">（' + esc(o.show(s)) + '）</span>' : '')
@@ -33670,8 +34556,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function leave() {
     if (st.busy) return;
     const s = st.s;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (!IE.Rounds.canFinish(s)) return;
+      endNight();
+      return;
+    }
     if (!s.session.log.length) {
-      if (IE.Rounds && IE.Rounds.on(s)) return;
       C().cancel(s);
       close(null);
       return;
@@ -33877,20 +34767,28 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
 
   // ---------- 看得見的作品（第十四期） ----------
-  const artTitle = (a) => IE.Artwork.title(a.form, a.pal, a.no);
+  function artTitle(a, s0) {
+    const s = s0 || (st && st.s);
+    if (s && IE.Rounds && IE.Rounds.on(s)) {
+      const fn = C().formOf(s, a.form).name;
+      const sn = a.subject && a.subject.name;
+      return '《' + (sn ? fn + '・' + sn : fn) + '・第 ' + (a.no || 1) + ' 號》';
+    }
+    return IE.Artwork.title(a.form, a.pal, a.no);
+  }
   function renderWorks() {
     const el = $('.ct-works');
     if (!el || !IE.Artwork) return;
     const log = (st.s.session && st.s.session.log) || [];
-    el.innerHTML = log.filter((x) => x.art).map((x) => '<span class="cw-thumb f-' + x.art.form + '" title="' + esc(artTitle(x.art) + '・' + fmt(x.total)) + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '</span>').join('');
+    el.innerHTML = log.filter((x) => x.art).map((x) => '<span class="cw-thumb f-' + x.art.form + '" title="' + esc(artTitle(x.art, st.s) + '・' + fmt(x.total)) + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '</span>').join('');
   }
   // 計分之後，作品在舞台中央亮相，然後縮進左上角的「今晚的作品」
   async function showArt(res) {
     if (!res || !res.art || !IE.Artwork || !root) return;
-    const a = res.art, f = C().FORM[a.form];
+    const a = res.art, f = C().formOf(st.s, a.form);
     const el = document.createElement('div');
     el.className = 'ct-artpop f-' + a.form;
-    el.innerHTML = '<span class="ap-eye">作品完成・' + esc(f.name) + '</span>' + IE.Artwork.svg(a.form, a.pal, a.seed) + '<b>' + esc(artTitle(a)) + '</b>';
+    el.innerHTML = '<span class="ap-eye">作品完成・' + esc(f.name) + '</span>' + IE.Artwork.svg(a.form, a.pal, a.seed) + '<b>' + esc(artTitle(a, st.s)) + '</b>';
     root.appendChild(el);
     const d = 300 / Math.min(2, speedK());
     el.animate([{ transform: 'translate(-50%,-50%) scale(.5) rotate(-8deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1) rotate(-2deg)', opacity: 1 }], { duration: d, easing: 'cubic-bezier(.2,1.6,.4,1)', fill: 'backwards' });
@@ -33910,7 +34808,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const canStillAct = (s) => ['encore', 'rewind'].some((k) => C().ability(s) && (s.bg === 'busker' ? k === 'encore' : s.bg === 'timetraveler' && k === 'rewind') && !C().abilityState(s, k));
   async function doPlay() {
     const s = st.s, ses = s.session;
-    if (!st.busy && ses.plays <= 0) { await endNight(); return; }
+    if (!st.busy && (ses.plays <= 0 || (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s) && !st.sel.length))) { await endNight(); return; }
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
     if (st.tutStep >= 0 && st.tutStep <= 2) st.tutStep = 3;
     st.busy = true; st.fast = false; st.chipN = 0;
@@ -33945,10 +34843,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     fx && (fx.burn = 0);
     await showArt(res);
     $('.ct-mult').classList.remove('burning', 'inferno');
-    if (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.cleared(s)) {
-      await showCleared(ses);
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (res && res.justPassed) await showCleared(ses);
       st.busy = false;
-      await endNight();
+      render();
+      root.querySelectorAll('.ct-hand .cc').forEach((el, i) => el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+        { duration: 220, delay: i * 30, fill: 'backwards' }));
+      if (IE.Rounds.canFinish(s) && !canStillAct(s)) await endNight();
       return;
     }
     st.busy = false;
@@ -33958,16 +34859,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if ((ses.plays <= 0 || !ses.hand.length) && !canStillAct(s)) await endNight();
   }
 
-  // 五輪模式：一筆過關時中央彈出「收工！」與提早收工獎金明細
+  // 五輪模式：達標時提示「已達標！」，之後每一筆為加演（火花 +0.1）
   async function showCleared(ses) {
     if (!root) return;
-    const RT = D().ROUND_TEXT, E = D().ECON;
     const el = document.createElement('div');
     el.className = 'ct-cleared' + (IE.Pixel && IE.Pixel.reducedMotion ? ' static' : '');
-    const earlyTxt = ses && ses.plays > 0 ? RT.early.replace('{n}', ses.plays).replace('{v}', E.earlyBonus) : '';
+    const encoreTxt = ses && ses.plays > 0 ? '還剩 ' + ses.plays + ' 筆：之後每一筆加演火花 +0.1' : '';
     el.innerHTML = ctCash('<div class="ct-cleared-card">'
-      + '<b>' + esc(RT.cleared) + '</b>'
-      + (earlyTxt ? '<p>' + esc(earlyTxt) + '</p>' : '')
+      + '<b>已達標！</b>'
+      + (encoreTxt ? '<p>' + esc(encoreTxt) + '</p>' : '')
       + '</div>');
     root.appendChild(el);
     A().sfx('combo');
@@ -33986,15 +34886,84 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     for (const x of res.steps) {
       if (!root) return;
       switch (x.t) {
-        case 'form':
-          $('.ct-form .fn').textContent = C().FORM[x.form].name;
+        case 'form': {
+          const fObj = C().formOf(s, x.form);
+          const isBase = x.form === 'mix' || x.form === 'single';
+          $('.ct-form .fn').textContent = fObj.name;
           $('.ct-form .fl').textContent = 'Lv.' + x.level;
           setBoxes(x.chips, x.mult);
           pulse(chipsEl); pulse(multEl);
-          if (x.form !== 'mix') { const wh = $('.ct-wheel'); if (wh) { pulse(wh.querySelector('svg')); wh.classList.add('flash'); setTimeout(() => wh && wh.classList.remove('flash'), 600); } tag(C().FORM[x.form].name + '・' + C().FORM[x.form].tag, 'form f-' + x.form); }
-          A().fx(x.form === 'mix' ? 'chip' : 'mult', x.form === 'mix' ? 0 : C().RANK.indexOf(x.form));
-          await wait(x.form === 'mix' ? 320 : 420);
+          if (!isBase) {
+            const wh = $('.ct-wheel');
+            if (wh && !wh.hidden && wh.querySelector('svg')) {
+              pulse(wh.querySelector('svg'));
+              wh.classList.add('flash');
+              setTimeout(() => wh && wh.classList.remove('flash'), 600);
+            }
+            tag(fObj.name + '・' + fObj.tag, 'form f-' + x.form);
+          }
+          A().fx(isBase ? 'chip' : 'mult', isBase ? 0 : Math.max(0, C().rankOf(s).indexOf(x.form)));
+          await wait(isBase ? 320 : 420);
           break;
+        }
+        case 'link': {
+          const lbl = x.kind === 'zhuan' ? (x.xmult ? '轉 ×' + x.xmult : '轉') : '承 +' + x.mult;
+          const uid = res.scoring && res.scoring[x.idx + 1 != null ? x.idx + 1 : x.idx];
+          const el = uid != null ? stageCard(uid) : null;
+          tag(lbl, x.xmult ? 'new' : 'recipe');
+          if (el) floatText(el, lbl, x.xmult ? 'xmult' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(4);
+          await wait(x.xmult ? 340 : 240);
+          break;
+        }
+        case 'compound': {
+          const el = x.uid != null ? stageCard(x.uid) : null;
+          const valTxt = x.chips ? '+' + x.chips + ' 籌碼' : x.mult ? '+' + x.mult + ' 倍率' : x.xmult ? '×' + x.xmult : '下一張再計一次';
+          tag(x.famName + '「' + x.name + '」　' + valTxt, x.xmult ? 'new' : 'recipe');
+          if (el) floatText(el, x.famName, x.xmult ? 'xmult' : x.chips ? 'chips' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(x.chips ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          await wait(260);
+          break;
+        }
+        case 'media': {
+          tag(x.name + '　+' + x.mult + ' 倍率', 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('mult', ++n);
+          await wait(260);
+          break;
+        }
+        case 'subject': {
+          tag('題材「' + x.name + '」　+' + x.mult + ' 倍率', 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('mult', ++n);
+          await wait(260);
+          break;
+        }
+        case 'he': {
+          tag('合 ×' + x.xmult, 'new');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('xmult', ++n);
+          shake(4);
+          await wait(340);
+          break;
+        }
+        case 'title': {
+          tag(x.name + ' ×' + x.xmult, 'legend');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('xmult', ++n);
+          shake(5);
+          await wait(360);
+          break;
+        }
         case 'card': {
           const el = stageCard(x.uid);
           const cObj = s.cards.find((c) => c.uid === x.uid);
@@ -34260,14 +35229,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (isRounds) {
       const RT = D().ROUND_TEXT, E = D().ECON;
       const earlyAmt = (g.playsLeft || 0) * E.earlyBonus;
-      const overkill = g.pass && g.score >= g.target * 2;
+      const ov = g.over || (g.pass && g.score >= g.target * 2 ? { x: 2, spark: E.overkillSpark } : null);
       const dots = '●'.repeat(Math.max(0, s.chances)) + '<i>' + '○'.repeat(Math.max(0, 3 - s.chances)) + '</i>';
       return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '過關' : '未達標') + '</span>'
         + '<b>第 ' + g.index + '／15 晚・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
         + quotes
         + (g.pass
           ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'
-            + (overkill ? '<small class="sr-overkill">超額兩倍：火花 +' + E.overkillSpark + (g.kind !== 'small' ? '・金色扭蛋券 +1' : '') + '</small>' : '')
+            + (ov ? '<small class="sr-overkill">超額 ' + ov.x + ' 倍：火花 +' + ov.spark + (ov.ticket ? '・金色扭蛋券 +' + ov.ticket : '') + '</small>' : '')
           : '<p class="sr-fail-msg">' + esc(RT.failed) + '</p>'
             + '<small class="sr-chances">' + esc(RT.chances) + '：<b class="sr-dots">' + dots + '</b>（火花 ' + E.failSpark + '）</small>')
         + '</div>';
@@ -34301,8 +35270,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="ct-end-score num">0</div>'
       + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
       + '<div class="ct-end-art">' + res.session.log.map((x, i) => (x.art && IE.Artwork
-        ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art)) + '</b><small>' + C().FORM[x.form].name + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
-        : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + C().FORM[x.form].name + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
+        ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art, s)) + '</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
+        : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
       + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
       + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
       + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
@@ -34349,13 +35318,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return tags.length > 1 ? '需要' + tags.slice(0, -1).join('、') + '，還有一樣東西……' : '需要很多' + tags[0] + '……';
   }
   function codexHtml(s, meta) {
+    const isRounds = !!(s && IE.Rounds && IE.Rounds.on(s));
     const known = (id) => !!(s.discovered[id] || (meta.recipes && meta.recipes[id]));
-    const forms = D().FORMS.map((f) => {
+    const forms = C().formsOf(s).map((f) => {
       const seen = (s.formsSeen && s.formsSeen[f.id]) || (meta.forms && meta.forms[f.id]) || !f.secret;
       const st2 = C().formStats(s, f.id);
       return '<div class="recipe' + (seen ? '' : ' unknown') + '"><b>' + (seen ? f.name + ' Lv.' + st2.level : '？？？') + '</b>'
-        + '<span>' + (seen ? esc(f.tag + '：' + f.desc) : '一種隱藏的配色') + '</span>'
-        + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率・練習：' + esc(f.teach) + '</span>' : '') + '</div>';
+        + '<span>' + (seen ? esc(f.tag + (f.desc && f.desc !== f.tag ? '：' + f.desc : '')) : '一種隱藏的配色') + '</span>'
+        + (seen ? '<span class="mute">' + st2.chips + ' 籌碼 × ' + st2.mult + ' 倍率' + (f.teach ? '・練習：' + esc(f.teach) : '') + '</span>' : '') + '</div>';
     }).join('');
     const nKnown = D().RECIPES.filter((r) => known(r.id)).length;
     const recipes = D().RECIPES.map((r) => {
@@ -34365,8 +35335,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + '<span>' + (k ? esc(tags || '特殊條件') + (r.hint ? '：' + esc(r.hint) : '') : esc(recipeHint(r))) + '</span>'
         + '<span class="mute">+' + r.chips + ' 籌碼・+' + r.mult + ' 倍率' + (r.xmult ? '・×' + r.xmult : '') + '</span></div>';
     }).join('');
+    const formHead = isRounds
+      ? '<h3>結構（起承轉合）</h3><p class="mute" style="font-size:12px">按選取次序連接：相同情緒「承 +2」、相鄰情緒「承 +1」、相對情緒「轉 ×2」；最後一張連回第一張為「合 ×2」。</p>'
+      : '<h3>配色（情緒色輪）</h3><p class="mute" style="font-size:12px">色輪：人情 → 希望 → 水 → 記憶 → 反叛 → 機械 → 愧疚 → 憤怒 → 霓虹 → 飢餓 →（回到人情）。正對面是相反的情緒。</p>';
     return '<div class="modal wide"><h2>創作圖鑑</h2>'
-      + '<h3>配色（情緒色輪）</h3><p class="mute" style="font-size:12px">色輪：人情 → 希望 → 水 → 記憶 → 反叛 → 機械 → 愧疚 → 憤怒 → 霓虹 → 飢餓 →（回到人情）。正對面是相反的情緒。</p><div class="recipes">' + forms + '</div>'
+      + formHead + '<div class="recipes">' + forms + '</div>'
       + '<h3>具名組合（' + nKnown + '/' + D().RECIPES.length + '）</h3><div class="recipes">' + recipes + '</div>'
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="close">收起</button></div></div>';
   }

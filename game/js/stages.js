@@ -139,9 +139,21 @@
         Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
         s.cr += reward; s.stats.crEarned += reward; out.cr = reward;
         out.lines.push('獎金 $' + reward);
-        if (score >= stage.target * 2) {
-          s.stats.stages.double = (s.stats.stages.double || 0) + 1; out.lines.push('分數達到目標的兩倍：評語「驚為天人」'); R.addSpark(s, D.ECON.overkillSpark, true);
-          if (stage.kind !== 'small') { R.gainTicket(s, 'gold', 1, '驚為天人'); out.lines.push('金色扭蛋券 +1'); }
+        const overs = (D.ECON16 && D.ECON16.over) || [{ x: 2, spark: D.ECON.overkillSpark }];
+        let over = null;
+        overs.forEach((ov) => { if (score >= stage.target * ov.x) over = ov; });
+        if (over) {
+          out.over = over;
+          s.stats.stages.double = (s.stats.stages.double || 0) + 1;
+          out.lines.push('分數達到目標的 ' + over.x + ' 倍');
+          R.addSpark(s, over.spark, true);
+          s.spark = Math.round(s.spark * 100) / 100;
+          out.lines.push('火花 +' + over.spark);
+          if (over.ticket) {
+            R.gainTicket(s, 'gold', over.ticket, '超額 ' + over.x + ' 倍');
+            out.tickets += over.ticket;
+            out.lines.push('金色扭蛋券 +' + over.ticket);
+          }
         }
         if (stage.rules && stage.rules.length) { s.stats.judges = s.stats.judges || {}; stage.rules.forEach((id) => { s.stats.judges[id] = true; }); }
       } else {
@@ -283,6 +295,14 @@
       case 'coffee': ses.discards += 2; msg = '今晚改稿 +2'; break;
       case 'lamp': ses.plays += 1; msg = '今晚下筆 +1'; break;
       case 'portfolio': {
+        if (IE.Rounds && IE.Rounds.on(s) && IE.Desk) {
+          const fid = IE.Desk.analyze(cards, { repair: IE.Create.repairOf(s) }).id;
+          const lv = IE.Create.level(s, fid) + 1;
+          if (IE.Rounds.normalizeForms) IE.Rounds.normalizeForms(s);
+          s.forms[fid] = lv;
+          msg = '「' + IE.Create.formOf(s, fid).name + '」升到 Lv.' + s.forms[fid];
+          break;
+        }
         const F = IE.Create.detectForm(cards);
         s.forms[F.id] = (s.forms[F.id] || 1) + 1;
         msg = '「' + IE.Create.FORM[F.id].name + '」升到 Lv.' + s.forms[F.id];

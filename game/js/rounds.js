@@ -156,12 +156,63 @@
     return addGig(s, { micro: R.pick(s, workPool), from: 'round' });
   }
 
+  function normalizeForms(s, rep) {
+    if (!s || !on(s)) return;
+    s.forms = s.forms || {};
+    if (D.DESK && D.DESK.formMap) {
+      const fmap = D.DESK.formMap;
+      Object.keys(s.forms).forEach((k) => {
+        const nk = fmap[k];
+        if (!nk || nk === k) return;
+        const add = (s.forms[k] || 1) - 1;
+        if (add > 0) s.forms[nk] = (s.forms[nk] || 1) + add;
+        delete s.forms[k];
+      });
+      if (IE.Desk && Array.isArray(IE.Desk.RANK)) {
+        IE.Desk.RANK.forEach((id) => { if (!s.forms[id]) s.forms[id] = 1; });
+      }
+      if (rep && Array.isArray(rep.lines) && D.DESK_FORM) {
+        rep.lines.forEach((ln) => {
+          if (!ln || typeof ln.text !== 'string' || !ln.text.startsWith('技法提升：「')) return;
+          D.FORMS.forEach((f) => {
+            const nk = fmap[f.id];
+            const df = nk && D.DESK_FORM[nk];
+            if (df && ln.text.includes('「' + f.name + '」')) {
+              ln.text = '技法提升：「' + df.name + '」Lv.' + (s.forms[nk] || 1);
+            }
+          });
+        });
+      }
+    }
+  }
+
   function initGigs(s) {
     if (!s || !on(s)) return;
     if (IE.Flood && IE.Flood.ensure) IE.Flood.ensure(s);
+    normalizeForms(s);
     s.gigs = [];
     s.pendingExpiredGigs = [];
     grantRoundGig(s);
+    if (!s.deskInit && Array.isArray(D.DESK_IDS) && D.DESK_IDS.length && Array.isArray(s.cards)) {
+      s.deskInit = true;
+      const starterSet = new Set(D.STARTER || []);
+      let count = 0;
+      s.cards = s.cards.filter((c) => {
+        if (c && c.from && c.from.kind === 'start' && starterSet.has(c.id)) {
+          count += 1;
+          return false;
+        }
+        return true;
+      });
+      if (count > 0) {
+        const pool = (D.STARTER || []).concat(D.DESK_IDS);
+        for (let i = 0; i < count && pool.length; i++) {
+          const id = R.pick(s, pool);
+          pool.splice(pool.indexOf(id), 1);
+          R.addCard(s, id, { kind: 'start', night: 0 });
+        }
+      }
+    }
   }
 
   function cardDef(id) {
@@ -268,8 +319,8 @@
     if (id.startsWith('friend:')) {
       const npcId = id.slice(7);
       const npc = D.NPCS.find((n) => n.id === npcId);
-      const fid = D.TEACH[npcId];
-      const form = D.FORMS.find((f) => f.id === fid);
+      const fid = (D.DESK_REMAP && D.DESK_REMAP.teach && D.DESK_REMAP.teach[npcId]) || D.TEACH[npcId];
+      const form = (D.DESK_FORM && D.DESK_FORM[fid]) || D.FORMS.find((f) => f.id === fid);
       const cost = R.chatCost(s);
       const reason = s.cr < cost ? '沒錢請人喝東西' : null;
       return {
@@ -277,7 +328,7 @@
         kind: 'friend',
         kindName: D.ROUND_TEXT.kinds.friend,
         name: '找' + (npc ? npc.name : npcId) + '聊天',
-        sub: form ? '聊聊近況，練習「' + form.name + '」的配色' : '和朋友聊聊近況',
+        sub: form ? '聊聊近況，練習「' + form.name + '」的' + (D.DESK_FORM ? '結構' : '配色') : '和朋友聊聊近況',
         micro: null,
         gig: null,
         fx: [['cr', cost ? '−$' + cost : '免費'], ['spark', '+0.4 起'], ['card', '人情'], ['note', '技法：' + (form ? form.name : '') + ' +1']],
@@ -375,7 +426,21 @@
 
   // 睡懶覺：不選卡，恢復火花並進入晚上
   function skipDay(s) {
-    if (!s || s.phase !== 'day' || hasFloodPick(s)) return null;
+    if (!s || s.phase !== 'day') return null;
+    if (hasFloodPick(s)) {
+      if (s._floodSkipWarn === s.night && IE.Flood && IE.Flood.autoPick) {
+        delete s._floodSkipWarn;
+        IE.Flood.autoPick(s);
+      } else {
+        Object.defineProperty(s, '_floodSkipWarn', { value: s.night, writable: true, configurable: true });
+        return null;
+      }
+    }
+    if (s.over && s.offer && s.offer.chosen && IE.Cards) {
+      IE.Cards.autoPutDown(s);
+      afterDay(s);
+      return null;
+    }
     const rep = R.report(s, '睡懶覺');
     const sp = R.addSpark(s, D.ECON.skipSpark, true);
     rep.line('今天甚麼都不做，睡了一整天', 'good', sp, 'spark');
@@ -385,7 +450,16 @@
 
   // 選一張生活卡
   function choose(s, id, reply) {
-    if (!s || s.phase !== 'day' || hasFloodPick(s)) return null;
+    if (!s || s.phase !== 'day') return null;
+    if (hasFloodPick(s)) {
+      if (s._floodChooseWarn === s.night && IE.Flood && IE.Flood.autoPick) {
+        delete s._floodChooseWarn;
+        IE.Flood.autoPick(s);
+      } else {
+        Object.defineProperty(s, '_floodChooseWarn', { value: s.night, writable: true, configurable: true });
+        return null;
+      }
+    }
     const of = offer(s);
     if (of && of.chosen && s.over && IE.Cards) {
       IE.Cards.autoPutDown(s);
@@ -408,11 +482,14 @@
       if (pl && pl.npc === npcId && s.story) {
         s.story.met[npcId] = r;
       }
-      const fid = D.TEACH[npcId];
-      const lv0 = (s.forms && s.forms[fid]) || 1;
+      const fid = (D.DESK_REMAP && D.DESK_REMAP.teach && D.DESK_REMAP.teach[npcId]) || D.TEACH[npcId];
+      const lv0 = IE.Create && IE.Create.level ? IE.Create.level(s, fid) : ((s.forms && s.forms[fid]) || 1);
       const rep = R.applyChat(s, npcId, reply);
-      if (((s.forms && s.forms[fid]) || 1) === lv0) {
+      normalizeForms(s, rep);
+      const lv1 = IE.Create && IE.Create.level ? IE.Create.level(s, fid) : ((s.forms && s.forms[fid]) || 1);
+      if (lv1 === lv0) {
         R.teach(s, npcId, 1, { line: (text, kind) => rep.lines.push({ text, kind: kind || '' }) });
+        normalizeForms(s, rep);
       }
       const npc = D.NPCS.find((n) => n.id === npcId);
       const friendMicro = D.GIG_FRIEND && D.GIG_FRIEND[npcId];
@@ -425,6 +502,7 @@
     if (id === 'volunteer') {
       of.chosen = id;
       const rep = R.applyVolunteer(s);
+      normalizeForms(s, rep);
       afterDay(s);
       return rep;
     }
@@ -497,10 +575,26 @@
     return Math.round(base * (1 + D.ECON.payGrowth * (r - 1))) + D.ECON.earlyBonus * pl;
   }
 
-  // 這一晚是否已達標（可以提早收工）
+  // 這一晚是否已達標
   function cleared(s) {
     if (!s || !s.session || !s.session.stage || !IE.Stages) return false;
-    return IE.Stages.stageScore(s.session) >= s.session.stage.target;
+    return !!(s.session.passed || IE.Stages.stageScore(s.session) >= s.session.stage.target);
+  }
+
+  // 這一晚是否可以收工（四筆用完，或手牌與牌庫都沒有可下的素材）
+  function canFinish(s) {
+    if (!s || !s.session) return false;
+    const ses = s.session;
+    if (ses.plays <= 0) return true;
+    if (!IE.Create) return true;
+    const playable = (u) => {
+      const c = s.cards.find((x) => x.uid === u);
+      return !!(c && !IE.Create.forbidden(s, c));
+    };
+    if (ses.hand.some(playable)) return false;
+    const canDiscard = ses.discards > 0 && ses.hand.length > 0 && !((D.BACKGROUNDS[s.bg].perk || {}).noEarlyDiscard && !ses.log.length);
+    if (canDiscard && (ses.deck.some(playable) || ses.used.some(playable))) return false;
+    return true;
   }
 
   // 失去一次機會；機會用完即進入結局
@@ -525,6 +619,7 @@
   // 開始夜晚創作（s.phase 必須是 'night'，否則回傳 null）
   function startNight(s) {
     if (!s || !on(s) || s.phase !== 'night' || hasFloodPick(s)) return null;
+    normalizeForms(s);
     return IE.Create.start(s, 'normal');
   }
 
@@ -535,6 +630,7 @@
 
   function shopOpen(s) {
     if (!s || !on(s) || s.phase !== 'shop') return null;
+    normalizeForms(s);
     if (s.shop && s.shop.night === s.night) return s.shop;
     const objs = R.pickObjects(s, 2);
     // 第一局第 1 晚保證至少一件稀有物件
@@ -556,8 +652,8 @@
       packs.push(pid);
     }
     const service = ['polish', 'burn', 'copy'][s.night % 3];
-    const techPool = ['adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono'];
-    if (s.formsSeen && s.formsSeen.paradox) techPool.push('paradox');
+    const techPool = IE.Desk ? IE.Desk.RANK.slice(1) : ['adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mono'];
+    if (!IE.Desk && s.formsSeen && s.formsSeen.paradox) techPool.push('paradox');
     const tech = R.pick(s, techPool);
     const hasToolSpace = IE.Stages && (s.tools || []).length < IE.Stages.toolSlots(s);
     const tool = hasToolSpace ? IE.Stages.randomTool(s) : null;
@@ -607,7 +703,7 @@
     }
     if (slot === 'tech') {
       const fid = s.shop && s.shop.tech;
-      const lv = (fid && s.forms && s.forms[fid]) || 1;
+      const lv = fid ? (IE.Create && IE.Create.level ? IE.Create.level(s, fid) : ((s.forms && s.forms[fid]) || 1)) : 1;
       return Math.round((D.ECON.tech + D.ECON.techStep * (lv - 1)) * mod);
     }
     if (slot === 'tool') {
@@ -642,7 +738,7 @@
   }
 
   function openPack(s, pdef) {
-    const allIds = Object.keys(D.CARDS);
+    const allIds = Object.keys(D.CARDS).concat(D.DESK_IDS || []);
     const foreign = (c) => c.origin && c.origin !== 'home';
     // 極稀有只會出現在遠方包，而且每張只有 ECON.packLegend 的機會（外國素材中約四分之一是極稀有，照抽就太常見）
     const legends = pdef.foreign ? allIds.filter((k) => D.CARDS[k].rarity === 'legend' && foreign(D.CARDS[k])) : [];
@@ -722,13 +818,15 @@
     if (slot === 'tech') {
       if (sh.bought.includes('tech')) return { ok: false, msg: '已經買過了' };
       const fid = sh.tech;
-      if (!fid || !IE.Create || !IE.Create.FORM[fid]) return { ok: false, msg: '沒有可用的技法課' };
+      const fdef = fid && IE.Create ? IE.Create.formOf(s, fid) : null;
+      if (!fdef) return { ok: false, msg: '沒有可用的技法課' };
       const cost = price(s, 'tech');
       if (s.cr < cost) return { ok: false, msg: '要 $' + cost };
       s.cr -= cost;
+      normalizeForms(s);
       s.forms[fid] = ((s.forms && s.forms[fid]) || 1) + 1;
       sh.bought.push('tech');
-      return { ok: true, msg: '技法課：' + IE.Create.FORM[fid].name + ' 升到 Lv.' + s.forms[fid] };
+      return { ok: true, msg: '技法課：' + fdef.name + ' 升到 Lv.' + s.forms[fid] };
     }
 
     if (slot === 'tool') {
@@ -1019,6 +1117,8 @@
     tripPick,
     nightReward,
     cleared,
+    canFinish,
+    normalizeForms,
     loseChance,
     startNight,
     shopOpen,

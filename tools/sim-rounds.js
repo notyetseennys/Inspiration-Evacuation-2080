@@ -14,7 +14,8 @@ const path = require('path');
   'data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js',
   'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js',
   'data-abilities.js', 'data-stories.js', 'data-weather.js', 'data-contacts.js',
-  'data-rounds.js', 'data-cities.js', 'data-story.js', 'rules.js', 'cards.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
+  'data-rounds.js', 'data-cities.js', 'data-story.js', 'data-stance.js', 'data-art.js', 'desk.js', 'data-desk.js',
+  'rules.js', 'cards.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
   'stages.js', 'meta.js', 'dossier.js', 'flood.js', 'rounds.js', 'story.js',
 ].forEach((f) => require(path.join(__dirname, '../game/js', f)));
 
@@ -42,6 +43,8 @@ const BGS = process.env.BG
 const SEASONS = Object.keys(D.SEASONS);
 const ALL_STRATS = [
   { id: 'balanced',  name: '均衡型 (balanced)' },
+  { id: 'novice',    name: '新手   (novice)' },
+  { id: 'expert',    name: '老手   (expert)' },
   { id: 'worker',    name: '打工狂 (worker)' },
   { id: 'liver',     name: '生活派 (liver)' },
   { id: 'saint',     name: '聖人   (saint)' },
@@ -54,7 +57,7 @@ const STRATS = process.env.STRAT
   ? ALL_STRATS.filter((x) => process.env.STRAT.split(',').includes(x.id))
   : ALL_STRATS;
 
-const FORM_KEYS = ['mono', 'adj', 'triad', 'split', 'comp', 'tetrad', 'full', 'mix', 'series', 'cross', 'mini', 'epic', 'paradox'];
+const STRUCT_KEYS = IE.Desk ? IE.Desk.RANK.slice() : ['single', 'pair', 'contrast', 'flow', 'twist', 'echo', 'loop', 'mono', 'full'];
 const SNOW_NIGHTS = [1, 3, 6, 9, 12, 15];
 
 // 工作卡預期薪水排序（由高至低）
@@ -68,6 +71,15 @@ function median(arr) {
   return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2);
 }
 
+function medianFloat(arr) {
+  if (!arr || !arr.length) return 0;
+  const a = arr.slice().sort((x, y) => x - y);
+  const m = Math.floor(a.length / 2);
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+}
+
+const teachFormOf = (npcId) => (D.DESK_REMAP && D.DESK_REMAP.teach && D.DESK_REMAP.teach[npcId]) || D.TEACH[npcId];
+
 function topUsedForms(s) {
   const counts = Object.assign({}, s.style || {});
   (s.works || []).forEach((w) => {
@@ -77,7 +89,7 @@ function topUsedForms(s) {
     if (s.forms[f] > 1) counts[f] = (counts[f] || 0) + (s.forms[f] - 1) * 3;
   });
   return Object.keys(counts)
-    .filter((f) => f !== 'mix')
+    .filter((f) => f !== 'mix' && f !== 'single')
     .sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
 }
 
@@ -136,7 +148,7 @@ function pickDayCard(s, strat) {
   if (strat === 'liver') {
     const topForms = topUsedForms(s);
     const friends = infos.filter((c) => c.kind === 'friend').sort((a, b) => {
-      const fa = D.TEACH[a.id.slice(7)], fb = D.TEACH[b.id.slice(7)];
+      const fa = teachFormOf(a.id.slice(7)), fb = teachFormOf(b.id.slice(7));
       const ia = topForms.indexOf(fa), ib = topForms.indexOf(fb);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     });
@@ -165,13 +177,15 @@ function pickDayCard(s, strat) {
     .filter((c) => c.kind === 'work')
     .sort((a, b) => cardExpectedPay(b) - cardExpectedPay(a));
 
-  // 1. 錢不夠「本輪租金 + 60」→ 收入最高的工作卡
-  if (s.cr < rent + 60 && cleanWorks.length) {
+  // 1. 錢不夠「本輪租金 + 緩衝」→ 收入最高的工作卡
+  const floodBuf = strat === 'expert' && FLOOD && FLOOD.stage(s) !== 'dry' ? 160 : 0;
+  const rentBuf = (strat === 'expert' ? 160 : 60) + floodBuf;
+  if (s.cr < rent + rentBuf && cleanWorks.length) {
     return cleanWorks[0].id;
   }
 
-  // 2. 靈魂超過門檻（balanced > 17，saint > 12）→ 義工（shameless 從不義工）
-  if (strat !== 'shameless' && s.soul > (strat === 'saint' ? 12 : 17)) {
+  // 2. 靈魂超過門檻（balanced > 17，expert > 15，saint > 12）→ 義工（shameless 從不義工）
+  if (strat !== 'shameless' && s.soul > (strat === 'saint' ? 12 : strat === 'expert' ? 15 : 17)) {
     const vol = pool.find((c) => c.kind === 'volunteer' || c.id === 'volunteer');
     if (vol) return vol.id;
   }
@@ -186,10 +200,10 @@ function pickDayCard(s, strat) {
     if (worst && (worst.wear || 0) > 0 && CR.starOf(worst) >= 4) return null;
   }
 
-  // 3. 否則優先：朋友卡（教的配色是最常用的配色）＞ 出國（錢足夠「本輪租金 + 旅費 + 60」時）＞ 生活卡 ＞ 工作卡
+  // 3. 否則優先：朋友卡（教的結構是最常用的結構）＞ 出國（錢足夠「本輪租金 + 旅費 + 60」時）＞ 生活卡 ＞ 工作卡
   const topForms = topUsedForms(s);
   const friends = pool.filter((c) => c.kind === 'friend').sort((a, b) => {
-    const fa = D.TEACH[a.id.slice(7)], fb = D.TEACH[b.id.slice(7)];
+    const fa = teachFormOf(a.id.slice(7)), fb = teachFormOf(b.id.slice(7));
     const ia = topForms.indexOf(fa), ib = topForms.indexOf(fb);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
@@ -216,7 +230,7 @@ function chooseStoryChapter(s, ch, strat) {
   if (strat === 'random') {
     return R.pick(s, indices);
   }
-  if (strat === 'balanced') {
+  if (strat === 'balanced' || strat === 'novice' || strat === 'expert') {
     const idx = indices.find((i) => opts[i].side === 'both');
     return idx != null ? idx : indices[0];
   }
@@ -298,7 +312,7 @@ function runDay(s, strat, metrics) {
       const hideCost = Math.abs(STORY.money(s, -rawHide));
       const rent = RD.rentOf(s);
       if (pl && pl.npc === npcId && !(s.story && s.story.hidden && s.story.hidden[npcId])) {
-        if (strat === 'balanced' && s.cr >= rent + hideCost + 60) {
+        if ((strat === 'balanced' || strat === 'novice' || strat === 'expert') && s.cr >= rent + hideCost + 60) {
           STORY.hide(s, npcId);
         } else if ((strat === 'saint' || strat === 'liver') && s.cr >= rent + hideCost) {
           STORY.hide(s, npcId);
@@ -345,37 +359,54 @@ function runDay(s, strat, metrics) {
   metrics.transitions++;
 }
 
+function sampleRandomPlay(s, valid) {
+  const maxK = Math.min(5, CR.maxCards(s), valid.length);
+  const k = 1 + Math.floor(R.rand(s) * maxK);
+  const pool = valid.slice();
+  const uids = [];
+  while (uids.length < k && pool.length) {
+    const u = R.pick(s, pool);
+    pool.splice(pool.indexOf(u), 1);
+    uids.push(u);
+  }
+  const sc = CR.scorePlay(s, uids, { roll: 0.5 });
+  return { uids, total: sc.total, form: sc.form };
+}
+
+function recordNightStats(ses, night, metrics) {
+  if (ses.log.length && metrics.nightPlays[night]) {
+    metrics.nightPlays[night].push(Math.max(...ses.log.map((x) => x.total)));
+  }
+  if (metrics.nightRatios[night] && ses.stage && ses.stage.target > 0) {
+    metrics.nightRatios[night].push(ST.stageScore(ses) / ses.stage.target);
+  }
+}
+
 function runNight(s, strat, metrics) {
   const night = s.night;
   const ses = RD.startNight(s);
   if (!ses) return;
   metrics.transitions++;
 
-  if (strat === 'random') {
-    while (ses.plays > 0 && ses.hand.length > 0) {
+  if (strat === 'random' || strat === 'novice') {
+    const samples = strat === 'novice' ? 3 : 1;
+    while (!RD.canFinish(s)) {
       const valid = ses.hand.filter((u) => {
         const c = s.cards.find((x) => x.uid === u);
         return c && !CR.forbidden(s, c);
       });
       if (!valid.length) break;
-      const maxK = Math.min(5, CR.maxCards(s), valid.length);
-      const k = 1 + Math.floor(R.rand(s) * maxK);
-      const pool = valid.slice();
-      const uids = [];
-      while (uids.length < k && pool.length) {
-        const u = R.pick(s, pool);
-        pool.splice(pool.indexOf(u), 1);
-        uids.push(u);
+      let pick = null;
+      for (let i = 0; i < samples; i++) {
+        const cand = sampleRandomPlay(s, valid);
+        if (!pick || cand.total > pick.total) pick = cand;
       }
-      const res = CR.play(s, uids);
+      const res = CR.play(s, pick.uids);
       if (!res) break;
       metrics.plays++;
       metrics.forms[res.form] = (metrics.forms[res.form] || 0) + 1;
-      if (RD.cleared(s)) break;
     }
-    if (ses.log.length && metrics.nightPlays[night]) {
-      metrics.nightPlays[night].push(Math.max(...ses.log.map((x) => x.total)));
-    }
+    recordNightStats(ses, night, metrics);
     CR.finish(s);
     CARDS.autoPutDown(s);
     metrics.transitions++;
@@ -402,11 +433,15 @@ function runNight(s, strat, metrics) {
     if (top) CR.useAbility(s, 'mark', top.uid);
   }
 
-  while (ses.plays > 0 && ses.hand.length > 0) {
+  const lastOnly = !!(ses.stage && ses.stage.rules && ses.stage.rules.some((id) => ST.BOSS[id] && ST.BOSS[id].lastOnly));
+
+  while (!RD.canFinish(s)) {
     let best = CR.bestPlay(s);
-    while (best && ses.discards > 0 && s.cards.length - ses.hand.length - ses.used.length >= 3) {
+    const minLeft = strat === 'expert' ? 2 : 3;
+    while (best && ses.discards > 0 && s.cards.length - ses.hand.length - ses.used.length >= minLeft) {
       const remScore = ses.stage.target - ST.stageScore(ses);
-      const needMore = best.form === 'mix' || best.total * ses.plays < remScore;
+      const wantSculpt = strat === 'expert' && ses.plays === 1 && STRUCT_KEYS.indexOf(best.form) < STRUCT_KEYS.indexOf('full');
+      const needMore = best.form === 'single' || best.form === 'mix' || best.total * ses.plays < remScore || wantSculpt;
       if (!needMore) break;
       const keep = new Set(best.uids);
       const weak = ses.hand
@@ -420,16 +455,33 @@ function runNight(s, strat, metrics) {
       best = CR.bestPlay(s);
     }
     if (!best) break;
-    const res = CR.play(s, best.uids);
+
+    let playUids = best.uids;
+    // expert：每晚保留最好的結構到最後一筆（壓軸規則必留；一般夜晚在已達標或先出副牌也能達標時保留主力結構至最後一筆）
+    const holdMinIdx = lastOnly ? STRUCT_KEYS.indexOf('contrast') : STRUCT_KEYS.indexOf('loop');
+    if (strat === 'expert' && ses.plays > 1 && STRUCT_KEYS.indexOf(best.form) >= holdMinIdx) {
+      const keepSet = new Set(best.uids);
+      const filler = ses.hand.filter((u) => {
+        if (keepSet.has(u)) return false;
+        const c = s.cards.find((x) => x.uid === u);
+        return c && !CR.forbidden(s, c);
+      });
+      if (filler.length) {
+        const sg = CR.suggest(s, filler, 1);
+        const fillerBest = sg && sg[0];
+        if (fillerBest && (lastOnly || ((ses.passed || ST.stageScore(ses) + fillerBest.est >= ses.stage.target) && (ses.plays === 2 || fillerBest.uids.length >= 2)))) {
+          playUids = fillerBest.uids;
+        }
+      }
+    }
+
+    const res = CR.play(s, playUids);
     if (!res) break;
     metrics.plays++;
     metrics.forms[res.form] = (metrics.forms[res.form] || 0) + 1;
-    if (bg === 'busker' && !RD.cleared(s)) CR.useAbility(s, 'encore');
-    if (RD.cleared(s)) break;
+    if (bg === 'busker' && ses.plays === 0) CR.useAbility(s, 'encore');
   }
-  if (ses.log.length && metrics.nightPlays[night]) {
-    metrics.nightPlays[night].push(Math.max(...ses.log.map((x) => x.total)));
-  }
+  recordNightStats(ses, night, metrics);
   CR.finish(s);
   CARDS.autoPutDown(s);
   metrics.transitions++;
@@ -546,7 +598,7 @@ function runShop(s, strat, metrics) {
     return;
   }
 
-  const reserve = RD.rentOf(s);
+  const reserve = RD.rentOf(s) + (strat === 'expert' ? (s.night % 3 === 0 ? 60 : 25) : 0);
   const RAR_SCORE = { legend: 3, rare: 2, common: 1 };
 
   // 1. 遺物一定拿
@@ -584,6 +636,7 @@ function runShop(s, strat, metrics) {
     while ((s.floor || 0) > 0 && FLOOD.stage(s) !== 'dry') {
       const mv = FLOOD.services(s).find((x) => x.id === 'moveup' && x.affordable);
       if (!mv) break;
+      if (strat === 'expert' && s.night % 3 === 0 && s.cr - mv.price < RD.rentOf(s) && FLOOD.stage(s) === 'warn') break;
       const b = RD.shopBuy(s, 'moveup');
       if (!b || !b.ok) break;
       metrics.shopBuys++;
@@ -615,13 +668,28 @@ function runShop(s, strat, metrics) {
         counts = ownedSchools(s);
       }
     }
+    if (strat === 'expert') {
+      const openObjs = sh.objs
+        .filter((id) => D.OBJ[id] && !sh.bought.includes('obj:' + id) && s.objects.length < R.slotsOf(s))
+        .sort((a, b) => (RAR_SCORE[D.OBJ[b].rarity] || 1) - (RAR_SCORE[D.OBJ[a].rarity] || 1));
+      for (const id of openObjs) {
+        if (s.objects.length >= R.slotsOf(s)) break;
+        const slot = 'obj:' + id;
+        const cost = RD.price(s, slot);
+        if (s.cr - cost < reserve + 120) continue;
+        const b = RD.shopBuy(s, slot);
+        if (b && b.ok) metrics.shopBuys++;
+      }
+    }
   }
 
-  // 3. 最常用配色的技法課
+  // 3. 最常用結構的技法課
   if (sh.tech && !sh.bought.includes('tech')) {
     const topForms = topUsedForms(s);
     const cost = RD.price(s, 'tech');
-    const isTop = !topForms.length || topForms.slice(0, 2).includes(sh.tech) || (s.forms && s.forms[sh.tech] > 1);
+    const isTop = !topForms.length || topForms.slice(0, 2).includes(sh.tech)
+      || (s.forms && s.forms[sh.tech] > 1)
+      || (strat === 'expert' && (sh.tech === 'full' || sh.tech === 'mono') && s.cr - cost >= reserve + 50);
     if (isTop && s.cr - cost >= reserve) {
       const b = RD.shopBuy(s, 'tech');
       if (b && b.ok) metrics.shopBuys++;
@@ -721,9 +789,13 @@ function runOne(bg, season, seed, strat) {
     reversals: 0,
     forms: {},
     nightPlays: {},
+    nightRatios: {},
     preReviewCr: {},
   };
-  SNOW_NIGHTS.forEach((n) => { metrics.nightPlays[n] = []; });
+  SNOW_NIGHTS.forEach((n) => {
+    metrics.nightPlays[n] = [];
+    metrics.nightRatios[n] = [];
+  });
 
   let guard = 0;
   while (!s.ended && guard++ < 200) {
@@ -791,13 +863,17 @@ function runStrategy(strat) {
   const lostRuns = { night: 0, rent: 0, soul: 0 };
   const lostTotal = { night: 0, rent: 0, soul: 0 };
   const formTotals = {};
-  FORM_KEYS.forEach((k) => { formTotals[k] = 0; });
+  STRUCT_KEYS.forEach((k) => { formTotals[k] = 0; });
   let totalPlays = 0;
   let totalShopBuys = 0;
   let totalShopVisits = 0;
 
   const nightPlayScores = {};
-  SNOW_NIGHTS.forEach((k) => { nightPlayScores[k] = []; });
+  const nightRatioScores = {};
+  SNOW_NIGHTS.forEach((k) => {
+    nightPlayScores[k] = [];
+    nightRatioScores[k] = [];
+  });
   const n1OfReached15 = [];
   const preReviewCrs = { 1: [], 2: [], 3: [], 4: [], 5: [] };
 
@@ -820,6 +896,9 @@ function runStrategy(strat) {
       if (r.metrics.nightPlays[k] && r.metrics.nightPlays[k].length) {
         nightPlayScores[k].push(...r.metrics.nightPlays[k]);
       }
+      if (r.metrics.nightRatios[k] && r.metrics.nightRatios[k].length) {
+        nightRatioScores[k].push(...r.metrics.nightRatios[k]);
+      }
     });
     if (r.metrics.nightPlays[15] && r.metrics.nightPlays[15].length && r.metrics.nightPlays[1] && r.metrics.nightPlays[1].length) {
       n1OfReached15.push(...r.metrics.nightPlays[1]);
@@ -830,7 +909,11 @@ function runStrategy(strat) {
   });
 
   const snowMed = {};
-  SNOW_NIGHTS.forEach((k) => { snowMed[k] = median(nightPlayScores[k]); });
+  const ratioMed = {};
+  SNOW_NIGHTS.forEach((k) => {
+    snowMed[k] = median(nightPlayScores[k]);
+    ratioMed[k] = nightRatioScores[k].length ? medianFloat(nightRatioScores[k]).toFixed(2) + '×' : 'N/A';
+  });
   const snowMult = snowMed[1] > 0 && snowMed[15] > 0 ? (snowMed[15] / snowMed[1]).toFixed(1) : 'N/A';
 
   const winRate = ((endings.recruited || 0) / n) * 100;
@@ -868,10 +951,14 @@ function runStrategy(strat) {
   console.log(`  差事與工作: 平均每局小遊戲 ${avgMicros.toFixed(2)} 次 · 過期差事 ${avgExpired.toFixed(2)} 個 · 平均總收入 $${Math.round(avgIncome)}`);
   console.log(`  水位與搬遷: 平均每局淹水 ${avgFloodNights.toFixed(2)} 晚 · 被水帶走 ${avgFloodCards.toFixed(2)} 張卡 · 失去住所 ${pct(lostHomeRuns)} · 平均搬遷 ${avgMoves.toFixed(2)} 次`);
   console.log(`  出國與故事線: 平均每局出國 ${avgTrips.toFixed(2)} 次 · 回答 ${avgChapters.toFixed(2)} 章角色線 · 極端選項 ${avgExtremes.toFixed(2)} 個 · 發生反轉 ${avgReversals.toFixed(2)} 次 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
-  const formLine = FORM_KEYS
+  const structLine = STRUCT_KEYS
     .map((f) => `${f}:${totalPlays ? Math.round((formTotals[f] / totalPlays) * 100) : 0}%`)
     .join(' ');
-  console.log(`  配色分佈: ${formLine}`);
+  const ratioLine = SNOW_NIGHTS
+    .map((k) => `N${k}=${ratioMed[k]}`)
+    .join(' · ');
+  console.log(`  結構分佈: ${structLine}`);
+  console.log(`  總分÷目標中位數: ${ratioLine}`);
 
   return {
     name: strat.name,
@@ -883,6 +970,8 @@ function runStrategy(strat) {
     soulFail: pct(lostRuns.soul),
     medObj: medObjects,
     estMin: medEstMin + 'm',
+    structLine,
+    ratioLine,
   };
 }
 

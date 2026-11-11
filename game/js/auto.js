@@ -173,6 +173,7 @@
     s.stats.autoDone = (s.stats.autoDone || 0) + 1;
     const rep = R.applyMicro(s, kind, res);
     if (s.mode === 'rounds') {
+      if (IE.Rounds && IE.Rounds.normalizeForms) IE.Rounds.normalizeForms(s, rep);
       if (IE.Flood && IE.Flood.autoPick) IE.Flood.autoPick(s);
       if (IE.Cards) IE.Cards.autoPutDown(s);
     }

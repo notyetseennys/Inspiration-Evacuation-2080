@@ -1029,8 +1029,21 @@ const URL = 'http://localhost:' + PORT + '/';
     }
 
     // 19b. 完成第 2 晚與市集，進入第 3 晚（本身已是外星評審）：不重複出現 .rd-boss-ahead
-    if (!(await page.$('#ctable .ct-end'))) {
-      await page.click('#ctable [data-ct="leave"]');
+    // WO-16-09 §3：四筆用完（或沒有可下的素材）才可以收工，不能只下一筆就按 [data-ct="leave"]
+    for (let remTurn = 0; remTurn < 6; remTurn++) {
+      if (await page.$('#ctable .ct-end')) break;
+      if (await page.$('#ctable [data-ct="leave"]:not([hidden])')) {
+        await page.click('#ctable [data-ct="leave"]');
+        break;
+      }
+      const nextUids = await page.evaluate(() => {
+        const b = window.__IE.Create.bestPlay(window.__IE.Game.state);
+        return b ? b.uids : [];
+      });
+      if (!nextUids.length) break;
+      for (const u of nextUids) await page.click('#ctable .ct-hand .cc[data-uid="' + u + '"]');
+      await page.click('#ctable .ct-play');
+      await page.waitForFunction(() => !!document.querySelector('#ctable .ct-end') || !window.__IE.Craft.isBusy(), { timeout: 15000 });
     }
     await page.waitForSelector('#ctable .ct-end [data-end="shop"]', { timeout: 15000 });
     await page.click('#ctable .ct-end [data-end="shop"]');
