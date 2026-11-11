@@ -859,6 +859,53 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('按繼續進入：' + r2Title);
 
+    // WO-16-03：用差事開一次 label，中途觸發抗議照片兩難，結算畫面顯示 .mg-stance
+    await page.evaluate(() => {
+      const s = window.__IE.Game.state;
+      s.gigs = [{ micro: 'label', from: 'round', night: s.night }];
+      s.offer = null;
+      window.__IE.Game.roundsGo();
+    });
+    await page.waitForSelector('.rd-day .rd-card[data-card="label"]');
+    await page.click('.rd-day .rd-card[data-card="label"]');
+    await page.waitForSelector('#modal [data-do="byhand"]');
+    await page.click('#modal [data-do="byhand"]');
+    await page.waitForFunction(() => !!(window.__IE.Game.micro && window.__IE.Game.micro.kind === 'label'));
+    await page.evaluate(() => {
+      const m = window.__IE.Game.micro;
+      for (let i = 0; i < 600 && !(m._st.item && m._st.item.protest && m._st.item.y >= 24); i++) {
+        m.update(0.2);
+        if (m._st.item && !m._st.item.protest && m._st.item.y >= 24) m.control('yes', true);
+      }
+    });
+    await page.waitForSelector('#panel [data-ctrl="pass"]:not([hidden])');
+    await page.click('#panel [data-ctrl="pass"]');
+    await page.evaluate(() => {
+      const m = window.__IE.Game.micro;
+      for (let i = 0; i < 600 && window.__IE.Game.micro === m; i++) {
+        m.update(0.25);
+        if (m._st.phase === 'play' && m._st.item && m._st.item.y >= 24) m.control('yes', true);
+      }
+    });
+    await page.waitForSelector('#modal .mg-stance');
+    await scanMoney('差事 label 結算（.mg-stance）', ['#modal'], 0);
+    const mgStanceCheck = await page.evaluate(() => {
+      const D = window.__IE.DATA;
+      const el = document.querySelector('#modal .mg-stance');
+      const txt = el ? el.textContent : '';
+      return {
+        hasCareCls: !!(el && el.classList.contains('s-care')),
+        hasHead: !!(D.STANCE_TEXT && txt.includes(D.STANCE_TEXT.care)),
+        hasLine: !!(D.STANCE && D.STANCE.label && txt.includes(D.STANCE.label.lines.care)),
+        hasCard: !!(D.STANCE && D.STANCE.label && txt.includes(D.STANCE.label.care.name)),
+      };
+    });
+    if (!mgStanceCheck.hasCareCls || !mgStanceCheck.hasHead || !mgStanceCheck.hasLine || !mgStanceCheck.hasCard) {
+      await fail('差事 label 結算畫面 .mg-stance 檢查不通過：' + JSON.stringify(mgStanceCheck));
+    }
+    await page.evaluate(() => { window.__IE.UI.closeModal(); });
+    ok('差事開 label：抗議兩難「跳過」掣正常，結算畫面有 .mg-stance.s-care、公文評語與立場卡');
+
     // WO-15-13 (7) & (3)：第 2 輪不藏朋友，進入第 2 輪篩選日（朋友被收藏），按繼續到第 3 輪第 1 晚觸發 .rd-reversal 與 .rd-fate
     const r2Npc = await page.evaluate(() => {
       const s = window.__IE.Game.state;
