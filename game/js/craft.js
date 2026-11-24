@@ -15,8 +15,107 @@
   // 不顯示「這手牌可以」的推薦、預計得分、「這一筆足夠」、「差一張」、改稿追的機會和「配得出」的配色；
   // 只保留選牌時亮出的配色名稱和基本籌碼 × 倍率，分數在下筆之後的演出裡揭曉。經典模式照舊。
   const explore = () => !!(st && st.s && IE.Rounds && IE.Rounds.on(st.s));
+  const isDeskMode = () => !!(st && st.isDesk);
   const $ = (sel) => root.querySelector(sel);
   const ctCash = (str) => (IE.Rounds && IE.Rounds.cashText && st && st.s ? IE.Rounds.cashText(st.s, str) : str);
+
+  // 五輪模式創作桌手牌卡（.dk-card.cc）：卡面為圖（無美術包時退回情緒色漸層），下方為名字、情緒標籤與星級
+  function dkCardEl(s, c, o) {
+    o = o || {};
+    const D_ = D();
+    const SR = IE.Stages ? IE.Stages.scoring(s) : null;
+    const dark = s.session && s.session.stage && s.session.stage.rules.some((id) => IE.Stages.BOSS[id].ui === 'blackout') && !o.sel;
+    if (dark) {
+      return '<button type="button" class="dk-card cc dark" data-uid="' + c.uid + '">'
+        + '<span class="dk-face"></span>'
+        + '<span class="dk-card-body"><span class="dk-name">？？？</span>'
+        + '<span class="dk-meta"><span class="dk-tags-row"><span class="dk-tag">停電</span></span><span class="dk-stars">?</span></span></span></button>';
+    }
+    const off = C().forbidden(s, c);
+    const blocked = SR && !off && SR.blocked(c);
+    const medKey = D_.mediumOf(c);
+    const med = D_.MEDIA[medKey];
+    const isForeign = !!(c.origin && c.origin !== 'home');
+    const val = C().cardValue(s, c);
+    const starN = C().starOf(c);
+    const t0 = c.tags[0];
+    const t1 = c.tags[1] || t0;
+    const m1 = (t0 && D_.TAGS[t0] && D_.TAGS[t0].color) || '#37c3d6';
+    const m2 = (t1 && D_.TAGS[t1] && D_.TAGS[t1].color) || m1;
+    const art = (IE.Desk && IE.Desk.artOf) ? IE.Desk.artOf(c) : null;
+    const hasArt = !!(D_.ART && D_.ART.a && art && D_.ART.a[art.face] && IE.NightScene && !(st && st.artFailed));
+    const faceImg = hasArt
+      ? '<img class="dk-face-im' + (art.flip ? ' flip' : '') + '" src="' + esc(IE.NightScene.base() + art.face + '.webp') + '" alt="" draggable="false">'
+      : '';
+    const ord = o.sel && o.pos >= 0 ? '<span class="dk-ord num">' + (o.pos + 1) + '</span>' : '';
+    const tags = c.tags.slice(0, 2).map((t) => '<span class="dk-tag tag-' + t + '" style="--c:' + D_.TAGS[t].color + '">' + esc(D_.TAGS[t].name) + '</span>').join('');
+    const titleTip = off
+      ? (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用')
+      : (blocked ? '外星評審：這張素材不計分' : (c.name + '（籌碼 ' + val + '・' + med.full + '）'));
+    return '<button type="button" class="dk-card cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '')
+      + (c.rarity ? ' r-' + c.rarity : '') + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '')
+      + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '" title="' + esc(titleTip) + '">'
+      + '<span class="dk-face" style="--m1:' + m1 + ';--m2:' + m2 + '">' + ord + faceImg
+      + '<span class="dk-med-dot" style="--c:' + med.color + '">' + esc(med.name) + '</span></span>'
+      + '<span class="dk-card-body">'
+      + '<span class="dk-name">' + esc(c.name) + '</span>'
+      + '<span class="dk-meta"><span class="dk-tags-row">' + tags + '</span>'
+      + '<span class="dk-stars s' + starN + '">' + '★'.repeat(starN) + '</span></span>'
+      + '</span></button>';
+  }
+
+  function wireFaceImgFallback(container) {
+    if (!container) return;
+    container.querySelectorAll('img.dk-face-im').forEach((im) => {
+      im.addEventListener('error', () => { im.remove(); }, { once: true });
+    });
+  }
+
+  function buildPaintRecord(s, ses, title) {
+    const vp = (IE.NightScene && IE.NightScene.plan) ? IE.NightScene.plan(s) : null;
+    const round = (IE.Rounds && IE.Rounds.roundOf) ? IE.Rounds.roundOf(s) : Math.max(1, Math.ceil((s.night || 1) / 3));
+    const strokes = (ses && Array.isArray(ses.paintStrokes)) ? ses.paintStrokes.filter(Boolean).slice(0, 4) : [];
+    return {
+      seed: vp ? vp.seed : ((s.seed || 1) * 31 + round),
+      round,
+      stage: vp ? vp.stage : ((IE.Flood && IE.Flood.stage) ? IE.Flood.stage(s) : 'dry'),
+      flood: vp ? vp.flood : 0,
+      cold: vp ? vp.cold : (s.season === 'cold'),
+      rain: vp ? vp.rain : false,
+      pier: vp ? vp.pier : 'np-stage-pier-1',
+      title: title || '',
+      strokes,
+    };
+  }
+
+  function attachPaintToTonightGallery(s, ses, title) {
+    if (!ses || !Array.isArray(ses.log) || !ses.log.length) return null;
+    const rec = buildPaintRecord(s, ses, title);
+    ses.log.forEach((entry) => {
+      if (entry && entry.art) entry.art.paint = Object.assign({}, rec, { strokes: rec.strokes.slice() });
+    });
+    return rec;
+  }
+
+  function activateSvgFallback(artItem) {
+    if (!st || !root) return;
+    st.artFailed = true;
+    const cv = root.querySelector('.dk-canvas canvas.dk-cv');
+    const fb = root.querySelector('.dk-canvas .dk-svg-fallback');
+    if (cv) cv.style.opacity = '0';
+    if (fb && IE.Artwork) {
+      fb.hidden = false;
+      const s = st.s;
+      const log = (s && s.session && s.session.log) || [];
+      const last = artItem || (log.length && log[log.length - 1].art) || null;
+      fb.innerHTML = last
+        ? IE.Artwork.svg(last.form, last.pal, last.seed)
+        : IE.Artwork.svg('single', ['neon', 'water'], (s && s.seed) || 1);
+      const svgEl = fb.querySelector('svg');
+      if (svgEl) svgEl.setAttribute('aria-hidden', 'true');
+    }
+    root.querySelectorAll('img.dk-face-im').forEach((im) => im.remove());
+  }
 
   // ---------- 素材卡 ----------
   function cardEl(s, c, o) {
@@ -173,55 +272,125 @@
     if (needTut) meta.craftTutorial = true;
     st = { s, onDone, sel: [], busy: false, speed: Number(store.get('ie2080.speed')) || 1, sortBy: store.get('ie2080.sort') || 'tag',
       fast: false, best: Math.max(s.stats.bestPlay || 0, (IE.Game.meta && IE.Game.meta.bestPlay) || 0), sigStart: R().signal(s), chipN: 0,
-      tutStep: needTut ? 0 : -1 };
+      tutStep: needTut ? 0 : -1, isDesk: isRounds, moreOpen: false, painter: null, workPainter: null,
+      artFailed: !(D().ART && D().ART.a && IE.NightScene), playingUids: null };
     // 計分演出期間，建議和標籤列淡出（手牌已經變了）
     let busy = false;
     Object.defineProperty(st, 'busy', { get: () => busy, set: (v) => { busy = v; if (root) root.classList.toggle('ct-busy', !!v); } });
     root = document.createElement('div');
     root.id = 'ctable';
-    root.className = 'ctable';
+    root.className = isRounds ? 'ctable dk-mode' : 'ctable';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
-    root.innerHTML = '<div class="ct-scene-bg" aria-hidden="true"></div><canvas class="ct-fx"></canvas><div class="ct-inner">'
-      + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
-      + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
-      + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
-      // 版面參考《小丑牌》：左欄是關卡、計分板、色輪和配色表；主欄上方是物件和工具，下面是舞台、建議和手牌
-      + '<div class="ct-body"><aside class="ct-side">'
-      + '<div class="ct-stagebar" hidden></div>'
-      + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
-      + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
-      + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
-      + '<p class="ct-est"></p>'
-      + '<div class="ct-wheel"' + (isRounds ? ' hidden' : '') + ' aria-live="polite"></div>'
-      + '<p class="ct-hint"></p>'
-      + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>' + (isRounds ? '結構表' : '配色表<small>● 這手牌配得出</small>') + '</summary><ol class="ct-flist"></ol></details>'
-      + '</aside><div class="ct-main">'
-      + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
-      + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
-      + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-works" aria-label="今晚的作品"></div><div class="ct-tags"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
-      + '<div class="ct-sugg" aria-live="polite"></div>'
-      + '<div class="ct-suits"></div>'
-      + '<section class="ct-hand"></section>'
-      + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
-      + '<button type="button" class="btn ct-discard" data-ct="discard">改稿</button>'
-      + '<button type="button" class="btn primary big ct-play" data-ct="play">下筆</button></footer>'
-      + '<p class="ct-counts"></p></div></div></div>';
+    if (isRounds) {
+      root.innerHTML = '<canvas class="ct-fx"></canvas>'
+        + '<div class="dk-shell ct-inner">'
+        + '<div class="dk-left">'
+        + '<div class="dk-canvas">'
+        + '<canvas class="dk-cv" width="960" height="600"></canvas>'
+        + '<div class="dk-svg-fallback" hidden></div>'
+        + '<div class="dk-tags ct-tags"></div>'
+        + '<div class="dk-total ct-total num" hidden></div>'
+        + '<div class="dk-obj-flash" aria-live="polite"></div>'
+        + '</div>'
+        + '<div class="dk-layer-hint"></div>'
+        + '</div>'
+        + '<div class="dk-right">'
+        + '<section class="dk-score">'
+        + '<div class="dk-score-top">'
+        + '<div class="ct-goal night"><span class="lbl">今晚目標</span><div class="bar"><i></i><em style="display:none"></em></div><b class="num ct-goal-n"></b></div>'
+        + '<div class="dk-dots" aria-hidden="true"></div>'
+        + '<span class="dk-stamp" hidden>達標</span>'
+        + '</div>'
+        + '<div class="dk-rule"><span class="dk-venue ct-scene-stage" aria-hidden="true"></span><span class="dk-rule-txt"></span></div>'
+        + '<span class="ct-night" hidden><b class="num">0</b></span>'
+        + '</section>'
+        + '<section class="dk-row"></section>'
+        + '<section class="dk-preview">'
+        + '<div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
+        + '<div class="dk-pv-notes"></div>'
+        + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
+        + '</section>'
+        + '<section class="dk-hand ct-hand"></section>'
+        + '<footer class="dk-actions">'
+        + '<div class="dk-main-acts ct-actions">'
+        + '<button type="button" class="btn dk-discard ct-discard" data-ct="discard">改稿</button>'
+        + '<button type="button" class="btn primary dk-play ct-play" data-ct="play">下筆</button>'
+        + '<button type="button" class="btn dk-more" data-ct="more" aria-expanded="false" aria-label="更多選項">⋯</button>'
+        + '</div>'
+        + '<button type="button" class="btn dk-leave" data-ct="leave" hidden>離開</button>'
+        + '</footer>'
+        + '</div>'
+        + '<div class="dk-sheet-bg" data-ct="close-more" hidden></div>'
+        + '<aside class="dk-sheet" role="dialog" aria-labelledby="dk-sheet-title" hidden>'
+        + '<div class="dk-sheet-head"><h2 id="dk-sheet-title">創作工具與收藏</h2><button type="button" class="btn dk-sheet-close" data-ct="close-more">收起</button></div>'
+        + '<div class="dk-sheet-nav">'
+        + '<button type="button" class="btn" data-ct="deck">牌庫</button>'
+        + '<button type="button" class="btn" data-ct="codex">圖鑑</button>'
+        + '<button type="button" class="btn" data-ct="sort">排序</button>'
+        + '<button type="button" class="btn" data-ct="speed">速度</button>'
+        + '</div>'
+        + '<section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section>'
+        + '<p class="ct-info"></p><p class="ct-counts"></p>'
+        + '</aside>'
+        + '</div>';
+    } else {
+      root.innerHTML = '<div class="ct-scene-bg" aria-hidden="true"></div><canvas class="ct-fx"></canvas><div class="ct-inner">'
+        + '<header class="ct-head"><div class="ct-title"><b>創作之夜</b><span class="ct-sub"></span><span class="ct-audio-badge"></span></div>'
+        + '<div class="ct-hbtns"><button type="button" class="btn" data-ct="speed"></button><button type="button" class="btn" data-ct="deck">牌庫</button><button type="button" class="btn" data-ct="codex">圖鑑</button><button type="button" class="btn" data-ct="leave">離開</button></div></header>'
+        + '<div class="ct-goal"><span class="lbl">本季訊號</span><div class="bar"><i></i><em></em></div><b class="num ct-goal-n"></b></div>'
+        // 版面參考《小丑牌》：左欄是關卡、計分板、色輪和配色表；主欄上方是物件和工具，下面是舞台、建議和手牌
+        + '<div class="ct-body"><aside class="ct-side">'
+        + '<div class="ct-stagebar" hidden></div>'
+        + '<section class="ct-score"><div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
+        + '<div class="ct-calc"><div class="ct-box ct-chips"><small>籌碼</small><b class="num">0</b></div><span class="x">×</span><div class="ct-box ct-mult"><small>倍率</small><b class="num">0</b></div></div>'
+        + '<div class="ct-night"><small>今晚</small><b class="num">0</b></div></section>'
+        + '<p class="ct-est"></p>'
+        + '<div class="ct-wheel" aria-live="polite"></div>'
+        + '<p class="ct-hint"></p>'
+        + '<details class="ct-forms"' + (store.get('ie2080.forms') === 'open' ? ' open' : '') + '><summary>配色表<small>● 這手牌配得出</small></summary><ol class="ct-flist"></ol></details>'
+        + '</aside><div class="ct-main">'
+        + '<aside class="ct-tut" aria-live="polite" hidden></aside>'
+        + '<div class="ct-kit"><section class="ct-objs"></section><div class="ct-schools"></div><section class="ct-tools"></section><section class="ct-abil"></section><p class="ct-info"></p></div>'
+        + '<section class="ct-stage"><div class="ct-scene-stage" aria-hidden="true"></div><div class="ct-works" aria-label="今晚的作品"></div><div class="ct-tags"></div><div class="ct-played"></div><div class="ct-total num" hidden></div></section>'
+        + '<div class="ct-sugg" aria-live="polite"></div>'
+        + '<div class="ct-suits"></div>'
+        + '<section class="ct-hand"></section>'
+        + '<footer class="ct-actions"><button type="button" class="btn" data-ct="sort">排序</button>'
+        + '<button type="button" class="btn ct-discard" data-ct="discard">改稿</button>'
+        + '<button type="button" class="btn primary big ct-play" data-ct="play">下筆</button></footer>'
+        + '<p class="ct-counts"></p></div></div></div>';
+    }
     document.body.appendChild(root);
     document.body.classList.add('ct-open');
     root.addEventListener('click', onClick);
-    root.querySelector('.ct-forms').addEventListener('toggle', (e) => store.set('ie2080.forms', e.target.open ? 'open' : 'closed'));
+    const formsEl = root.querySelector('.ct-forms');
+    if (formsEl) formsEl.addEventListener('toggle', (e) => store.set('ie2080.forms', e.target.open ? 'open' : 'closed'));
     root.addEventListener('mouseover', onHover);
     root.addEventListener('mouseout', onHover);
     root.addEventListener('pointerdown', () => { if (st && st.busy) st.fast = true; });
     fxInit();
+    if (isRounds) {
+      const cv = root.querySelector('canvas.dk-cv');
+      if (st.artFailed || !cv) {
+        activateSvgFallback();
+      } else {
+        st.painter = IE.NightScene.paint(cv, {
+          state: s,
+          onFallback: () => activateSvgFallback(),
+        });
+        if (s.session && Array.isArray(s.session.paintStrokes) && s.session.paintStrokes.length && !st.artFailed) {
+          st.painter.replay(buildPaintRecord(s, s.session));
+        }
+      }
+    }
     const stg = s.session && s.session.stage;
     if (stg && stg.kind === 'boss') A().setMode('boss', 88);
     else if (stg) A().setMode('stage', 84);
     else A().setMode('alien', 80);
     render();
-    // 窄畫面：直接捲到計分板，讓建議和手牌在第一屏出現（物件和關卡資料在上面，向上捲就看到）
-    if (window.innerWidth < 960 && st.tutStep < 0) requestAnimationFrame(() => {
+    // 窄畫面：經典模式直接捲到計分板；五輪模式本身是一屏不捲動
+    if (!isRounds && window.innerWidth < 960 && st.tutStep < 0) requestAnimationFrame(() => {
       const sc = root && $('.ct-score');
       if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
     });
@@ -231,6 +400,8 @@
   }
   function close(result) {
     fxStop();
+    if (st && st.painter) { st.painter.stop(); st.painter = null; }
+    if (st && st.workPainter) { st.workPainter.stop(); st.workPainter = null; }
     if (root) { root.removeEventListener('click', onClick); root.remove(); }
     document.body.classList.remove('ct-open');
     root = null;
@@ -361,7 +532,199 @@
       box._lastHtml = html;
     }
   }
+  const ROLE_LABELS = { qi: '起', cheng: '承', zhuan: '轉', he: '合', zhuanhe: '轉合' };
+  const LAYER_HINTS = [
+    '第一筆：天空和遠景',
+    '第二筆：海上的建築',
+    '第三筆：碼頭上的人和事',
+    '第四筆：前景收束',
+  ];
+
+  function syncMoreSheet(focusMode) {
+    if (!root || !st || !isDeskMode()) return;
+    const openFlag = !!st.moreOpen;
+    const sheet = $('.dk-sheet');
+    const bg = $('.dk-sheet-bg');
+    const moreBtn = $('[data-ct="more"]');
+    const leftEl = $('.dk-left');
+    const rightEl = $('.dk-right');
+    if (sheet) sheet.hidden = !openFlag;
+    if (bg) bg.hidden = !openFlag;
+    if (moreBtn) moreBtn.setAttribute('aria-expanded', String(openFlag));
+    if (leftEl && 'inert' in leftEl) leftEl.inert = openFlag;
+    if (rightEl && 'inert' in rightEl) rightEl.inert = openFlag;
+    if (focusMode === 'open' && sheet) {
+      const closeBtn = sheet.querySelector('.dk-sheet-close');
+      if (closeBtn) closeBtn.focus({ preventScroll: true });
+    } else if (focusMode === 'close' && moreBtn) {
+      moreBtn.focus({ preventScroll: true });
+    }
+  }
+
+  function renderDeskRow(uids, pv) {
+    if (!root || !st) return;
+    const rowEl = $('.dk-row');
+    if (!rowEl) return;
+    const s = st.s;
+    const D_ = D();
+    const cards = (uids || []).map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    if (!cards.length) {
+      rowEl.innerHTML = '<span class="dk-row-empty">按次序點選手牌排上稿紙（起 → 承／轉 → 合）</span>';
+      return;
+    }
+    const scoring = (pv && pv.scoring) || [];
+    const roles = (pv && pv.roles) || [];
+    const links = (pv && pv.links) || [];
+    const parts = [];
+    cards.forEach((c, i) => {
+      if (i > 0) {
+        const rawK = links[i - 1] || (IE.Desk ? IE.Desk.rel(cards[i - 1], c) : 'duan');
+        const clsK = rawK === 'fix' ? 'same is-fix' : rawK;
+        const lbl = (IE.Desk && IE.Desk.LINK_NAME && IE.Desk.LINK_NAME[rawK]) || (rawK === 'zhuan' ? '轉' : rawK === 'duan' ? '斷' : '承');
+        parts.push('<span class="dk-link k-' + clsK + '" data-link-pos="' + (i - 1) + '">' + esc(lbl) + '</span>');
+      }
+      const ri = scoring.indexOf(c.uid);
+      const inRun = ri >= 0;
+      const roleKey = inRun ? roles[ri] : '';
+      const roleTxt = inRun ? (ROLE_LABELS[roleKey] || '承') : '不計';
+      const t0 = c.tags[0];
+      const t1 = c.tags[1] || t0;
+      const m1 = (t0 && D_.TAGS[t0] && D_.TAGS[t0].color) || '#37c3d6';
+      const m2 = (t1 && D_.TAGS[t1] && D_.TAGS[t1].color) || m1;
+      parts.push('<button type="button" class="dk-slot ' + (inRun ? 'in-run' : 'is-noise') + '" data-row-uid="' + c.uid
+        + '" style="--m1:' + m1 + ';--m2:' + m2 + '" aria-label="取消選取 ' + esc(c.name) + '（' + esc(roleTxt) + '）">'
+        + '<span class="dk-slot-role">' + esc(roleTxt) + '</span>'
+        + '<span class="dk-slot-name">' + esc(c.name) + '</span>'
+        + '</button>');
+    });
+    if (pv && pv.he) {
+      parts.push('<span class="dk-he">合 ×2</span>');
+    }
+    rowEl.innerHTML = parts.join('');
+  }
+
+  function renderDesk() {
+    const s = st.s, ses = s.session;
+    if (!root || !ses) return;
+    const D_ = D();
+    const k = R().kpi(s);
+    const g = ses.stage;
+    root.classList.toggle('has-stage', !!g);
+
+    const venueBox = $('.dk-venue');
+    if (venueBox && IE.img) {
+      const stageImgKey = g ? (g.kind === 'boss' ? 'stage-ufo' : g.kind === 'big' ? 'stage-gallery' : 'stage-hall') : 'stage-desk';
+      const src = IE.img(stageImgKey);
+      const vhtml = src ? '<img class="px dk-venue-img" src="' + esc(src) + '" alt="" onerror="this.hidden=true">' : '';
+      if (venueBox._lastHtml !== vhtml) {
+        venueBox.innerHTML = vhtml;
+        venueBox._lastHtml = vhtml;
+      }
+    }
+
+    const kindName = (D_.ROUND_TEXT && D_.ROUND_TEXT.nightKinds && IE.Rounds ? D_.ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)] : '') || '創作';
+    const ruleEl = $('.dk-rule-txt');
+    if (ruleEl) {
+      let ruleHtml = '第 ' + s.night + '／15 晚・' + esc(kindName);
+      if (g && g.rules && g.rules.length && IE.Stages) {
+        const rtxt = g.rules.map((id) => {
+          const b = IE.Stages.BOSS[id];
+          return b ? '<b>' + esc(b.name) + '</b>：' + esc(bossDesc(s, b)) : '';
+        }).filter(Boolean).join('；');
+        if (rtxt) ruleHtml += '｜' + rtxt;
+      } else {
+        ruleHtml += '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + esc(k.name);
+      }
+      ruleEl.innerHTML = ctCash(ruleHtml);
+    }
+
+    const doneStrokes = ses.log ? ses.log.length : 0;
+    const dotsEl = $('.dk-dots');
+    if (dotsEl) {
+      const dots = [];
+      for (let i = 0; i < 4; i++) {
+        const cls = i < doneStrokes ? ' done' : (i === doneStrokes && ses.plays > 0 ? ' now' : '');
+        dots.push('<i class="dk-dot' + cls + '"></i>');
+      }
+      dotsEl.innerHTML = dots.join('');
+    }
+
+    const target = (g && g.target) || (IE.Rounds && IE.Rounds.target(s, s.night)) || 1;
+    const sc = IE.Stages ? IE.Stages.stageScore(ses) : ses.total;
+    const stampEl = $('.dk-stamp');
+    if (stampEl) stampEl.hidden = !(sc >= target);
+
+    renderGoal();
+    $('.ct-night b').textContent = fmt(ses.total);
+
+    const hintEl = $('.dk-layer-hint');
+    if (hintEl) {
+      hintEl.textContent = LAYER_HINTS[doneStrokes] || '四筆已齊・可收工或加演';
+    }
+
+    const activeUids = st.playingUids || st.sel;
+    const pv = activeUids.length ? C().preview(s, activeUids) : null;
+    if (!st.busy) {
+      renderDeskRow(activeUids, pv);
+      if (!pv) {
+        $('.ct-form .fn').textContent = doneStrokes ? '再下一筆' : '選擇素材';
+        $('.ct-form .fl').textContent = '';
+        setBoxes(0, 0, 'preview');
+        $('.dk-pv-notes').innerHTML = '';
+      } else {
+        $('.ct-form .fn').textContent = pv.name;
+        $('.ct-form .fl').textContent = 'Lv.' + pv.level;
+        setBoxes(pv.chips, pv.mult, 'preview');
+        const notes = [];
+        if (pv.subject && pv.subject.bonus && pv.subject.name) {
+          notes.push('<span class="dk-pv-pill">題材：' + esc(pv.subject.name) + '</span>');
+        }
+        if (pv.ai < 1) {
+          notes.push('<span class="dk-pv-pill bad">AI ×' + pv.ai + '</span>');
+        }
+        if (pv.blocked) {
+          notes.push('<span class="dk-pv-pill bad">' + pv.blocked + ' 張不計分</span>');
+        }
+        $('.dk-pv-notes').innerHTML = notes.join('');
+      }
+
+      const cards = sortedHand();
+      const handEl = $('.dk-hand');
+      handEl.dataset.cols = cards.length > 10 ? '6' : cards.length > 8 ? '5' : '4';
+      handEl.innerHTML = cards.map((c) => dkCardEl(s, c, { sel: st.sel.includes(c.uid), pos: st.sel.indexOf(c.uid) })).join('');
+      wireFaceImgFallback(handEl);
+      if (pv) {
+        handEl.querySelectorAll('.dk-card').forEach((b) => {
+          b.classList.toggle('scoring', pv.scoring.includes(Number(b.dataset.uid)));
+        });
+      }
+    }
+
+    const pb = $('.ct-play'), db = $('.ct-discard');
+    const finishReady = !!(IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s));
+    pb.textContent = ses.plays > 0 && !finishReady ? '下筆（' + ses.plays + '）' : '完成今晚';
+    db.textContent = '改稿（' + ses.discards + '）';
+    pb.disabled = st.busy || (ses.plays > 0 && !finishReady && !st.sel.length);
+    db.disabled = st.busy || !st.sel.length || ses.discards <= 0 || (D_.BACKGROUNDS[s.bg].perk.noEarlyDiscard && !doneStrokes);
+    $('[data-ct="leave"]').hidden = !(IE.Rounds && IE.Rounds.canFinish(s));
+
+    syncMoreSheet(false);
+    const slots = [];
+    for (let i = 0; i < s.objSlots; i++) slots.push(s.objects[i] ? objTile(s.objects[i], i) : '<div class="ct-obj empty">空位</div>');
+    $('.ct-objs').innerHTML = ctCash(slots.join(''));
+    $('.ct-schools').innerHTML = ctCash(schoolsHtml(s));
+    renderTools();
+    renderAbility();
+    $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
+    $('[data-ct="speed"]').textContent = st.speed >= 4 ? '速度：跳過' : '速度 ×' + st.speed;
+    $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
+  }
+
   function render() {
+    if (isDeskMode()) {
+      renderDesk();
+      return;
+    }
     const s = st.s, ses = s.session;
     const k = R().kpi(s);
     if (IE.Rounds && IE.Rounds.on(s)) {
@@ -454,6 +817,14 @@
   }
   function finishAbility(r) {
     $('.ct-info').innerHTML = ctCash(esc(r.msg));
+    if (isDeskMode() && r.ok && st.s && st.s.session) {
+      if (Array.isArray(st.s.session.paintStrokes) && st.s.session.paintStrokes.length > st.s.session.log.length) {
+        st.s.session.paintStrokes.length = st.s.session.log.length;
+      }
+      if (st.painter && !st.artFailed) {
+        st.painter.replay(buildPaintRecord(st.s, st.s.session));
+      }
+    }
     if (r.ok) persist();
     if (r.ok) { A().sfx('pickup'); burst($('.ct-abil'), 24, 0.8, '#ffd36b'); st.sel = []; } else A().sfx('wrong');
     render();
@@ -473,9 +844,31 @@
     const uids = ses.lastUids || [];
     if (!uids.length) return;
     st.busy = true; st.fast = false; st.chipN = 0;
+    if (isDeskMode()) { st.moreOpen = false; syncMoreSheet(false); }
     const r = C().useAbility(s, 'encore');
     if (!r.ok) { st.busy = false; return finishAbility(r); }
     persist();
+    if (isDeskMode()) {
+      attachPaintToTonightGallery(s, s.session, '');
+      st.playingUids = uids.slice();
+      renderDeskRow(st.playingUids, C().preview(s, st.playingUids));
+      $('.ct-tags').innerHTML = '';
+      $('.dk-obj-flash').innerHTML = '';
+      tag('安哥！觀眾要求再唱一次', 'new');
+      A().fx('xmult', 3);
+      await wait(340);
+      await animateDesk(r.res, null);
+      await showTotal(r.res);
+      $('.ct-tags').innerHTML = '';
+      $('.dk-obj-flash').innerHTML = '';
+      $('.ct-total').hidden = true;
+      st.playingUids = null;
+      if (r.res && r.res.justPassed) await showCleared(s.session);
+      st.busy = false;
+      render();
+      if (IE.Rounds.canFinish(s) && !canStillAct(s)) await endNight();
+      return;
+    }
     $('.ct-tags').innerHTML = '';
     $('.ct-played').innerHTML = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean).map((c) => cardEl(s, c, { stage: true, dim: !r.res.scoring.includes(c.uid) })).join('');
     tag('安哥！觀眾要求再唱一次', 'new');
@@ -823,6 +1216,7 @@
   // ---------- 輸入 ----------
   function onClick(e) {
     if (!st) return;
+    if (e.target.closest('[data-do="cardback"]')) return;
     const tutGo = e.target.closest('[data-tut-go]');
     if (tutGo) {
       st.tutStep = Number(tutGo.dataset.tutGo);
@@ -840,6 +1234,8 @@
       renderTutorial();
       return;
     }
+    const rowSlot = e.target.closest('.dk-slot[data-row-uid]');
+    if (rowSlot && !st.busy) { toggle(Number(rowSlot.dataset.rowUid)); return; }
     const card = e.target.closest('.ct-hand .cc');
     if (card && !st.busy) { toggle(Number(card.dataset.uid)); return; }
     const gd = e.target.closest('[data-sg], [data-chase]');
@@ -862,12 +1258,22 @@
     if (!b || b.disabled) return;
     A().sfx('click');
     const k = b.dataset.ct;
+    if (k === 'more') {
+      st.moreOpen = !st.moreOpen;
+      syncMoreSheet(st.moreOpen ? 'open' : 'close');
+      return;
+    }
+    if (k === 'close-more') {
+      st.moreOpen = false;
+      syncMoreSheet('close');
+      return;
+    }
     if (k === 'play') doPlay();
     else if (k === 'discard') doDiscard();
     else if (k === 'sort') { nextSort(); store.set('ie2080.sort', st.sortBy); render(); }
     else if (k === 'speed') { st.speed = st.speed >= 4 ? 1 : st.speed * 2; store.set('ie2080.speed', String(st.speed)); render(); }
-    else if (k === 'deck') openDeck();
-    else if (k === 'codex') UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} });
+    else if (k === 'deck') { if (st.moreOpen) { st.moreOpen = false; syncMoreSheet(false); } openDeck(); }
+    else if (k === 'codex') { if (st.moreOpen) { st.moreOpen = false; syncMoreSheet(false); } UI().pushModal(codexHtml(st.s, IE.Game.meta || {}), { close: UI().closeModal }, { dismiss: () => {} }); }
     else if (k === 'leave') leave();
   }
   // 排序：標籤 → 媒材 → 籌碼
@@ -875,10 +1281,16 @@
   function nextSort() { st.sortBy = (SORTS[st.sortBy] || SORTS.value)[0]; }
   const s0 = () => st.s;
   function toggle(uid) {
-    const SR = IE.Stages ? IE.Stages.scoring(st.s) : null;
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
-    else if (c && C().forbidden(s0(), c)) { $('.ct-info').textContent = c.guilt && D().BACKGROUNDS[s0().bg].perk.noGuilt ? '你沒有良知：「愧疚」不能下筆。' : '外星評審：這張素材不能用。'; return; }
+    else if (c && C().forbidden(s0(), c)) {
+      const msg = c.guilt && D().BACKGROUNDS[s0().bg].perk.noGuilt ? '你沒有良知：「愧疚」不能下筆。' : '外星評審：這張素材不能用。';
+      $('.ct-info').textContent = msg;
+      const h = isDeskMode() && $('.dk-layer-hint');
+      if (h) h.textContent = msg;
+      A().sfx('wrong');
+      return;
+    }
     else if (st.sel.length < C().maxCards(s0())) {
       st.sel.push(uid);
       if (c && A().medium) {
@@ -888,12 +1300,23 @@
       }
       if (st.tutStep === 0 && st.sel.length > 0) st.tutStep = 1;
     }
-    else { $('.ct-info').textContent = '每次最多下筆 ' + C().maxCards(s0()) + ' 張。'; return; }
+    else {
+      const msg = '每次最多下筆 ' + C().maxCards(s0()) + ' 張。';
+      $('.ct-info').textContent = msg;
+      const h = isDeskMode() && $('.dk-layer-hint');
+      if (h) h.textContent = msg;
+      return;
+    }
     A().fx('card', st.sel.length * 2);
     render();
   }
   function key(k) {
     if (!st || st.busy) { if (st) st.fast = true; return; }
+    if (k === 'Escape' && isDeskMode() && st.moreOpen) {
+      st.moreOpen = false;
+      syncMoreSheet('close');
+      return;
+    }
     if (/^[1-9]$/.test(k)) { const c = sortedHand()[Number(k) - 1]; if (c) toggle(c.uid); }
     else if (k === 'Enter') doPlay();
     else if (k === 'd' || k === 'D' || k === 'Backspace') doDiscard();
@@ -963,7 +1386,7 @@
   }
 
   // ---------- 演出工具 ----------
-  const speedK = () => (IE.Pixel.reducedMotion ? 4 : st.fast ? 5 : st.speed);
+  const speedK = () => (IE.Pixel.reducedMotion ? (isDeskMode() ? 12 : 4) : st.fast ? (isDeskMode() ? 12 : 5) : (isDeskMode() && st.speed >= 4 ? 14 : st.speed));
   const wait = (ms) => new Promise((r) => setTimeout(r, ms / speedK()));
   function rectOf(el) {
     const a = el.getBoundingClientRect();
@@ -1199,7 +1622,391 @@
   // ---------- 下筆 ----------
   // 最後一筆之後仍然可以用的能力（安哥、倒帶）：不要自動結束今晚
   const canStillAct = (s) => ['encore', 'rewind'].some((k) => C().ability(s) && (s.bg === 'busker' ? k === 'encore' : s.bg === 'timetraveler' && k === 'rewind') && !C().abilityState(s, k));
+
+  function flyCardToCanvas(fromEl, card, planItem) {
+    if (!root || !fromEl || IE.Pixel.reducedMotion || speedK() >= 10) return Promise.resolve();
+    const cv = root.querySelector('canvas.dk-cv');
+    if (!cv) return Promise.resolve();
+    const r0 = rectOf(fromEl);
+    const pt = (st && st.painter && planItem && planItem.at)
+      ? st.painter.screenPoint(planItem.at)
+      : rectOf(cv);
+    const D_ = D();
+    const t0 = card && card.tags && card.tags[0];
+    const t1 = (card && card.tags && card.tags[1]) || t0;
+    const m1 = (t0 && D_.TAGS[t0] && D_.TAGS[t0].color) || '#37c3d6';
+    const m2 = (t1 && D_.TAGS[t1] && D_.TAGS[t1].color) || m1;
+    const ghost = document.createElement('div');
+    ghost.className = 'dk-fly-card';
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.style.setProperty('--m1', m1);
+    ghost.style.setProperty('--m2', m2);
+    ghost.style.left = (r0.x - 34) + 'px';
+    ghost.style.top = (r0.y - 23) + 'px';
+    ghost.textContent = card ? card.name : '';
+    root.appendChild(ghost);
+    const dx = pt.x - r0.x;
+    const dy = pt.y - r0.y;
+    const dur = Math.max(80, Math.round(250 / Math.min(3, speedK())));
+    return new Promise((resolve) => {
+      const anim = ghost.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 0.96 },
+        { transform: 'translate(' + (dx * 0.55).toFixed(1) + 'px, ' + (dy * 0.55 - 18).toFixed(1) + 'px) scale(0.92)', opacity: 1, offset: 0.55 },
+        { transform: 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(0.38)', opacity: 0 },
+      ], { duration: dur, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+      const done = () => {
+        if (ghost.parentNode) ghost.remove();
+        resolve();
+      };
+      anim.onfinish = done;
+      setTimeout(done, dur + 60);
+    });
+  }
+
+  function flashDeskObj(name, valTxt, iconHtml) {
+    if (!root) return;
+    const box = $('.dk-obj-flash');
+    if (!box) return;
+    const ping = document.createElement('div');
+    ping.className = 'dk-obj-ping';
+    ping.innerHTML = (iconHtml || '') + '<span>' + esc(name) + '</span><b>' + esc(valTxt) + '</b>';
+    box.appendChild(ping);
+    while (box.children.length > 3) box.firstElementChild.remove();
+    const dur = Math.max(180, Math.round(820 / Math.min(3, speedK())));
+    if (!IE.Pixel.reducedMotion) {
+      ping.animate([
+        { transform: 'translateX(14px) scale(0.85)', opacity: 0 },
+        { transform: 'translateX(0) scale(1)', opacity: 1, offset: 0.2 },
+        { transform: 'translateX(0) scale(1)', opacity: 1, offset: 0.78 },
+        { transform: 'translateX(8px) scale(0.95)', opacity: 0 },
+      ], { duration: dur, easing: 'ease-out' });
+    }
+    setTimeout(() => { if (ping.parentNode) ping.remove(); }, dur);
+  }
+
+  async function animateDesk(res, paintPrep) {
+    const s = st.s;
+    const rowSlot = (uid) => root && root.querySelector('.dk-row .dk-slot[data-row-uid="' + uid + '"]');
+    const multEl = $('.ct-mult'), chipsEl = $('.ct-chips');
+    const drawnPlans = new Set();
+    let n = 0;
+    for (const x of res.steps) {
+      if (!root) return;
+      switch (x.t) {
+        case 'form': {
+          const fObj = C().formOf(s, x.form);
+          const isBase = x.form === 'mix' || x.form === 'single';
+          $('.ct-form .fn').textContent = fObj.name;
+          $('.ct-form .fl').textContent = 'Lv.' + x.level;
+          setBoxes(x.chips, x.mult);
+          pulse(chipsEl); pulse(multEl);
+          if (!isBase) tag(fObj.name + '・' + fObj.tag, 'form f-' + x.form);
+          A().fx(isBase ? 'chip' : 'mult', isBase ? 0 : Math.max(0, C().rankOf(s).indexOf(x.form)));
+          await wait(isBase ? 220 : 300);
+          break;
+        }
+        case 'card': {
+          const el = rowSlot(x.uid);
+          const cObj = s.cards.find((c) => c.uid === x.uid);
+          if (cObj && A().medium) {
+            const mk = D().mediumOf(cObj);
+            A().medium(mk);
+            st.lastNote = '媒材音：' + (MED_SOUND_DESC[mk] || mk);
+          }
+          if (el) el.classList.add('lit');
+          if (x.again && el) popAgain(el);
+          floatText(el || chipsEl, '+' + x.chips, 'chips');
+          setBoxes(x.C, x.M);
+          pulse(chipsEl);
+          A().fx('chip', ++n);
+          const pItem = paintPrep && paintPrep.plans && paintPrep.plans[x.uid];
+          if (pItem && !drawnPlans.has(x.uid) && st.painter && !st.artFailed) {
+            drawnPlans.add(x.uid);
+            if (cObj && cObj.tags && (cObj.tags.includes('anger') || cObj.tags.includes('rebel'))) {
+              st.painter.strike();
+            }
+            const drawMs = Math.max(40, Math.round(260 / Math.min(4, speedK())));
+            await Promise.all([
+              flyCardToCanvas(el, cObj, pItem),
+              st.painter.drawItem(pItem, drawMs),
+            ]);
+          } else {
+            bump(el, x.again ? 1.18 : 1.1);
+            await wait(x.again ? 200 : 240);
+          }
+          break;
+        }
+        case 'compound': {
+          const el = x.uid != null ? rowSlot(x.uid) : null;
+          const valTxt = x.chips ? '+' + x.chips + ' 籌碼' : x.mult ? '+' + x.mult + ' 倍率' : x.xmult ? '×' + x.xmult : '再計一次';
+          tag('「' + x.name + '・' + x.famName + '」　' + valTxt, x.xmult ? 'new' : 'recipe');
+          if (el) floatText(el, x.name + '・' + x.famName, x.xmult ? 'xmult' : x.chips ? 'chips' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(x.chips ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          await wait(230);
+          break;
+        }
+        case 'link': {
+          const lbl = x.kind === 'zhuan' ? (x.xmult ? '轉 ×' + x.xmult : '轉') : '承 +' + x.mult;
+          const nextUid = res.scoring && res.scoring[x.idx + 1 != null ? x.idx + 1 : x.idx];
+          const nextSlot = nextUid != null ? rowSlot(nextUid) : null;
+          const linkEl = nextSlot && nextSlot.previousElementSibling && nextSlot.previousElementSibling.classList.contains('dk-link')
+            ? nextSlot.previousElementSibling
+            : null;
+          if (linkEl) linkEl.classList.add('lit');
+          tag(lbl, x.xmult ? 'new' : 'recipe');
+          if (linkEl || nextSlot) floatText(linkEl || nextSlot, lbl, x.xmult ? 'xmult' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(4);
+          await wait(x.xmult ? 290 : 200);
+          break;
+        }
+        case 'media': {
+          tag(x.name + '　+' + x.mult + ' 倍率', 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('mult', ++n);
+          await wait(220);
+          break;
+        }
+        case 'subject': {
+          tag('題材「' + x.name + '」　+' + x.mult + ' 倍率', 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('mult', ++n);
+          await wait(220);
+          break;
+        }
+        case 'he': {
+          const heEl = root.querySelector('.dk-row .dk-he');
+          if (heEl) heEl.classList.add('lit');
+          tag('合 ×' + x.xmult, 'new');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('xmult', ++n);
+          shake(4);
+          if (paintPrep && paintPrep.close && st.painter && !st.artFailed) {
+            paintPrep._closed = true;
+            st.painter.glint(28);
+            await st.painter.drawItem(paintPrep.close, Math.max(40, Math.round(300 / Math.min(4, speedK()))));
+          } else {
+            await wait(280);
+          }
+          break;
+        }
+        case 'title': {
+          tag(x.name + ' ×' + x.xmult, 'legend');
+          setBoxes(x.C, x.M);
+          pulse(multEl);
+          A().fx('xmult', ++n);
+          shake(5);
+          await wait(300);
+          break;
+        }
+        case 'mod': {
+          const el = rowSlot(x.uid);
+          floatText(el || multEl, x.chips ? '+' + x.chips : x.mult ? '+' + x.mult + ' 倍率' : '×' + x.xmult, x.chips ? 'chips' : 'mult');
+          setBoxes(x.C, x.M);
+          pulse(x.chips ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          await wait(220);
+          break;
+        }
+        case 'obj': {
+          const oId = s.objects[x.slot];
+          const oDef = oId && C().objDef(s, oId);
+          const valTxt = x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips + ' 籌碼';
+          flashDeskObj(oDef ? oDef.name : '靈感物件', valTxt, oId ? IE.Icons.obj(oId, 20) : '');
+          if (x.uid != null) {
+            const targetCard = x.held ? root.querySelector('.dk-hand .dk-card[data-uid="' + x.uid + '"]') : rowSlot(x.uid);
+            if (targetCard) {
+              bump(targetCard, x.held ? 1.12 : 1.06);
+              if (x.held) {
+                burst(targetCard, 14, 0.7, '#ffd36b');
+                floatText(targetCard, x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult : '+' + x.chips, x.xmult ? 'xmult' : 'mult');
+              }
+            }
+          }
+          setBoxes(x.C, x.M);
+          pulse(x.chips && !x.mult ? chipsEl : multEl);
+          A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(4);
+          await wait(x.xmult ? 320 : 230);
+          break;
+        }
+        case 'school': {
+          const sc = D().SCHOOLS && D().SCHOOLS[x.school];
+          const valTxt = x.xmult ? '×' + x.xmult : x.mult ? '+' + x.mult + ' 倍率' : '+' + x.chips + ' 籌碼';
+          flashDeskObj(sc ? sc.name : '流派', valTxt, IE.Icons.school ? IE.Icons.school(x.school, 18) : '');
+          if (A().school) A().school(x.school);
+          setBoxes(x.C, x.M);
+          pulse(x.chips && !x.mult ? chipsEl : multEl);
+          if (!A().school) A().fx(x.xmult ? 'xmult' : 'mult', ++n);
+          if (x.xmult) shake(5);
+          await wait(x.xmult ? 340 : 240);
+          break;
+        }
+        case 'recipe':
+          tag((x.isNew ? '新組合！' : '') + x.name + '　+' + x.chips + ' 籌碼　+' + x.mult + ' 倍率' + (x.xmult ? '　×' + x.xmult : ''),
+            x.legend ? 'legend' : x.isNew ? 'new' : 'recipe');
+          setBoxes(x.C, x.M);
+          pulse(chipsEl); pulse(multEl);
+          if (x.legend) {
+            A().fx('legend');
+            shake(10);
+            burst($('.ct-tags'), 60, 1.3, '#ffd36b');
+            flash('#ffd36b');
+            await showLegendCard(x);
+          } else {
+            A().fx(x.isNew ? 'xmult' : 'mult', ++n);
+            await wait(x.isNew ? 400 : 280);
+          }
+          break;
+        case 'ai':
+          tag('AI 模仿 ×' + x.x, 'ai');
+          setBoxes(res.chips, Math.round(Number($('.ct-mult b').textContent) * x.x * 10) / 10);
+          A().sfx('wrong');
+          await wait(240);
+          break;
+        case 'blocked': {
+          const el = rowSlot(x.uid);
+          if (el) { el.classList.add('is-noise'); floatText(el, '不計分', 'bad'); wiggle(el); }
+          A().sfx('wrong');
+          await wait(220);
+          break;
+        }
+        case 'stage':
+          tag('外星評審（' + x.name + '）×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          if (x.x !== 1) shake(5);
+          await wait(280);
+          break;
+        case 'live':
+          tag(x.x >= 1 ? '直播觀眾瘋狂洗版 ×' + x.x : '直播翻車 ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          if (x.x < 1) shake(6);
+          await wait(280);
+          break;
+        case 'encore':
+          tag('安哥 ×' + x.x, 'kpi-good');
+          await wait(220);
+          break;
+        case 'world':
+          tag('世界事件 ×' + x.x, 'kpi-good');
+          await wait(220);
+          break;
+        case 'weather':
+          tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
+          A().fx('mult', 2);
+          await wait(220);
+          break;
+        case 'trip':
+          tag((x.abroad ? '異鄉之夜' : '旅行的餘韻') + ' ×' + x.x, 'kpi-good');
+          A().fx('mult', 3);
+          await wait(240);
+          break;
+        case 'kpi':
+          tag('外星 KPI ×' + x.x, x.x >= 1 ? 'kpi-good' : 'kpi-bad');
+          A().sfx(x.x >= 1 ? 'combo' : 'wrong');
+          await wait(240);
+          break;
+        case 'spark':
+          tag('× 火花 ' + x.x.toFixed(1), 'spark');
+          A().fx('burn');
+          fx && (fx.burn = Math.log10(Math.max(1, res.mult)) * 5);
+          multEl.classList.add('burning');
+          if (res.mult >= 20) multEl.classList.add('inferno');
+          shake(Math.min(8, 2 + res.mult / 6));
+          await wait(380);
+          break;
+      }
+      const M = x.M || 0;
+      if (fx && M >= 8) { fx.burn = Math.max(fx.burn, Math.log10(M) * 4); multEl.classList.add('burning'); }
+    }
+    if (paintPrep) {
+      paintPrep.list.forEach((it) => { if (it && it.step) it.step(1); });
+      if (paintPrep.close && !paintPrep._closed) paintPrep.close.step(1);
+    }
+    if (st && st.painter && !st.artFailed && s.session && s.session.plays <= 0) {
+      st.painter.finish();
+    }
+  }
+
+  async function doPlayDesk() {
+    const s = st.s, ses = s.session;
+    if (!st.busy && (ses.plays <= 0 || (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s) && !st.sel.length))) {
+      await endNight();
+      return;
+    }
+    if (st.busy || !st.sel.length || ses.plays <= 0) return;
+    st.busy = true; st.fast = false; st.chipN = 0;
+    if (st.moreOpen) { st.moreOpen = false; syncMoreSheet(false); }
+    const strokeIdx = ses.log ? ses.log.length : 0;
+    const uids = st.sel.slice();
+    st.sel = [];
+    st.playingUids = uids.slice();
+    const pv = C().preview(s, uids);
+    renderDeskRow(uids, pv);
+    const handEl = $('.dk-hand');
+    const remain = sortedHand().filter((c) => !uids.includes(c.uid));
+    handEl.dataset.cols = remain.length > 10 ? '6' : remain.length > 8 ? '5' : '4';
+    handEl.innerHTML = remain.map((c) => dkCardEl(s, c, {})).join('');
+    wireFaceImgFallback(handEl);
+    $('.ct-tags').innerHTML = '';
+    $('.dk-obj-flash').innerHTML = '';
+    $('.ct-play').disabled = true;
+    $('.ct-discard').disabled = true;
+    A().fx('card', 4);
+    await wait(160);
+    const bestBefore = st.best, stageBefore = ses.stage ? IE.Stages.stageScore(ses) : 0;
+    const res = C().play(s, uids);
+    const lastLog = ses.log && ses.log[ses.log.length - 1];
+    if (lastLog) {
+      const scoredUids = (res.scoring && res.scoring.length) ? res.scoring : uids;
+      lastLog.cardNames = scoredUids.map((u) => (s.cards.find((c) => c.uid === u) || {}).name).filter(Boolean);
+    }
+    ses.paintStrokes = ses.paintStrokes || [];
+    if (strokeIdx < 4 && IE.NightScene) {
+      ses.paintStrokes[strokeIdx] = IE.NightScene.recordStroke(s, strokeIdx, res);
+    }
+    attachPaintToTonightGallery(s, ses, '');
+    persist();
+    renderDeskRow(uids, {
+      scoring: res.scoring,
+      roles: res.roles,
+      links: res.links,
+      he: res.he,
+    });
+    const paintPrep = (!st.artFailed && st.painter && strokeIdx < 4)
+      ? st.painter.prepareStroke(strokeIdx, res, s)
+      : null;
+    await animateDesk(res, paintPrep);
+    if (st.artFailed) activateSvgFallback(res.art);
+    await showTotal(res);
+    frenzy(s, res, bestBefore, stageBefore);
+    $('.ct-tags').innerHTML = '';
+    $('.dk-obj-flash').innerHTML = '';
+    $('.ct-total').hidden = true;
+    fx && (fx.burn = 0);
+    $('.ct-mult').classList.remove('burning', 'inferno');
+    st.playingUids = null;
+    if (res && res.justPassed) await showCleared(ses);
+    st.busy = false;
+    render();
+    if (!IE.Pixel.reducedMotion && speedK() < 10) {
+      root.querySelectorAll('.dk-hand .dk-card').forEach((el, i) => {
+        el.animate([{ transform: 'translateY(14px)', opacity: 0.25 }, { transform: 'none', opacity: 1 }],
+          { duration: 180, delay: i * 18, fill: 'backwards' });
+      });
+    }
+    if (IE.Rounds.canFinish(s) && !canStillAct(s)) await endNight();
+  }
+
   async function doPlay() {
+    if (isDeskMode()) return doPlayDesk();
     const s = st.s, ses = s.session;
     if (!st.busy && (ses.plays <= 0 || (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s) && !st.sel.length))) { await endNight(); return; }
     if (st.busy || !st.sel.length || ses.plays <= 0) return;
@@ -1528,7 +2335,9 @@
     el.className = 'ct-total num' + (tier ? ' tier-' + tier : '');
     el.dataset.tier = tier === 3 ? '★ 破百萬・超新星爆發 ★' : tier === 2 ? '✦ 破十萬・訊號狂潮 ✦' : tier === 1 ? '◆ 破萬・靈感湧現 ◆' : '';
     const baseSize = Math.min(84, 30 + Math.log10(Math.max(10, res.total)) * 10);
-    const size = tier === 3 ? Math.max(baseSize, 96) : tier === 2 ? Math.max(baseSize, 84) : tier === 1 ? Math.max(baseSize, 72) : baseSize;
+    const size = isDeskMode()
+      ? Math.min(46, Math.round(24 + Math.log10(Math.max(10, res.total)) * 5.5))
+      : (tier === 3 ? Math.max(baseSize, 96) : tier === 2 ? Math.max(baseSize, 84) : tier === 1 ? Math.max(baseSize, 72) : baseSize);
     el.style.fontSize = size + 'px';
     const record = res.total > st.best;
     const steps = 18;
@@ -1579,7 +2388,14 @@
   async function doDiscard() {
     const s = st.s, ses = s.session;
     if (st.busy || !st.sel.length || ses.discards <= 0) return;
-    if (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length) { $('.ct-info').textContent = '即興：第一筆之前不准改稿。'; A().sfx('wrong'); return; }
+    if (D().BACKGROUNDS[s.bg].perk.noEarlyDiscard && !ses.log.length) {
+      const msg = '即興：第一筆之前不准改稿。';
+      $('.ct-info').textContent = msg;
+      const h = isDeskMode() && $('.dk-layer-hint');
+      if (h) h.textContent = msg;
+      A().sfx('wrong');
+      return;
+    }
     if (st.tutStep === 3) st.tutStep = 4;
     st.busy = true;
     const uids = st.sel.slice();
@@ -1646,36 +2462,94 @@
     const s = st.s;
     const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     st.busy = true;
-    renderScene(true);
+    if (isDeskMode()) {
+      if (st.moreOpen) { st.moreOpen = false; syncMoreSheet(false); }
+      if (st.painter) { st.painter.stop(); st.painter = null; }
+    } else {
+      renderScene(true);
+    }
     const before = st.sigStart;
     const res = C().finish(s);
-    persist();
     const w = res.work;
+    const paintRec = isRounds ? attachPaintToTonightGallery(s, res.session, w ? w.name : '') : null;
+    persist();
     const fresh = [...new Set(res.session.fresh)].map((id) => D().RECIPES.find((r) => r.id === id)).filter(Boolean);
     const th = R().threshold(s);
     const after = R().signal(s);
     const best = s.stats.bestWork && w && s.stats.bestWork === w;
     const panel = document.createElement('div');
-    panel.className = 'ct-end';
-    panel.innerHTML = ctCash('<div class="ct-end-card">'
-      + '<span class="mute">' + (res.session.mode === 'sketch' ? '今晚的速寫' : '今晚的作品') + '</span>'
-      + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
-      + '<div class="ct-end-score num">0</div>'
-      + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
-      + '<div class="ct-end-art">' + res.session.log.map((x, i) => (x.art && IE.Artwork
-        ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art, s)) + '</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
-        : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
-      + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
-      + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
-      + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
-      + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
-      + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
-      + (isRounds ? '' : '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>')
-      + (isRounds
-        ? '<button type="button" class="btn primary big" data-end="shop">' + esc(s.ended ? '看結局' : D().ROUND_TEXT.toShop) + '</button>'
-        : '<button type="button" class="btn primary big" data-end="done">完成</button>')
-      + '</div>');
-    root.appendChild(panel);
+    if (isRounds) {
+      panel.className = 'dk-work ct-end';
+      const lastArt = res.session.log.length ? res.session.log[res.session.log.length - 1].art : null;
+      const fallbackSvg = IE.Artwork
+        ? (lastArt ? IE.Artwork.svg(lastArt.form, lastArt.pal, lastArt.seed) : IE.Artwork.svg('single', ['neon', 'water'], s.seed || 1))
+        : '';
+      const useCanvas = !!(paintRec && !st.artFailed && D().ART && D().ART.a && IE.NightScene);
+      const stanzas = res.session.log.map((x, i) => {
+        const ps = res.session.paintStrokes && res.session.paintStrokes[i];
+        const names = (x.cardNames && x.cardNames.length)
+          ? x.cardNames
+          : ((ps && Array.isArray(ps.cards)) ? ps.cards.map((c) => c.name).filter(Boolean) : []);
+        const formName = C().formOf(s, x.form).name;
+        return '<div class="dk-stanza"><span class="dk-st-no">第 ' + (i + 1) + ' 筆・' + esc(formName) + '</span>'
+          + (names.length ? names.map((nm) => '<b>' + esc(nm) + '</b>').join('<span>·</span>') : '<b>' + fmt(x.total) + '</b>')
+          + '</div>';
+      }).join('');
+      panel.innerHTML = ctCash('<div class="dk-work-card ct-end-card">'
+        + '<div class="dk-work-frame">'
+        + (useCanvas ? '<canvas class="dk-work-cv" width="960" height="600"></canvas>' : fallbackSvg)
+        + '</div>'
+        + '<div class="dk-work-meta">'
+        + '<span class="dk-work-eye">今晚的作品</span>'
+        + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
+        + '<div class="dk-work-score ct-end-score num">0</div>'
+        + (stanzas ? '<div class="dk-stanzas">' + stanzas + '</div>' : '')
+        + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
+        + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
+        + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+        + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
+        + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
+        + '<button type="button" class="btn primary big" data-end="shop">' + esc(s.ended ? '看結局' : D().ROUND_TEXT.toShop) + '</button>'
+        + '</div></div>');
+      const fbSvgEl = panel.querySelector('.dk-work-frame svg');
+      if (fbSvgEl) fbSvgEl.setAttribute('aria-hidden', 'true');
+      root.appendChild(panel);
+      if (useCanvas) {
+        const wcv = panel.querySelector('canvas.dk-work-cv');
+        if (wcv) {
+          st.workPainter = IE.NightScene.paint(wcv, {
+            onFallback: () => {
+              const frame = panel.querySelector('.dk-work-frame');
+              if (frame && fallbackSvg) {
+                frame.innerHTML = fallbackSvg;
+                const sv = frame.querySelector('svg');
+                if (sv) sv.setAttribute('aria-hidden', 'true');
+              }
+            },
+          });
+          st.workPainter.replay(paintRec);
+        }
+      }
+    } else {
+      panel.className = 'ct-end';
+      panel.innerHTML = ctCash('<div class="ct-end-card">'
+        + '<span class="mute">' + (res.session.mode === 'sketch' ? '今晚的速寫' : '今晚的作品') + '</span>'
+        + '<h2>' + (w ? '《' + esc(w.name) + '》' : '今晚甚麼都沒有寫') + '</h2>'
+        + '<div class="ct-end-score num">0</div>'
+        + (best ? '<p class="ct-best">你最好的作品！它會沉入舊城，等下一局的你把它打撈上來。</p>' : '')
+        + '<div class="ct-end-art">' + res.session.log.map((x, i) => (x.art && IE.Artwork
+          ? '<figure class="art-card f-' + x.form + '">' + IE.Artwork.svg(x.art.form, x.art.pal, x.art.seed) + '<figcaption><b>' + esc(artTitle(x.art, s)) + '</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>'
+          : '<figure class="art-card"><figcaption><b>第 ' + (i + 1) + ' 筆</b><small>' + esc(C().formOf(s, x.form).name) + '・<span class="num">' + fmt(x.total) + '</span></small></figcaption></figure>')).join('') + '</div>'
+        + (fresh.length ? '<p class="ct-fresh">新發現的組合：' + fresh.map((r) => '<b' + (r.legend ? ' class="lg"' : '') + '>' + esc(r.name) + '</b>').join('、') + '</p>' : '')
+        + (res.session.relief ? '<p class="relief">你把愧疚寫了出來，靈魂輕了 ' + res.session.relief + ' 克。</p>' : '')
+        + (res.spore ? '<p class="ct-fresh">菌絲：素材庫長出了「' + esc(res.spore.name) + '」。</p>' : '')
+        + (res.stage ? stageResultHtml(res.stage, res.session.stage) : '')
+        + (res.paid && res.paid.length ? res.paid.map((p) => '<p class="ct-paid">天空區委託完成：' + esc(p.text) + '　<b class="num">+$' + fmt(p.pay) + '</b></p>').join('') : '')
+        + '<div class="ct-goal end"><span class="lbl">本季訊號</span><div class="bar"><i style="width:' + Math.min(100, before / th * 100) + '%"></i></div><b class="num">' + IE.UI.kfmt(after) + ' / ' + IE.UI.kfmt(th) + '</b></div>'
+        + '<button type="button" class="btn primary big" data-end="done">完成</button>'
+        + '</div>');
+      root.appendChild(panel);
+    }
     let closed = false;
     const endBtn = panel.querySelector('[data-end="done"], [data-end="shop"]');
     endBtn.addEventListener('click', () => {
