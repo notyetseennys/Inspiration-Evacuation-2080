@@ -1222,7 +1222,9 @@
         tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
       }
     }
-    const curBosses = nk !== 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, round - 1) : [];
+    // 第十七期：章節沒有「外星評審的規則」時不預告
+    const judgeOn = !IE.Chapters || IE.Chapters.feat(s, 'judge');
+    const curBosses = judgeOn && nk !== 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, round - 1) : [];
     const bossAheadHtml = curBosses.length && T.bossAhead
       ? '<div class="rd-boss-ahead">' + esc(T.bossAhead.replace('{rules}', curBosses.map((b) => b.name + '（' + b.desc + '）').join('、'))) + '</div>'
       : '';
@@ -1683,8 +1685,10 @@
   }
   function packModal(s) {
     const pk = s.pack || { name: '素材包', cards: [] };
+    // 第十七期：撕開之後的卡用真的圖（和得到素材時的包一樣）
+    const face = (c, i) => (IE.PackFx && D().PACK16 ? IE.PackFx.cardFace(s, c, i, { dup: false }) : cardHtml(c));
     const cards = (pk.cards || []).map((c, i) => {
-      const btn = '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>';
+      const btn = '<button type="button" class="rp-card pk-pick" data-do="packpick" data-i="' + i + '">' + face(c, i) + '</button>';
       return cardSlotHtml(btn, 'pack:' + i);
     }).join('');
     const n = (pk.cards || []).length;

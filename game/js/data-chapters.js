@@ -14,30 +14,31 @@
   //   collect 朋友被收藏、flood 水淹的後果、weather 天氣、stance 工作裏的抉擇、kpi 外星 KPI、judge 外星評審的規則、trip 出國
   // objRarity：市集和遺物攤會出現的物件稀有度。
   // building：還在興建中（等對應的工單），不可以玩。
+  // target：這一季的目標倍數（第一輪校準：第一季最易）。
   const CHAPTERS = [
     {
-      id: 'c1', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      target: 0.75, id: 'c1', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
       rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
       intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
       adds: '創作桌、人生的選擇、朋友、差事',
       clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
     },
     {
-      id: 'c2', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      target: 0.85, id: 'c2', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
       rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
       intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
       adds: '水位：水淹到家，由受傷到失去住所；天氣',
       clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
     },
     {
-      id: 'c3', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      target: 0.95, id: 'c3', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
       rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
       intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
       adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
       clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
     },
     {
-      id: 'c4', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      target: 1, id: 'c4', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
       intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
       adds: '外星評審的規則；出國',
@@ -106,7 +107,7 @@
     {
       id: 'theatre', name: '舊戲院', line: '創作桌', nodes: [
         { id: 'rehearse', name: '排練', text: '下筆之前，看得到這一筆的預計分數。', fx: { preview: 1 }, info: true },
-        { id: 'script', name: '劇本', text: '創作桌提示這手牌最好的排法。', fx: { hint: 1 }, info: true },
+        { id: 'script', name: '劇本', text: '創作桌提示這手牌排得出的最好結構（次序要自己找）。', fx: { hint: 1 }, info: true },
         { id: 'backstage', name: '後台', text: '每晚多一次改稿。', fx: { discards: 1 } },
         { id: 'repertoire', name: '舊劇目', text: '開局「起承轉合」就是 Lv.2。', fx: { fullLevel: 1 } },
         { id: 'notes', name: '導演筆記', text: 'AI 模仿你的結構，速度減半。', fx: { aiHalf: 1 } },
@@ -190,7 +191,7 @@
     soulWarn: '病歷：靈魂離上限不足 2 克。',
     nextJudge: '招聘廣告：下一輪的外星評審規則是 {rules}',
     impact: '你有 {n} 張素材受影響',
-    hint: '劇本：最好的排法是「{form}」，預計 {score} 分',
+    hint: '劇本：這手牌排得出「{form}」',
     preview: '排練：預計 {score} 分',
     roundPack: '沉船貨櫃：水退了一點，你撈起一個包。',
   };

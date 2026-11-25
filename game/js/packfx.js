@@ -49,7 +49,7 @@
       + '<span class="pk-flap" aria-hidden="true"></span>'
       + '<span class="pk-tearline" aria-hidden="true"><i></i></span>'
       + '<span class="pk-label"><b>' + esc(K.name) + '</b><small>' + esc(K.line) + '</small></span>'
-      + '<span class="pk-count num">×' + n + '</span>'
+      + (n > 1 ? '<span class="pk-count num">×' + n + '</span>' : '')
       + '<span class="pk-hint">' + esc(P.tearHint) + '</span>'
       + '</button>'
       + '<div class="pk-cards' + (o.gridCls ? ' ' + o.gridCls : '') + '">' + inner + '</div>'

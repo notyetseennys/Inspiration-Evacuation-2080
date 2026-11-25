@@ -85,7 +85,11 @@
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'stageTarget') : 1;
     const ease = s && s.firstRun && k <= 2 ? D.ECON.firstRunEase : 1;
     const nMod = s && s.nightMod && s.nightMod.night === k ? s.nightMod.mult : 1;
-    return sig3(D.ECON.t1 * Math.pow(D.ECON.growth, k - 1) * stMod * ease * nMod);
+    // 第十七期第一輪校準：兩段式曲線（前 lateFrom 晚 ×growth，之後 ×growthLate）；章節再乘它的難度
+    const E = D.ECON, lf = E.lateFrom || 99;
+    const curve = Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
+    const ch = IE.Chapters ? IE.Chapters.of(s) : null;
+    return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1));
   }
 
   // 第 r 輪結束時的租金

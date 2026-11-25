@@ -202,6 +202,9 @@
     // 覺醒的 AI：模仿自己反而越來越強
     if (P.aiInvert) return Math.min(2, r2(1 + 0.12 * heat));
     const half = objs.some((o) => o.def.aiHalf) || !!(s.salvage && s.salvage.aiHalf);
+    // 第十七期：創作桌（五輪模式）的 AI 學得更快：同一種結構連續用，很快就被模仿（D.DESK.ai）
+    const AI = deskOn(s) && D.DESK && D.DESK.ai ? D.DESK.ai : null;
+    if (AI) return Math.max(AI.floor, r2(1 - AI.pen * Math.max(0, heat - AI.free) * (half ? 0.5 : 1)));
     const pen = 0.1 * Math.max(0, heat - 2) * (half ? 0.5 : 1);
     return Math.max(0.4, r2(1 - pen));
   }
@@ -1197,7 +1200,8 @@
   // 每天 AI 對你風格的記憶消退四成
   function newDay(s) {
     if (!s.style) return;
-    Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * 0.6); if (s.style[k] < 0.05) delete s.style[k]; });
+    const dec = deskOn(s) && D.DESK && D.DESK.ai ? D.DESK.ai.decay : 0.6;
+    Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * dec); if (s.style[k] < 0.05) delete s.style[k]; });
   }
 
   // ---------- 角色的招牌能力（創作桌上使用，第八期） ----------

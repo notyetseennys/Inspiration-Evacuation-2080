@@ -7,8 +7,11 @@ module.exports = (t) => {
 
   // 總規格 §6
   const ECON = {
-    t1: 3120,
-    growth: 1.42,
+    // 第十七期第一輪校準（2026-11-25，Claude）：創作桌改變了分數的尺度，目標曲線改為兩段式
+    t1: 12000,
+    growth: 1.48,
+    growthLate: 1.3,
+    lateFrom: 6,
     firstRunEase: 0.7,
     hand: 8, plays: 4, discards: 3,
     nightPay: { small: 42, big: 62, boss: 140 },

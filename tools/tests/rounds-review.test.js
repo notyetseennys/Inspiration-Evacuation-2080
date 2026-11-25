@@ -91,7 +91,10 @@ module.exports = (t) => {
     s.cards[0].wear = 3;
     s.cards[1].wear = 0;
     Rounds.advance(s);
-    const expected = Math.round(10 * Math.pow(0.6, 4) * 100) / 100;
+    // 第十七期：創作桌（五輪模式）的 AI 記憶每天 ×D.DESK.ai.decay（原本 ×0.6），每晚四天
+    const dec = (D.DESK && D.DESK.ai && D.DESK.ai.decay) || 0.6;
+    let expected = 10;
+    for (let i = 0; i < 4; i++) expected = Math.round(expected * dec * 100) / 100;
     assert.equal(s.style.mix, expected);
     assert.equal(s.cards[0].wear, 2);
     assert.equal(s.cards[1].wear, 0);

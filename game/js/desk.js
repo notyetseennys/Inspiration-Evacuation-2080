@@ -18,11 +18,14 @@
   D.DESK = {
     base: 10,                       // 每一筆的基本籌碼
     same: 2, near: 1,               // 承：倍率 +
-    zhuan: 2, he: 2, title: 1.5,    // 轉、合、「起承轉合」和「獨白」：倍率 ×
+    // 第十七期第一輪校準：收窄「最好的排法」和「隨便排」的差距（原本 轉 ×2、合 ×2、稱號 ×1.5、題材 3/6/10、媒材 6/2/4/8）
+    zhuan: 1.5, he: 1.5, title: 1.25, // 轉、合、「起承轉合」和「獨白」：倍率 ×
     level: { chips: 40, mult: 4 },  // 結構每升一級
-    subject: [0, 0, 0, 3, 6, 10],   // 主調的情緒出現 n 次：倍率 +
-    media: { pure: 6, 3: 2, 4: 4, 5: 8 },
+    subject: [0, 0, 0, 2, 4, 6],    // 主調的情緒出現 n 次：倍率 +
+    media: { pure: 4, 3: 2, 4: 3, 5: 5 },
     family: { blend: { mult: 2 }, layer: { chips: 20 }, echo: { echo: 1 }, tension: { xmult: 1.25 }, paradox: { xmult: 1.5 } },
+    // 第十七期：AI 模仿你的結構。熱度＝最近用這種結構的次數（每天 ×decay，一晚四天）；超過 free 之後每一點扣 pen，最低 floor
+    ai: { free: 1.5, pen: 0.12, decay: 0.85, floor: 0.4 },
     artTag: { ancient: 'memory', cosmic: 'neon' },  // 外來素材借用哪一種情緒的圖
     // 舊的配色 id → 新的結構 id（物件、流派、評審、技法課的資料照這張表換）
     formMap: { mix: 'single', adj: 'flow', triad: 'twist', split: 'echo', comp: 'contrast', tetrad: 'loop', full: 'full', mono: 'mono', paradox: 'contrast' },

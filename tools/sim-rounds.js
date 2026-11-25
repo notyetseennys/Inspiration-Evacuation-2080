@@ -635,10 +635,15 @@ function runShop(s, strat, metrics) {
         }
       }
     }
-    while ((s.floor || 0) > 0 && FLOOD.stage(s) !== 'dry') {
+    // 第十七期：只在明晚真的會淹（水位預報）時才搬，而且搬完仍然留得住租金（以前一見預警就搬，錢都花在搬家上）
+    const wet = (st) => st === 'light' || st === 'medium' || st === 'heavy';
+    for (let guard = 0; guard < 3 && (s.floor || 0) > 0; guard++) {
+      const fc = FLOOD.forecast ? FLOOD.forecast(s) : { stage: FLOOD.stage(s) };
+      if (!fc || !wet(fc.stage)) break;
       const mv = FLOOD.services(s).find((x) => x.id === 'moveup' && x.affordable);
       if (!mv) break;
-      if (strat === 'expert' && s.night % 3 === 0 && s.cr - mv.price < RD.rentOf(s) && FLOOD.stage(s) === 'warn') break;
+      const reserve = RD.rentOf(s) * (s.night % 3 === 0 ? 1 : 0.5);
+      if (s.cr - mv.price < reserve && fc.stage === 'light') break;
       const b = RD.shopBuy(s, 'moveup');
       if (!b || !b.ok) break;
       metrics.shopBuys++;

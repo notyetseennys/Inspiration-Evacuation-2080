@@ -44,13 +44,16 @@ module.exports = (t) => {
     assert.equal(Rounds.dayOfNight(15), 60);
   });
 
-  t.test('五輪：目標每晚上升', () => {
+  // 第十七期第一輪校準：兩段式曲線（前 lateFrom 晚 ×growth，之後 ×growthLate）
+  const curve = (k) => Math.pow(D.ECON.growth, Math.min(k, D.ECON.lateFrom) - 1) * Math.pow(D.ECON.growthLate, Math.max(0, k - D.ECON.lateFrom));
+  t.test('五輪：目標每晚上升（兩段式：前六晚快、之後慢）', () => {
     const s = t.run({ mode: 'rounds' });
     assert.equal(Rounds.target(s, 1), Rounds.sig3(D.ECON.t1));
     for (let k = 1; k <= 14; k++) {
-      assert.equal(Rounds.target(s, k), Rounds.sig3(D.ECON.t1 * Math.pow(D.ECON.growth, k - 1)));
+      assert.equal(Rounds.target(s, k), Rounds.sig3(D.ECON.t1 * curve(k)));
+      const want = k < D.ECON.lateFrom ? D.ECON.growth : D.ECON.growthLate;
       const ratio = Rounds.target(s, k + 1) / Rounds.target(s, k);
-      assert.ok(Math.abs(ratio - D.ECON.growth) <= D.ECON.growth * 0.015, '第 ' + k + ' 晚增長率誤差超過 1.5%');
+      assert.ok(Math.abs(ratio - want) <= want * 0.015, '第 ' + k + ' 晚增長率誤差超過 1.5%');
     }
   });
 

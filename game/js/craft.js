@@ -634,7 +634,7 @@
         }).filter(Boolean).join('；');
         if (rtxt) ruleHtml += '｜' + rtxt;
       } else {
-        ruleHtml += '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + esc(k.name);
+        ruleHtml += '・火花 ×' + s.spark.toFixed(1) + (k.name ? '・KPI：' + esc(k.name) : '');
       }
       ruleEl.innerHTML = ctCash(ruleHtml);
     }
@@ -726,7 +726,7 @@
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
   }
 
-  // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌最好的排法（按一下照劇本排）
+  // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌排得出的最好結構（不說次序）
   function scriptHintHtml(s) {
     if (!(s.salvage && s.salvage.hint) || !s.session || !D().SALVAGE_TEXT || st.busy) return '';
     const key = s.session.hand.join(',') + '|' + (s.session.log || []).length;
@@ -737,7 +737,8 @@
     const bp = st.hintCache.bp;
     if (!bp || !bp.uids || !bp.uids.length) return '';
     const formName = (IE.Desk && IE.Desk.STRUCT[bp.form] && IE.Desk.STRUCT[bp.form].name) || bp.form;
-    return '<button type="button" class="dk-pv-pill hint" data-ct="hint">' + esc(D().SALVAGE_TEXT.hint.replace('{form}', formName).replace('{score}', fmt(bp.total))) + ' ▶</button>';
+    // 只說出結構，不說次序：判斷仍然是玩家的
+    return '<span class="dk-pv-pill hint">' + esc(D().SALVAGE_TEXT.hint.replace('{form}', formName)) + '</span>';
   }
   function render() {
     if (isDeskMode()) {
@@ -1285,11 +1286,6 @@
     if (k === 'close-more') {
       st.moreOpen = false;
       syncMoreSheet('close');
-      return;
-    }
-    if (k === 'hint') {
-      const bp = st.hintCache && st.hintCache.bp;
-      if (bp && bp.uids) { st.sel = bp.uids.filter((u) => st.s.session.hand.includes(u)); render(); }
       return;
     }
     if (k === 'play') doPlay();

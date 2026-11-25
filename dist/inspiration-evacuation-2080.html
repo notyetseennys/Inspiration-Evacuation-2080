@@ -7314,8 +7314,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   text-align: left; color: #1b2233; overflow: hidden; isolation: isolate;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
   transition: transform 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.45s, min-height 0.45s, padding 0.45s, margin 0.45s;
-  animation: pk-bob 3.2s ease-in-out infinite;
 }
+/* 封口本身不動（按鈕會動的話，自動化測試判斷為「不穩定」）；呼吸感放在一層光上 */
+.pk-seal::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25); animation: pk-glow 2.6s ease-in-out infinite; }
+@keyframes pk-glow { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 .pk-seal:active { cursor: grabbing; }
 .pk-seal:focus-visible { outline: 2px solid var(--spark); outline-offset: 3px; }
 .pk-flap {
@@ -7336,14 +7338,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 .pk.is-open .pk-seal { min-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: -6px; opacity: 0; transform: translateY(18px) scale(0.96); pointer-events: none; animation: none; }
 .pk.is-open .pk-flap { transform: translate(40px, -90px) rotate(-24deg); opacity: 0; }
 .pk.is-open .pk-seal > :not(.pk-flap) { visibility: hidden; }
-@keyframes pk-bob { 0%, 100% { transform: translateY(0) rotate(-0.4deg); } 50% { transform: translateY(-3px) rotate(0.4deg); } }
 @keyframes pk-hint { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.95; } }
 
 /* 每一種包的模樣 */
-.pk.k-story .pk-seal, .pk.k-prologue .pk-seal { background: radial-gradient(circle at 82% 62%, #b3242e 0 15px, #8e1a22 16px 19px, transparent 20px), linear-gradient(170deg, #f1e5c8, #d6c39c); }
+.pk.k-story .pk-seal, .pk.k-prologue .pk-seal { background: radial-gradient(circle at calc(100% - 96px) 58%, #b3242e 0 15px, #8e1a22 16px 19px, transparent 20px), linear-gradient(170deg, #f1e5c8, #d6c39c); }
 .pk.k-work .pk-seal { background: repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0 2px, transparent 2px 7px), linear-gradient(170deg, #c79a64, #9c7140); color: #2a1a08; }
 .pk.k-trip .pk-seal { background: repeating-linear-gradient(135deg, rgba(255,255,255,0.08) 0 10px, transparent 10px 20px), linear-gradient(160deg, #2463a5, #133a68); color: #eaf3ff; }
-.pk.k-shop .pk-seal { background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 45%, rgba(255,255,255,0) 60%) 0 0 / 260% 100%, linear-gradient(135deg, #ff4fb4, #7b5cff 50%, #37c3d6); color: #fff; animation: pk-bob 3.2s ease-in-out infinite, pk-sheen 2.8s linear infinite; }
+.pk.k-shop .pk-seal { background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 45%, rgba(255,255,255,0) 60%) 0 0 / 260% 100%, linear-gradient(135deg, #ff4fb4, #7b5cff 50%, #37c3d6); color: #fff; animation: pk-sheen 2.8s linear infinite; }
 .pk.k-friend .pk-seal { background: repeating-linear-gradient(135deg, #d0333f 0 10px, #fff 10px 20px, #2a56b8 20px 30px, #fff 30px 40px) top / 100% 8px no-repeat, repeating-linear-gradient(135deg, #d0333f 0 10px, #fff 10px 20px, #2a56b8 20px 30px, #fff 30px 40px) bottom / 100% 8px no-repeat, #f6f2e8; }
 .pk.k-salvage .pk-seal { background: radial-gradient(circle at 20% 110%, rgba(55,195,214,0.35), transparent 55%), repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0 3px, transparent 3px 9px), linear-gradient(170deg, #2f5f61, #12302f); color: #dff7f4; }
 .pk.k-craft .pk-seal { background: repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 3px, transparent 3px 14px), linear-gradient(170deg, #7a5532, #4c321b); color: #f6e7d2; }
@@ -7383,7 +7384,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 @keyframes pk-holo { from { background-position: 0% 0%; } to { background-position: 260% 260%; } }
 
 /* 市集素材包：撕開之後才選 */
-.pk.k-shop .pk-cards .rp-card { width: 100%; }
+.pk.k-shop .pk-cards { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+.pk.k-shop .pk-cards .card-slot { width: 100%; max-width: 172px; position: relative; }
+.pk.k-shop .pk-cards .rp-card.pk-pick { width: 100%; padding: 0; border: 0; background: none; border-radius: 9px; cursor: pointer; }
+.pk.k-shop .pk-cards .rp-card.pk-pick .pk-card { max-width: none; transition: transform 0.15s, box-shadow 0.15s; }
+.pk.k-shop .pk-cards .rp-card.pk-pick:hover .pk-card, .pk.k-shop .pk-cards .rp-card.pk-pick:focus-visible .pk-card { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--spark); }
 .pk-odds { margin: 8px 0 0; font-size: 13px; color: var(--mute); }
 .pk-odds summary { cursor: pointer; display: inline-block; padding: 6px 10px; border: 1px solid var(--line); border-radius: 99px; min-height: 32px; }
 .pk-odds p { margin: 6px 0 0; line-height: 1.6; }
@@ -7398,7 +7403,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 #ctable.dk-mode .dk-card.foil { box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(255, 79, 180, 0.55); }
 
 @media (prefers-reduced-motion: reduce) {
-  .pk-seal, .pk.k-shop .pk-seal, .pk-hint, .pk-card.is-foil .pk-face::after, #ctable.dk-mode .dk-card.foil .dk-face::after { animation: none; }
+  .pk-seal::after, .pk.k-shop .pk-seal, .pk-hint, .pk-card.is-foil .pk-face::after, #ctable.dk-mode .dk-card.foil .dk-face::after { animation: none; }
   .pk-cards > * { transition: none; }
 }
 
@@ -7470,7 +7475,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 .salv-n.is-locked { opacity: 0.45; }
 .salv-n.is-info .salv-nm::after { content: " ◆"; color: var(--alien); font-size: 10px; }
 @keyframes salv-pulse { 0% { box-shadow: 0 0 0 0 rgba(55, 195, 214, 0.65); } 100% { box-shadow: 0 0 0 10px rgba(55, 195, 214, 0); } }
-.salv-detail { margin-top: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(6, 14, 26, 0.85); border: 1px solid rgba(255, 194, 71, 0.25); min-height: 84px; }
+.salv-detail { position: sticky; bottom: 0; z-index: 2; margin-top: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(6, 14, 26, 0.95); border: 1px solid rgba(255, 194, 71, 0.3); min-height: 84px; box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.45); }
 .salv-sel { display: grid; gap: 6px; justify-items: start; }
 .salv-sel b { font-size: 18px; }
 .salv-sel p { margin: 0; line-height: 1.6; color: #dbe3f2; }
@@ -10646,8 +10651,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 五輪模式的經濟與數值常數
   const ECON = {
     // 目標
-    t1: 3120,             // 第 1 晚的目標
-    growth: 1.42,         // 之後每晚 ×1.42
+    // 第十七期第一輪校準（2026-11-25）：創作桌令分數的尺度改變了（WO-16-09），原本 t1 3120、每晚 ×1.42 令頭幾晚是目標的幾十倍。
+    // 分數前六晚增長快、之後慢，所以目標改為兩段：前六晚 ×1.48，之後 ×1.3。
+    t1: 12000,            // 第 1 晚的目標
+    growth: 1.48,         // 第 2 至 6 晚每晚 ×1.48
+    growthLate: 1.3,      // 第 7 晚起每晚 ×1.3
+    lateFrom: 6,
     firstRunEase: 0.7,    // 第一局的第 1、2 晚目標 ×0.7
     // 創作桌
     hand: 8, plays: 4, discards: 3,
@@ -13057,11 +13066,14 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   D.DESK = {
     base: 10,                       // 每一筆的基本籌碼
     same: 2, near: 1,               // 承：倍率 +
-    zhuan: 2, he: 2, title: 1.5,    // 轉、合、「起承轉合」和「獨白」：倍率 ×
+    // 第十七期第一輪校準：收窄「最好的排法」和「隨便排」的差距（原本 轉 ×2、合 ×2、稱號 ×1.5、題材 3/6/10、媒材 6/2/4/8）
+    zhuan: 1.5, he: 1.5, title: 1.25, // 轉、合、「起承轉合」和「獨白」：倍率 ×
     level: { chips: 40, mult: 4 },  // 結構每升一級
-    subject: [0, 0, 0, 3, 6, 10],   // 主調的情緒出現 n 次：倍率 +
-    media: { pure: 6, 3: 2, 4: 4, 5: 8 },
+    subject: [0, 0, 0, 2, 4, 6],    // 主調的情緒出現 n 次：倍率 +
+    media: { pure: 4, 3: 2, 4: 3, 5: 5 },
     family: { blend: { mult: 2 }, layer: { chips: 20 }, echo: { echo: 1 }, tension: { xmult: 1.25 }, paradox: { xmult: 1.5 } },
+    // 第十七期：AI 模仿你的結構。熱度＝最近用這種結構的次數（每天 ×decay，一晚四天）；超過 free 之後每一點扣 pen，最低 floor
+    ai: { free: 1.5, pen: 0.12, decay: 0.85, floor: 0.4 },
     artTag: { ancient: 'memory', cosmic: 'neon' },  // 外來素材借用哪一種情緒的圖
     // 舊的配色 id → 新的結構 id（物件、流派、評審、技法課的資料照這張表換）
     formMap: { mix: 'single', adj: 'flow', triad: 'twist', split: 'echo', comp: 'contrast', tetrad: 'loop', full: 'full', mono: 'mono', paradox: 'contrast' },
@@ -13420,30 +13432,31 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   //   collect 朋友被收藏、flood 水淹的後果、weather 天氣、stance 工作裏的抉擇、kpi 外星 KPI、judge 外星評審的規則、trip 出國
   // objRarity：市集和遺物攤會出現的物件稀有度。
   // building：還在興建中（等對應的工單），不可以玩。
+  // target：這一季的目標倍數（第一輪校準：第一季最易）。
   const CHAPTERS = [
     {
-      id: 'c1', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      target: 0.75, id: 'c1', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
       rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
       intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
       adds: '創作桌、人生的選擇、朋友、差事',
       clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
     },
     {
-      id: 'c2', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      target: 0.85, id: 'c2', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
       rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
       intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
       adds: '水位：水淹到家，由受傷到失去住所；天氣',
       clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
     },
     {
-      id: 'c3', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      target: 0.95, id: 'c3', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
       rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
       intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
       adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
       clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
     },
     {
-      id: 'c4', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      target: 1, id: 'c4', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
       intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
       adds: '外星評審的規則；出國',
@@ -13512,7 +13525,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     {
       id: 'theatre', name: '舊戲院', line: '創作桌', nodes: [
         { id: 'rehearse', name: '排練', text: '下筆之前，看得到這一筆的預計分數。', fx: { preview: 1 }, info: true },
-        { id: 'script', name: '劇本', text: '創作桌提示這手牌最好的排法。', fx: { hint: 1 }, info: true },
+        { id: 'script', name: '劇本', text: '創作桌提示這手牌排得出的最好結構（次序要自己找）。', fx: { hint: 1 }, info: true },
         { id: 'backstage', name: '後台', text: '每晚多一次改稿。', fx: { discards: 1 } },
         { id: 'repertoire', name: '舊劇目', text: '開局「起承轉合」就是 Lv.2。', fx: { fullLevel: 1 } },
         { id: 'notes', name: '導演筆記', text: 'AI 模仿你的結構，速度減半。', fx: { aiHalf: 1 } },
@@ -13596,7 +13609,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     soulWarn: '病歷：靈魂離上限不足 2 克。',
     nextJudge: '招聘廣告：下一輪的外星評審規則是 {rules}',
     impact: '你有 {n} 張素材受影響',
-    hint: '劇本：最好的排法是「{form}」，預計 {score} 分',
+    hint: '劇本：這手牌排得出「{form}」',
     preview: '排練：預計 {score} 分',
     roundPack: '沉船貨櫃：水退了一點，你撈起一個包。',
   };
@@ -16200,6 +16213,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     // 覺醒的 AI：模仿自己反而越來越強
     if (P.aiInvert) return Math.min(2, r2(1 + 0.12 * heat));
     const half = objs.some((o) => o.def.aiHalf) || !!(s.salvage && s.salvage.aiHalf);
+    // 第十七期：創作桌（五輪模式）的 AI 學得更快：同一種結構連續用，很快就被模仿（D.DESK.ai）
+    const AI = deskOn(s) && D.DESK && D.DESK.ai ? D.DESK.ai : null;
+    if (AI) return Math.max(AI.floor, r2(1 - AI.pen * Math.max(0, heat - AI.free) * (half ? 0.5 : 1)));
     const pen = 0.1 * Math.max(0, heat - 2) * (half ? 0.5 : 1);
     return Math.max(0.4, r2(1 - pen));
   }
@@ -17195,7 +17211,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 每天 AI 對你風格的記憶消退四成
   function newDay(s) {
     if (!s.style) return;
-    Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * 0.6); if (s.style[k] < 0.05) delete s.style[k]; });
+    const dec = deskOn(s) && D.DESK && D.DESK.ai ? D.DESK.ai.decay : 0.6;
+    Object.keys(s.style).forEach((k) => { s.style[k] = r2(s.style[k] * dec); if (s.style[k] < 0.05) delete s.style[k]; });
   }
 
   // ---------- 角色的招牌能力（創作桌上使用，第八期） ----------
@@ -19571,7 +19588,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'stageTarget') : 1;
     const ease = s && s.firstRun && k <= 2 ? D.ECON.firstRunEase : 1;
     const nMod = s && s.nightMod && s.nightMod.night === k ? s.nightMod.mult : 1;
-    return sig3(D.ECON.t1 * Math.pow(D.ECON.growth, k - 1) * stMod * ease * nMod);
+    // 第十七期第一輪校準：兩段式曲線（前 lateFrom 晚 ×growth，之後 ×growthLate）；章節再乘它的難度
+    const E = D.ECON, lf = E.lateFrom || 99;
+    const curve = Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
+    const ch = IE.Chapters ? IE.Chapters.of(s) : null;
+    return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1));
   }
 
   // 第 r 輪結束時的租金
@@ -35201,7 +35222,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<span class="pk-flap" aria-hidden="true"></span>'
       + '<span class="pk-tearline" aria-hidden="true"><i></i></span>'
       + '<span class="pk-label"><b>' + esc(K.name) + '</b><small>' + esc(K.line) + '</small></span>'
-      + '<span class="pk-count num">×' + n + '</span>'
+      + (n > 1 ? '<span class="pk-count num">×' + n + '</span>' : '')
       + '<span class="pk-hint">' + esc(P.tearHint) + '</span>'
       + '</button>'
       + '<div class="pk-cards' + (o.gridCls ? ' ' + o.gridCls : '') + '">' + inner + '</div>'
@@ -36687,7 +36708,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         tonightLine += '・' + stg.rules.map((r) => '「' + r.name + '」（' + r.desc + '）').join('、');
       }
     }
-    const curBosses = nk !== 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, round - 1) : [];
+    // 第十七期：章節沒有「外星評審的規則」時不預告
+    const judgeOn = !IE.Chapters || IE.Chapters.feat(s, 'judge');
+    const curBosses = judgeOn && nk !== 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, round - 1) : [];
     const bossAheadHtml = curBosses.length && T.bossAhead
       ? '<div class="rd-boss-ahead">' + esc(T.bossAhead.replace('{rules}', curBosses.map((b) => b.name + '（' + b.desc + '）').join('、'))) + '</div>'
       : '';
@@ -37148,8 +37171,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   function packModal(s) {
     const pk = s.pack || { name: '素材包', cards: [] };
+    // 第十七期：撕開之後的卡用真的圖（和得到素材時的包一樣）
+    const face = (c, i) => (IE.PackFx && D().PACK16 ? IE.PackFx.cardFace(s, c, i, { dup: false }) : cardHtml(c));
     const cards = (pk.cards || []).map((c, i) => {
-      const btn = '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>';
+      const btn = '<button type="button" class="rp-card pk-pick" data-do="packpick" data-i="' + i + '">' + face(c, i) + '</button>';
       return cardSlotHtml(btn, 'pack:' + i);
     }).join('');
     const n = (pk.cards || []).length;
@@ -38208,7 +38233,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         }).filter(Boolean).join('；');
         if (rtxt) ruleHtml += '｜' + rtxt;
       } else {
-        ruleHtml += '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + esc(k.name);
+        ruleHtml += '・火花 ×' + s.spark.toFixed(1) + (k.name ? '・KPI：' + esc(k.name) : '');
       }
       ruleEl.innerHTML = ctCash(ruleHtml);
     }
@@ -38300,7 +38325,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
   }
 
-  // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌最好的排法（按一下照劇本排）
+  // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌排得出的最好結構（不說次序）
   function scriptHintHtml(s) {
     if (!(s.salvage && s.salvage.hint) || !s.session || !D().SALVAGE_TEXT || st.busy) return '';
     const key = s.session.hand.join(',') + '|' + (s.session.log || []).length;
@@ -38311,7 +38336,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const bp = st.hintCache.bp;
     if (!bp || !bp.uids || !bp.uids.length) return '';
     const formName = (IE.Desk && IE.Desk.STRUCT[bp.form] && IE.Desk.STRUCT[bp.form].name) || bp.form;
-    return '<button type="button" class="dk-pv-pill hint" data-ct="hint">' + esc(D().SALVAGE_TEXT.hint.replace('{form}', formName).replace('{score}', fmt(bp.total))) + ' ▶</button>';
+    // 只說出結構，不說次序：判斷仍然是玩家的
+    return '<span class="dk-pv-pill hint">' + esc(D().SALVAGE_TEXT.hint.replace('{form}', formName)) + '</span>';
   }
   function render() {
     if (isDeskMode()) {
@@ -38859,11 +38885,6 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (k === 'close-more') {
       st.moreOpen = false;
       syncMoreSheet('close');
-      return;
-    }
-    if (k === 'hint') {
-      const bp = st.hintCache && st.hintCache.bp;
-      if (bp && bp.uids) { st.sel = bp.uids.filter((u) => st.s.session.hand.includes(u)); render(); }
       return;
     }
     if (k === 'play') doPlay();
