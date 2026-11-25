@@ -107,7 +107,7 @@
         : (FT.barHomeless || '水位 {w} 樓・你住天橋下').replace('{w}', wStr);
       hud.innerHTML = RD.cashText(s, ''
         + '<div class="hud-top">'
-        + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">第 ' + s.night + '／15 晚</span></div>'
+        + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">' + (chapterOf(s) ? esc(chapterOf(s).name) + '・' : '') + '第 ' + s.night + '／' + IE.Rounds.nightsTotal(s) + ' 晚</span></div>'
         + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
         + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
         + '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>'
@@ -118,7 +118,7 @@
         + '<div class="hud-meters rd-meters">'
         + '<div class="meter m-cash"><span class="lbl">' + (IE.imgTag ? IE.imgTag('note-floatcity', 'note-icon') : '') + '$ ' + esc(cur.name || '浮城元') + '</span><b class="num">$' + fmt(s.cr) + '</b></div>'
         + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">火花</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">' + s.spark.toFixed(1) + '</b></div>'
-        + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
+        + '<div class="meter m-soul' + (s.soul > R().soulLimit(s) ? ' over' : (s.salvage && s.salvage.soulWarn && s.soul > R().soulLimit(s) - 2 ? ' warn' : '')) + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + ' / ' + R().SOUL_LIMIT + ' <small>克</small></b></div>'
         + '</div>');
       hudFlash(s);
       return;
@@ -191,6 +191,7 @@
     wrap.classList.toggle('static', !wrap.hidden);
     wrap.innerHTML = uiCash(html);
     wrap.hidden = false;
+    if (IE.PackFx) IE.PackFx.bind(wrap);
     modalHandlers = handlers || {};
     const first = wrap.querySelector('[data-autofocus]') || wrap.querySelector('.btn.primary') || wrap.querySelector('button');
     if (first) setTimeout(() => first.focus({ preventScroll: true }), 30);
@@ -208,6 +209,7 @@
     if (prev) {
       wrap.classList.add('static');
       wrap.innerHTML = prev.html; modalHandlers = prev.handlers; modalOpts = prev.opts;
+      if (IE.PackFx) IE.PackFx.bind(wrap);
       return;
     }
     wrap.hidden = true; wrap.innerHTML = ''; modalHandlers = {}; modalOpts = {};
@@ -522,6 +524,7 @@
   // ---------- 報告 ----------
   // 五輪模式的貨幣名稱取自所在城市（docs/ECONOMY.md；第 7 區是浮城元）
   let lastReport = null;
+  const chapterOf = (s) => (IE.Chapters && s ? IE.Chapters.of(s) : null);
   function cityCurrency() {
     const s = IE.Game && IE.Game.state;
     const C = D().CITIES || {};
@@ -568,7 +571,9 @@
       + '<div class="obj-txt"><b>' + esc(D().OBJ[id].name) + '</b><span>' + esc(D().OBJ[id].desc) + '</span></div></div>').join('') + '</div>';
     const stUid = isRounds && rep.stance && rep.stance.card ? rep.stance.card.uid : null;
     const cards = (rep.cards || []).filter((c) => c && (stUid == null || c.uid !== stUid));
-    if (cards.length) h += '<h3>獲得素材</h3><div class="gained">' + cards.map((c) => cardHtml(c, { cardback: !!isRounds })).join('') + '</div>';
+    // 第十七期：五輪模式得到的素材是一個要撕開的包
+    if (cards.length && isRounds && IE.PackFx && D().PACK16) h += IE.PackFx.html(IE.Game && IE.Game.state, cards);
+    else if (cards.length) h += '<h3>獲得素材</h3><div class="gained">' + cards.map((c) => cardHtml(c, { cardback: !!isRounds })).join('') + '</div>';
     if (!isRounds && rep.dropped && rep.dropped.length) h += '<p class="mute" style="font-size:13px">素材太多，丟掉了：' + rep.dropped.map((c) => esc(c.name)).join('、') + '</p>';
     return h;
   }
@@ -743,7 +748,16 @@
       + '<span class="btn ' + (open ? 'primary ' : '') + 'mini dc-cta">' + (open ? (rec ? '再次挑戰' : '開始挑戰') : 'Lv.5 解鎖') + '</span>'
       + '</div></div>';
   }
-  function titlePanel(meta, hasSave) {
+  function titlePanel(meta, hasSave, firstTime) {
+    // 第十七期：新玩家的標題頁只有一句話和「開始」（第一季「招聘季」直接開始）
+    if (firstTime) {
+      return '<div class="title-menu is-first">'
+        + '<p class="tagline">水位每天都在上漲。你還有今晚可以畫。</p>'
+        + '<div class="btn-row">'
+        + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button><button class="btn" type="button" data-do="new">放棄並開始新一局</button>'
+          : '<button class="btn primary big" type="button" data-do="new">開始</button>')
+        + '</div></div>';
+    }
     const endings = meta.endings ? Object.keys(meta.endings).length : 0;
     const types = meta.archetypes ? Object.keys(meta.archetypes).length : 0;
     const recipes = meta.recipes ? Object.keys(meta.recipes).length : 0;
@@ -754,6 +768,7 @@
       + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button>' : '')
       + '<button class="btn ' + (hasSave ? '' : 'primary big') + '" type="button" data-do="new">' + (hasSave ? '放棄並開始新一局' : '開始') + '</button>'
       + '</div>'
+      + (IE.Chapters ? '<div class="btn-row era-row"><button class="btn era-btn" type="button" data-do="era">浮城年表</button><button class="btn salv-btn" type="button" data-do="salvage">舊城打撈<small class="num">沉積 ' + (IE.Salvage ? IE.Salvage.balance(meta) : 0) + '</small></button></div>' : '')
       + '<div class="btn-row"><button class="btn" type="button" data-do="help">玩法</button><button class="btn" type="button" data-do="collection">收藏</button>'
       + '<button class="btn gacha-btn" type="button" data-do="gacha">人才扭蛋機' + IE.UI.ticketChips(meta) + '</button>'
       + (IE.Meta.perks(meta).weekly ? '<button class="btn weekly-btn" type="button" data-do="weekly">每週挑戰<small>' + weeklyText(meta) + '</small></button>' : '')
@@ -874,7 +889,7 @@
     const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     const nightsDone = isRounds ? (s.nightLog || []).length : 0;
     const roundSum = isRounds
-      ? '<p class="run-sum">通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '') + '</p>'
+      ? '<p class="run-sum">通過 ' + (s.reviewsPassed || 0) + ' / ' + IE.Rounds.total(s) + ' 輪・完成 ' + nightsDone + ' / ' + IE.Rounds.nightsTotal(s) + ' 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '') + '</p>'
       : '';
     const endKey = e.kind === 'agent' && (e.title === '完美員工' || s.conscience < 0.3) ? 'perfect' : e.kind;
     const endBanner = isRounds && IE.imgTag ? IE.imgTag('end-' + endKey, 'end-banner') : '';
@@ -1079,7 +1094,7 @@
         + '<figcaption><b>' + esc(artTitleTxt) + '</b><small>' + esc((formObj.name || '') + (a.who ? '・' + a.who : '') + '・') + '<span class="num">' + fmt(a.total || 0) + '</span></small></figcaption></figure>';
     }).join('') + '</div>'
       : '<p class="mute">還沒有作品。每一筆都會畫成一幅小畫，最好的會留在這裡。</p>');
-    return '<div class="modal wide"><h2>收藏</h2>' + profileHtml(meta) + achHtml + galHtml + memoHtml + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
+    return '<div class="modal wide"><h2>收藏</h2>' + (IE.EraUI ? IE.EraUI.collectionOverview(meta) : '') + profileHtml(meta) + achHtml + galHtml + memoHtml + rosterHtml(meta) + '<h3>結局</h3><div class="recipes">' + endings + '</div>'
       + '<h3>死亡圖鑑（' + Object.keys(dSeen).length + '/' + D().DEATHS.length + '）</h3>' + deaths
       + worldCodexHtml(meta)
       + '<h3>事件圖鑑（' + Object.keys(evSeen).length + '/' + allEv.length + '）</h3>' + events
@@ -1183,7 +1198,7 @@
     const RD = IE.Rounds, T = D().ROUND_TEXT;
     const round = RD.roundOf(s);
     const groups = [];
-    for (let r = 0; r < 5; r++) {
+    for (let r = 0; r < RD.total(s); r++) {
       const dots = [];
       for (let j = 1; j <= 3; j++) {
         const k = r * 3 + j;
@@ -1193,11 +1208,11 @@
         const stCls = k === s.night ? ' now' : (log ? (log.pass ? ' done' : ' fail') : sd ? (sd === 'pass' ? ' done' : ' fail') : k < s.night ? ' done' : '');
         const bRules = nk === 'boss' && IE.Stages && IE.Stages.bossesFor ? IE.Stages.bossesFor(s, r) : [];
         const bTitle = bRules.length ? '：' + bRules.map((b) => b.name).join('、') : '';
-        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(T.dayTitle.replace('{round}', r + 1).replace('{night}', k) + '・' + T.nightKinds[nk] + bTitle) + '"></i>');
+        dots.push('<i class="rm-night k-' + nk + stCls + '" title="' + esc(RD.dayTitle(s, r + 1, k) + '・' + T.nightKinds[nk] + bTitle) + '"></i>');
       }
       groups.push('<span class="rm-round' + (r + 1 === round ? ' cur' : '') + '">' + dots.join('') + '</span>');
     }
-    const dayTitle = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const dayTitle = RD.dayTitle(s, round, s.night);
     const nk = RD.kindOf(s.night);
     let tonightLine = T.tonight.replace('{kind}', T.nightKinds[nk]).replace('{target}', fmt(RD.target(s)));
     // 外星評審的規則在開局時已經選好（rules.js 的 newRun），這裡只是讀取
@@ -1345,6 +1360,7 @@
       + '<span class="rd-rent">' + esc(rentLine) + '</span>'
       + '</div>'
       + floodBannerHtml
+      + (IE.EraUI ? IE.EraUI.dayExtras(s) : '')
       + bossAheadHtml
       + storyStripHtml
       + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
@@ -1364,7 +1380,7 @@
     const D_ = D(), ST = IE.Story, T = D_.ROUND_TEXT, TX = (D_.STORY && D_.STORY.text) || {};
     const bg = D_.BACKGROUNDS[s.bg];
     const banner = IE.imgTag ? IE.imgTag('story-crossroads', 'st-banner') : '';
-    const sub = T.dayTitle.replace('{round}', ch.round).replace('{night}', s.night);
+    const sub = IE.Rounds.dayTitle(s, ch.round, s.night);
     const title = (TX.storyHead || '{name}的人生').replace('{name}', bg ? bg.name : '');
     const opts = (ch.options || []).map((opt, i) => {
       const reason = ST ? ST.reason(s, opt) : null;
@@ -1394,7 +1410,7 @@
   function reversalModal(s, revs) {
     const D_ = D(), ST = IE.Story, T = D_.ROUND_TEXT, TX = (D_.STORY && D_.STORY.text) || {};
     const round = IE.Rounds.roundOf(s);
-    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const sub = IE.Rounds.dayTitle(s, round, s.night);
     const banner = IE.imgTag ? IE.imgTag('story-reversal', 'rv-banner') : '';
     const items = (revs || []).map((rv) => {
       const fx = ST ? ST.fx(s, rv.fx || {}) : [];
@@ -1414,7 +1430,7 @@
   function floodPickModal(s) {
     const D_ = D(), FT = D_.FLOOD_TEXT || {}, T = D_.ROUND_TEXT;
     const round = IE.Rounds.roundOf(s);
-    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const sub = IE.Rounds.dayTitle(s, round, s.night);
     const uids = Array.isArray(s.floodPick) ? s.floodPick : [];
     const cards = uids.map((uid) => {
       const c = (s.cards || []).find((x) => x && x.uid === uid);
@@ -1435,7 +1451,7 @@
   function floodOutModal(s) {
     const D_ = D(), FT = D_.FLOOD_TEXT || {}, T = D_.ROUND_TEXT;
     const round = IE.Rounds.roundOf(s);
-    const sub = T.dayTitle.replace('{round}', round).replace('{night}', s.night);
+    const sub = IE.Rounds.dayTitle(s, round, s.night);
     const out = s.floodOut || {};
     const objHtml = out.obj && FT.heavyObj
       ? '<p class="fo-obj">' + esc(FT.heavyObj.replace('{x}', out.obj)) + '</p>'
@@ -1649,7 +1665,7 @@
     return '<div class="modal wide rd-shop">'
       + shopBanner
       + '<div class="rs-head">'
-      + '<div><span class="eyebrow">' + esc(T.dayTitle.replace('{round}', round).replace('{night}', s.night)) + '</span><h2>' + esc(T.shopTitle) + '</h2></div>'
+      + '<div><span class="eyebrow">' + esc(IE.Rounds.dayTitle(s, round, s.night)) + '</span><h2>' + esc(T.shopTitle) + '</h2></div>'
       + '<div class="rs-meta' + (isLastNight ? ' due' : '') + '">'
       + '<span class="rs-cash">現有 <b class="num">$' + fmt(s.cr) + '</b></span>'
       + '<span class="rs-rent' + (diff > 0 ? ' short' : ' ok') + (isLastNight ? ' due' : '') + '">' + (isLastNight ? '離開後交租 ' : '本輪租金 ') + '<b class="num">$' + fmt(rent) + '</b>（<b>' + (diff > 0 ? '還差 $' + fmt(diff) : '已足夠') + '</b>）</span>'
@@ -1671,11 +1687,16 @@
       const btn = '<button type="button" class="rp-card" data-do="packpick" data-i="' + i + '">' + cardHtml(c) + '</button>';
       return cardSlotHtml(btn, 'pack:' + i);
     }).join('');
+    const n = (pk.cards || []).length;
+    const pdef = (D().PACKS || []).find((p) => p.name === pk.name) || null;
+    const body = IE.PackFx && D().PACK16
+      ? IE.PackFx.html(s, pk.cards || [], { kind: 'shop', cardsHtml: cards, count: n, gridCls: 'rp-grid' }) + IE.PackFx.oddsHtml(s, pdef)
+      : '<div class="rp-grid">' + cards + '</div>';
     return '<div class="modal wide rd-pack">'
-      + '<span class="eyebrow">開包・三選一</span>'
+      + '<span class="eyebrow">開包・' + (n === 4 ? '四' : '三') + '選一</span>'
       + '<h2>' + esc(pk.name) + '</h2>'
-      + '<p class="mute" style="font-size:13px">挑一張素材收進素材庫。</p>'
-      + '<div class="rp-grid">' + cards + '</div>'
+      + '<p class="mute" style="font-size:13px">撕開，挑一張素材收進素材庫。</p>'
+      + body
       + '</div>';
   }
   function pickModal(s) {
@@ -1889,9 +1910,10 @@
       + '</div>'
       + '<div class="rr-sec rr-soul ' + (rep.soulOk ? 'ok' : 'fail') + '">'
       + scaleSvg
-      + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().SOUL_LIMIT + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
+      + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().soulLimit(IE.Game && IE.Game.state) + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
       + '</div>'
       + collectHtml
+      + (rep.nextJudge && rep.nextJudge.length && D().SALVAGE_TEXT ? '<p class="era-intel">' + esc(D().SALVAGE_TEXT.nextJudge.replace('{rules}', rep.nextJudge.join('、'))) + '</p>' : '')
       + '<div class="rr-verdict">'
       + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'
       + '<span class="rr-chances">' + esc(T.chances) + ' <b class="rr-dots">' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'

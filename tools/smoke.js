@@ -15,6 +15,8 @@ const URL = 'http://localhost:' + PORT + '/';
   await new Promise((r) => setTimeout(r, 600));
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1000, height: 900 } });
+  // 第十七期：不經新玩家的流程，開局頁預設完整的五輪模式
+  await page.addInitScript(() => { try { localStorage.setItem('ie2080.noPrologue', '1'); localStorage.setItem('ie2080.chapter', 'free'); } catch (e) { /* 忽略 */ } });
   // 固定新局的種子（SEED 環境變數可以換一個），令每次測試走同一條路：
   // 世界事件、天氣、道德抉擇都一樣，不會因為隨機事件（例如工作被停工、意外死亡）而偶爾失敗
   const SEED = Number(process.env.SEED || 20801031);

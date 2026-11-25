@@ -115,6 +115,9 @@ const URL = 'http://localhost:' + PORT + '/';
       localStorage.setItem('ie2080.speed', '4');
       localStorage.setItem('ie2080.noEncounter', '1');
       localStorage.setItem('ie2080.seed', String(seed));
+      // 第十七期：舊的檢查走完整的五輪模式（不經新玩家的流程，不用章節）
+      localStorage.setItem('ie2080.noPrologue', '1');
+      localStorage.setItem('ie2080.chapter', 'free');
     }, SEED);
     await page.reload();
 
@@ -848,6 +851,9 @@ const URL = 'http://localhost:' + PORT + '/';
     const cardsBefore = await page.evaluate(() => window.__IE.Game.state.cards.length);
     await page.click('#modal .rs-item[data-slot^="pack:"] button:not([disabled])');
     await page.waitForSelector('#modal .rd-pack');
+    // 第十七期：素材包要先撕開才看得到卡
+    if (await page.$('#modal .rd-pack .pk-seal')) await page.click('#modal .rd-pack .pk-seal');
+    await page.waitForTimeout(150);
     const packCardN = await page.$$eval('#modal .rd-pack .rp-card', (els) => els.length);
     if (packCardN !== 3) await fail('.rd-pack 應有 3 張 .rp-card，現在有 ' + packCardN + ' 張');
     // WO-16-04：市集開包 .rd-pack 上的 [data-do="cardback"] 可看卡背且不誤觸選卡
@@ -863,10 +869,12 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-pack-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
+    // 第十七期：選到素材庫已有的素材時，是原來那張升星，張數不變
+    const pickDup = await page.evaluate(() => { const s = window.__IE.Game.state; const c = s.pack && s.pack.cards[0]; return !!(c && s.cards.some((x) => x.id === c.id && !x.relic)); });
     await page.click('#modal .rd-pack [data-i="0"]');
     await page.waitForSelector('#modal .rd-shop');
     const cardsAfter = await page.evaluate(() => window.__IE.Game.state.cards.length);
-    if (cardsAfter !== cardsBefore + 1) await fail('開包選卡後 s.cards.length 應 +1（' + cardsBefore + ' → ' + cardsAfter + '）');
+    if (cardsAfter !== cardsBefore + (pickDup ? 0 : 1)) await fail('開包選卡後 s.cards.length 應 ' + (pickDup ? '不變（重複升星）' : '+1') + '（' + cardsBefore + ' → ' + cardsAfter + '）');
     ok('開包三選一（.rd-pack）：素材庫 ' + cardsBefore + ' → ' + cardsAfter + ' 張');
 
     // 10. 按 .rs-item[data-slot="tech"] button:not([disabled])；檢查對應配色的等級加了 1，該格變成 disabled
@@ -1643,6 +1651,14 @@ const URL = 'http://localhost:' + PORT + '/';
     });
     await page.waitForSelector('#modal .rd-review');
     await page.click('#modal .rd-review [data-do="next"]');
+    // 第十七期：局末先顯示「這一生沉下去的沉積」，按「繼續」才到檔案
+    await page.waitForSelector('#modal .dossier, #modal .salv-earn');
+    if (await page.$('#modal .salv-earn')) {
+      const earn = await page.evaluate(() => ({ total: (document.querySelector('#modal .salv-earn .earn-total') || {}).textContent || '', sed: window.__IE.Game.meta.salvage && window.__IE.Game.meta.salvage.sediment }));
+      if (!/沉積 \+\d+/.test(earn.total) || !(earn.sed > 0)) await fail('局末的沉積結算不正確：' + JSON.stringify(earn));
+      ok('第十七期：局末顯示沉積結算（' + earn.total + '，舊城現有 ' + earn.sed + '）');
+      await page.click('#modal .salv-earn [data-do="ok"]');
+    }
     await page.waitForSelector('#modal .dossier');
     await page.waitForSelector('#panel .run-sum');
     const runSum = await page.$eval('#panel .run-sum', (el) => el.textContent);
@@ -1729,6 +1745,9 @@ const URL = 'http://localhost:' + PORT + '/';
       localStorage.setItem('ie2080.speed', '4');
       localStorage.setItem('ie2080.noEncounter', '1');
       localStorage.setItem('ie2080.seed', String(seed));
+      // 第十七期：舊的檢查走完整的五輪模式（不經新玩家的流程，不用章節）
+      localStorage.setItem('ie2080.noPrologue', '1');
+      localStorage.setItem('ie2080.chapter', 'free');
     }, SEED);
     await filePage.reload();
     await filePage.click('[data-do="new"]');
@@ -1842,6 +1861,9 @@ const URL = 'http://localhost:' + PORT + '/';
       localStorage.setItem('ie2080.speed', '4');
       localStorage.setItem('ie2080.noEncounter', '1');
       localStorage.setItem('ie2080.seed', String(seed));
+      // 第十七期：舊的檢查走完整的五輪模式（不經新玩家的流程，不用章節）
+      localStorage.setItem('ie2080.noPrologue', '1');
+      localStorage.setItem('ie2080.chapter', 'free');
     }, SEED);
     await noArtPage.reload();
     await noArtPage.evaluate(() => { window.__IE.DATA.ART = null; });

@@ -19,6 +19,8 @@ const URL = 'http://localhost:' + PORT + '/';
   await new Promise((r) => setTimeout(r, 700));
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  // 第十七期：不經新玩家的流程，開局頁預設完整的五輪模式
+  await page.addInitScript(() => { try { localStorage.setItem('ie2080.noPrologue', '1'); localStorage.setItem('ie2080.chapter', 'free'); } catch (e) { /* 忽略 */ } });
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errors.push('console: ' + m.text()); });

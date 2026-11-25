@@ -6,6 +6,7 @@
   const D = () => IE.DATA, R = () => IE.Rules, C = () => IE.Create, UI = () => IE.UI, A = () => IE.Audio;
   const esc = (v) => IE.UI.esc(v);
   const fmt = (n) => IE.UI.fmt(n);
+  const nightsOf = (s) => (IE.Rounds && IE.Rounds.nightsTotal ? IE.Rounds.nightsTotal(s) : 15);
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 忽略 */ } },
@@ -53,7 +54,7 @@
       ? (c.guilt && D_.BACKGROUNDS[s.bg].perk.noGuilt ? '你沒有良知：不能寫愧疚' : '外星評審：這張素材不能用')
       : (blocked ? '外星評審：這張素材不計分' : (c.name + '（籌碼 ' + val + '・' + med.full + '）'));
     return '<button type="button" class="dk-card cc med-' + medKey + (o.sel ? ' sel' : '') + (c.mod ? ' mod-' + c.mod : '')
-      + (c.rarity ? ' r-' + c.rarity : '') + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '')
+      + (c.rarity ? ' r-' + c.rarity : '') + (isForeign ? ' foreign' : '') + (c.legacy ? ' legacy' : '') + (c.foil ? ' foil' : '')
       + (off ? ' forbidden' : '') + (blocked ? ' blocked' : '') + '" data-uid="' + c.uid + '" title="' + esc(titleTip) + '">'
       + '<span class="dk-face" style="--m1:' + m1 + ';--m2:' + m2 + '">' + ord + faceImg
       + '<span class="dk-med-dot" style="--c:' + med.color + '">' + esc(med.name) + '</span></span>'
@@ -625,7 +626,7 @@
     const kindName = (D_.ROUND_TEXT && D_.ROUND_TEXT.nightKinds && IE.Rounds ? D_.ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)] : '') || '創作';
     const ruleEl = $('.dk-rule-txt');
     if (ruleEl) {
-      let ruleHtml = '第 ' + s.night + '／15 晚・' + esc(kindName);
+      let ruleHtml = '第 ' + s.night + '／' + nightsOf(s) + ' 晚・' + esc(kindName);
       if (g && g.rules && g.rules.length && IE.Stages) {
         const rtxt = g.rules.map((id) => {
           const b = IE.Stages.BOSS[id];
@@ -670,7 +671,7 @@
         $('.ct-form .fn').textContent = doneStrokes ? '再下一筆' : '選擇素材';
         $('.ct-form .fl').textContent = '';
         setBoxes(0, 0, 'preview');
-        $('.dk-pv-notes').innerHTML = '';
+        $('.dk-pv-notes').innerHTML = scriptHintHtml(s);
       } else {
         $('.ct-form .fn').textContent = pv.name;
         $('.ct-form .fl').textContent = 'Lv.' + pv.level;
@@ -684,6 +685,11 @@
         }
         if (pv.blocked) {
           notes.push('<span class="dk-pv-pill bad">' + pv.blocked + ' 張不計分</span>');
+        }
+        // 第十七期：舊城的「排練」：下筆之前看得到預計分數
+        if (s.salvage && s.salvage.preview && D().SALVAGE_TEXT) {
+          const est = C().scorePlay(s, activeUids).total;
+          notes.push('<span class="dk-pv-pill good">' + esc(D().SALVAGE_TEXT.preview.replace('{score}', fmt(est))) + '</span>');
         }
         $('.dk-pv-notes').innerHTML = notes.join('');
       }
@@ -720,6 +726,19 @@
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
   }
 
+  // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌最好的排法（按一下照劇本排）
+  function scriptHintHtml(s) {
+    if (!(s.salvage && s.salvage.hint) || !s.session || !D().SALVAGE_TEXT || st.busy) return '';
+    const key = s.session.hand.join(',') + '|' + (s.session.log || []).length;
+    if (!st.hintCache || st.hintCache.key !== key) {
+      const bp = C().bestPlay(s);
+      st.hintCache = { key, bp };
+    }
+    const bp = st.hintCache.bp;
+    if (!bp || !bp.uids || !bp.uids.length) return '';
+    const formName = (IE.Desk && IE.Desk.STRUCT[bp.form] && IE.Desk.STRUCT[bp.form].name) || bp.form;
+    return '<button type="button" class="dk-pv-pill hint" data-ct="hint">' + esc(D().SALVAGE_TEXT.hint.replace('{form}', formName).replace('{score}', fmt(bp.total))) + ' ▶</button>';
+  }
   function render() {
     if (isDeskMode()) {
       renderDesk();
@@ -729,7 +748,7 @@
     const k = R().kpi(s);
     if (IE.Rounds && IE.Rounds.on(s)) {
       const kindName = D().ROUND_TEXT.nightKinds[IE.Rounds.kindOf(s.night)];
-      $('.ct-sub').textContent = '第 ' + s.night + '／15 晚・' + kindName + '・火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
+      $('.ct-sub').textContent = '第 ' + s.night + '／' + nightsOf(s) + ' 晚・' + kindName + '・火花 ×' + s.spark.toFixed(1) + (k.name ? '・KPI：' + k.name : '');
       $('[data-ct="leave"]').hidden = !IE.Rounds.canFinish(s);
     } else {
       $('.ct-sub').textContent = (ses.mode === 'allnighter' ? '通宵・' : ses.mode === 'sketch' ? '只下筆一次・' : '') + '火花 ×' + s.spark.toFixed(1) + '・KPI：' + k.name;
@@ -1266,6 +1285,11 @@
     if (k === 'close-more') {
       st.moreOpen = false;
       syncMoreSheet('close');
+      return;
+    }
+    if (k === 'hint') {
+      const bp = st.hintCache && st.hintCache.bp;
+      if (bp && bp.uids) { st.sel = bp.uids.filter((u) => st.s.session.hand.includes(u)); render(); }
       return;
     }
     if (k === 'play') doPlay();
@@ -2441,7 +2465,7 @@
       const ov = g.over || (g.pass && g.score >= g.target * 2 ? { x: 2, spark: E.overkillSpark } : null);
       const dots = '●'.repeat(Math.max(0, s.chances)) + '<i>' + '○'.repeat(Math.max(0, 3 - s.chances)) + '</i>';
       return '<div class="ct-stage-result ' + (g.pass ? 'pass' : 'fail') + '"><span class="sr-stamp">' + (g.pass ? '過關' : '未達標') + '</span>'
-        + '<b>第 ' + g.index + '／15 晚・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
+        + '<b>第 ' + g.index + '／' + nightsOf(st.s) + ' 晚・' + esc(g.name) + '</b><span class="num">' + fmt(g.score) + ' / ' + fmt(g.target) + '</span>'
         + quotes
         + (g.pass
           ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'

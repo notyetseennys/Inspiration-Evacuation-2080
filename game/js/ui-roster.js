@@ -88,6 +88,7 @@
         + '<p class="mute">也可以用人才扭蛋機抽出來：' + ticketChips(meta) + '</p>';
     const modeBtn = (k) => '<button type="button" class="' + (curMode === k ? 'sel' : '') + '" data-do="mode" data-id="' + k + '">' + modes[k].name + '<small>' + modes[k].desc + '</small></button>';
     const opts = '<div class="su-opts">'
+      + (curMode === 'rounds' && IE.EraUI && IE.Chapters ? IE.EraUI.chapterChip(meta, sel.chapter) : '')
       + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + modeBtn('rounds') + '</div>'
       + '<details class="sd-more su-classic"' + (isClassic ? ' open' : '') + '><summary>經典模式</summary><p class="mute">舊版玩法，不再平衡。</p><div class="seg">' + modeBtn('standard') + modeBtn('long') + '</div></details></div>'
       + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + Object.keys(D().SEASONS).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'

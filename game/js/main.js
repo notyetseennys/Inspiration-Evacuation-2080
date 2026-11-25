@@ -88,6 +88,37 @@
   // 白天、晚上、旅途、世界地圖與最後一期（殘局）各有自己的音樂
   const hubMusic = (s) => music(s.trip ? 'travel' : Game.view === 'world' ? 'world' : s.quarter >= 4 ? 'endgame' : R.isNight(s) ? 'night' : 'city');
   // ---------- 標題、開局 ----------
+  // 新玩家：還沒有完成過一局（測試可以用 localStorage 的 ie2080.noPrologue 關掉）
+  const firstTime = () => !(Game.meta.runs > 0) && !store.get('ie2080.noPrologue');
+  // 第十七期：浮城年表（選一季）
+  function openEra(sel, onPick, onClose) {
+    music('archive');
+    UI.modal(IE.EraUI.chapterPanel(Game.meta, sel), {
+      chapter(el) { const id = el.dataset.id; A.sfx('pickup'); UI.closeModal(); onPick(id); },
+      close() { UI.closeModal(); if (onClose) onClose(); },
+    }, { dismiss: () => { if (onClose) onClose(); } });
+  }
+  // 第十七期：舊城打撈（升級樹）
+  function openSalvage(after) {
+    music('archive');
+    let sel = null;
+    const render = () => UI.modal(IE.EraUI.salvagePanel(Game.meta, sel), {
+      node(el) { sel = el.dataset.id; A.sfx('click'); render(); },
+      buy(el) {
+        const r = IE.Salvage.buy(Game.meta, el.dataset.id);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        Game.meta.ach17 = Game.meta.ach17 || {};
+        Game.meta.ach17.salvage1 = true;
+        if (IE.Salvage.ownedCount(Game.meta) >= IE.Salvage.NODES.length) Game.meta.ach17.salvageAll = true;
+        store.set(KEY_META, Game.meta);
+        UI.toast('打撈了「' + r.node.name + '」', 'good');
+        render();
+      },
+      close() { UI.closeModal(); if (after) after(); },
+    }, { dismiss: () => { if (after) after(); } });
+    render();
+  }
   function showTitle() {
     Game.state = null;
     document.body.classList.remove('mode-rounds');
@@ -97,9 +128,16 @@
     S.City.enter('attract');
     setScene(S.City);
     UI.closeModal();
-    UI.setPanel(UI.titlePanel(Game.meta, !!savedRun()), {
+    UI.setPanel(UI.titlePanel(Game.meta, !!savedRun(), firstTime()), {
       continue() { A.init(); Game.state = savedRun(); S.City.enter('hub'); resumeRun(); },
-      new() { A.init(); store.del(KEY_RUN); showSetup(); },
+      new() {
+        A.init(); store.del(KEY_RUN);
+        // 第十七期：新玩家不經開局頁，直接開始第一季「招聘季」
+        if (firstTime() && IE.Chapters) { newGame('copywriter', 'storm', { mode: 'rounds', chapter: 'c1' }); return; }
+        showSetup();
+      },
+      era() { A.init(); openEra(Game.setup.chapter, (id) => { Game.setup.chapter = id; Game.setup.mode = 'rounds'; showSetup(); }, () => showTitle()); },
+      salvage() { A.init(); openSalvage(() => showTitle()); },
       help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
       collection() {
         music('archive');
@@ -176,7 +214,18 @@
     Game.state = null;
     document.body.classList.remove('mode-rounds');
     if (!IE.Roster.unlocked(Game.meta, Game.setup.bg)) Game.setup.bg = 'copywriter';
+    // 第十七期：選哪一季（測試可以用 localStorage 的 ie2080.chapter 指定，例如 free）
+    if (IE.Chapters) {
+      let forced = null;
+      try { forced = localStorage.getItem('ie2080.chapter'); } catch (e) { forced = null; }
+      if (forced) forced = forced.replace(/^"|"$/g, '');
+      const ch = Game.setup.chapter;
+      const ok = ch === 'free' ? IE.Chapters.freeUnlocked(Game.meta) : (ch && IE.Chapters.unlocked(Game.meta, ch));
+      if (forced) Game.setup.chapter = String(forced);
+      else if (!ok) Game.setup.chapter = IE.Chapters.defaultFor(Game.meta);
+    }
     const render = () => music('setup') || UI.setPanel(UI.setupPanel(Game.setup, Game.meta), {
+      era() { openEra(Game.setup.chapter, (id) => { Game.setup.chapter = id; Game.setup.mode = 'rounds'; render(); }, () => render()); },
       bg(el) {
         Game.setup.bg = el.dataset.id; Game.setup.stake = IE.Meta.stakeMax(Game.meta, el.dataset.id); render();
         // 手機：選了角色就捲到角色資料
@@ -187,7 +236,7 @@
       mode(el) { Game.setup.mode = el.dataset.id; render(); },
       back() { showTitle(); },
       gacha() { openGacha(render); },
-      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)), mode: Game.setup.mode || 'rounds' }); },
+      start() { if (IE.Roster.unlocked(Game.meta, Game.setup.bg)) newGame(Game.setup.bg, Game.setup.season, { stake: Math.min(Game.setup.stake || 1, IE.Meta.stakeMax(Game.meta, Game.setup.bg)), mode: Game.setup.mode || 'rounds', chapter: (Game.setup.mode || 'rounds') === 'rounds' && Game.setup.chapter !== 'free' ? Game.setup.chapter : null }); },
     });
     render();
     window.scrollTo({ top: 0 });
@@ -197,7 +246,9 @@
     o = o || {};
     // 測試可以用 localStorage 的 ie2080.seed 固定新局的種子（煙霧測試用，令每次走同一條路）
     const testSeed = store.get('ie2080.seed');
-    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard' });
+    const rounds = (o.mode || 'standard') === 'rounds';
+    Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard',
+      chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta) : null });
     Game.ticketShown = 0;
     if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
@@ -854,6 +905,13 @@
       });
       return;
     }
+    // 第十七期：沉船貨櫃的打撈包，早上撕開
+    if (Array.isArray(s.packQueue) && s.packQueue.length && IE.EraUI) {
+      save();
+      UI.setPanel('<p class="mute">' + UI.esc(D.SALVAGE_TEXT.head) + '</p>');
+      UI.modal(IE.EraUI.salvagePackModal(s, s.packQueue[0]), { ok() { s.packQueue.shift(); UI.closeModal(); save(); roundsDay(); } });
+      return;
+    }
     const revs = IE.Story && IE.Story.reversals ? IE.Story.reversals(s) : [];
     if (revs.length) {
       save();
@@ -909,6 +967,13 @@
     IE.Rounds.offer(s);
     UI.setPanel(UI.dayPanel(s), {
       card(el) { roundsChoose(el.dataset.card); },
+      confess() {
+        const rep = IE.Rounds.confess(s);
+        if (!rep) return;
+        A.sfx('pickup');
+        UI.renderHud(s); A.setSpark(s.spark); save();
+        UI.modal(UI.reportModal(rep, '繼續'), { ok() { UI.closeModal(); roundsDay(); } });
+      },
       reroll() {
         const r = IE.Rounds.rerollOffer(s);
         if (!r.ok) { UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
@@ -1257,6 +1322,18 @@
     ending.kind = kind;
     s.ended = ending;
     const dossier = IE.Dossier.evaluate(s, kind);
+    // 第十七期：這一季的紀錄、沉下去的沉積、收藏（見過的素材、閃卡）、新的成就
+    let earnRes = null, chRes = null;
+    if (IE.Rounds && IE.Rounds.on(s)) {
+      if (IE.Chapters) { chRes = IE.Chapters.record(Game.meta, s, kind); chRes.cleared = chRes.firstClear ? IE.Chapters.of(s) : null; }
+      if (IE.Salvage) earnRes = IE.Salvage.bank(Game.meta, s, kind, { firstClear: !!(chRes && chRes.firstClear) });
+      Game.meta.cardsSeen = Game.meta.cardsSeen || {};
+      Object.keys(s.seenCards || {}).forEach((id) => { Game.meta.cardsSeen[id] = Math.max(Game.meta.cardsSeen[id] || 0, s.seenCards[id]); });
+      Game.meta.ach17 = Game.meta.ach17 || {};
+      if (s.stats.foils) Game.meta.ach17.foil1 = true;
+      if (s.stats.dups) Game.meta.ach17.dup1 = true;
+      if (kind === 'recruited' && s.chapter) Game.meta.ach17[s.chapter] = true;
+    }
     Game.meta = R.recordMeta(Game.meta, s, kind, dossier);
     store.set(KEY_META, Game.meta);
     store.del(KEY_RUN);
@@ -1267,20 +1344,21 @@
     A.setSpark(kind === 'grey' ? 0 : s.spark);
     UI.renderHud(s);
     // 第十一期：結局之後一鍵用同一角色再來；顯示差多少；可以匯出試玩紀錄
-    const same = { bg: s.bg, season: s.season, mode: s.mode || 'standard', stake: s.stake || 1 };
+    const same = { bg: s.bg, season: s.season, mode: s.mode || 'standard', stake: s.stake || 1, chapter: s.chapter || null };
     const best = Math.round(((s.stats && s.stats.bestRatio) || 0) * 100);
     const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     const nightsDone = isRounds ? (s.nightLog || []).length : 0;
     const summary = isRounds
-      ? '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪・完成 ' + nightsDone + ' / 15 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '')
+      ? (IE.Chapters && IE.Chapters.of(s) ? IE.Chapters.of(s).name + '・' : '') + '通過 ' + (s.reviewsPassed || 0) + ' / ' + IE.Rounds.total(s) + ' 輪・完成 ' + nightsDone + ' / ' + IE.Rounds.nightsTotal(s) + ' 晚' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '') + (earnRes ? '・沉積 +' + earnRes.total : '')
       : '通過 ' + (s.reviewsPassed || 0) + ' / 5 輪篩選・最接近門檻 ' + best + '%・活到第 ' + s.day + ' 天' + (s.playMs ? '・用了 ' + Math.round(s.playMs / 60000) + ' 分鐘' : '');
     const exportLog = () => {
       const data = JSON.stringify({ v: 1, bg: s.bg, mode: same.mode, stake: same.stake, ending: kind, day: s.day, passed: s.reviewsPassed || 0, best, playMs: s.playMs || 0, trace: s.trace || [] });
       try { navigator.clipboard.writeText(data).then(() => UI.toast('試玩紀錄已複製，可以貼給開發者', 'good'), () => UI.toast('複製失敗', 'bad')); } catch (e) { UI.toast('複製失敗', 'bad'); }
     };
-    UI.setPanel('<p class="run-sum">' + UI.esc(summary) + '</p><div class="btn-row"><button class="btn primary" type="button" data-do="retry">同一角色再來</button><button class="btn" type="button" data-do="again">換角色</button><button class="btn" type="button" data-do="log">匯出試玩紀錄</button><button class="btn" type="button" data-do="title">返回標題</button></div>',
-      { retry: () => { UI.closeModal(); newGame(same.bg, same.season, { mode: same.mode, stake: same.stake }); }, again: () => { UI.closeModal(); showSetup(); }, log: exportLog, title: () => showTitle() });
-    UI.modal(UI.dossierModal(ending, s, dossier, Game.meta), {
+    UI.setPanel('<p class="run-sum">' + UI.esc(summary) + '</p><div class="btn-row"><button class="btn primary" type="button" data-do="retry">同一角色再來</button><button class="btn" type="button" data-do="again">換角色</button>' + (isRounds && IE.Salvage ? '<button class="btn" type="button" data-do="salvage">舊城打撈</button>' : '') + '<button class="btn" type="button" data-do="log">匯出試玩紀錄</button><button class="btn" type="button" data-do="title">返回標題</button></div>',
+      { retry: () => { UI.closeModal(); newGame(same.bg, same.season, { mode: same.mode, stake: same.stake, chapter: same.chapter }); }, again: () => { UI.closeModal(); showSetup(); }, log: exportLog, title: () => showTitle(),
+        salvage: () => openSalvage(() => {}) });
+    const showDossier = () => UI.modal(UI.dossierModal(ending, s, dossier, Game.meta), {
       copy() {
         const text = UI.dossierText(ending, s, dossier);
         const ok = () => UI.toast('已複製', 'good');
@@ -1290,6 +1368,13 @@
       },
       again() { UI.closeModal(); showSetup(); },
     }, { dismiss: () => {} });
+    // 第十七期：先看這一生沉下去多少沉積，再看檔案
+    if (earnRes && IE.EraUI) {
+      UI.modal(IE.EraUI.earnModal(earnRes, chRes, Game.meta), {
+        salvage() { UI.closeModal(); openSalvage(showDossier); },
+        ok() { UI.closeModal(); showDossier(); },
+      }, { dismiss: showDossier });
+    } else showDossier();
   }
 
   // ---------- 輸入 ----------
@@ -1361,6 +1446,8 @@
 
   // ---------- 開機 ----------
   function boot(data) {
+    // 第十七期：浮城年表的跨局紀錄（舊玩家的「全城篩選」一開始就開放）
+    if (IE.Chapters) { IE.Chapters.migrate(Game.meta); store.set(KEY_META, Game.meta); }
     P.setup(document.getElementById('screen'));
     UI.bindDelegation();
     bindInput();
