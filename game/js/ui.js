@@ -98,6 +98,7 @@
       const chances = Math.max(0, s.chances == null ? 3 : s.chances);
       const rent = RD.rentOf(s);
       const FT = D().FLOOD_TEXT || {};
+      const HV = IE.Rounds.reveal ? IE.Rounds.reveal(s) : { chances: true, rent: true, water: true };
       const fStage = (s.floor <= 0 && s.flood === 'heavy')
         ? 'heavy'
         : (IE.Flood && IE.Flood.stage ? IE.Flood.stage(s) : 'dry');
@@ -108,10 +109,10 @@
       hud.innerHTML = RD.cashText(s, ''
         + '<div class="hud-top">'
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">' + (chapterOf(s) ? esc(chapterOf(s).name) + '・' : '') + '第 ' + s.night + '／' + IE.Rounds.nightsTotal(s) + ' 晚</span></div>'
-        + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
-        + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
-        // 第十七期：這一季還沒有水位系統（例如第一季）就不顯示水位
-        + ((!IE.Chapters || IE.Chapters.feat(s, 'flood')) ? '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>' : '')
+        + (HV.chances ? '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>' : '')
+        + (HV.rent ? '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>' : '')
+        // 第十七期：這一季還沒有水位系統（例如第一季）就不顯示水位；WO-16-11：引導局第一晚也不顯示
+        + (HV.water && (!IE.Chapters || IE.Chapters.feat(s, 'flood')) ? '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>' : '')
         + '<div class="hud-btns">'
         + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
@@ -397,13 +398,15 @@
       + '<button class="btn" type="button" data-do="objs">管理物件</button><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
   }
   // 街頭奇遇與人脈（第十期）
-  function streetFxText(fx) {
+  function streetFxText(fx, s) {
     const out = [];
+    // 五輪模式沒有身體和偏執（狀態列也不顯示），奇遇不寫這兩樣
+    const rounds = !!(s && IE.Rounds && IE.Rounds.on(s));
     if (fx.cr) out.push('$ ' + (fx.cr > 0 ? '+' : '−') + Math.abs(fx.cr));
-    if (fx.body) out.push('身體 ' + (fx.body > 0 ? '+' : '−') + Math.abs(fx.body));
+    if (fx.body && !rounds) out.push('身體 ' + (fx.body > 0 ? '+' : '−') + Math.abs(fx.body));
     if (fx.spark) out.push('火花 ' + (fx.spark > 0 ? '+' : '−') + Math.abs(fx.spark));
     if (fx.soul) out.push(fx.soul > 0 ? '靈魂變重' : '靈魂變輕');
-    if (fx.paranoia) out.push('偏執 ' + (fx.paranoia > 0 ? '+' : '−') + Math.abs(fx.paranoia));
+    if (fx.paranoia && !rounds) out.push('偏執 ' + (fx.paranoia > 0 ? '+' : '−') + Math.abs(fx.paranoia));
     if (fx.tag) out.push('「' + D().TAGS[fx.tag].name + '」素材' + (fx.n > 1 ? ' ×' + fx.n : ''));
     if (fx.contact) out.push('？');
     return out.join('・');
@@ -413,7 +416,7 @@
     return '<div class="modal encounter"><span class="eyebrow">街頭奇遇' + (e.weather && w ? '・' + esc(w.name) : '') + '</span>'
       + '<p class="d-text">' + esc(e.text) + '</p>'
       + '<div class="d-opts">' + e.opts.map((o, k) => '<button class="d-opt" type="button" data-do="pick" data-id="' + k + '"><span class="d-label">' + esc(o.label) + '</span>'
-        + (streetFxText(o.fx) ? '<span class="fx"><span class="fx-note">' + esc(streetFxText(o.fx)) + '</span></span>' : '') + '</button>').join('') + '</div></div>';
+        + (streetFxText(o.fx, s) ? '<span class="fx"><span class="fx-note">' + esc(streetFxText(o.fx, s)) + '</span></span>' : '') + '</button>').join('') + '</div></div>';
   }
   function contactsModal(s) {
     const all = D().CONTACTS || [], mine = s.contacts || {};
@@ -532,13 +535,15 @@
     const c = (s && C[s.city]) || C[D().CITY_DEFAULT];
     return (c && c.currency && c.currency.name) || '浮城元';
   }
-  function deltasHtml(d, isRounds) {
+  function deltasHtml(d, isRounds, hints) {
     const out = [];
-    if (d.cr) out.push('<div class="delta cr"><span class="k">' + (isRounds ? esc(cityCurrency()) : '信用點') + '</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span></div>');
+    const H = (D().PROLOGUE && D().PROLOGUE.hint) || {};
+    const hint = (k) => (hints && hints.includes(k) && H[k] ? '<small class="delta-hint">' + esc(H[k]) + '</small>' : '');
+    if (d.cr) out.push('<div class="delta cr"><span class="k">' + (isRounds ? esc(cityCurrency()) : '信用點') + '</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span>' + hint('cr') + '</div>');
     if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
-    if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
-    if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
-    return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
+    if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span>' + hint('spark') + '</div>');
+    if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span>' + hint('soul') + '</div>');
+    return out.length ? '<div class="deltas' + (hints && hints.length ? ' has-hints' : '') + '">' + out.join('') + '</div>' : '';
   }
   function linesHtml(lines, isRounds) {
     const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body' && !l._stanceLine) : (lines || []);
@@ -592,7 +597,9 @@
   function reportModal(rep, btnLabel) {
     const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
     lastReport = rep || null;
-    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + stanceHtml(rep, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep, isRounds)
+    // WO-16-11：引導局：錢、火花、靈魂第一次改變時加一句說明（main.js 之後才記下，這裏不改局面）
+    const hints = isRounds && IE.Rounds.newHints ? IE.Rounds.newHints(IE.Game.state, rep || {}) : [];
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds, hints) + stanceHtml(rep, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep, isRounds)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -753,10 +760,10 @@
     // 第十七期：新玩家的標題頁只有一句話和「開始」（第一季「招聘季」直接開始）
     if (firstTime) {
       return '<div class="title-menu is-first">'
-        + '<p class="tagline">水位每天都在上漲。你還有今晚可以畫。</p>'
+        + '<p class="tagline">' + esc((D().PROLOGUE && D().PROLOGUE.tagline) || '水位每天都在上漲。你還有今晚可以畫。') + '</p>'
         + '<div class="btn-row">'
         + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button><button class="btn" type="button" data-do="new">放棄並開始新一局</button>'
-          : '<button class="btn primary big" type="button" data-do="new">開始</button>')
+          : '<button class="btn primary big" type="button" data-do="new">' + esc((D().PROLOGUE && D().PROLOGUE.start) || '開始') + '</button>')
         + '</div></div>';
     }
     const endings = meta.endings ? Object.keys(meta.endings).length : 0;
@@ -965,8 +972,11 @@
       + '印章：' + dos.stamps.map((x) => '【' + DS.STAMPS[x.id].text + '】').join('');
   }
   // 玩法（第十二期）：一頁看懂，三根支柱；詳細規則收起
-  function helpModal() {
-    return '<div class="modal wide"><h2>玩法</h2><div class="help help-quick">'
+  // WO-16-11：沒有局面（標題頁）或五輪模式的局：先是五輪模式的說明（D.HELP16），經典模式的說明收在最後的摺疊裏；
+  // 經典模式的局：和以前完全一樣。o.replay：標題頁的「重看序章」
+  function helpModal(s, o) {
+    o = o || {};
+    const quick = '<div class="help help-quick">'
       + '<p class="hq-goal"><b>目標</b>：撐過 60 天、五輪篩選。最後一輪通過，外星人就會帶你走。落選三次，你會被歸入人才庫。</p>'
       + '<div class="hq-pillars">'
       + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆。每張素材是一兩種情緒，情緒排成一個<b>色輪</b>：只有一種顏色是單色、正對面的兩種是互補、平均分開的三種是三色、連在一起是鄰近色。顏色太雜就只是草稿。<b>配色</b>決定倍率，素材的<b>星級</b>決定籌碼。每一筆都會畫成一幅作品。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
@@ -974,7 +984,8 @@
       + '<div class="hq-p"><span class="hq-n">3</span><b>浮城</b><p>白天工作賺錢、生活收集素材、找朋友聊天。標着「今晚加成」的行動最划算；小遊戲不想玩可以按「跳過」。每天的天氣都會改變一些規則。</p></div>'
       + '</div>'
       + '<p class="mute hq-foot">撐住三樣東西：錢（交租）、身體（降到 0 會死）、火花（創作的倍率，太低會麻木）。</p>'
-      + '</div><details class="help-more"><summary>詳細規則</summary><div class="help">'
+      + '</div>';
+    const more = '<details class="help-more"><summary>詳細規則</summary><div class="help">'
       + '<p>標準的一局有 <b>60 天</b>（長篇模式 100 天）。每天分為早上、下午、晚上三個時段，每個時段做一件事。每期最後一天（標準模式第 12、24、36、48、60 天）晚上是<b>篩選日</b>：累積訊號夠高、靈魂又夠輕，就通過這一輪；第五輪通過，外星人就會把你帶走。落選三次會被歸入人才庫，提早結束。篩選日前兩晚，外星 HR 會在夢裡面試你。</p>'
       + '<h3>三樣東西互相蠶食</h3><ul>'
       + '<li><b>錢</b>：每晚要吃飯，每 7 天要交租，租金每期上漲。兩次交不起租就會被趕出門。</li>'
@@ -1020,7 +1031,20 @@
       + '<li><b>古董市場</b>：買稀有的古董素材，也可以把素材賣給古董商。</li>'
       + '<li><b>家具</b>：彈簧床、冷氣機、抽水泵、防盜門、魚缸、書架、畫架、望遠鏡……全部看得見，也全部有用。被趕出門會失去全部家具。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
-      + '</div></details><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
+      + '</div></details>';
+    const okBtn = '<button class="btn primary" type="button" data-do="close">明白</button>';
+    const H = D().HELP16;
+    const classicRun = !!(s && !(IE.Rounds && IE.Rounds.on(s)));
+    if (classicRun || !H) return '<div class="modal wide"><h2>玩法</h2>' + quick + more + '<div class="btn-row">' + okBtn + '</div></div>';
+    const P = D().PROLOGUE;
+    return '<div class="modal wide help16"><h2>' + esc(H.head) + '</h2><div class="help help-quick">'
+      + '<p class="hq-goal"><b>目標</b>：' + esc(H.goal) + '</p>'
+      + '<div class="hq-pillars">' + H.pillars.map((x, i) => '<div class="hq-p"><span class="hq-n">' + (i + 1) + '</span><b>' + esc(x.name) + '</b><p>' + esc(x.text) + '</p></div>').join('') + '</div>'
+      + (H.era ? '<p class="help-era">' + esc(H.era) + '</p>' : '')
+      + '<p class="mute hq-foot">' + esc(H.foot) + '</p>'
+      + '</div>'
+      + '<details class="help-more help-classic"><summary>' + esc(H.classic) + '</summary>' + quick + more + '</details>'
+      + '<div class="btn-row">' + (o.replay && P ? '<button class="btn" type="button" data-do="prologue">' + esc(P.replay) + '</button>' : '') + okBtn + '</div></div>';
   }
   function collectionModal(meta) {
     const names = { agent: '星際特工', returned: '被遣返', guardian: '地球守護者', heavy: '良知太重', ordinary: '平凡人', death: '死亡', grey: '灰化' };
@@ -1197,6 +1221,8 @@
   // ---------- 第十五期：五輪模式白天面板與視窗 ----------
   function dayPanel(s) {
     const RD = IE.Rounds, T = D().ROUND_TEXT;
+    // WO-16-11：引導局逐晚打開（只是不顯示；被隱藏的部分規則照常運作）。不是引導局時全部顯示
+    const V = RD.reveal ? RD.reveal(s) : { cardsMax: Infinity, map: true, rent: true, boss: true, story: true, wx: true, reroll: true, skip: true, deck: true, memory: true };
     const round = RD.roundOf(s);
     const groups = [];
     for (let r = 0; r < RD.total(s); r++) {
@@ -1290,7 +1316,11 @@
     const of = RD.offer(s);
     const offerInfos = (of.ids || []).map((id) => RD.cardInfo(s, id));
     const hasGigToday = offerInfos.some((c) => !!(c && c.gig));
-    const cardsHtml = offerInfos.map((c) => {
+    // 引導局第一晚只顯示兩張：差事排在最前（有差事就一定看得見），其餘保持原來的次序
+    const shownInfos = V.cardsMax < Infinity
+      ? offerInfos.filter((c) => c && c.gig).concat(offerInfos.filter((c) => !(c && c.gig))).slice(0, V.cardsMax)
+      : offerInfos;
+    const cardsHtml = shownInfos.map((c) => {
       let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '', gigHtml = '';
       if (c.gig) {
         const gFrom = GT.from || {};
@@ -1354,29 +1384,28 @@
     } else if (s.floodPump && FT.pump) {
       floodBannerHtml = '<div class="rd-flood f-pump">' + esc(FT.pump) + '</div>';
     }
+    const btns = (V.reroll ? '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>' : '')
+      + (V.skip ? '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>' : '')
+      + (V.deck ? '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>' : '')
+      + (V.memory ? '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>' : '');
     return '<div class="rd-day">'
       + expHtml
       + '<div class="rd-top">'
-      + '<div class="rd-map-row"><div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div><span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
+      + '<div class="rd-map-row">' + (V.map ? '<div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div>' : '') + '<span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
       + '<div class="rd-meta-row">'
       + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
-      + '<span class="rd-rent">' + esc(rentLine) + '</span>'
+      + (V.rent ? '<span class="rd-rent">' + esc(rentLine) + '</span>' : '')
       + '</div>'
       + floodBannerHtml
       + (IE.EraUI ? IE.EraUI.dayExtras(s) : '')
-      + bossAheadHtml
-      + storyStripHtml
-      + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
+      + (V.boss ? bossAheadHtml : '')
+      + (V.story ? storyStripHtml : '')
+      + (V.wx && (wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
       + noGigHtml
       + '<div class="rd-cards">' + cardsHtml + '</div>'
-      + '<div class="rd-btns">'
-      + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
-      + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
-      + '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>'
-      + '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>'
-      + '</div>'
+      + (btns ? '<div class="rd-btns">' + btns + '</div>' : '')
       + '</div>';
   }
   function storyModal(s, ch) {
@@ -1385,7 +1414,10 @@
     const banner = IE.imgTag ? IE.imgTag('story-crossroads', 'st-banner') : '';
     const sub = IE.Rounds.dayTitle(s, ch.round, s.night);
     const title = (TX.storyHead || '{name}的人生').replace('{name}', bg ? bg.name : '');
+    // WO-16-11：引導局的第一個故事章只顯示生存、為別人、巔峰各一；data-i 保持在 ch.options 裏原來的位置
+    const shownIdx = IE.Rounds.guidedOptions ? IE.Rounds.guidedOptions(s, ch) : (ch.options || []).map((o, i) => i);
     const opts = (ch.options || []).map((opt, i) => {
+      if (!shownIdx.includes(i)) return '';
       const reason = ST ? ST.reason(s, opt) : null;
       const side = opt.side || 'both';
       const sideTxt = (TX.sides && TX.sides[side]) || side;

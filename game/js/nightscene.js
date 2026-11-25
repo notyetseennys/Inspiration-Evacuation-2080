@@ -121,6 +121,13 @@
     return { seed, sky, far, mids, pier, front, flood, cold, rain, stage };
   }
 
+  // WO-16-11：第一筆之前的草稿：這一晚的天空、兩層遠景和碼頭（plan 是 null 時沒有草稿）
+  function sketchPlan(s) {
+    const p = plan(s);
+    if (!p) return [];
+    return [p.sky, p.far[0], p.far[1], p.pier].filter(Boolean);
+  }
+
   function isZ(r) {
     return r === 'zhuan' || r === 'zhuanhe';
   }
@@ -500,6 +507,10 @@
       cold: !!o.cold,
       rain: !!o.rain,
       guide: o.guide !== false,
+      sketch: null,
+      sketchA: 0,
+      sketchOut: false,
+      sketchT0: null,
       sky: null,
       skyA: 0,
       far: [],
@@ -576,6 +587,32 @@
     bg.addColorStop(1, '#0a0c16');
     g.fillStyle = bg;
     g.fillRect(0, 0, W, H);
+
+    // WO-16-11：淡淡的草稿（globalAlpha 0.16，再蓋一層深藍）；第一筆開始時 0.6 秒內淡出，靜止模式直接消失
+    if (s.sketch && s.sketchA > 0) {
+      if (s.sketchOut) {
+        if (still) s.sketchA = 0;
+        else {
+          if (s.sketchT0 == null) s.sketchT0 = t;
+          s.sketchA = Math.max(0, 1 - (t - s.sketchT0) / 0.6);
+        }
+      }
+      if (s.sketchA > 0) {
+        const a0 = 0.16 * s.sketchA;
+        const sk = asset(s.sketch[0]);
+        if (sk.ok) {
+          g.globalAlpha = a0;
+          g.drawImage(sk.im, -14, -6, W + 28, H + 12);
+          g.globalAlpha = 1;
+        }
+        if (s.sketch[1]) tileLayer(g, null, s.sketch[1], HORIZON + 3, 46, a0, 0);
+        if (s.sketch[2]) tileLayer(g, null, s.sketch[2], HORIZON + 3, 72, a0, 0);
+        if (s.sketch[3]) tileLayer(g, null, s.sketch[3], H, 110, a0, 0);
+        g.globalAlpha = 1;
+        g.fillStyle = 'rgba(8,14,30,' + (0.35 * s.sketchA).toFixed(3) + ')';
+        g.fillRect(0, 0, W, H);
+      }
+    }
 
     if (s.guide && s.skyA < 1) {
       g.strokeStyle = 'rgba(160,175,210,0.16)';
@@ -1302,6 +1339,7 @@
       const A = M.a;
       const sRef = sOverride || o.state || { seed, pier, stage: basePlan ? basePlan.stage : 'dry' };
       const ring = Math.max(0, Math.min(3, Number(n) || 0));
+      if (sc.sketch) sc.sketchOut = true;
       const meta = resolveStrokeMeta(sRef, info);
       const { runCards, roles, form, he } = meta;
       const assets = strokePlan(sRef, ring, info);
@@ -1522,6 +1560,7 @@
 
     function finish() {
       sc.guide = false;
+      sc.sketch = null;
       sc.marks.length = 0;
       if (sc.sky) sc.skyA = 1;
       sc.far.forEach((f) => { f.a = 1; });
@@ -1558,6 +1597,7 @@
         return api;
       }
       sc.guide = false;
+      sc.sketch = null;
       sc.seed = (rec.seed >>> 0) || sc.seed;
       if (rec.flood != null) sc.flood = Math.max(0, Math.min(1, Number(rec.flood) || 0));
       if (rec.cold != null) sc.cold = !!rec.cold;
@@ -1627,6 +1667,17 @@
       raf = 0;
     }
 
+    // WO-16-11：opts.sketch：第一筆之前畫淡淡的草稿，而且不畫三行說明文字
+    if (o.sketch && sInit) {
+      const names = sketchPlan(sInit);
+      if (names.length) {
+        sc.sketch = names;
+        sc.sketchA = 1;
+        sc.guide = false;
+        trackAssets(names);
+      }
+    }
+
     onAssetReady();
 
     const api = {
@@ -1652,6 +1703,7 @@
     HORIZON,
     base,
     plan,
+    sketchPlan,
     mount,
     strokePlan,
     recordStroke,

@@ -1732,6 +1732,123 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('最後一次機會耗盡 → 進入人才檔案結局畫面（.dossier）與局摘要（' + runSum + '）');
 
+    // WO-16-11 §7.2：新玩家（不設 ie2080.noPrologue）：序章之夜 → 引導局（第一季）。手機 390×844
+    {
+      const np = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const npErrors = [];
+      np.on('pageerror', (e) => npErrors.push(e.message));
+      np.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) npErrors.push(m.text()); });
+      await np.goto(URL);
+      await np.evaluate((seed) => {
+        localStorage.clear();
+        localStorage.setItem('ie2080.seed', String(seed));
+        localStorage.setItem('ie2080.speed', '4');
+        localStorage.setItem('ie2080.noEncounter', '1');
+      }, SEED);
+      await np.reload();
+      const PRO = await np.evaluate(() => window.__IE.DATA.PROLOGUE);
+      const noHScroll = async (where) => {
+        const sw = await np.evaluate(() => document.documentElement.scrollWidth);
+        if (sw > 390) await fail('WO-16-11：' + where + '有橫向捲動（scrollWidth ' + sw + '）');
+      };
+      // 1. 新玩家的標題頁
+      await np.waitForSelector('.title-menu.is-first');
+      const t1 = await np.evaluate(() => ({
+        extra: ['help', 'collection', 'gacha'].filter((k) => document.querySelector('.title-menu [data-do="' + k + '"]')),
+        text: document.querySelector('.title-menu').innerText,
+      }));
+      if (t1.extra.length || !t1.text.includes(PRO.tagline)) await fail('WO-16-11 §7.2 第 1 項：新玩家的標題頁不對：' + JSON.stringify(t1));
+      ok('WO-16-11 §7.2 第 1 項：新玩家的標題頁只有一句話和「開始」');
+      // 2. 按「開始」：3 秒內出現第一句話；沒有「⋯」和改稿；狀態列隱藏；沒有存檔
+      const startPrologue = async () => {
+        await np.click('.title-menu [data-do="new"]');
+        await np.waitForSelector('#ctable .dk-say:not([hidden])', { timeout: 3000 });
+      };
+      await startPrologue();
+      const p2 = await np.evaluate(() => ({
+        say: document.querySelector('#ctable .dk-say').textContent,
+        shown: ['.dk-more', '.dk-discard'].filter((q) => { const e = document.querySelector('#ctable ' + q); return e && e.offsetParent !== null; }),
+        hud: document.getElementById('hud').hidden,
+        run: localStorage.getItem('ie2080.run'),
+      }));
+      if (p2.say !== PRO.steps[0].say || p2.shown.length || !p2.hud || p2.run) await fail('WO-16-11 §7.2 第 2 項：序章的開頭不對：' + JSON.stringify(p2));
+      await noHScroll('序章');
+      ok('WO-16-11 §7.2 第 2 項：按「開始」之後 3 秒內出現第一句話，沒有「⋯」和改稿，狀態列隱藏，沒有存檔');
+      // 只按發光的東西，下完 n 筆；每一筆之後出現對應的 after
+      const playStrokes = async (n) => {
+        let done = 0;
+        const deadline = Date.now() + 60000;
+        while (done < n && Date.now() < deadline) {
+          const g = await np.$('#ctable .is-guide:not([disabled])');
+          if (!g) { await np.waitForTimeout(100); continue; }
+          const isPlay = await g.evaluate((el) => el.classList.contains('ct-play'));
+          await g.click();
+          if (!isPlay) continue;
+          const want = PRO.steps[done].after;
+          await np.waitForFunction((w) => { const e = document.querySelector('#ctable .dk-say'); return (e && !e.hidden && e.textContent === w) || !!document.querySelector('.dk-work.is-prologue'); }, want, { timeout: 20000 });
+          done++;
+          const h = await np.evaluate(() => [document.querySelector('#ctable').scrollHeight, innerHeight]);
+          if (h[0] > h[1]) await fail('WO-16-11 §7.2 第 9 項：序章的創作桌超出一屏（' + h.join(' > ') + '）');
+        }
+        if (done < n) await fail('WO-16-11 §7.2 第 3 項：只按發光的東西下不完 ' + n + ' 筆（只下了 ' + done + ' 筆）');
+      };
+      // 4. 序章途中重新載入：回到新玩家的標題頁（序章沒有存檔），重新開始
+      await playStrokes(1);
+      await np.reload();
+      await np.waitForSelector('.title-menu.is-first');
+      if (await np.evaluate(() => !!localStorage.getItem('ie2080.run'))) await fail('WO-16-11 §7.2 第 4 項：序章不可以存檔');
+      ok('WO-16-11 §7.2 第 4 項：序章途中重新載入，回到新玩家的標題頁');
+      await startPrologue();
+      // 3. 三筆之後是序章的作品頁
+      await playStrokes(3);
+      await np.waitForSelector('.dk-work.is-prologue [data-do="prologue-next"]', { timeout: 15000 });
+      ok('WO-16-11 §7.2 第 3 項：只按發光的東西下完三筆，每一筆之後有說明，最後是序章的作品頁');
+      // 5、10. 開始第一晚：引導局是第一季，四張序章卡耗損 0
+      await np.click('.dk-work.is-prologue [data-do="prologue-next"]');
+      await np.waitForFunction(() => window.__IE.Game.state && window.__IE.Game.state.guided, null, { timeout: 10000 });
+      const g5 = await np.evaluate(() => {
+        const IEx = window.__IE, s = IEx.Game.state;
+        return { done: IEx.Game.meta.prologueDone, guided: s.guided, chapter: s.chapter, nights: IEx.Rounds.nightsTotal(s),
+          pro: s.cards.filter((c) => c.from && c.from.kind === 'prologue' && (c.wear || 0) === 0).length };
+      });
+      if (g5.done !== true || g5.guided !== true || g5.pro !== 4) await fail('WO-16-11 §7.2 第 5 項：引導局不對：' + JSON.stringify(g5));
+      ok('WO-16-11 §7.2 第 5 項：meta.prologueDone、Game.state.guided，素材庫有四張耗損 0 的序章卡');
+      if (g5.chapter !== 'c1' || g5.nights !== 6) await fail('WO-16-11 §7.2 第 10 項：引導局應該是第一季（6 晚）：' + JSON.stringify(g5));
+      ok('WO-16-11 §7.2 第 10 項：引導局是第一季「招聘季」（6 晚）');
+      // 6. 第一個故事章：剛好三個選項（生存、為別人、巔峰）
+      await np.waitForSelector('#modal [data-do="storypick"]', { timeout: 10000 });
+      const g6 = await np.$$eval('#modal [data-do="storypick"]', (bs) => bs.map((b) => { const t = b.querySelector('.st-side'); return t ? Array.from(t.classList).find((c) => /^s-/.test(c)) : ''; }));
+      if (g6.length !== 3 || ['s-survive', 's-others', 's-peak'].some((k) => !g6.includes(k))) await fail('WO-16-11 §7.2 第 6 項：第一個故事章應該只有生存、為別人、巔峰：' + JSON.stringify(g6));
+      await noHScroll('第一個故事章');
+      ok('WO-16-11 §7.2 第 6 項：第一個故事章只有三個選項（' + g6.join('、') + '）');
+      await np.click('#modal [data-do="storypick"]');
+      // 7. 報告裏至少一個說明
+      await np.waitForSelector('#modal [data-do="ok"]');
+      const hintN = await np.$$eval('#modal .delta-hint', (h) => h.length);
+      if (!hintN) await fail('WO-16-11 §7.2 第 7 項：報告裏沒有 .delta-hint');
+      await noHScroll('報告');
+      ok('WO-16-11 §7.2 第 7 項：報告裏有 ' + hintN + ' 句說明');
+      // 8. 第一晚的白天面板：兩張生活卡，沒有租金、故事列、天氣、小地圖；狀態列沒有機會、租金、水位
+      for (let i = 0; i < 8; i++) {
+        if (await np.$('.rd-day .rd-card')) break;
+        const b = await np.$('#modal .pk:not(.is-open) .pk-seal, #modal [data-do="ok"]');
+        if (b) await b.click();
+        await np.waitForTimeout(250);
+      }
+      await np.waitForSelector('.rd-day .rd-card');
+      const g8 = await np.evaluate(() => ({
+        cards: document.querySelectorAll('.rd-day .rd-card').length,
+        shown: ['.rd-rent', '.rd-story-strip', '.rd-wx', '.rd-map'].filter((q) => document.querySelector('.rd-day ' + q)),
+        hud: ['.chances', '.rent', '.rd-water'].filter((q) => document.querySelector('#hud ' + q)),
+      }));
+      if (g8.cards !== 2 || g8.shown.length || g8.hud.length) await fail('WO-16-11 §7.2 第 8 項：第一晚的白天面板不對：' + JSON.stringify(g8));
+      await noHScroll('第一晚的白天面板');
+      ok('WO-16-11 §7.2 第 8 項：第一晚只有兩張生活卡，沒有租金、故事列、天氣、小地圖，狀態列沒有機會、租金、水位');
+      ok('WO-16-11 §7.2 第 9 項：手機 390×844 第 2 至 8 步沒有橫向捲動，序章的創作桌不超出一屏');
+      if (npErrors.length) await fail('WO-16-11：新玩家的流程有 JS 錯誤：\n' + npErrors.join('\n'));
+      await np.close();
+    }
+
     // WO-15-12 §5.9：dist/inspiration-evacuation-2080.html 用 file:// 離線開啟時，圖片 naturalWidth > 0，檔案大小 < 4 MB
     const distFile = path.join(__dirname, '..', 'dist', 'inspiration-evacuation-2080.html');
     const distStat = fs.statSync(distFile);

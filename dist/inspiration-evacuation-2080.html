@@ -7304,6 +7304,86 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
 }
 
+/* ---------- WO-16-11：序章之夜 ---------- */
+/* 序章沒有「⋯」、改稿、離開、評審和 KPI 的一行（排序和速度在「⋯」裏面） */
+#ctable.dk-mode.is-prologue .dk-more,
+#ctable.dk-mode.is-prologue .dk-discard,
+#ctable.dk-mode.is-prologue .dk-leave,
+#ctable.dk-mode.is-prologue .dk-rule,
+#ctable.dk-mode.is-prologue .dk-sheet,
+#ctable.dk-mode.is-prologue .dk-sheet-bg {
+  display: none !important;
+}
+
+/* 一句話：在稿紙上方，字級和稿紙的提示相同；手機上最多兩行 */
+#ctable.dk-mode .dk-say {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 2px 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: #ffe9b0;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#ctable.dk-mode .dk-say[hidden] {
+  display: none;
+}
+
+/* 一次只有一樣東西發光：明亮的外框和緩慢的呼吸光（1.6 秒一次） */
+#ctable.dk-mode .is-guide {
+  outline: 2px solid #ffd76a;
+  outline-offset: 2px;
+  animation: dk-guide-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes dk-guide-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 106, 0); }
+  50% { box-shadow: 0 0 16px 4px rgba(255, 215, 106, 0.55); }
+}
+
+#ctable.dk-mode .dk-card.is-locked {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+#ctable.dk-mode.is-prologue .dk-card,
+#ctable.dk-mode.is-prologue .dk-actions .btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 序章的作品頁 */
+#ctable.dk-mode .dk-work.is-prologue .dk-work-score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#ctable.dk-mode .dk-work.is-prologue .dk-pro-stamp {
+  font-size: 14px;
+  padding: 2px 8px;
+}
+
+#ctable.dk-mode .dk-work.is-prologue .dk-pro-done {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #dfe6f5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ctable.dk-mode .is-guide {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(255, 215, 106, 0.35);
+  }
+}
+
 /* 《靈感撤離 2080》第十七期：撕開（卡包）、浮城年表、舊城打撈、收藏冊 */
 
 /* ---------- 撕開 ---------- */
@@ -7517,6 +7597,33 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 @media (prefers-reduced-motion: reduce) {
   .salv-n.is-next .salv-lamp { animation: none; }
   .era-ch { transition: none; }
+}
+
+/* WO-16-11：「玩法」裏撕開和舊城的一句 */
+.help16 .help-era {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  background: rgba(255, 211, 107, 0.08);
+  border: 1px solid rgba(255, 211, 107, 0.28);
+}
+.help16 .help-classic > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* WO-16-11：引導局的報告：第一次改變的資源下面有一句說明 */
+.delta .delta-hint {
+  display: block;
+  max-width: 13em;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #ffe9b0;
+  letter-spacing: 0;
 }
 </style>
 </head>
@@ -10757,6 +10864,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     friend: '{x}給你的',
     shop: '第 {n} 晚之後，在市集買的',
     craft: '第 {n} 晚之後，自己做出來的',
+    prologue: '序章之夜，你第一次排出了起承轉合',
+    salvage: '從舊城的水底打撈上來的',
   };
 
   // 第十六期：卡背、遺物與回憶文案（總規格 §2.5）
@@ -10855,9 +10964,48 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     pump: '抽水泵響了一整晚，水退了一點。',
   };
 
+  // 第十六期乙段（WO-16-11）：序章之夜和新玩家的說明
+  const PROLOGUE = {
+    bg: 'copywriter', season: 'storm', seed: 2080, chapter: 'c1',
+    // 一碗糖水兩個人（人情）、摺紙船（人情）、為誰撐傘的機械人（機械）、人機之間（人情＋機械）
+    cards: ['dk_warmth1', 'dk_warmth2', 'dk_machine1', 'dk_warmth_machine'],
+    scene: { weather: 'drizzle', flood: 0.35 },
+    stageName: '序章之夜',
+    tagline: '水位每天都在上漲。你還有今晚可以畫。',
+    start: '開始',
+    steps: [
+      { pick: [0, 1], say: '這兩張都有人情，接得上。按它們，再按「下筆」。', after: '相同的情緒接在一起，是「承」。' },
+      { pick: [0, 1, 2], say: '人情的對面是機械。加上它，相反的情緒是「轉」。', after: '轉，令倍率翻倍。' },
+      { pick: [0, 1, 2, 3], say: '最後一張又有人情。回到開頭，就是「合」。', after: '先承、後轉、再合：起承轉合。' },
+    ],
+    done: '這就是你的第一幅畫。之後每一晚，次序由你決定。',
+    next: '開始第一晚',
+    replay: '重看序章',
+    hint: {
+      cr: '錢：交租用，交不起就失去一次機會。',
+      spark: '火花：分數的倍數。',
+      soul: '靈魂：超過 21 克，外星人就不要你。',
+    },
+  };
+
+  // 五輪模式的「玩法」（取代經典模式的說明；經典模式的說明收在最後的摺疊裏）
+  const HELP16 = {
+    head: '玩法',
+    goal: '撐過這一季的每一晚和每一輪篩選（第一季是六晚、兩輪）。最後一輪通過，外星人就會帶你走。今晚不達標、交不起租、靈魂太重，都會失去一次機會；三次用完，你會被歸入人才庫。',
+    pillars: [
+      { name: '創作', text: '晚上把素材按次序排成一行。相同或相鄰的情緒是「承」，相反的情緒是「轉」，最後一張回到開頭是「合」。先承、後轉、再合，就是起承轉合，分數最高；斷開的素材不計分。每一筆都會畫進同一幅夜景。' },
+      { name: '靈魂', text: '外星人只要又亮又輕的人：靈魂超過 21 克就不會被選中。做虧心事會變重，為別人做事會變輕。' },
+      { name: '浮城', text: '白天選一件事做。工作是罕有的差事，過了期限就沒有；故事的選擇會改變你的錢、靈魂和素材。水位每天上漲，水淹到家會帶走東西。' },
+    ],
+    era: '得到素材時，用手指撕開包：閃卡的籌碼 ×1.5，同一張再得到會升星。一生結束時，作品沉到舊城，留下沉積，在「舊城打撈」換下一生的能力。',
+    foot: '撐住三樣東西：錢（交租）、火花（分數的倍數）、靈魂（不可以太重）。每張素材都有來歷：按卡上的「來歷」看它從哪裏來。',
+    classic: '經典模式的規則',
+  };
+
   Object.assign(D, {
     ECON, ROUND_TEXT, DAYCARDS, DAYCARDS16, PACKS, SERVICES, SERVICES16,
     ORIGIN, CARD_TEXT, ECON16, GIG_TEXT, GIG_FRIEND, FLOOD_TEXT,
+    PROLOGUE, HELP16,
   });
 });
 
@@ -17443,7 +17591,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   IE.Create = {
     FORM, RANK, STAR_CHIPS, starOf, cardValue, polishCost, polishStar, opposite, wheelDist: wdist, wearMult, tagCounts, mediaCounts, detectForm, formStats, level, matchRecipes, kpiMod, aiFactor,
     syncDeskForms, formOf, formsOf, rankOf, repairOf, objDef, deskOn,
-    isSketch, stageTonight, maxCards, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
+    isSketch, stageTonight, maxCards, workName, forbidden, snapshot, restore, ability, abilityState, useAbility, buyPrice, bribePrice, sellPrice, activeObjects, objMods, schoolCounts, activeSchools, schoolOn, freeOfRules, medium: med, topRecipes, scorePlay, suggest, chase, preview, canStart, start, draw, play, discard, finish, cancel, newDay, bestPlay,
   };
 });
 
@@ -20667,8 +20815,145 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return { rent, rentOk: s.cr >= rent, soul: s.soul, soulOk: s.soul <= R.soulLimit(s) };
   }
 
+  // ---------- 第十六期乙段（WO-16-11）：序章之夜、引導局 ----------
+  // 序章用一個用完即棄的局面 p（p.prologue === true）：不存檔、不計入晚數、不給錢。以下全部是純函數，不用 Math.random。
+  const PRO = () => D.PROLOGUE;
+  // 四張序章卡的 uid，按 PROLOGUE.cards 的次序
+  function prologueUids(p) {
+    return PRO().cards.map((id) => { const c = p && p.cards ? p.cards.find((x) => x.id === id) : null; return c ? c.uid : null; }).filter((u) => u != null);
+  }
+  function prologueRun() {
+    const P = PRO();
+    const p = R.newRun({ bg: P.bg, season: P.season, seed: P.seed, mode: 'rounds', meta: { runs: 0 }, chapter: P.chapter || null });
+    p.prologue = true;
+    p.objects = [];
+    p.cards = [];
+    P.cards.forEach((id) => R.addCard(p, id, { kind: 'prologue' }));
+    p.weather = { id: P.scene.weather, day: p.day };
+    p.phase = 'night';
+    return p;
+  }
+  function prologueSession(p, target) {
+    const P = PRO();
+    const ses = IE.Create.start(p, 'normal');
+    ses.hand = prologueUids(p);
+    ses.deck = [];
+    ses.used = [];
+    ses.plays = P.steps.length;
+    ses.discards = 0;
+    ses.stage = { kind: 'prologue', name: P.stageName, target, rules: [], index: 0 };
+    ses.prologueStep = 0;
+    ses.base = { plays: ses.plays, discards: 0, handSize: ses.handSize };
+    return ses;
+  }
+  function prologueStep(p) {
+    const ses = p && p.session;
+    if (!ses || ses.prologueStep == null) return null;
+    const i = ses.prologueStep;
+    const st = PRO().steps[i];
+    if (!st) return null;
+    const all = prologueUids(p);
+    return { i, uids: st.pick.map((k) => all[k]), say: st.say, after: st.after };
+  }
+  // sel：介面上已經選了的 uid（按次序）。回傳下一張要按的卡、要按「下筆」，或者選錯了要重來
+  function prologueNext(p, sel) {
+    const step = prologueStep(p);
+    if (!step) return null;
+    const cur = Array.isArray(sel) ? sel : [];
+    if (cur.length > step.uids.length || cur.some((u, k) => u !== step.uids[k])) return { reset: true };
+    if (cur.length === step.uids.length) return { play: true };
+    return { uid: step.uids[cur.length] };
+  }
+  // 每一筆之後：手上還原為四張卡（原來的次序），進入下一步
+  function prologueAfterPlay(p) {
+    const ses = p && p.session;
+    if (!ses) return;
+    ses.hand = prologueUids(p);
+    ses.deck = [];
+    ses.used = [];
+    ses.prologueStep = (ses.prologueStep || 0) + 1;
+  }
+  // 目標：照三步實際下三筆，取第二、三筆累計分數的中間，第三筆一定剛剛達標（不可以寫成常數）
+  function prologueTarget() {
+    const q = prologueRun();
+    prologueSession(q, Infinity);
+    const cum = [];
+    PRO().steps.forEach(() => {
+      const st = prologueStep(q);
+      IE.Create.play(q, st.uids);
+      cum.push(q.session.total);
+      prologueAfterPlay(q);
+    });
+    return Math.round((cum[cum.length - 2] + cum[cum.length - 1]) / 2);
+  }
+  function prologueStart(p) {
+    return prologueSession(p, prologueTarget());
+  }
+  // 收工：不呼叫 IE.Create.finish、IE.Stages.settle（'prologue' 不在獎金表內）
+  function prologueFinish(p) {
+    const ses = p && p.session;
+    if (!ses) return null;
+    const out = {
+      title: ses.log.length && IE.Create.workName ? IE.Create.workName(ses.log, p) : '',
+      total: ses.total,
+      target: ses.stage ? ses.stage.target : 0,
+      passed: !!ses.passed,
+      strokes: ses.paintStrokes || [],
+    };
+    p.session = null;
+    return out;
+  }
+  // 正式的局：加入四張序章卡的新複本（耗損 0）
+  function prologueCarry(s) {
+    if (!on(s)) return [];
+    return PRO().cards.map((id) => R.addCard(s, id, { kind: 'prologue' }).card).filter(Boolean);
+  }
+  // 引導局要顯示甚麼（只是顯示；被隱藏的部分規則照常運作）
+  const REVEAL_ALL = { cardsMax: Infinity, map: true, rent: true, chances: true, water: true, skip: true, deck: true, boss: true, story: true, wx: true, reroll: true, memory: true };
+  function reveal(s) {
+    if (!s || !s.guided) return Object.assign({}, REVEAL_ALL);
+    const n = s.night || 1;
+    return {
+      cardsMax: n <= 1 ? 2 : Infinity,
+      map: n >= 2, rent: n >= 2, chances: n >= 2, water: n >= 2, skip: n >= 2, deck: n >= 2,
+      boss: n >= 3, story: n >= 3, wx: n >= 3, reroll: n >= 3, memory: n >= 3,
+    };
+  }
+  // 第一個故事章：引導局只給生存、為別人、巔峰各一（保留在 ch.options 裏原來的編號）
+  function guidedOptions(s, ch) {
+    const opts = (ch && ch.options) || [];
+    const all = opts.map((o, i) => i);
+    const answered = !!(s && s.story && s.story.log && s.story.log.length);
+    if (!s || !s.guided || answered || opts.length <= 3) return all;
+    const pick = [];
+    ['survive', 'others', 'peak'].forEach((side) => {
+      let i = opts.findIndex((o, k) => o && o.side === side && !o.extreme && !pick.includes(k));
+      if (i < 0) i = opts.findIndex((o, k) => o && o.side === side && !pick.includes(k));
+      if (i >= 0) pick.push(i);
+    });
+    for (let k = 0; k < opts.length && pick.length < 3; k++) if (!pick.includes(k)) pick.push(k);
+    return pick.sort((a, b) => a - b);
+  }
+  // 引導局：錢、火花、靈魂第一次改變時要加一句說明（不改局面）
+  function newHints(s, rep) {
+    if (!s || !s.guided || !rep || !rep.deltas) return [];
+    const h = s.hinted || {};
+    return ['cr', 'spark', 'soul'].filter((k) => rep.deltas[k] && !h[k]);
+  }
+
   IE.Rounds = {
     on,
+    prologueRun,
+    prologueStart,
+    prologueStep,
+    prologueNext,
+    prologueAfterPlay,
+    prologueTarget,
+    prologueFinish,
+    prologueCarry,
+    reveal,
+    guidedOptions,
+    newHints,
     cash,
     cashText,
     total,
@@ -33646,6 +33931,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return { seed, sky, far, mids, pier, front, flood, cold, rain, stage };
   }
 
+  // WO-16-11：第一筆之前的草稿：這一晚的天空、兩層遠景和碼頭（plan 是 null 時沒有草稿）
+  function sketchPlan(s) {
+    const p = plan(s);
+    if (!p) return [];
+    return [p.sky, p.far[0], p.far[1], p.pier].filter(Boolean);
+  }
+
   function isZ(r) {
     return r === 'zhuan' || r === 'zhuanhe';
   }
@@ -34025,6 +34317,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       cold: !!o.cold,
       rain: !!o.rain,
       guide: o.guide !== false,
+      sketch: null,
+      sketchA: 0,
+      sketchOut: false,
+      sketchT0: null,
       sky: null,
       skyA: 0,
       far: [],
@@ -34101,6 +34397,32 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     bg.addColorStop(1, '#0a0c16');
     g.fillStyle = bg;
     g.fillRect(0, 0, W, H);
+
+    // WO-16-11：淡淡的草稿（globalAlpha 0.16，再蓋一層深藍）；第一筆開始時 0.6 秒內淡出，靜止模式直接消失
+    if (s.sketch && s.sketchA > 0) {
+      if (s.sketchOut) {
+        if (still) s.sketchA = 0;
+        else {
+          if (s.sketchT0 == null) s.sketchT0 = t;
+          s.sketchA = Math.max(0, 1 - (t - s.sketchT0) / 0.6);
+        }
+      }
+      if (s.sketchA > 0) {
+        const a0 = 0.16 * s.sketchA;
+        const sk = asset(s.sketch[0]);
+        if (sk.ok) {
+          g.globalAlpha = a0;
+          g.drawImage(sk.im, -14, -6, W + 28, H + 12);
+          g.globalAlpha = 1;
+        }
+        if (s.sketch[1]) tileLayer(g, null, s.sketch[1], HORIZON + 3, 46, a0, 0);
+        if (s.sketch[2]) tileLayer(g, null, s.sketch[2], HORIZON + 3, 72, a0, 0);
+        if (s.sketch[3]) tileLayer(g, null, s.sketch[3], H, 110, a0, 0);
+        g.globalAlpha = 1;
+        g.fillStyle = 'rgba(8,14,30,' + (0.35 * s.sketchA).toFixed(3) + ')';
+        g.fillRect(0, 0, W, H);
+      }
+    }
 
     if (s.guide && s.skyA < 1) {
       g.strokeStyle = 'rgba(160,175,210,0.16)';
@@ -34827,6 +35149,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const A = M.a;
       const sRef = sOverride || o.state || { seed, pier, stage: basePlan ? basePlan.stage : 'dry' };
       const ring = Math.max(0, Math.min(3, Number(n) || 0));
+      if (sc.sketch) sc.sketchOut = true;
       const meta = resolveStrokeMeta(sRef, info);
       const { runCards, roles, form, he } = meta;
       const assets = strokePlan(sRef, ring, info);
@@ -35047,6 +35370,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
     function finish() {
       sc.guide = false;
+      sc.sketch = null;
       sc.marks.length = 0;
       if (sc.sky) sc.skyA = 1;
       sc.far.forEach((f) => { f.a = 1; });
@@ -35083,6 +35407,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         return api;
       }
       sc.guide = false;
+      sc.sketch = null;
       sc.seed = (rec.seed >>> 0) || sc.seed;
       if (rec.flood != null) sc.flood = Math.max(0, Math.min(1, Number(rec.flood) || 0));
       if (rec.cold != null) sc.cold = !!rec.cold;
@@ -35152,6 +35477,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       raf = 0;
     }
 
+    // WO-16-11：opts.sketch：第一筆之前畫淡淡的草稿，而且不畫三行說明文字
+    if (o.sketch && sInit) {
+      const names = sketchPlan(sInit);
+      if (names.length) {
+        sc.sketch = names;
+        sc.sketchA = 1;
+        sc.guide = false;
+        trackAssets(names);
+      }
+    }
+
     onAssetReady();
 
     const api = {
@@ -35177,6 +35513,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     HORIZON,
     base,
     plan,
+    sketchPlan,
     mount,
     strokePlan,
     recordStroke,
@@ -35599,6 +35936,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const chances = Math.max(0, s.chances == null ? 3 : s.chances);
       const rent = RD.rentOf(s);
       const FT = D().FLOOD_TEXT || {};
+      const HV = IE.Rounds.reveal ? IE.Rounds.reveal(s) : { chances: true, rent: true, water: true };
       const fStage = (s.floor <= 0 && s.flood === 'heavy')
         ? 'heavy'
         : (IE.Flood && IE.Flood.stage ? IE.Flood.stage(s) : 'dry');
@@ -35609,10 +35947,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       hud.innerHTML = RD.cashText(s, ''
         + '<div class="hud-top">'
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">' + (chapterOf(s) ? esc(chapterOf(s).name) + '・' : '') + '第 ' + s.night + '／' + IE.Rounds.nightsTotal(s) + ' 晚</span></div>'
-        + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
-        + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
-        // 第十七期：這一季還沒有水位系統（例如第一季）就不顯示水位
-        + ((!IE.Chapters || IE.Chapters.feat(s, 'flood')) ? '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>' : '')
+        + (HV.chances ? '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>' : '')
+        + (HV.rent ? '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>' : '')
+        // 第十七期：這一季還沒有水位系統（例如第一季）就不顯示水位；WO-16-11：引導局第一晚也不顯示
+        + (HV.water && (!IE.Chapters || IE.Chapters.feat(s, 'flood')) ? '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>' : '')
         + '<div class="hud-btns">'
         + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
@@ -35898,13 +36236,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<button class="btn" type="button" data-do="objs">管理物件</button><button class="btn primary" type="button" data-do="close">離開</button></div></div>';
   }
   // 街頭奇遇與人脈（第十期）
-  function streetFxText(fx) {
+  function streetFxText(fx, s) {
     const out = [];
+    // 五輪模式沒有身體和偏執（狀態列也不顯示），奇遇不寫這兩樣
+    const rounds = !!(s && IE.Rounds && IE.Rounds.on(s));
     if (fx.cr) out.push('$ ' + (fx.cr > 0 ? '+' : '−') + Math.abs(fx.cr));
-    if (fx.body) out.push('身體 ' + (fx.body > 0 ? '+' : '−') + Math.abs(fx.body));
+    if (fx.body && !rounds) out.push('身體 ' + (fx.body > 0 ? '+' : '−') + Math.abs(fx.body));
     if (fx.spark) out.push('火花 ' + (fx.spark > 0 ? '+' : '−') + Math.abs(fx.spark));
     if (fx.soul) out.push(fx.soul > 0 ? '靈魂變重' : '靈魂變輕');
-    if (fx.paranoia) out.push('偏執 ' + (fx.paranoia > 0 ? '+' : '−') + Math.abs(fx.paranoia));
+    if (fx.paranoia && !rounds) out.push('偏執 ' + (fx.paranoia > 0 ? '+' : '−') + Math.abs(fx.paranoia));
     if (fx.tag) out.push('「' + D().TAGS[fx.tag].name + '」素材' + (fx.n > 1 ? ' ×' + fx.n : ''));
     if (fx.contact) out.push('？');
     return out.join('・');
@@ -35914,7 +36254,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return '<div class="modal encounter"><span class="eyebrow">街頭奇遇' + (e.weather && w ? '・' + esc(w.name) : '') + '</span>'
       + '<p class="d-text">' + esc(e.text) + '</p>'
       + '<div class="d-opts">' + e.opts.map((o, k) => '<button class="d-opt" type="button" data-do="pick" data-id="' + k + '"><span class="d-label">' + esc(o.label) + '</span>'
-        + (streetFxText(o.fx) ? '<span class="fx"><span class="fx-note">' + esc(streetFxText(o.fx)) + '</span></span>' : '') + '</button>').join('') + '</div></div>';
+        + (streetFxText(o.fx, s) ? '<span class="fx"><span class="fx-note">' + esc(streetFxText(o.fx, s)) + '</span></span>' : '') + '</button>').join('') + '</div></div>';
   }
   function contactsModal(s) {
     const all = D().CONTACTS || [], mine = s.contacts || {};
@@ -36033,13 +36373,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const c = (s && C[s.city]) || C[D().CITY_DEFAULT];
     return (c && c.currency && c.currency.name) || '浮城元';
   }
-  function deltasHtml(d, isRounds) {
+  function deltasHtml(d, isRounds, hints) {
     const out = [];
-    if (d.cr) out.push('<div class="delta cr"><span class="k">' + (isRounds ? esc(cityCurrency()) : '信用點') + '</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span></div>');
+    const H = (D().PROLOGUE && D().PROLOGUE.hint) || {};
+    const hint = (k) => (hints && hints.includes(k) && H[k] ? '<small class="delta-hint">' + esc(H[k]) + '</small>' : '');
+    if (d.cr) out.push('<div class="delta cr"><span class="k">' + (isRounds ? esc(cityCurrency()) : '信用點') + '</span><span class="num">' + (isRounds ? (d.cr > 0 ? '+$' : '−$') + fmt(Math.abs(d.cr)) : signed(d.cr)) + '</span>' + hint('cr') + '</div>');
     if (d.body && !isRounds) out.push('<div class="delta body"><span class="k">身體</span><span class="num">' + signed(d.body) + '</span></div>');
-    if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span></div>');
-    if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span></div>');
-    return out.length ? '<div class="deltas">' + out.join('') + '</div>' : '';
+    if (d.spark) out.push('<div class="delta spark"><span class="k">火花</span><span class="num">' + signed(d.spark, 2) + '</span>' + hint('spark') + '</div>');
+    if (d.soul) out.push('<div class="delta soul"><span class="k">靈魂重量</span><span class="num">' + signed(d.soul, 1) + '<small>克</small></span>' + hint('soul') + '</div>');
+    return out.length ? '<div class="deltas' + (hints && hints.length ? ' has-hints' : '') + '">' + out.join('') + '</div>' : '';
   }
   function linesHtml(lines, isRounds) {
     const list = isRounds ? (lines || []).filter((l) => l.stat !== 'body' && !l._stanceLine) : (lines || []);
@@ -36093,7 +36435,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function reportModal(rep, btnLabel) {
     const isRounds = !!(IE.Rounds && IE.Game && IE.Rounds.on(IE.Game.state));
     lastReport = rep || null;
-    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds) + stanceHtml(rep, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep, isRounds)
+    // WO-16-11：引導局：錢、火花、靈魂第一次改變時加一句說明（main.js 之後才記下，這裏不改局面）
+    const hints = isRounds && IE.Rounds.newHints ? IE.Rounds.newHints(IE.Game.state, rep || {}) : [];
+    return '<div class="modal' + (rep.rank ? ' ranked' : '') + '">' + rankHtml(rep.rank) + '<h2>' + esc(rep.title) + '</h2>' + deltasHtml(rep.deltas || {}, isRounds, hints) + stanceHtml(rep, isRounds) + linesHtml(rep.lines || [], isRounds) + (isRounds ? '' : statsDeltaHtml(rep.stats)) + gainedHtml(rep, isRounds)
       + '<div class="btn-row"><button class="btn primary" type="button" data-do="ok">' + (btnLabel || '繼續') + '</button></div></div>';
   }
   function settleModal(rep) {
@@ -36254,10 +36598,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     // 第十七期：新玩家的標題頁只有一句話和「開始」（第一季「招聘季」直接開始）
     if (firstTime) {
       return '<div class="title-menu is-first">'
-        + '<p class="tagline">水位每天都在上漲。你還有今晚可以畫。</p>'
+        + '<p class="tagline">' + esc((D().PROLOGUE && D().PROLOGUE.tagline) || '水位每天都在上漲。你還有今晚可以畫。') + '</p>'
         + '<div class="btn-row">'
         + (hasSave ? '<button class="btn primary big" type="button" data-do="continue">繼續上一局</button><button class="btn" type="button" data-do="new">放棄並開始新一局</button>'
-          : '<button class="btn primary big" type="button" data-do="new">開始</button>')
+          : '<button class="btn primary big" type="button" data-do="new">' + esc((D().PROLOGUE && D().PROLOGUE.start) || '開始') + '</button>')
         + '</div></div>';
     }
     const endings = meta.endings ? Object.keys(meta.endings).length : 0;
@@ -36466,8 +36810,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '印章：' + dos.stamps.map((x) => '【' + DS.STAMPS[x.id].text + '】').join('');
   }
   // 玩法（第十二期）：一頁看懂，三根支柱；詳細規則收起
-  function helpModal() {
-    return '<div class="modal wide"><h2>玩法</h2><div class="help help-quick">'
+  // WO-16-11：沒有局面（標題頁）或五輪模式的局：先是五輪模式的說明（D.HELP16），經典模式的說明收在最後的摺疊裏；
+  // 經典模式的局：和以前完全一樣。o.replay：標題頁的「重看序章」
+  function helpModal(s, o) {
+    o = o || {};
+    const quick = '<div class="help help-quick">'
       + '<p class="hq-goal"><b>目標</b>：撐過 60 天、五輪篩選。最後一輪通過，外星人就會帶你走。落選三次，你會被歸入人才庫。</p>'
       + '<div class="hq-pillars">'
       + '<div class="hq-p"><span class="hq-n">1</span><b>創作</b><p>晚上用素材下筆。每張素材是一兩種情緒，情緒排成一個<b>色輪</b>：只有一種顏色是單色、正對面的兩種是互補、平均分開的三種是三色、連在一起是鄰近色。顏色太雜就只是草稿。<b>配色</b>決定倍率，素材的<b>星級</b>決定籌碼。每一筆都會畫成一幅作品。關卡之後到遺物攤買靈感物件，它們是你的引擎。</p></div>'
@@ -36475,7 +36822,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="hq-p"><span class="hq-n">3</span><b>浮城</b><p>白天工作賺錢、生活收集素材、找朋友聊天。標着「今晚加成」的行動最划算；小遊戲不想玩可以按「跳過」。每天的天氣都會改變一些規則。</p></div>'
       + '</div>'
       + '<p class="mute hq-foot">撐住三樣東西：錢（交租）、身體（降到 0 會死）、火花（創作的倍率，太低會麻木）。</p>'
-      + '</div><details class="help-more"><summary>詳細規則</summary><div class="help">'
+      + '</div>';
+    const more = '<details class="help-more"><summary>詳細規則</summary><div class="help">'
       + '<p>標準的一局有 <b>60 天</b>（長篇模式 100 天）。每天分為早上、下午、晚上三個時段，每個時段做一件事。每期最後一天（標準模式第 12、24、36、48、60 天）晚上是<b>篩選日</b>：累積訊號夠高、靈魂又夠輕，就通過這一輪；第五輪通過，外星人就會把你帶走。落選三次會被歸入人才庫，提早結束。篩選日前兩晚，外星 HR 會在夢裡面試你。</p>'
       + '<h3>三樣東西互相蠶食</h3><ul>'
       + '<li><b>錢</b>：每晚要吃飯，每 7 天要交租，租金每期上漲。兩次交不起租就會被趕出門。</li>'
@@ -36521,7 +36869,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<li><b>古董市場</b>：買稀有的古董素材，也可以把素材賣給古董商。</li>'
       + '<li><b>家具</b>：彈簧床、冷氣機、抽水泵、防盜門、魚缸、書架、畫架、望遠鏡……全部看得見，也全部有用。被趕出門會失去全部家具。</li></ul>'
       + '<h3>操作</h3><p>鍵盤：數字鍵選擇行動（第 10 項按 0）。每個小遊戲畫面下方都有操作說明；手機可以直接按畫面或下方的按鈕。</p>'
-      + '</div></details><div class="btn-row"><button class="btn primary" type="button" data-do="close">明白</button></div></div>';
+      + '</div></details>';
+    const okBtn = '<button class="btn primary" type="button" data-do="close">明白</button>';
+    const H = D().HELP16;
+    const classicRun = !!(s && !(IE.Rounds && IE.Rounds.on(s)));
+    if (classicRun || !H) return '<div class="modal wide"><h2>玩法</h2>' + quick + more + '<div class="btn-row">' + okBtn + '</div></div>';
+    const P = D().PROLOGUE;
+    return '<div class="modal wide help16"><h2>' + esc(H.head) + '</h2><div class="help help-quick">'
+      + '<p class="hq-goal"><b>目標</b>：' + esc(H.goal) + '</p>'
+      + '<div class="hq-pillars">' + H.pillars.map((x, i) => '<div class="hq-p"><span class="hq-n">' + (i + 1) + '</span><b>' + esc(x.name) + '</b><p>' + esc(x.text) + '</p></div>').join('') + '</div>'
+      + (H.era ? '<p class="help-era">' + esc(H.era) + '</p>' : '')
+      + '<p class="mute hq-foot">' + esc(H.foot) + '</p>'
+      + '</div>'
+      + '<details class="help-more help-classic"><summary>' + esc(H.classic) + '</summary>' + quick + more + '</details>'
+      + '<div class="btn-row">' + (o.replay && P ? '<button class="btn" type="button" data-do="prologue">' + esc(P.replay) + '</button>' : '') + okBtn + '</div></div>';
   }
   function collectionModal(meta) {
     const names = { agent: '星際特工', returned: '被遣返', guardian: '地球守護者', heavy: '良知太重', ordinary: '平凡人', death: '死亡', grey: '灰化' };
@@ -36698,6 +37059,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // ---------- 第十五期：五輪模式白天面板與視窗 ----------
   function dayPanel(s) {
     const RD = IE.Rounds, T = D().ROUND_TEXT;
+    // WO-16-11：引導局逐晚打開（只是不顯示；被隱藏的部分規則照常運作）。不是引導局時全部顯示
+    const V = RD.reveal ? RD.reveal(s) : { cardsMax: Infinity, map: true, rent: true, boss: true, story: true, wx: true, reroll: true, skip: true, deck: true, memory: true };
     const round = RD.roundOf(s);
     const groups = [];
     for (let r = 0; r < RD.total(s); r++) {
@@ -36791,7 +37154,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const of = RD.offer(s);
     const offerInfos = (of.ids || []).map((id) => RD.cardInfo(s, id));
     const hasGigToday = offerInfos.some((c) => !!(c && c.gig));
-    const cardsHtml = offerInfos.map((c) => {
+    // 引導局第一晚只顯示兩張：差事排在最前（有差事就一定看得見），其餘保持原來的次序
+    const shownInfos = V.cardsMax < Infinity
+      ? offerInfos.filter((c) => c && c.gig).concat(offerInfos.filter((c) => !(c && c.gig))).slice(0, V.cardsMax)
+      : offerInfos;
+    const cardsHtml = shownInfos.map((c) => {
       let banner = '', head = '<b class="rd-name">' + esc(c.name) + '</b>', lastBadge = '', gigHtml = '';
       if (c.gig) {
         const gFrom = GT.from || {};
@@ -36855,29 +37222,28 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     } else if (s.floodPump && FT.pump) {
       floodBannerHtml = '<div class="rd-flood f-pump">' + esc(FT.pump) + '</div>';
     }
+    const btns = (V.reroll ? '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>' : '')
+      + (V.skip ? '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>' : '')
+      + (V.deck ? '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>' : '')
+      + (V.memory ? '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>' : '');
     return '<div class="rd-day">'
       + expHtml
       + '<div class="rd-top">'
-      + '<div class="rd-map-row"><div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div><span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
+      + '<div class="rd-map-row">' + (V.map ? '<div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div>' : '') + '<span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
       + '<div class="rd-meta-row">'
       + '<span class="rd-tonight k-' + nk + '">' + esc(tonightLine) + '</span>'
-      + '<span class="rd-rent">' + esc(rentLine) + '</span>'
+      + (V.rent ? '<span class="rd-rent">' + esc(rentLine) + '</span>' : '')
       + '</div>'
       + floodBannerHtml
       + (IE.EraUI ? IE.EraUI.dayExtras(s) : '')
-      + bossAheadHtml
-      + storyStripHtml
-      + ((wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
+      + (V.boss ? bossAheadHtml : '')
+      + (V.story ? storyStripHtml : '')
+      + (V.wx && (wxHtml || evHtml) ? '<div class="rd-wx">' + wxHtml + evHtml + '</div>' : '')
       + '</div>'
       + '<h2 class="rd-ask">' + esc(T.dayAsk) + '</h2>'
       + noGigHtml
       + '<div class="rd-cards">' + cardsHtml + '</div>'
-      + '<div class="rd-btns">'
-      + '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>'
-      + '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>'
-      + '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>'
-      + '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>'
-      + '</div>'
+      + (btns ? '<div class="rd-btns">' + btns + '</div>' : '')
       + '</div>';
   }
   function storyModal(s, ch) {
@@ -36886,7 +37252,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const banner = IE.imgTag ? IE.imgTag('story-crossroads', 'st-banner') : '';
     const sub = IE.Rounds.dayTitle(s, ch.round, s.night);
     const title = (TX.storyHead || '{name}的人生').replace('{name}', bg ? bg.name : '');
+    // WO-16-11：引導局的第一個故事章只顯示生存、為別人、巔峰各一；data-i 保持在 ch.options 裏原來的位置
+    const shownIdx = IE.Rounds.guidedOptions ? IE.Rounds.guidedOptions(s, ch) : (ch.options || []).map((o, i) => i);
     const opts = (ch.options || []).map((opt, i) => {
+      if (!shownIdx.includes(i)) return '';
       const reason = ST ? ST.reason(s, opt) : null;
       const side = opt.side || 'both';
       const sideTxt = (TX.sides && TX.sides[side]) || side;
@@ -37632,6 +38001,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 只保留選牌時亮出的配色名稱和基本籌碼 × 倍率，分數在下筆之後的演出裡揭曉。經典模式照舊。
   const explore = () => !!(st && st.s && IE.Rounds && IE.Rounds.on(st.s));
   const isDeskMode = () => !!(st && st.isDesk);
+  // WO-16-11：序章之夜（用完即棄的局面 p.prologue）
+  const isPro = () => !!(st && st.s && st.s.prologue);
   const $ = (sel) => root.querySelector(sel);
   const ctCash = (str) => (IE.Rounds && IE.Rounds.cashText && st && st.s ? IE.Rounds.cashText(st.s, str) : str);
 
@@ -37895,7 +38266,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     Object.defineProperty(st, 'busy', { get: () => busy, set: (v) => { busy = v; if (root) root.classList.toggle('ct-busy', !!v); } });
     root = document.createElement('div');
     root.id = 'ctable';
-    root.className = isRounds ? 'ctable dk-mode' : 'ctable';
+    root.className = isRounds ? 'ctable dk-mode' + (s.prologue ? ' is-prologue' : '') : 'ctable';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
     if (isRounds) {
@@ -37921,6 +38292,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + '<div class="dk-rule"><span class="dk-venue ct-scene-stage" aria-hidden="true"></span><span class="dk-rule-txt"></span></div>'
         + '<span class="ct-night" hidden><b class="num">0</b></span>'
         + '</section>'
+        + '<p class="dk-say" aria-live="polite" hidden></p>'
         + '<section class="dk-row"></section>'
         + '<section class="dk-preview">'
         + '<div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
@@ -37991,10 +38363,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (st.artFailed || !cv) {
         activateSvgFallback();
       } else {
-        st.painter = IE.NightScene.paint(cv, {
-          state: s,
-          onFallback: () => activateSvgFallback(),
-        });
+        // WO-16-11：五輪模式的每一晚，第一筆之前畫布是一幅淡淡的草稿；序章另外指定水位
+        const paintOpts = { state: s, sketch: true, onFallback: () => activateSvgFallback() };
+        if (s.prologue && D().PROLOGUE) paintOpts.flood = D().PROLOGUE.scene.flood;
+        st.painter = IE.NightScene.paint(cv, paintOpts);
         if (s.session && Array.isArray(s.session.paintStrokes) && s.session.paintStrokes.length && !st.artFailed) {
           st.painter.replay(buildPaintRecord(s, s.session));
         }
@@ -38011,6 +38383,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
     });
     const resumed = isRounds && s.session.log.length > 0;
+    // 序章：沒有開場的關卡介紹（多按一下就做不到「四次點擊」），第一句話直接出現
+    if (s.prologue) {
+      const stp = IE.Rounds.prologueStep(s);
+      st.proSay = stp ? stp.say : null;
+      render();
+      return;
+    }
     if (stg && !resumed) showStageIntro(stg);
     if (resumed && IE.Rounds.canFinish(s) && !canStillAct(s)) endNight();
   }
@@ -38029,12 +38408,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const isOpen = () => !!root;
   // 五輪模式：每個改變今晚狀態的動作之後都存檔。重新載入時接着玩下去，而不是整晚重來
   //（否則可以重新載入、用同一手牌和抽牌次序無限重試失敗的一晚）
-  function persist() { if (st && IE.Rounds && IE.Rounds.on(st.s) && IE.Game.save) IE.Game.save(); }
+  function persist() { if (st && !isPro() && IE.Rounds && IE.Rounds.on(st.s) && IE.Game.save) IE.Game.save(); }
 
   // ---------- 繪畫 ----------
   function sortedHand() {
     const s = st.s, ses = s.session;
     const cards = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    if (isPro()) return cards;
     const order = D().WHEEL || Object.keys(D().TAGS);
     const morder = Object.keys(D().MEDIA);
     if (st.sortBy === 'tag') cards.sort((a, b) => order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]) || b.value - a.value);
@@ -38185,7 +38565,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const D_ = D();
     const cards = (uids || []).map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
     if (!cards.length) {
-      rowEl.innerHTML = '<span class="dk-row-empty">按次序點選手牌排上稿紙（起 → 承／轉 → 合）</span>';
+      rowEl.innerHTML = isPro() ? '' : '<span class="dk-row-empty">按次序點選手牌排上稿紙（起 → 承／轉 → 合）</span>';
       return;
     }
     const scoring = (pv && pv.scoring) || [];
@@ -38339,6 +38719,33 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
     $('[data-ct="speed"]').textContent = st.speed >= 4 ? '速度：跳過' : '速度 ×' + st.speed;
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
+    if (isPro()) renderPrologueGuide();
+  }
+
+  // WO-16-11：序章之夜：一句話、一次只有一樣東西發光（發光的卡或「下筆」），其他未選的卡鎖上
+  function renderPrologueGuide() {
+    const p = st.s;
+    const sayEl = $('.dk-say');
+    if (sayEl) {
+      sayEl.hidden = !st.proSay;
+      sayEl.textContent = st.proSay || '';
+    }
+    let nx = st.proHold || st.busy ? null : IE.Rounds.prologueNext(p, st.sel);
+    if (nx && nx.reset) { st.sel = []; nx = IE.Rounds.prologueNext(p, st.sel); }
+    root.querySelectorAll('.dk-hand .dk-card').forEach((b) => {
+      const uid = Number(b.dataset.uid);
+      const picked = st.sel.includes(uid);
+      const guide = !!(nx && nx.uid === uid);
+      b.classList.toggle('is-guide', guide);
+      b.classList.toggle('is-locked', !picked && !guide);
+      b.disabled = !picked && !guide;
+    });
+    const pb = $('.ct-play');
+    if (pb) {
+      pb.textContent = '下筆';
+      pb.classList.toggle('is-guide', !!(nx && nx.play));
+      pb.disabled = !(nx && nx.play);
+    }
   }
 
   // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌排得出的最好結構（不說次序）
@@ -38916,6 +39323,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function nextSort() { st.sortBy = (SORTS[st.sortBy] || SORTS.value)[0]; }
   const s0 = () => st.s;
   function toggle(uid) {
+    if (isPro()) {
+      if (st.busy || st.proHold) return;
+      const nx = IE.Rounds.prologueNext(st.s, st.sel);
+      if (!nx || nx.uid !== uid) return;
+      st.sel.push(uid);
+      const pc = st.s.cards.find((x) => x.uid === uid);
+      if (pc && A().medium) A().medium(D().mediumOf(pc));
+      A().fx('card', st.sel.length * 2);
+      render();
+      return;
+    }
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
     else if (c && C().forbidden(s0(), c)) {
@@ -39572,6 +39990,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   async function doPlayDesk() {
     const s = st.s, ses = s.session;
+    if (isPro()) {
+      if (st.busy || st.proHold) return;
+      if (!IE.Rounds.prologueStep(s)) { await endNight(); return; }
+      const nx = IE.Rounds.prologueNext(s, st.sel);
+      if (!nx || !nx.play) return;
+    }
     if (!st.busy && (ses.plays <= 0 || (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s) && !st.sel.length))) {
       await endNight();
       return;
@@ -39629,6 +40053,25 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     $('.ct-mult').classList.remove('burning', 'inferno');
     st.playingUids = null;
     if (res && res.justPassed) await showCleared(ses);
+    if (isPro()) {
+      // 序章：演出完畢，說明這一筆（1.6 秒；減少動態效果時不用等），然後換成下一步的一句話
+      const done = IE.Rounds.prologueStep(s);
+      IE.Rounds.prologueAfterPlay(s);
+      st.proSay = done ? done.after : null;
+      st.proHold = true;
+      st.busy = false;
+      st.fast = false;
+      render();
+      const hold = IE.Pixel.reducedMotion ? 0 : (st.speed >= 4 ? 300 : Math.round(1600 / Math.max(1, st.speed)));
+      if (hold) await new Promise((r) => setTimeout(r, hold));
+      if (!root || !st) return;
+      st.proHold = false;
+      const nxt = IE.Rounds.prologueStep(s);
+      if (!nxt) { await endNight(); return; }
+      st.proSay = nxt.say;
+      render();
+      return;
+    }
     st.busy = false;
     render();
     if (!IE.Pixel.reducedMotion && speedK() < 10) {
@@ -40093,7 +40536,61 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + (g.objs.length ? '<small>靈感物件：' + g.objs.map((id) => esc(D().OBJ[id].name)).join('、') + '</small>' : '') + '</div>';
   }
   // ---------- 今晚完成 ----------
+  // WO-16-11：序章的作品頁：整幅畫、作品名、分數和「達標」印、一句話、「開始第一晚」。
+  // 不呼叫 IE.Create.finish、IE.Stages.settle；不顯示獎金、超額、新組合、靈魂和每一筆的素材
+  async function endPrologue() {
+    const p = st.s;
+    if (st.proEnded) return;
+    st.proEnded = true;
+    st.busy = true;
+    const P = D().PROLOGUE;
+    const rec = p.session && Array.isArray(p.session.log) && p.session.log.length ? buildPaintRecord(p, p.session, '') : null;
+    if (st.painter) { st.painter.stop(); st.painter = null; }
+    const r = IE.Rounds.prologueFinish(p) || { title: '', total: 0 };
+    if (rec) rec.title = r.title;
+    const useCanvas = !!(rec && !st.artFailed && D().ART && D().ART.a && IE.NightScene);
+    const panel = document.createElement('div');
+    panel.className = 'dk-work ct-end is-prologue';
+    panel.innerHTML = '<div class="dk-work-card ct-end-card">'
+      + '<div class="dk-work-frame">' + (useCanvas ? '<canvas class="dk-work-cv" width="960" height="600"></canvas>' : '') + '</div>'
+      + '<div class="dk-work-meta">'
+      + '<span class="dk-work-eye">' + esc(P.stageName) + '</span>'
+      + '<h2>《' + esc(r.title) + '》</h2>'
+      + '<div class="dk-work-score-row"><div class="dk-work-score ct-end-score num">0</div><span class="dk-stamp dk-pro-stamp">達標</span></div>'
+      + '<p class="dk-pro-done">' + esc(P.done) + '</p>'
+      + '<button type="button" class="btn primary big is-guide" data-do="prologue-next">' + esc(P.next) + '</button>'
+      + '</div></div>';
+    root.appendChild(panel);
+    if (useCanvas) {
+      const wcv = panel.querySelector('canvas.dk-work-cv');
+      if (wcv) {
+        st.workPainter = IE.NightScene.paint(wcv, {
+          onFallback: () => { const fr = panel.querySelector('.dk-work-frame'); if (fr) fr.innerHTML = ''; },
+        });
+        st.workPainter.replay(rec);
+      }
+    }
+    let closed = false;
+    const btn = panel.querySelector('[data-do="prologue-next"]');
+    btn.addEventListener('click', () => {
+      if (closed) return;
+      closed = true;
+      close(r);
+    });
+    panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 });
+    const sc = panel.querySelector('.ct-end-score');
+    const total = r.total || 0;
+    for (let i = 1; i <= 24 && !closed; i++) { sc.textContent = fmt(total * (1 - Math.pow(1 - i / 24, 3))); if (i % 4 === 0) A().fx('chip', i / 2); await wait(30); }
+    if (closed) return;
+    sc.textContent = fmt(total);
+    A().sfx('boom');
+    setTimeout(() => A().sfx('stagePass'), 220);
+    burst(sc, 80, 1.2);
+    btn.focus({ preventScroll: true });
+  }
+
   async function endNight() {
+    if (isPro()) { await endPrologue(); return; }
     const s = st.s;
     const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     st.busy = true;
@@ -40384,13 +40881,21 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       continue() { A.init(); Game.state = savedRun(); S.City.enter('hub'); resumeRun(); },
       new() {
         A.init(); store.del(KEY_RUN);
-        // 第十七期：新玩家不經開局頁，直接開始第一季「招聘季」
-        if (firstTime() && IE.Chapters) { newGame('copywriter', 'storm', { mode: 'rounds', chapter: 'c1' }); return; }
+        // WO-16-11：新玩家先玩序章之夜，再直接開始第一季「招聘季」（引導局），不經開局頁
+        if (firstTime() && !Game.meta.prologueDone && IE.Rounds && IE.Rounds.prologueRun) { openPrologue(startGuided); return; }
+        if (firstTime() && IE.Chapters) { startGuided(); return; }
         showSetup();
       },
       era() { A.init(); openEra(Game.setup.chapter, (id) => { Game.setup.chapter = id; Game.setup.mode = 'rounds'; showSetup(); }, () => showTitle()); },
       salvage() { A.init(); openSalvage(() => showTitle()); },
-      help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
+      help() {
+        A.init();
+        UI.modal(UI.helpModal(null, { replay: !!(IE.Rounds && IE.Rounds.prologueRun) }), {
+          close: UI.closeModal,
+          // 重看序章：只改 meta.prologueDone 以外甚麼都不改
+          prologue() { UI.closeModal(); openPrologue(showTitle); },
+        }, { dismiss: () => {} });
+      },
       collection() {
         music('archive');
         const galPainters = [];
@@ -40493,6 +40998,31 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     render();
     window.scrollTo({ top: 0 });
   }
+  // WO-16-11：序章之夜。用完即棄的局面 p：Game.state 保持 null，p 不存檔
+  function openPrologue(after) {
+    A.init();
+    const p = IE.Rounds.prologueRun();
+    IE.Rounds.prologueStart(p);
+    document.getElementById('hud').hidden = true;
+    UI.closeModal();
+    music('create');
+    IE.Craft.open(p, () => {
+      Game.meta.prologueDone = true;
+      store.set(KEY_META, Game.meta);
+      after();
+    });
+  }
+  // 引導局：新玩家的正式第一局（前文案、風暴季、第一季）
+  function startGuided() {
+    const P = D.PROLOGUE || { bg: 'copywriter', season: 'storm', chapter: 'c1' };
+    newGame(P.bg, P.season, { mode: 'rounds', guided: true, chapter: P.chapter || 'c1' });
+  }
+  // 引導局：報告已經顯示了錢、火花、靈魂第一次改變的說明，記下來（ui.js 不改局面）
+  function markHints(s, rep) {
+    if (!s || !s.guided || !IE.Rounds || !IE.Rounds.newHints) return;
+    s.hinted = s.hinted || {};
+    IE.Rounds.newHints(s, rep).forEach((k) => { s.hinted[k] = true; });
+  }
   function newGame(bg, season, o) {
     A.init();
     o = o || {};
@@ -40501,6 +41031,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const rounds = (o.mode || 'standard') === 'rounds';
     Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard',
       chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta) : null });
+    if (rounds && o.guided) {
+      Game.state.guided = true;
+      Game.state.hinted = {};
+      if (Game.meta.prologueDone && IE.Rounds && IE.Rounds.prologueCarry) IE.Rounds.prologueCarry(Game.state);
+    }
     Game.ticketShown = 0;
     if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
@@ -40965,6 +41500,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     A.setSpark(s.spark);
     UI.setPanel('<p class="mute">' + UI.esc(rep.title) + '</p>');
     UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); maybeEncounter(afterSlot); } });
+    markHints(s, rep);
     save();
   }
   // 街頭奇遇（第十期）：做完一件事之後有機會碰到
@@ -41194,6 +41730,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
           A.sfx(rep.deltas && rep.deltas.soul > 0 ? 'wrong' : 'pickup');
           UI.renderHud(s); A.setSpark(s.spark); save();
           UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+          markHints(s, rep); save();
         },
       });
       return;
@@ -41209,6 +41746,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
           A.sfx(rep.deltas.soul > 0 ? 'wrong' : 'pickup');
           UI.renderHud(s); A.setSpark(s.spark); save();
           UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+          markHints(s, rep); save();
         },
       });
       return;
@@ -41683,7 +42221,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         if (IE.BGM) IE.BGM.syncMute();
         UI.renderHud(Game.state);
       }
-      else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
+      else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'stats' && !Game.micro && !(IE.Rounds && IE.Rounds.on(Game.state))) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen() && !(IE.Rounds && IE.Rounds.on(Game.state))) openPhone(false);
     });

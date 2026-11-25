@@ -55,6 +55,8 @@ card.relic = false; // 送這張卡的朋友被收藏之後變成 true
 | `friend` | 朋友 | `{x}給你的` |
 | `shop` | 市集 | `第 {n} 晚之後，在市集買的` |
 | `craft` | 複製、合併 | `第 {n} 晚之後，自己做出來的` |
+| `prologue` | 序章之夜的四張卡（WO-16-11） | `序章之夜，你第一次排出了起承轉合` |
+| `salvage` | 舊城打撈（第十七期） | `從舊城的水底打撈上來的` |
 
 - `R.addCard(s, idOrCard, origin)` 加第三個參數。`origin` 可以只給 `{ kind, x, npc }`，`night` 和 `text` 由 `IE.Cards.origin(s, o)` 補上（`night` 取 `s.night`，沒有就是 0）。
 - 不給 `origin` 時（舊模式、舊存檔）：`card.from` 是 `null`，介面不顯示來歷。

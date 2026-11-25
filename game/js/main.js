@@ -132,13 +132,21 @@
       continue() { A.init(); Game.state = savedRun(); S.City.enter('hub'); resumeRun(); },
       new() {
         A.init(); store.del(KEY_RUN);
-        // 第十七期：新玩家不經開局頁，直接開始第一季「招聘季」
-        if (firstTime() && IE.Chapters) { newGame('copywriter', 'storm', { mode: 'rounds', chapter: 'c1' }); return; }
+        // WO-16-11：新玩家先玩序章之夜，再直接開始第一季「招聘季」（引導局），不經開局頁
+        if (firstTime() && !Game.meta.prologueDone && IE.Rounds && IE.Rounds.prologueRun) { openPrologue(startGuided); return; }
+        if (firstTime() && IE.Chapters) { startGuided(); return; }
         showSetup();
       },
       era() { A.init(); openEra(Game.setup.chapter, (id) => { Game.setup.chapter = id; Game.setup.mode = 'rounds'; showSetup(); }, () => showTitle()); },
       salvage() { A.init(); openSalvage(() => showTitle()); },
-      help() { A.init(); UI.modal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} }); },
+      help() {
+        A.init();
+        UI.modal(UI.helpModal(null, { replay: !!(IE.Rounds && IE.Rounds.prologueRun) }), {
+          close: UI.closeModal,
+          // 重看序章：只改 meta.prologueDone 以外甚麼都不改
+          prologue() { UI.closeModal(); openPrologue(showTitle); },
+        }, { dismiss: () => {} });
+      },
       collection() {
         music('archive');
         const galPainters = [];
@@ -241,6 +249,31 @@
     render();
     window.scrollTo({ top: 0 });
   }
+  // WO-16-11：序章之夜。用完即棄的局面 p：Game.state 保持 null，p 不存檔
+  function openPrologue(after) {
+    A.init();
+    const p = IE.Rounds.prologueRun();
+    IE.Rounds.prologueStart(p);
+    document.getElementById('hud').hidden = true;
+    UI.closeModal();
+    music('create');
+    IE.Craft.open(p, () => {
+      Game.meta.prologueDone = true;
+      store.set(KEY_META, Game.meta);
+      after();
+    });
+  }
+  // 引導局：新玩家的正式第一局（前文案、風暴季、第一季）
+  function startGuided() {
+    const P = D.PROLOGUE || { bg: 'copywriter', season: 'storm', chapter: 'c1' };
+    newGame(P.bg, P.season, { mode: 'rounds', guided: true, chapter: P.chapter || 'c1' });
+  }
+  // 引導局：報告已經顯示了錢、火花、靈魂第一次改變的說明，記下來（ui.js 不改局面）
+  function markHints(s, rep) {
+    if (!s || !s.guided || !IE.Rounds || !IE.Rounds.newHints) return;
+    s.hinted = s.hinted || {};
+    IE.Rounds.newHints(s, rep).forEach((k) => { s.hinted[k] = true; });
+  }
   function newGame(bg, season, o) {
     A.init();
     o = o || {};
@@ -249,6 +282,11 @@
     const rounds = (o.mode || 'standard') === 'rounds';
     Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard',
       chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta) : null });
+    if (rounds && o.guided) {
+      Game.state.guided = true;
+      Game.state.hinted = {};
+      if (Game.meta.prologueDone && IE.Rounds && IE.Rounds.prologueCarry) IE.Rounds.prologueCarry(Game.state);
+    }
     Game.ticketShown = 0;
     if ((Game.meta.nextStart && Game.meta.nextStart.length) || Game.meta.nextTools) { Game.meta.nextStart = []; Game.meta.nextTools = 0; store.set(KEY_META, Game.meta); }
     S.City.enter('hub');
@@ -713,6 +751,7 @@
     A.setSpark(s.spark);
     UI.setPanel('<p class="mute">' + UI.esc(rep.title) + '</p>');
     UI.modal(UI.reportModal(rep), { ok() { UI.closeModal(); maybeEncounter(afterSlot); } });
+    markHints(s, rep);
     save();
   }
   // 街頭奇遇（第十期）：做完一件事之後有機會碰到
@@ -942,6 +981,7 @@
           A.sfx(rep.deltas && rep.deltas.soul > 0 ? 'wrong' : 'pickup');
           UI.renderHud(s); A.setSpark(s.spark); save();
           UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+          markHints(s, rep); save();
         },
       });
       return;
@@ -957,6 +997,7 @@
           A.sfx(rep.deltas.soul > 0 ? 'wrong' : 'pickup');
           UI.renderHud(s); A.setSpark(s.spark); save();
           UI.modal(UI.reportModal(rep, '開始今天'), { ok() { UI.closeModal(); roundsDay(); } });
+          markHints(s, rep); save();
         },
       });
       return;
@@ -1431,7 +1472,7 @@
         if (IE.BGM) IE.BGM.syncMute();
         UI.renderHud(Game.state);
       }
-      else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(), { close: UI.closeModal }, { dismiss: () => {} });
+      else if (b.dataset.hud === 'help') UI.pushModal(UI.helpModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'stats' && !Game.micro && !(IE.Rounds && IE.Rounds.on(Game.state))) UI.pushModal(UI.statsModal(Game.state), { close: UI.closeModal }, { dismiss: () => {} });
       else if (b.dataset.hud === 'phone' && !Game.micro && !Game.state.ended && !UI.modalOpen() && !(IE.Rounds && IE.Rounds.on(Game.state))) openPhone(false);
     });

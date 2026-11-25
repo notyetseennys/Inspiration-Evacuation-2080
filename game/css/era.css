@@ -212,3 +212,30 @@
   .salv-n.is-next .salv-lamp { animation: none; }
   .era-ch { transition: none; }
 }
+
+/* WO-16-11：「玩法」裏撕開和舊城的一句 */
+.help16 .help-era {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  background: rgba(255, 211, 107, 0.08);
+  border: 1px solid rgba(255, 211, 107, 0.28);
+}
+.help16 .help-classic > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* WO-16-11：引導局的報告：第一次改變的資源下面有一句說明 */
+.delta .delta-hint {
+  display: block;
+  max-width: 13em;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #ffe9b0;
+  letter-spacing: 0;
+}

@@ -1158,8 +1158,145 @@
     return { rent, rentOk: s.cr >= rent, soul: s.soul, soulOk: s.soul <= R.soulLimit(s) };
   }
 
+  // ---------- 第十六期乙段（WO-16-11）：序章之夜、引導局 ----------
+  // 序章用一個用完即棄的局面 p（p.prologue === true）：不存檔、不計入晚數、不給錢。以下全部是純函數，不用 Math.random。
+  const PRO = () => D.PROLOGUE;
+  // 四張序章卡的 uid，按 PROLOGUE.cards 的次序
+  function prologueUids(p) {
+    return PRO().cards.map((id) => { const c = p && p.cards ? p.cards.find((x) => x.id === id) : null; return c ? c.uid : null; }).filter((u) => u != null);
+  }
+  function prologueRun() {
+    const P = PRO();
+    const p = R.newRun({ bg: P.bg, season: P.season, seed: P.seed, mode: 'rounds', meta: { runs: 0 }, chapter: P.chapter || null });
+    p.prologue = true;
+    p.objects = [];
+    p.cards = [];
+    P.cards.forEach((id) => R.addCard(p, id, { kind: 'prologue' }));
+    p.weather = { id: P.scene.weather, day: p.day };
+    p.phase = 'night';
+    return p;
+  }
+  function prologueSession(p, target) {
+    const P = PRO();
+    const ses = IE.Create.start(p, 'normal');
+    ses.hand = prologueUids(p);
+    ses.deck = [];
+    ses.used = [];
+    ses.plays = P.steps.length;
+    ses.discards = 0;
+    ses.stage = { kind: 'prologue', name: P.stageName, target, rules: [], index: 0 };
+    ses.prologueStep = 0;
+    ses.base = { plays: ses.plays, discards: 0, handSize: ses.handSize };
+    return ses;
+  }
+  function prologueStep(p) {
+    const ses = p && p.session;
+    if (!ses || ses.prologueStep == null) return null;
+    const i = ses.prologueStep;
+    const st = PRO().steps[i];
+    if (!st) return null;
+    const all = prologueUids(p);
+    return { i, uids: st.pick.map((k) => all[k]), say: st.say, after: st.after };
+  }
+  // sel：介面上已經選了的 uid（按次序）。回傳下一張要按的卡、要按「下筆」，或者選錯了要重來
+  function prologueNext(p, sel) {
+    const step = prologueStep(p);
+    if (!step) return null;
+    const cur = Array.isArray(sel) ? sel : [];
+    if (cur.length > step.uids.length || cur.some((u, k) => u !== step.uids[k])) return { reset: true };
+    if (cur.length === step.uids.length) return { play: true };
+    return { uid: step.uids[cur.length] };
+  }
+  // 每一筆之後：手上還原為四張卡（原來的次序），進入下一步
+  function prologueAfterPlay(p) {
+    const ses = p && p.session;
+    if (!ses) return;
+    ses.hand = prologueUids(p);
+    ses.deck = [];
+    ses.used = [];
+    ses.prologueStep = (ses.prologueStep || 0) + 1;
+  }
+  // 目標：照三步實際下三筆，取第二、三筆累計分數的中間，第三筆一定剛剛達標（不可以寫成常數）
+  function prologueTarget() {
+    const q = prologueRun();
+    prologueSession(q, Infinity);
+    const cum = [];
+    PRO().steps.forEach(() => {
+      const st = prologueStep(q);
+      IE.Create.play(q, st.uids);
+      cum.push(q.session.total);
+      prologueAfterPlay(q);
+    });
+    return Math.round((cum[cum.length - 2] + cum[cum.length - 1]) / 2);
+  }
+  function prologueStart(p) {
+    return prologueSession(p, prologueTarget());
+  }
+  // 收工：不呼叫 IE.Create.finish、IE.Stages.settle（'prologue' 不在獎金表內）
+  function prologueFinish(p) {
+    const ses = p && p.session;
+    if (!ses) return null;
+    const out = {
+      title: ses.log.length && IE.Create.workName ? IE.Create.workName(ses.log, p) : '',
+      total: ses.total,
+      target: ses.stage ? ses.stage.target : 0,
+      passed: !!ses.passed,
+      strokes: ses.paintStrokes || [],
+    };
+    p.session = null;
+    return out;
+  }
+  // 正式的局：加入四張序章卡的新複本（耗損 0）
+  function prologueCarry(s) {
+    if (!on(s)) return [];
+    return PRO().cards.map((id) => R.addCard(s, id, { kind: 'prologue' }).card).filter(Boolean);
+  }
+  // 引導局要顯示甚麼（只是顯示；被隱藏的部分規則照常運作）
+  const REVEAL_ALL = { cardsMax: Infinity, map: true, rent: true, chances: true, water: true, skip: true, deck: true, boss: true, story: true, wx: true, reroll: true, memory: true };
+  function reveal(s) {
+    if (!s || !s.guided) return Object.assign({}, REVEAL_ALL);
+    const n = s.night || 1;
+    return {
+      cardsMax: n <= 1 ? 2 : Infinity,
+      map: n >= 2, rent: n >= 2, chances: n >= 2, water: n >= 2, skip: n >= 2, deck: n >= 2,
+      boss: n >= 3, story: n >= 3, wx: n >= 3, reroll: n >= 3, memory: n >= 3,
+    };
+  }
+  // 第一個故事章：引導局只給生存、為別人、巔峰各一（保留在 ch.options 裏原來的編號）
+  function guidedOptions(s, ch) {
+    const opts = (ch && ch.options) || [];
+    const all = opts.map((o, i) => i);
+    const answered = !!(s && s.story && s.story.log && s.story.log.length);
+    if (!s || !s.guided || answered || opts.length <= 3) return all;
+    const pick = [];
+    ['survive', 'others', 'peak'].forEach((side) => {
+      let i = opts.findIndex((o, k) => o && o.side === side && !o.extreme && !pick.includes(k));
+      if (i < 0) i = opts.findIndex((o, k) => o && o.side === side && !pick.includes(k));
+      if (i >= 0) pick.push(i);
+    });
+    for (let k = 0; k < opts.length && pick.length < 3; k++) if (!pick.includes(k)) pick.push(k);
+    return pick.sort((a, b) => a - b);
+  }
+  // 引導局：錢、火花、靈魂第一次改變時要加一句說明（不改局面）
+  function newHints(s, rep) {
+    if (!s || !s.guided || !rep || !rep.deltas) return [];
+    const h = s.hinted || {};
+    return ['cr', 'spark', 'soul'].filter((k) => rep.deltas[k] && !h[k]);
+  }
+
   IE.Rounds = {
     on,
+    prologueRun,
+    prologueStart,
+    prologueStep,
+    prologueNext,
+    prologueAfterPlay,
+    prologueTarget,
+    prologueFinish,
+    prologueCarry,
+    reveal,
+    guidedOptions,
+    newHints,
     cash,
     cashText,
     total,

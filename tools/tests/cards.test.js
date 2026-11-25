@@ -315,6 +315,8 @@ module.exports = (t) => {
       friend: '{x}給你的',
       shop: '第 {n} 晚之後，在市集買的',
       craft: '第 {n} 晚之後，自己做出來的',
+      prologue: '序章之夜，你第一次排出了起承轉合',
+      salvage: '從舊城的水底打撈上來的',
     });
 
     assert.deepEqual(D.CARD_TEXT, {

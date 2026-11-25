@@ -17,6 +17,8 @@
   // 只保留選牌時亮出的配色名稱和基本籌碼 × 倍率，分數在下筆之後的演出裡揭曉。經典模式照舊。
   const explore = () => !!(st && st.s && IE.Rounds && IE.Rounds.on(st.s));
   const isDeskMode = () => !!(st && st.isDesk);
+  // WO-16-11：序章之夜（用完即棄的局面 p.prologue）
+  const isPro = () => !!(st && st.s && st.s.prologue);
   const $ = (sel) => root.querySelector(sel);
   const ctCash = (str) => (IE.Rounds && IE.Rounds.cashText && st && st.s ? IE.Rounds.cashText(st.s, str) : str);
 
@@ -280,7 +282,7 @@
     Object.defineProperty(st, 'busy', { get: () => busy, set: (v) => { busy = v; if (root) root.classList.toggle('ct-busy', !!v); } });
     root = document.createElement('div');
     root.id = 'ctable';
-    root.className = isRounds ? 'ctable dk-mode' : 'ctable';
+    root.className = isRounds ? 'ctable dk-mode' + (s.prologue ? ' is-prologue' : '') : 'ctable';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', '創作之夜');
     if (isRounds) {
@@ -306,6 +308,7 @@
         + '<div class="dk-rule"><span class="dk-venue ct-scene-stage" aria-hidden="true"></span><span class="dk-rule-txt"></span></div>'
         + '<span class="ct-night" hidden><b class="num">0</b></span>'
         + '</section>'
+        + '<p class="dk-say" aria-live="polite" hidden></p>'
         + '<section class="dk-row"></section>'
         + '<section class="dk-preview">'
         + '<div class="ct-form"><span class="fn">選擇素材</span><span class="fl"></span></div>'
@@ -376,10 +379,10 @@
       if (st.artFailed || !cv) {
         activateSvgFallback();
       } else {
-        st.painter = IE.NightScene.paint(cv, {
-          state: s,
-          onFallback: () => activateSvgFallback(),
-        });
+        // WO-16-11：五輪模式的每一晚，第一筆之前畫布是一幅淡淡的草稿；序章另外指定水位
+        const paintOpts = { state: s, sketch: true, onFallback: () => activateSvgFallback() };
+        if (s.prologue && D().PROLOGUE) paintOpts.flood = D().PROLOGUE.scene.flood;
+        st.painter = IE.NightScene.paint(cv, paintOpts);
         if (s.session && Array.isArray(s.session.paintStrokes) && s.session.paintStrokes.length && !st.artFailed) {
           st.painter.replay(buildPaintRecord(s, s.session));
         }
@@ -396,6 +399,13 @@
       if (sc) root.scrollTop += sc.getBoundingClientRect().top - root.getBoundingClientRect().top - 8;
     });
     const resumed = isRounds && s.session.log.length > 0;
+    // 序章：沒有開場的關卡介紹（多按一下就做不到「四次點擊」），第一句話直接出現
+    if (s.prologue) {
+      const stp = IE.Rounds.prologueStep(s);
+      st.proSay = stp ? stp.say : null;
+      render();
+      return;
+    }
     if (stg && !resumed) showStageIntro(stg);
     if (resumed && IE.Rounds.canFinish(s) && !canStillAct(s)) endNight();
   }
@@ -414,12 +424,13 @@
   const isOpen = () => !!root;
   // 五輪模式：每個改變今晚狀態的動作之後都存檔。重新載入時接着玩下去，而不是整晚重來
   //（否則可以重新載入、用同一手牌和抽牌次序無限重試失敗的一晚）
-  function persist() { if (st && IE.Rounds && IE.Rounds.on(st.s) && IE.Game.save) IE.Game.save(); }
+  function persist() { if (st && !isPro() && IE.Rounds && IE.Rounds.on(st.s) && IE.Game.save) IE.Game.save(); }
 
   // ---------- 繪畫 ----------
   function sortedHand() {
     const s = st.s, ses = s.session;
     const cards = ses.hand.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    if (isPro()) return cards;
     const order = D().WHEEL || Object.keys(D().TAGS);
     const morder = Object.keys(D().MEDIA);
     if (st.sortBy === 'tag') cards.sort((a, b) => order.indexOf(a.tags[0]) - order.indexOf(b.tags[0]) || b.value - a.value);
@@ -570,7 +581,7 @@
     const D_ = D();
     const cards = (uids || []).map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
     if (!cards.length) {
-      rowEl.innerHTML = '<span class="dk-row-empty">按次序點選手牌排上稿紙（起 → 承／轉 → 合）</span>';
+      rowEl.innerHTML = isPro() ? '' : '<span class="dk-row-empty">按次序點選手牌排上稿紙（起 → 承／轉 → 合）</span>';
       return;
     }
     const scoring = (pv && pv.scoring) || [];
@@ -724,6 +735,33 @@
     $('[data-ct="sort"]').textContent = '排序：' + ({ tag: '標籤', medium: '媒材', value: '籌碼' }[st.sortBy] || '標籤');
     $('[data-ct="speed"]').textContent = st.speed >= 4 ? '速度：跳過' : '速度 ×' + st.speed;
     $('.ct-counts').textContent = '未抽 ' + ses.deck.length + ' / ' + s.cards.length + ' 張・最佳一筆 ' + fmt(st.best);
+    if (isPro()) renderPrologueGuide();
+  }
+
+  // WO-16-11：序章之夜：一句話、一次只有一樣東西發光（發光的卡或「下筆」），其他未選的卡鎖上
+  function renderPrologueGuide() {
+    const p = st.s;
+    const sayEl = $('.dk-say');
+    if (sayEl) {
+      sayEl.hidden = !st.proSay;
+      sayEl.textContent = st.proSay || '';
+    }
+    let nx = st.proHold || st.busy ? null : IE.Rounds.prologueNext(p, st.sel);
+    if (nx && nx.reset) { st.sel = []; nx = IE.Rounds.prologueNext(p, st.sel); }
+    root.querySelectorAll('.dk-hand .dk-card').forEach((b) => {
+      const uid = Number(b.dataset.uid);
+      const picked = st.sel.includes(uid);
+      const guide = !!(nx && nx.uid === uid);
+      b.classList.toggle('is-guide', guide);
+      b.classList.toggle('is-locked', !picked && !guide);
+      b.disabled = !picked && !guide;
+    });
+    const pb = $('.ct-play');
+    if (pb) {
+      pb.textContent = '下筆';
+      pb.classList.toggle('is-guide', !!(nx && nx.play));
+      pb.disabled = !(nx && nx.play);
+    }
   }
 
   // 第十七期：舊城的「劇本」：還未選牌時，提示這手牌排得出的最好結構（不說次序）
@@ -1301,6 +1339,17 @@
   function nextSort() { st.sortBy = (SORTS[st.sortBy] || SORTS.value)[0]; }
   const s0 = () => st.s;
   function toggle(uid) {
+    if (isPro()) {
+      if (st.busy || st.proHold) return;
+      const nx = IE.Rounds.prologueNext(st.s, st.sel);
+      if (!nx || nx.uid !== uid) return;
+      st.sel.push(uid);
+      const pc = st.s.cards.find((x) => x.uid === uid);
+      if (pc && A().medium) A().medium(D().mediumOf(pc));
+      A().fx('card', st.sel.length * 2);
+      render();
+      return;
+    }
     const c = st.s.cards.find((x) => x.uid === uid);
     if (st.sel.includes(uid)) st.sel = st.sel.filter((u) => u !== uid);
     else if (c && C().forbidden(s0(), c)) {
@@ -1957,6 +2006,12 @@
 
   async function doPlayDesk() {
     const s = st.s, ses = s.session;
+    if (isPro()) {
+      if (st.busy || st.proHold) return;
+      if (!IE.Rounds.prologueStep(s)) { await endNight(); return; }
+      const nx = IE.Rounds.prologueNext(s, st.sel);
+      if (!nx || !nx.play) return;
+    }
     if (!st.busy && (ses.plays <= 0 || (IE.Rounds && IE.Rounds.on(s) && IE.Rounds.canFinish(s) && !st.sel.length))) {
       await endNight();
       return;
@@ -2014,6 +2069,25 @@
     $('.ct-mult').classList.remove('burning', 'inferno');
     st.playingUids = null;
     if (res && res.justPassed) await showCleared(ses);
+    if (isPro()) {
+      // 序章：演出完畢，說明這一筆（1.6 秒；減少動態效果時不用等），然後換成下一步的一句話
+      const done = IE.Rounds.prologueStep(s);
+      IE.Rounds.prologueAfterPlay(s);
+      st.proSay = done ? done.after : null;
+      st.proHold = true;
+      st.busy = false;
+      st.fast = false;
+      render();
+      const hold = IE.Pixel.reducedMotion ? 0 : (st.speed >= 4 ? 300 : Math.round(1600 / Math.max(1, st.speed)));
+      if (hold) await new Promise((r) => setTimeout(r, hold));
+      if (!root || !st) return;
+      st.proHold = false;
+      const nxt = IE.Rounds.prologueStep(s);
+      if (!nxt) { await endNight(); return; }
+      st.proSay = nxt.say;
+      render();
+      return;
+    }
     st.busy = false;
     render();
     if (!IE.Pixel.reducedMotion && speedK() < 10) {
@@ -2478,7 +2552,61 @@
       + (g.objs.length ? '<small>靈感物件：' + g.objs.map((id) => esc(D().OBJ[id].name)).join('、') + '</small>' : '') + '</div>';
   }
   // ---------- 今晚完成 ----------
+  // WO-16-11：序章的作品頁：整幅畫、作品名、分數和「達標」印、一句話、「開始第一晚」。
+  // 不呼叫 IE.Create.finish、IE.Stages.settle；不顯示獎金、超額、新組合、靈魂和每一筆的素材
+  async function endPrologue() {
+    const p = st.s;
+    if (st.proEnded) return;
+    st.proEnded = true;
+    st.busy = true;
+    const P = D().PROLOGUE;
+    const rec = p.session && Array.isArray(p.session.log) && p.session.log.length ? buildPaintRecord(p, p.session, '') : null;
+    if (st.painter) { st.painter.stop(); st.painter = null; }
+    const r = IE.Rounds.prologueFinish(p) || { title: '', total: 0 };
+    if (rec) rec.title = r.title;
+    const useCanvas = !!(rec && !st.artFailed && D().ART && D().ART.a && IE.NightScene);
+    const panel = document.createElement('div');
+    panel.className = 'dk-work ct-end is-prologue';
+    panel.innerHTML = '<div class="dk-work-card ct-end-card">'
+      + '<div class="dk-work-frame">' + (useCanvas ? '<canvas class="dk-work-cv" width="960" height="600"></canvas>' : '') + '</div>'
+      + '<div class="dk-work-meta">'
+      + '<span class="dk-work-eye">' + esc(P.stageName) + '</span>'
+      + '<h2>《' + esc(r.title) + '》</h2>'
+      + '<div class="dk-work-score-row"><div class="dk-work-score ct-end-score num">0</div><span class="dk-stamp dk-pro-stamp">達標</span></div>'
+      + '<p class="dk-pro-done">' + esc(P.done) + '</p>'
+      + '<button type="button" class="btn primary big is-guide" data-do="prologue-next">' + esc(P.next) + '</button>'
+      + '</div></div>';
+    root.appendChild(panel);
+    if (useCanvas) {
+      const wcv = panel.querySelector('canvas.dk-work-cv');
+      if (wcv) {
+        st.workPainter = IE.NightScene.paint(wcv, {
+          onFallback: () => { const fr = panel.querySelector('.dk-work-frame'); if (fr) fr.innerHTML = ''; },
+        });
+        st.workPainter.replay(rec);
+      }
+    }
+    let closed = false;
+    const btn = panel.querySelector('[data-do="prologue-next"]');
+    btn.addEventListener('click', () => {
+      if (closed) return;
+      closed = true;
+      close(r);
+    });
+    panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 });
+    const sc = panel.querySelector('.ct-end-score');
+    const total = r.total || 0;
+    for (let i = 1; i <= 24 && !closed; i++) { sc.textContent = fmt(total * (1 - Math.pow(1 - i / 24, 3))); if (i % 4 === 0) A().fx('chip', i / 2); await wait(30); }
+    if (closed) return;
+    sc.textContent = fmt(total);
+    A().sfx('boom');
+    setTimeout(() => A().sfx('stagePass'), 220);
+    burst(sc, 80, 1.2);
+    btn.focus({ preventScroll: true });
+  }
+
   async function endNight() {
+    if (isPro()) { await endPrologue(); return; }
     const s = st.s;
     const isRounds = !!(IE.Rounds && IE.Rounds.on(s));
     st.busy = true;

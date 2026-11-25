@@ -41,3 +41,5 @@ jobs:
         run: node tools/smoke.js
       - name: 煙霧測試（五輪模式）
         run: node tools/smoke-rounds.js
+      - name: 頭五分鐘
+        run: node tools/first-five.js

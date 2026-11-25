@@ -281,6 +281,8 @@
   - WO-16-11 和 WO-16-05 已修訂（各自的開頭和修訂紀錄）。**審核 WO-16-11 時特別留意**：不要刪第十七期的程式（年表、打撈、沉積結算、排練和劇本）；`startGuided` 要帶 `chapter: 'c1'`；煙霧測試的開關不要重複加；序章的四張卡不經撕開的包。
   - 你維護：`data-chapters.js`、`chapters.js`、`salvage.js`、`rules.js` 裏閃卡和重複的部分、`chapters`／`salvage`／`packs` 三個測試檔。Gemini 只在工單列明時改 `packfx.js`、`era-ui.js`、`era.css`。
 
+- **Gemini 沒有使用量（2026-11-25）**：製作人要求你完成 Gemini 的工作。之後的工單由你直接在整合分支實作：照工單逐節做，跑工單的全部驗收條件和 §4 第 3 步的自動檢查，寫一份實作記錄（`reviews/WO-XX-XX-r1.md`，格式和審核記錄相同，加「和工單不同的地方」），更新狀態表，推送並確認 CI。**WO-16-11 已完成**（記錄在 `reviews/WO-16-11-r1.md`）：新玩家按「開始」→ 序章之夜（三筆、一次只亮一樣東西）→ 引導局（第一季，逐晚打開）；`tools/first-five.js` 在 CI 量度頭五分鐘。下一步：後段的引擎（第十七期 §6.3）→ WO-16-05 → 07 → 08。
+
 ## 6.1 審核 WO-15-11、13（故事線）時要特別留意
 
 - `data-story.js`、`data-cities.js`、`story-data.test.js`、`spec.test.js` 沒有被改（Gemini 只可以讀）。
@@ -335,7 +337,9 @@
 | `tools/test.js`、`tools/tests/` | 單元測試（`t.run(opts)` 預設 copywriter、storm、seed 1、不是第一局） |
 | `tools/sim.js` | 舊模式的模擬器（回歸用） |
 | `tools/sim-rounds.js` | 五輪模式的模擬器（WO-15-09）：`STRAT`、`ECON`、`BG`、`SEED0`（換一段種子）；校準紀錄在 `docs/workorders/phase-15/CALIBRATION.md` |
-| `tools/smoke.js`、`tools/smoke-rounds.js` | 煙霧測試（以 `localStorage` 的 `ie2080.seed` 固定種子，`ie2080.noEncounter` 關掉奇遇） |
+| `tools/smoke.js`、`tools/smoke-rounds.js` | 煙霧測試（以 `localStorage` 的 `ie2080.seed` 固定種子，`ie2080.noEncounter` 關掉奇遇；`ie2080.noPrologue`、`ie2080.chapter=free` 走全城篩選；`smoke-rounds.js` 最後有新玩家的一段） |
+| `tools/first-five.js` | 頭五分鐘的量度工具（WO-16-11；CI 會跑）：新玩家每次只按一樣東西，量度字數、點擊、演出時間、一屏 |
+| `tools/tests/prologue.test.js` | 序章、逐步打開、第一個抉擇、說明的單元測試（WO-16-11） |
 | `tools/review-play.js` | 你的試玩腳本 |
 | `proto/night/` | 「一晚」的好玩性原型（不改 `game/`；規則、畫布、音效、畫面、打包；說明在 `README.md`） |
 | `proto/night2/` | 原型第二版「起承轉合」（不改 `game/`；規則、歌、畫、音效、畫面、作品頁和分享碼、打包；說明在 `README.md`） |
