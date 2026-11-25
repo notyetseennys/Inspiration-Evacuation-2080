@@ -115,6 +115,16 @@
         UI.toast('打撈了「' + r.node.name + '」', 'good');
         render();
       },
+      // 第十八期：升級前世的軌道
+      pastUp(el) {
+        const r = IE.Salvage.levelUp(Game.meta, el.dataset.id);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        store.set(KEY_META, Game.meta);
+        const t = IE.Salvage.track(el.dataset.id);
+        UI.toast((t ? t.name : '') + ' Lv.' + r.level, 'good');
+        render();
+      },
       close() { UI.closeModal(); if (after) after(); },
     }, { dismiss: () => { if (after) after(); } });
     render();
@@ -301,7 +311,8 @@
     const testSeed = store.get('ie2080.seed');
     const rounds = (o.mode || 'standard') === 'rounds';
     Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard',
-      chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta) : null });
+      // 第十八期：前世的軌道只帶進浮城年表的季節；全城篩選（沒有章節）只看今生
+      chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta, { tracks: !!o.chapter }) : null });
     if (rounds && o.guided) {
       Game.state.guided = true;
       Game.state.hinted = {};
@@ -1388,7 +1399,7 @@
     let earnRes = null, chRes = null;
     if (IE.Rounds && IE.Rounds.on(s)) {
       if (IE.Chapters) { chRes = IE.Chapters.record(Game.meta, s, kind); chRes.cleared = chRes.firstClear ? IE.Chapters.of(s) : null; }
-      if (IE.Salvage) earnRes = IE.Salvage.bank(Game.meta, s, kind, { firstClear: !!(chRes && chRes.firstClear) });
+      if (IE.Salvage) earnRes = IE.Salvage.bank(Game.meta, s, kind, { firstClear: !!(chRes && chRes.firstClear), streak: (chRes && chRes.prog && chRes.prog.streak) || 0 });
       Game.meta.cardsSeen = Game.meta.cardsSeen || {};
       Object.keys(s.seenCards || {}).forEach((id) => { Game.meta.cardsSeen[id] = Math.max(Game.meta.cardsSeen[id] || 0, s.seenCards[id]); });
       Game.meta.ach17 = Game.meta.ach17 || {};

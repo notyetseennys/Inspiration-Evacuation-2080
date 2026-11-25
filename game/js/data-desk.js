@@ -158,6 +158,11 @@
         desc: '作品是「峰迴路轉」時，倍率 ×3。',
         play: (x) => (x.form === 'twist' ? { xmult: 3 } : null),
       },
+      // 第十八期：護士的起始物件。創作桌一筆最多五張、可以重複計分，×2 會按張數連乘（校準時有一局是目標的 193 倍）
+      confkey: {
+        desc: '每張「愧疚」素材計分時，倍率 ×1.5（一筆之中最多兩次）。',
+        card: (c) => (c.tags && c.tags.includes('guilt') ? { xmult: 1.5 } : null),
+      },
     },
     bossDesc: {
       copied: '你最常用的結構 ×0.5',

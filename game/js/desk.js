@@ -26,6 +26,8 @@
     family: { blend: { mult: 2 }, layer: { chips: 20 }, echo: { echo: 1 }, tension: { xmult: 1.25 }, paradox: { xmult: 1.5 } },
     // 第十七期：AI 模仿你的結構。熱度＝最近用這種結構的次數（每天 ×decay，一晚四天）；超過 free 之後每一點扣 pen，最低 floor
     ai: { free: 1.5, pen: 0.2, decay: 0.85, floor: 0.4 },
+    // 第十八期：同一件物件（流派、卡面效果）的 ×倍率，一筆之中最多生效幾次
+    xCap: 2,
     artTag: { ancient: 'memory', cosmic: 'neon' },  // 外來素材借用哪一種情緒的圖
     // 舊的配色 id → 新的結構 id（物件、流派、評審、技法課的資料照這張表換）
     formMap: { mix: 'single', adj: 'flow', triad: 'twist', split: 'echo', comp: 'contrast', tetrad: 'loop', full: 'full', mono: 'mono', paradox: 'contrast' },

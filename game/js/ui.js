@@ -6,9 +6,15 @@
   const $ = (sel) => document.querySelector(sel);
 
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = (n) => Math.round(n).toLocaleString('en-US');
-  // 大數字：萬、億
-  const kfmt = (n) => (n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
+  // 第十八期：浮城年表後段的分數會到千億以上：十億或以上改用「億」，一兆或以上用「兆」（舊模式的數字不會這麼大）
+  const fmt = (n) => {
+    const a = Math.abs(n);
+    if (a >= 1e12) return (n / 1e12).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' 兆';
+    if (a >= 1e9) return (n / 1e8).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' 億';
+    return Math.round(n).toLocaleString('en-US');
+  };
+  // 大數字：萬、億、兆
+  const kfmt = (n) => (n >= 1e12 ? (n / 1e12).toFixed(2) + '兆' : n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
   const pad2 = (n) => String(n).padStart(2, '0');
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
   const uiCash = (str) => (IE.Rounds && IE.Rounds.cashText && IE.Game && IE.Game.state ? IE.Rounds.cashText(IE.Game.state, str) : str);
@@ -1403,6 +1409,8 @@
       + (V.rent ? '<span class="rd-rent">' + esc(rentLine) + '</span>' : '')
       + '</div>'
       + floodBannerHtml
+      // 第十八期：這一季最後的外星評審（牆）
+      + (RD.isWall && RD.isWall(s) && D().WALL_TEXT ? '<div class="rd-wall" role="note">' + esc(D().WALL_TEXT.ahead) + '</div>' : '')
       + (IE.EraUI ? IE.EraUI.dayExtras(s) : '')
       + (V.boss ? bossAheadHtml : '')
       + (V.story ? storyStripHtml : '')

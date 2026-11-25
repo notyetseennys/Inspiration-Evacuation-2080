@@ -1826,6 +1826,97 @@ const URL = 'http://localhost:' + PORT + '/';
       await cp.close();
     }
 
+    // 第十八期：失敗是必然，成長是爽感：舊城的「前世」升級；第一季最後一晚的牆；一生結束時「這一生／上一生」的進度（手機 390px）
+    {
+      const fp = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const fErrors = [];
+      fp.on('pageerror', (e) => fErrors.push(e.message));
+      fp.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) fErrors.push(m.text()); });
+      await fp.goto(URL);
+      await fp.evaluate((seed) => {
+        localStorage.clear();
+        localStorage.setItem('ie2080.seed', String(seed));
+        localStorage.setItem('ie2080.speed', '4');
+        localStorage.setItem('ie2080.noEncounter', '1');
+        localStorage.setItem('ie2080.noPrologue', '1');
+        localStorage.setItem('ie2080.chapter', 'c1');
+      }, SEED);
+      await fp.reload();
+      await fp.waitForSelector('.title-menu [data-do="salvage"]');
+      await fp.evaluate(() => {
+        const m = window.__IE.Game.meta;
+        m.salvage = { sediment: 200, earned: 200, owned: {}, levels: { chips: 2 } };
+        window.__IE.Chapters.migrate(m);
+        m.chapters.tries.c1 = 1;
+        m.chapters.last = { c1: { nights: 6, total: 6, ratio: 0.31, wall: true } };
+        m.chapters.best = { c1: { nights: 6, total: 6, ratio: 0.31, wall: true } };
+        m.chapters.fails = { c1: 1 };
+      });
+      const IE_COST0 = await fp.evaluate(() => window.__IE.Salvage.levelCost(0));
+      await fp.click('.title-menu [data-do="salvage"]');
+      await fp.waitForSelector('#modal .past .past-t');
+      const past = await fp.evaluate(() => ({
+        rows: document.querySelectorAll('#modal .past .past-t').length,
+        chips: (document.querySelector('#modal .past [data-id="chips"]') || {}).disabled,
+        now: [...document.querySelectorAll('#modal .past .past-now')].map((x) => x.textContent),
+        scroll: document.documentElement.scrollWidth - window.innerWidth,
+      }));
+      if (past.rows !== 5 || past.now[0] !== '×1.32' || past.chips) await fail('第十八期：前世的軌道顯示不正確：' + JSON.stringify(past));
+      await fp.click('#modal .past [data-do="pastUp"][data-id="mult"]');
+      await fp.waitForTimeout(300);
+      const up = await fp.evaluate(() => ({ lv: window.__IE.Game.meta.salvage.levels.mult, sed: window.__IE.Game.meta.salvage.sediment, saved: JSON.parse(localStorage.getItem('ie2080.meta') || '{}').salvage, now: (document.querySelectorAll('#modal .past .past-now')[1] || {}).textContent }));
+      if (up.lv !== 1 || up.sed !== 200 - IE_COST0 || !up.saved || up.saved.levels.mult !== 1 || up.now !== '×1.15') await fail('第十八期：升級前世不正確：' + JSON.stringify(up));
+      if (past.scroll > 0) await fail('第十八期：舊城打撈在手機上有橫向捲動 ' + past.scroll + 'px');
+      ok('第十八期：舊城打撈有「前世」五條軌道（手稿 Lv.2 ×1.32）；升級掌聲扣 ' + IE_COST0 + ' 沉積並存檔；手機 390px 沒有橫向捲動');
+      await fp.click('#modal [data-do="close"]');
+      // 第一季最後一晚：白天面板和創作桌都提示「最後的外星評審」
+      await fp.click('.title-menu [data-do="new"]');
+      await fp.waitForSelector('[data-do="start"]');
+      await fp.click('[data-do="start"]');
+      await fp.waitForFunction(() => window.__IE.Game.state && window.__IE.Game.state.mode === 'rounds' && window.__IE.Game.state.chapter === 'c1');
+      for (let i = 0; i < 12; i++) {
+        if (await fp.$('.rd-day .rd-card')) break;
+        const b = await fp.$('#modal .pk:not(.is-open) .pk-seal, #modal [data-do="ok"], #modal [data-do="storypick"]:not([disabled]), #modal .d-opt:not([disabled])');
+        if (b) await b.click();
+        await fp.waitForTimeout(300);
+      }
+      await fp.evaluate(() => {
+        const IEx = window.__IE, s = IEx.Game.state;
+        s.night = IEx.Rounds.nightsTotal(s);
+        s.day = IEx.Rounds.dayOfNight(s.night);
+        s.phase = 'day';
+        IEx.Game.roundsGo();
+      });
+      await fp.waitForSelector('.rd-day .rd-wall');
+      const wallTxt = await fp.evaluate(() => document.querySelector('.rd-day .rd-wall').textContent);
+      if (!wallTxt.includes('最後的外星評審')) await fail('第十八期：牆的提示不正確：' + wallTxt);
+      ok('第十八期：第一季最後一晚的白天面板有牆的提示（' + wallTxt + '）');
+      // 一生結束：這一生走到第 6／6 晚、外星評審 40%；上一生 31%；執念（失敗 1 次）
+      await fp.evaluate(() => {
+        const IEx = window.__IE, s = IEx.Game.state;
+        s.nightLog = [1, 2, 3, 4, 5, 6].map((n) => ({ night: n, score: n < 6 ? 2000 : 400, target: 1000, pass: n < 6 }));
+        s.chances = 1; s.cr = 0; s.soul = 5;
+        s.phase = 'review';
+        IEx.Game.roundsGo();
+      });
+      await fp.waitForSelector('#modal .rd-review');
+      await fp.click('#modal .rd-review [data-do="next"]');
+      await fp.waitForSelector('#modal .salv-earn');
+      const earn = await fp.evaluate(() => ({
+        prog: [...document.querySelectorAll('#modal .earn-prog li')].map((x) => x.textContent),
+        lines: [...document.querySelectorAll('#modal .earn-lines li')].map((x) => x.textContent),
+        scroll: document.documentElement.scrollWidth - window.innerWidth,
+        best: window.__IE.Game.meta.chapters.best.c1,
+      }));
+      const p0 = earn.prog[0] || '', p1 = earn.prog[1] || '';
+      if (!p0.includes('這一生：第 6／6 晚') || !p0.includes('40%') || !p1.includes('上一生') || !p1.includes('31%') || !earn.prog.some((x) => x.includes('新的最遠紀錄'))) await fail('第十八期：一生結束的進度不正確：' + JSON.stringify(earn));
+      if (!earn.lines.some((x) => x.includes('執念'))) await fail('第十八期：沒有執念的沉積：' + JSON.stringify(earn.lines));
+      if (earn.scroll > 0) await fail('第十八期：沉積結算在手機上有橫向捲動 ' + earn.scroll + 'px');
+      ok('第十八期：一生結束時顯示「' + p0 + '」「' + p1 + '」和新的最遠紀錄；沉積有執念的一行');
+      if (fErrors.length) await fail('第十八期：有 JS 錯誤：\n' + fErrors.join('\n'));
+      await fp.close();
+    }
+
     // WO-16-11 §7.2：新玩家（不設 ie2080.noPrologue）：序章之夜 → 引導局（第一季）。手機 390×844
     {
       const np = await browser.newPage({ viewport: { width: 390, height: 844 } });

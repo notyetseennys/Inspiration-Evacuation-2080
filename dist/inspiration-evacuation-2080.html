@@ -7598,6 +7598,34 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 .earn-ch { color: var(--spark); line-height: 1.6; }
 .earn-unlock { color: var(--alien); font-weight: 700; }
 
+/* ---------- 第十八期：前世、這一生的進度、牆 ---------- */
+.past { margin: 4px 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(6, 14, 26, 0.78); border: 1px solid rgba(255, 194, 71, 0.35); }
+.past h3 { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; margin: 0 0 8px; font-size: 16px; }
+.past h3 small { grid-column: 1; color: var(--mute); font-weight: 400; font-size: 12px; }
+.past-pow { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--spark); font-size: 20px; text-shadow: 0 0 12px rgba(255, 194, 71, 0.5); }
+.past-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.past-t { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); }
+.past-t.has { background: rgba(255, 194, 71, 0.07); }
+.past-nm { grid-column: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.past-nm b { font-size: 14px; }
+.past-lv { color: var(--spark); font-size: 15px; }
+.past-tx { grid-column: 1; grid-row: 2; color: #b9c9dc; font-size: 12px; line-height: 1.4; min-width: 0; }
+.past-now { grid-column: 2; grid-row: 1 / span 2; color: var(--sea); font-size: 18px; }
+.past-up, .past-full { grid-column: 3; grid-row: 1 / span 2; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.past-full { color: var(--spark); font-weight: 700; padding: 0 8px; }
+.past-note { margin: 8px 0 0; color: var(--mute); font-size: 12px; line-height: 1.5; }
+.earn-prog { text-align: left; max-width: 340px; margin: 0 auto 10px; }
+.earn-prog li { display: flex; justify-content: space-between; gap: 10px; }
+.earn-prog .v { display: inline-flex; align-items: baseline; gap: 6px; }
+.earn-prog .v small { color: var(--mute); font-size: 12px; }
+.earn-prog .v b { color: var(--sea); font-size: 18px; }
+.earn-prog .earn-best { color: var(--spark); font-weight: 700; justify-content: center; }
+.earn-grow { color: #dbe3f2; margin: 0 0 10px; }
+.era-best { color: var(--spark); font-size: 12.5px; }
+.ct-goal.wall .lbl { color: #ff8a96; font-weight: 700; }
+.ct-goal.wall { box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.55); }
+.rd-wall { padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255, 77, 94, 0.6); background: rgba(255, 77, 94, 0.12); color: #ffd0d5; font-weight: 700; line-height: 1.5; }
+
 /* ---------- 白天的舊城情報 ---------- */
 .era-intels { display: grid; gap: 6px; margin: 6px 0 2px; }
 .era-intel { padding: 6px 10px; border-left: 3px solid var(--sea); border-radius: 4px; background: rgba(55, 195, 214, 0.08); font-size: 13px; line-height: 1.5; }
@@ -7623,6 +7651,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   .salv-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .salv-bal b { font-size: 32px; }
   .salv-nm { font-size: 12.5px; }
+  .past-t { grid-template-columns: minmax(0, 1fr) auto; }
+  .past-now { grid-column: 2; grid-row: 1; font-size: 16px; }
+  .past-up, .past-full { grid-column: 2; grid-row: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .salv-n.is-next .salv-lamp { animation: none; }
@@ -10941,6 +10972,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     moveStep: 40,
     rehouse: 260,
     thaw: 0.6,
+    freeSediment: 3,      // 第十八期：全城篩選沉下去的沉積 ×3
   };
   // 創作桌超額三級獎勵（WO-16-09 §3）；不可列舉以維持 cards.test.js 對甲段鍵集合的既有檢查相容
   Object.defineProperty(ECON16, 'over', {
@@ -11034,13 +11066,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 五輪模式的「玩法」（取代經典模式的說明；經典模式的說明收在最後的摺疊裏）
   const HELP16 = {
     head: '玩法',
-    goal: '撐過這一季的每一晚和每一輪篩選（第一季是六晚、兩輪）。最後一輪通過，外星人就會帶你走。今晚不達標、交不起租、靈魂太重，都會失去一次機會；三次用完，你會被歸入人才庫。',
+    goal: '撐過這一季的每一晚和每一輪篩選（第一季是六晚、兩輪）。最後一晚是這一季最後的外星評審：不達標，這一生就到此為止。其他晚上不達標、交不起租、靈魂太重，都會失去一次機會；三次用完，你會被歸入人才庫。',
     pillars: [
       { name: '創作', text: '晚上把素材按次序排成一行。相同或相鄰的情緒是「承」，相反的情緒是「轉」，最後一張回到開頭是「合」。先承、後轉、再合，就是起承轉合，分數最高；斷開的素材不計分。每一筆都會畫進同一幅夜景。' },
       { name: '靈魂', text: '外星人只要又亮又輕的人：靈魂超過 21 克就不會被選中。做虧心事會變重，為別人做事會變輕。' },
       { name: '浮城', text: '白天選一件事做。工作是罕有的差事，過了期限就沒有；故事的選擇會改變你的錢、靈魂和素材。水位每天上漲，水淹到家會帶走東西。' },
     ],
-    era: '得到素材時，用手指撕開包：閃卡的籌碼 ×1.5，同一張再得到會升星。一生結束時，作品沉到舊城，留下沉積，在「舊城打撈」換下一生的能力。',
+    era: '第一次挑戰一季，幾乎一定會失敗，這是正常的。一生結束時，作品沉到舊城，留下沉積：在「舊城打撈」升級「前世」（每一筆的籌碼和倍率一直變大），或者打撈新的能力。同一季每失敗一次，下一生沉下去的沉積更多（執念）。得到素材時，用手指撕開包：閃卡的籌碼 ×1.5，同一張再得到會升星。',
     foot: '撐住三樣東西：錢（交租）、火花（分數的倍數）、靈魂（不可以太重）。每張素材都有來歷：按卡上的「來歷」看它從哪裏來。',
     classic: '經典模式的規則',
   };
@@ -13273,6 +13305,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     family: { blend: { mult: 2 }, layer: { chips: 20 }, echo: { echo: 1 }, tension: { xmult: 1.25 }, paradox: { xmult: 1.5 } },
     // 第十七期：AI 模仿你的結構。熱度＝最近用這種結構的次數（每天 ×decay，一晚四天）；超過 free 之後每一點扣 pen，最低 floor
     ai: { free: 1.5, pen: 0.2, decay: 0.85, floor: 0.4 },
+    // 第十八期：同一件物件（流派、卡面效果）的 ×倍率，一筆之中最多生效幾次
+    xCap: 2,
     artTag: { ancient: 'memory', cosmic: 'neon' },  // 外來素材借用哪一種情緒的圖
     // 舊的配色 id → 新的結構 id（物件、流派、評審、技法課的資料照這張表換）
     formMap: { mix: 'single', adj: 'flow', triad: 'twist', split: 'echo', comp: 'contrast', tetrad: 'loop', full: 'full', mono: 'mono', paradox: 'contrast' },
@@ -13601,6 +13635,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         desc: '作品是「峰迴路轉」時，倍率 ×3。',
         play: (x) => (x.form === 'twist' ? { xmult: 3 } : null),
       },
+      // 第十八期：護士的起始物件。創作桌一筆最多五張、可以重複計分，×2 會按張數連乘（校準時有一局是目標的 193 倍）
+      confkey: {
+        desc: '每張「愧疚」素材計分時，倍率 ×1.5（一筆之中最多兩次）。',
+        card: (c) => (c.tags && c.tags.includes('guilt') ? { xmult: 1.5 } : null),
+      },
     },
     bossDesc: {
       copied: '你最常用的結構 ×0.5',
@@ -13634,28 +13673,28 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // target：這一季的目標倍數（第一輪校準：第一季最易）。
   const CHAPTERS = [
     {
-      target: 0.35, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      target: 1.2, steep: 1.15, wall: 7, sediment: 1, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
       rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
       intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
       adds: '創作桌、人生的選擇、朋友、差事',
       clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
     },
     {
-      target: 0.42, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      target: 38, steep: 1.15, wall: 2.4, sediment: 2, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
       rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
       intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
       adds: '水位：水淹到家，由受傷到失去住所；天氣',
       clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
     },
     {
-      target: 0.46, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      target: 450, steep: 1.15, wall: 2, sediment: 3.5, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
       rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
       intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
       adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
       clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
     },
     {
-      target: 0.88, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      target: 5000, steep: 1.12, wall: 2.4, sediment: 6, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
       intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
       adds: '外星評審的規則；出國',
@@ -13663,7 +13702,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     },
     {
       // WO-16-07 之後開放（2026-11-25）
-      target: 0.95, id: 'c5', collector: 'purge', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
+      target: 70000, steep: 1.12, wall: 2.4, sediment: 12, id: 'c5', collector: 'purge', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip', 'cold'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-water-1',
       intro: '洋流停了。水面結冰，水位暫時不升；融冰的那天，水會一次過上來。',
       adds: '寒潮季：結冰、不能潛水、融冰',
@@ -13795,6 +13834,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       recruited: '被選中',
       firstClear: '第一次通過這一季',
       gaze: '升維者的目光',
+      season: '這一季的沉積 ×{x}',
+      streak: '執念：這一季已經失敗 {n} 次，沉積 ×{x}',
     },
     empty: '舊城還是一片漆黑。玩完一局，作品就會沉到這裏。',
     go: '去舊城打撈',
@@ -13858,13 +13899,49 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     { id: 'c4', name: '玻璃櫃', desc: '通過「觀光季」' },
   ];
 
+  // 第十八期（2026-11-25，製作人：「失敗係 100%，然後不斷透過失敗去成長」）：
+  // 前世的軌道：舊城打撈裏可以一直升級的力量。每一級的效果相加；價錢按等級上升（PAST_COST）。
+  // per 的鍵和舊城的節點相同，合併到 s.salvage：chipsX／multX 是每一筆的籌碼和倍率加成，payX 是夜晚獎金加成，sparkCap 是火花上限。
+  const PAST_TRACKS = [
+    { id: 'chips', name: '前世的手稿', text: '每一級：每一筆的籌碼 ×1.15（連乘）', per: { chipsX: 0.15 }, compound: true, max: 60 },
+    { id: 'mult', name: '前世的掌聲', text: '每一級：每一筆的倍率 ×1.15（連乘）', per: { multX: 0.15 }, compound: true, max: 60 },
+    { id: 'spark', name: '前世的星光', text: '開局火花 +0.1、火花上限 +0.1', per: { startSpark: 0.1, sparkCap: 0.1 }, max: 10 },
+    { id: 'soul', name: '前世的藥方', text: '靈魂上限 +0.5 克', per: { soulLimit: 0.5 }, max: 8 },
+    { id: 'purse', name: '前世的積蓄', text: '夜晚的獎金 +10%、開局多 {cash:4}', per: { payX: 0.1, startCash: 4 }, max: 12 },
+  ];
+  // 第 L 級升到 L + 1 的價錢：base × growth^L（四捨五入）
+  const PAST_COST = { base: 10, growth: 1.12 };
+  // 一生沉下去的沉積：每晚、每晚達標、超額每一級、每通過一輪、被選中、第一次通過這一季
+  const SEDIMENT = { night: 4, passed: 6, over: 2, round: 8, recruited: 24, firstClear: 20,
+    // 執念：同一季之前每連續失敗一次，這一生的沉積多 streak（最多算 streakMax 次）；通過這一季就重新計算
+    streak: 0.25, streakMax: 4 };
+  // 牆：每一季最後一晚的外星評審。不達標，這一生就結束（不論還有幾次機會）
+  const WALL_TEXT = {
+    ahead: '今晚是這一季最後的外星評審。不達標，這一生到此為止。',
+    goal: '最後的外星評審',
+    fail: '最後的外星評審沒有選中你。這一生到此為止；你的作品會沉到舊城。',
+    best: '最遠：第 {n}／{total} 晚',
+    bestWall: '最遠：外星評審的 {p}%',
+    lifeNow: '這一生：第 {n}／{total} 晚',
+    lifePrev: '上一生：第 {n}／{total} 晚',
+    wallPct: '外星評審 {p}%',
+    newBest: '新的最遠紀錄',
+    pastHead: '前世',
+    pastSub: '每一次失敗，都令下一生更強。',
+    pastPower: '每一筆 ×{x}',
+    pastFree: '前世的力量只帶進浮城年表的季節；全城篩選只看今生。',
+    level: 'Lv.{n}',
+    levelMax: '已滿',
+    up: '升級',
+  };
+
   // 第十七期（後段的引擎）的文字
   const ENGINE_TEXT = {
     sparkCapUp: '外星人調高了你的訊號上限：火花上限 +{v}（現在 ×{max}）。',
     masterwork: '名作：這幅作品的 {n} 張素材記得更深，各升一星。',
   };
 
-  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17, ENGINE_TEXT });
+  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17, ENGINE_TEXT, PAST_TRACKS, PAST_COST, WALL_TEXT, SEDIMENT });
 });
 
 // ---- js/chapters.js ----
@@ -13936,22 +14013,45 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const fresh = open.find((c) => !cleared(meta)[c.id]);
     return (fresh || open[open.length - 1] || LIST[0]).id;
   }
-  // 一局結束：記錄嘗試和通過；回傳 { firstClear, next }（next 是這次新開放的一章）
+  // 第十八期：這一生走到哪裏：完成幾晚、最後一晚的 總分÷目標、有沒有走到最後一晚（牆）
+  function progressOf(s) {
+    const log = (s && s.nightLog) || [];
+    const x = log[log.length - 1];
+    const total = nights(s);
+    return { nights: log.length, total, ratio: x && x.target ? Math.round((x.score / x.target) * 100) / 100 : 0, wall: log.length >= total };
+  }
+  // a 是否比 b 走得更遠（先比晚數，再比最後一晚的比例）
+  const farther = (a, b) => !b || a.nights > b.nights || (a.nights === b.nights && a.ratio > b.ratio);
+  const best = (meta, id) => (meta && meta.chapters && meta.chapters.best && meta.chapters.best[id]) || null;
+  // 一局結束：記錄嘗試、通過、這一生的進度；回傳 { firstClear, next, prog }（next 是這次新開放的一章；
+  // prog：{ now 這一生, prev 上一生, best 最遠紀錄, newBest 是否打破之前的紀錄 }，記在 meta.chapters.last／best）
   function record(meta, s, endingKind) {
     if (!meta || !s || !roundsMode(s) || !s.chapter) return { firstClear: false, next: null };
     migrate(meta);
     const id = s.chapter;
     meta.chapters.tries[id] = (meta.chapters.tries[id] || 0) + 1;
-    if (endingKind !== 'recruited') return { firstClear: false, next: null };
+    meta.chapters.best = meta.chapters.best || {};
+    meta.chapters.last = meta.chapters.last || {};
+    meta.chapters.fails = meta.chapters.fails || {};
+    // 執念：這一生之前，同一季連續失敗了幾次（通過就歸零）
+    const streak = meta.chapters.fails[id] || 0;
+    meta.chapters.fails[id] = endingKind === 'recruited' ? 0 : streak + 1;
+    const now = progressOf(s);
+    const prev = meta.chapters.last[id] || null;
+    const before = meta.chapters.best[id] || null;
+    meta.chapters.last[id] = now;
+    if (farther(now, before)) meta.chapters.best[id] = now;
+    const prog = { now, prev, best: meta.chapters.best[id], newBest: !!before && farther(now, before), streak };
+    if (endingKind !== 'recruited') return { firstClear: false, next: null, prog };
     const first = !meta.chapters.cleared[id];
     meta.chapters.cleared[id] = (meta.chapters.cleared[id] || 0) + 1;
     const c = get(id);
     const nx = c ? LIST[c.no] : null;
     const next = first && nx ? nx : null;
-    return { firstClear: first, next, free: first && id === 'c4' };
+    return { firstClear: first, next, free: first && id === 'c4', prog };
   }
 
-  IE.Chapters = { LIST, get, of, feat, rounds, nights, objAllowed, migrate, unlocked, freeUnlocked, status, list, defaultFor, record };
+  IE.Chapters = { LIST, get, of, feat, rounds, nights, objAllowed, migrate, unlocked, freeUnlocked, status, list, defaultFor, record, progressOf, best };
 });
 
 // ---- js/salvage.js ----
@@ -13987,6 +14087,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function ensure(meta) {
     meta.salvage = meta.salvage || { sediment: 0, earned: 0, owned: {} };
     meta.salvage.owned = meta.salvage.owned || {};
+    meta.salvage.levels = meta.salvage.levels || {};
     meta.salvage.sediment = meta.salvage.sediment || 0;
     meta.salvage.earned = meta.salvage.earned || 0;
     return meta.salvage;
@@ -14013,12 +14114,51 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     sv.owned[id] = true;
     return { ok: true, node: n, left: sv.sediment };
   }
-  // 已打撈節點的效果合併（數字相加）
-  function perks(meta) {
+  // ---------- 第十八期：前世的軌道（可以一直升級的力量） ----------
+  const TRACKS = D.PAST_TRACKS || [];
+  const TBY = {};
+  TRACKS.forEach((t) => { TBY[t.id] = t; });
+  const track = (id) => TBY[id] || null;
+  const level = (meta, id) => (meta && meta.salvage && meta.salvage.levels && meta.salvage.levels[id]) || 0;
+  // 第 lv 級升到 lv + 1 的價錢
+  function levelCost(lv) {
+    const C = D.PAST_COST || { base: 5, growth: 1.22 };
+    return Math.round(C.base * Math.pow(C.growth, lv));
+  }
+  function canLevel(meta, id) {
+    const t = track(id);
+    const W = D.WALL_TEXT || {};
+    if (!t) return { ok: false, msg: '沒有這條軌道' };
+    const lv = level(meta, id);
+    if (lv >= t.max) return { ok: false, msg: W.levelMax || '已滿' };
+    const cost = levelCost(lv);
+    if (balance(meta) < cost) return { ok: false, msg: D.SALVAGE_TEXT.need.replace('{n}', String(cost)), cost };
+    return { ok: true, cost };
+  }
+  function levelUp(meta, id) {
+    const c = canLevel(meta, id);
+    if (!c.ok) return c;
+    const sv = ensure(meta);
+    sv.sediment -= c.cost;
+    sv.levels[id] = level(meta, id) + 1;
+    return { ok: true, level: sv.levels[id], left: sv.sediment, cost: c.cost };
+  }
+  // 前世的總等級（顯示用）
+  const totalLevel = (meta) => TRACKS.reduce((a, t) => a + level(meta, t.id), 0);
+
+  // 已打撈節點和前世軌道的效果合併（數字相加）。opts.tracks === false：不計前世的軌道（全城篩選只看今生）
+  function perks(meta, opts) {
+    const withTracks = !(opts && opts.tracks === false);
     const out = {};
+    const add = (k, v) => { out[k] = Math.round(((out[k] || 0) + v) * 100) / 100; };
     NODES.forEach((n) => {
       if (!owned(meta, n.id)) return;
-      Object.keys(n.fx || {}).forEach((k) => { out[k] = Math.round(((out[k] || 0) + n.fx[k]) * 100) / 100; });
+      Object.keys(n.fx || {}).forEach((k) => add(k, n.fx[k]));
+    });
+    if (withTracks) TRACKS.forEach((t) => {
+      const lv = level(meta, t.id);
+      // compound：每一級連乘（×(1 + per)），合併成「多了幾成」；其他軌道每一級相加
+      if (lv > 0) Object.keys(t.per || {}).forEach((k) => add(k, t.compound ? Math.pow(1 + t.per[k], lv) - 1 : t.per[k] * lv));
     });
     return out;
   }
@@ -14042,12 +14182,30 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const T = D.SALVAGE_TEXT.lines;
     let v = 0;
     const add = (k, n, val) => { if (!val) return; v += val; lines.push({ k, text: T[k].replace('{n}', String(n)), v: val }); };
-    add('nights', nights, nights * 1);
-    add('passed', passed, passed * 3);
-    add('over', over, over * 1);
-    add('rounds', roundsPassed, roundsPassed * 4);
-    add('recruited', 1, recruited ? 12 : 0);
-    add('firstClear', 1, o.firstClear ? 10 : 0);
+    // 第十八期：沉積的計法在 D.SEDIMENT（每晚 2、每晚達標 3、超額每級 1、每輪 4、被選中 12、第一次通過 10）
+    const SD = Object.assign({ night: 1, passed: 3, over: 1, round: 4, recruited: 12, firstClear: 10 }, D.SEDIMENT || {});
+    add('nights', nights, nights * SD.night);
+    add('passed', passed, passed * SD.passed);
+    add('over', over, over * SD.over);
+    add('rounds', roundsPassed, roundsPassed * SD.round);
+    add('recruited', 1, recruited ? SD.recruited : 0);
+    add('firstClear', 1, o.firstClear ? SD.firstClear : 0);
+    // 第十八期：越後的季，沉下去的越多（章節的 sediment；全城篩選用 D.ECON16.freeSediment）
+    const ch = IE.Chapters && s ? IE.Chapters.of(s) : null;
+    const f = ch ? (ch.sediment || 1) : (s && s.mode === 'rounds' && D.ECON16 && D.ECON16.freeSediment) || 1;
+    if (f !== 1 && v) {
+      const bonus = Math.round(v * (f - 1));
+      v += bonus;
+      if (T.season) lines.push({ k: 'season', text: T.season.replace('{x}', String(f)), v: bonus });
+    }
+    // 第十八期：執念（o.streak＝這一生之前，同一季連續失敗了幾次）
+    const st = Math.min(o.streak || 0, SD.streakMax || 0);
+    if (st > 0 && SD.streak && v) {
+      const x = Math.round((1 + SD.streak * st) * 100) / 100;
+      const bonus = Math.round(v * (x - 1));
+      v += bonus;
+      if (T.streak) lines.push({ k: 'streak', text: T.streak.replace('{n}', String(o.streak)).replace('{x}', String(x)), v: bonus });
+    }
     const x = (s && s.salvage && s.salvage.sedimentX) || 0;
     if (x && v) {
       const bonus = Math.round(v * x);
@@ -14072,7 +14230,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   }
   const districts = () => (D.SALVAGE || []).map((d) => Object.assign({}, d, { nodes: NODES.filter((n) => n.district === d.id) }));
 
-  IE.Salvage = { NODES, get, owned, balance, ownedCount, ensure, canBuy, buy, perks, overTier, earn, bank, describe, districts };
+  IE.Salvage = { NODES, get, owned, balance, ownedCount, ensure, canBuy, buy, perks, overTier, earn, bank, describe, districts, TRACKS, track, level, levelCost, canLevel, levelUp, totalLevel };
 });
 
 // ---- js/rules.js ----
@@ -14503,7 +14661,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function applyStartSalvage(s) {
     const sv = s.salvage;
     if (sv.startCash) s.cr += sv.startCash;
-    if (sv.startSpark) s.spark = round1(Math.min(SPARK_MAX, s.spark + sv.startSpark));
+    // 第十八期：前世的星光也提高火花上限
+    if (sv.sparkCap) s.sparkCapBonus = Math.round(((s.sparkCapBonus || 0) + sv.sparkCap) * 100) / 100;
+    if (sv.startSpark) s.spark = round1(Math.min(SPARK_MAX + (s.sparkCapBonus || 0), s.spark + sv.startSpark));
     if (sv.startSoul) s.soul = Math.max(0, round1(s.soul + sv.startSoul));
     if (sv.fullLevel) { s.forms = s.forms || {}; s.forms.full = (s.forms.full || 1) + sv.fullLevel; }
     for (let i = 0; i < (sv.startCards || 0); i++) {
@@ -16489,6 +16649,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const noWear = schools.some((x) => x.def.noWear);
       const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
       const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
+      // 第十八期：同一件物件（同一個流派、同一種卡面效果）的「×倍率」，一筆之中最多生效 D.DESK.xCap 次；
+      // 超過的那幾次只計加法的部分（否則每張素材都 ×2 會令一筆的分數按張數連乘）
+      const XCAP = (D.DESK && D.DESK.xCap) || 0;
+      const xUsed = {};
+      const capX = (key, e) => {
+        if (!XCAP || !e || !e.xmult || e.xmult <= 1) return e;
+        xUsed[key] = (xUsed[key] || 0) + 1;
+        if (xUsed[key] <= XCAP) return e;
+        const rest = Object.assign({}, e);
+        delete rest.xmult;
+        return rest.chips || rest.mult ? rest : null;
+      };
       let echoNext = 0;
       const blockedUids = new Set();
       IE.Desk.structSteps(A).forEach((st) => {
@@ -16509,16 +16681,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
             const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
             chips += v;
             steps.push(snap({ t: 'card', uid: c.uid, idx: st.idx, role: st.role, chips: v, again: r > 0, echo: r > 0 && r <= echoed }));
-            const mf = MOD_FX[c.mod];
+            const mf = capX('mod:' + c.mod, MOD_FX[c.mod]);
             if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
             objs.forEach((o) => {
               if (!o.def.card) return;
-              const e = o.def.card(c, ctx);
+              const e = capX('obj:' + o.id + ':' + o.slot, o.def.card(c, ctx));
               if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
             });
             schools.forEach((x) => {
               if (!x.def.card) return;
-              const e = x.def.card(c, ctx, x.n);
+              const e = capX('school:' + x.id, x.def.card(c, ctx, x.n));
               if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
             });
           }
@@ -16534,7 +16706,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       });
       held.forEach((c) => objs.forEach((o) => {
         if (!o.def.held) return;
-        const e = o.def.held(c, ctx);
+        const e = capX('held:' + o.id + ':' + o.slot, o.def.held(c, ctx));
         if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
       }));
       const sorted = topRecipes(recs);
@@ -16563,6 +16735,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const wt = RL.weatherTag ? RL.weatherTag(s, sel) : null, wx = wt ? wt.x : 1;
       const sm = SR ? SR.mult(A.id, ctx.kpiMod, sel) : 1;
       const sp = s.spark * (SR ? SR.sparkMult : 1);
+      // 第十八期：前世的手稿（chipsX）和掌聲（multX）
+      const pastX = Math.round((1 + ((s.salvage && s.salvage.chipsX) || 0)) * (1 + ((s.salvage && s.salvage.multX) || 0)) * 100) / 100;
+      if (pastX !== 1) steps.push({ t: 'past', x: pastX });
       if (ai !== 1) steps.push({ t: 'ai', x: ai });
       if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
       if (wm !== 1) steps.push({ t: 'world', x: wm });
@@ -16570,7 +16745,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       if (wt) steps.push({ t: 'weather', x: wx, name: wt.name });
       if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
       steps.push({ t: 'spark', x: sp });
-      const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx);
+      const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx * pastX);
       const total = Math.round(raw * ctx.kpiMod);
       const relief = r1(A.run.reduce((a, c) => a + (c.grams || 0), 0));
       const keys = Object.keys(counts).filter((t) => wpos(t) >= 0);
@@ -18752,7 +18927,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       } else {
         s.stats.stages.fail++;
         R.addSpark(s, D.ECON.failSpark, true); out.lines.push('火花 ' + D.ECON.failSpark);
-        IE.Rounds.loseChance(s, 'night', { line: (t) => out.lines.push(t) });
+        if (IE.Rounds.isWall && IE.Rounds.isWall(s)) {
+          // 第十八期：牆：最後的外星評審不達標，這一生就結束（不論還有幾次機會）
+          out.wall = true;
+          if (D.WALL_TEXT) out.lines.push(D.WALL_TEXT.fail);
+          s.lost = s.lost || [];
+          s.lost.push('wall');
+          s.chances = 0;
+          s.ended = R.endingFor(s, 'archived');
+          s.phase = 'ended';
+        } else {
+          IE.Rounds.loseChance(s, 'night', { line: (t) => out.lines.push(t) });
+        }
       }
       s.nightLog = s.nightLog || [];
       s.nightLog.push({ night: s.night, kind: stage.kind, target: stage.target, score, pass, reward, playsLeft: pl });
@@ -19825,7 +20011,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       ? E.curve[R.clamp(k - 1, 0, E.curve.length - 1)]
       : Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
     const ch = IE.Chapters ? IE.Chapters.of(s) : null;
-    return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1));
+    // 第十八期：每一季最後一晚的外星評審是一道牆（章節的 wall；全城篩選用 ECON.wall）
+    const wall = k === nightsTotal(s) ? ((ch && ch.wall) || D.ECON.wall || 1) : 1;
+    // 第十八期：季內的難度逐晚追上自己的力量（章節的 steep；全城篩選用 ECON.steep）
+    const steep = Math.pow((ch && ch.steep) || D.ECON.steep || 1, Math.max(0, k - 1));
+    return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1) * wall * steep);
   }
 
   // 第 r 輪結束時的租金
@@ -20325,7 +20515,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const base = D.ECON.nightPay[k] || 0;
     const r = roundOf(s);
     const pl = Math.max(0, playsLeft || 0);
-    return Math.round(base * (1 + D.ECON.payGrowth * (r - 1))) + D.ECON.earlyBonus * pl;
+    // 第十八期：前世的積蓄（payX）令夜晚的獎金多一點
+    return Math.round(base * (1 + D.ECON.payGrowth * (r - 1)) * (1 + sv(s, 'payX'))) + D.ECON.earlyBonus * pl;
   }
 
   // 這一晚是否已達標
@@ -21038,8 +21229,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return ['cr', 'spark', 'soul'].filter((k) => rep.deltas[k] && !h[k]);
   }
 
+  // 第十八期：今晚是不是這一季最後的外星評審（牆）。只有浮城年表的季節有牆；全城篩選要 D.ECON.wall 才有
+  function isWall(s) {
+    if (!(s && on(s) && !s.prologue && (s.night || 0) >= nightsTotal(s))) return false;
+    const ch = IE.Chapters ? IE.Chapters.of(s) : null;
+    return !!(ch ? ch.wall : D.ECON.wall);
+  }
+
   IE.Rounds = {
     on,
+    isWall,
     prologueRun,
     prologueStart,
     prologueStep,
@@ -35829,6 +36028,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const stTxt = st === 'cleared' ? T.cleared + (c.clears > 1 ? ' ×' + c.clears : '') : st === 'locked' ? '🔒' : st === 'building' ? '🚧' : (c.tries ? T.current : '');
       const why = st === 'locked' ? T.locked : st === 'building' ? T.building : '';
       const can = st === 'open' || st === 'cleared';
+      // 第十八期：未通過而試過的季，顯示最遠紀錄
+      const W = D().WALL_TEXT || {};
+      const bst = st === 'open' && c.tries && IE.Chapters.best ? IE.Chapters.best(meta, c.id) : null;
+      const bestTxt = bst ? (bst.wall && W.bestWall ? W.bestWall.replace('{p}', Math.round(bst.ratio * 100)) : W.best.replace('{n}', bst.nights).replace('{total}', bst.total)) : '';
       return '<button type="button" class="era-ch st-' + st + (sel === c.id ? ' sel' : '') + '" data-do="chapter" data-id="' + c.id + '"' + (can ? '' : ' disabled') + ' style="--sky:url(\'' + esc(art(c.sky)) + '\')">'
         + '<span class="era-sky" aria-hidden="true"></span>'
         + '<span class="era-txt">'
@@ -35838,6 +36041,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + '<span class="era-intro">' + esc(c.intro) + '</span>'
         + '<span class="era-adds">' + esc(T.adds.replace('{x}', c.adds)) + '</span>'
         + (why ? '<span class="era-why">' + esc(why) + '</span>' : '<span class="era-len num">' + esc(T.length.replace('{r}', c.rounds).replace('{n}', c.rounds * 3)) + '</span>')
+        + (bestTxt ? '<span class="era-best">' + esc(bestTxt) + '</span>' : '')
         + '</span>'
         + (stTxt ? '<span class="era-st">' + esc(stTxt) + '</span>' : '')
         + '</button>';
@@ -35862,6 +36066,39 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const sub = c ? T.length.replace('{r}', c.rounds).replace('{n}', c.rounds * 3) + '・' + c.species : '完整的一年';
     return '<div class="su-opt su-era"><span class="lbl">' + esc(T.head) + '</span>'
       + '<button type="button" class="era-pick" data-do="era" style="--sky:url(\'' + esc(art(c ? c.sky : 'np-sky-anger-2')) + '\')"><b>' + esc(txt) + '</b><small>' + esc(sub) + '</small><span class="era-pick-go">換一季 ›</span></button></div>';
+  }
+
+  // ---------- 第十八期：前世的軌道（可以一直升級） ----------
+  // 每一條軌道現在的效果（顯示用）
+  const TRACK_NOW = {
+    chips: (t, lv) => '×' + Math.pow(1 + t.per.chipsX, lv).toFixed(2),
+    mult: (t, lv) => '×' + Math.pow(1 + t.per.multX, lv).toFixed(2),
+    spark: (t, lv) => '+' + (t.per.startSpark * lv).toFixed(1),
+    soul: (t, lv) => '+' + (t.per.soulLimit * lv).toFixed(1) + ' 克',
+    purse: (t, lv) => '+' + Math.round(t.per.payX * lv * 100) + '%',
+  };
+  function pastSection(meta) {
+    const SV = IE.Salvage, W = D().WALL_TEXT || {};
+    if (!SV.TRACKS || !SV.TRACKS.length) return '';
+    const p = SV.perks(meta);
+    const power = Math.round((1 + (p.chipsX || 0)) * (1 + (p.multX || 0)) * 100) / 100;
+    const rows = SV.TRACKS.map((t) => {
+      const lv = SV.level(meta, t.id);
+      const c = SV.canLevel(meta, t.id);
+      const full = lv >= t.max;
+      const now = lv && TRACK_NOW[t.id] ? TRACK_NOW[t.id](t, lv) : '—';
+      return '<li class="past-t' + (lv ? ' has' : '') + '">'
+        + '<span class="past-nm"><b>' + esc(t.name) + '</b><span class="past-lv num">' + esc(W.level.replace('{n}', lv)) + '</span></span>'
+        + '<span class="past-tx">' + esc(SV.describe(t)) + '</span>'
+        + '<span class="past-now num">' + esc(now) + '</span>'
+        + (full ? '<span class="past-full">' + esc(W.levelMax) + '</span>'
+          : '<button type="button" class="btn past-up' + (c.ok ? ' primary' : '') + '" data-do="pastUp" data-id="' + t.id + '"' + (c.ok ? '' : ' disabled') + '>' + esc(W.up) + '<span class="num">' + fmt(SV.levelCost(lv)) + '</span></button>')
+        + '</li>';
+    }).join('');
+    return '<section class="past"><h3>' + esc(W.pastHead) + '<small>' + esc(W.pastSub) + '</small><span class="past-pow num">' + esc(W.pastPower.replace('{x}', power.toFixed(2))) + '</span></h3>'
+      + '<ol class="past-list">' + rows + '</ol>'
+      + (W.pastFree ? '<p class="past-note">' + esc(W.pastFree) + '</p>' : '')
+      + '</section>';
   }
 
   // ---------- 舊城打撈 ----------
@@ -35900,6 +36137,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="salv-bg" aria-hidden="true" style="--bg1:url(\'' + esc(art('np-far-drowned')) + '\');--bg2:url(\'' + esc(art('np-sky-water-2')) + '\')"></div>'
       + '<div class="salv-head"><div><span class="eyebrow">' + esc(T.head) + '</span><h2>' + esc(T.head) + '</h2><p class="salv-sub">' + esc(T.sub) + '</p></div>'
       + '<div class="salv-bal"><small>' + esc(T.unit) + '</small><b class="num">' + fmt(bal) + '</b><small>' + SV.ownedCount(meta) + ' / ' + SV.NODES.length + '</small></div></div>'
+      + pastSection(meta)
       + '<div class="salv-grid">' + dists + '</div>'
       + '<div class="salv-detail" aria-live="polite">' + detail + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="close">' + esc(D().CHAPTER_TEXT.back) + '</button></div>'
@@ -35914,10 +36152,24 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (chRes && chRes.firstClear && chRes.cleared) chHtml += '<p class="earn-ch">' + esc(CT.clearedNow.replace('{x}', chRes.cleared.name)) + ' ' + esc(chRes.cleared.clear || '') + '</p>';
     if (chRes && chRes.next) chHtml += '<p class="earn-unlock">' + esc(CT.unlocked.replace('{x}', '第 ' + chRes.next.no + ' 季・' + chRes.next.name)) + '</p>';
     if (chRes && chRes.free) chHtml += '<p class="earn-unlock">' + esc(CT.unlocked.replace('{x}', CT.free)) + '</p>';
+    // 第十八期：這一生走到哪裏，和上一生比較
+    const W = D().WALL_TEXT || {};
+    const pr = chRes && chRes.prog;
+    let progHtml = '';
+    if (pr && pr.now && W.lifeNow) {
+      // 「外星評審 81%」：字和數字分開排（數字用等寬的數字字體）
+      const pct = (x) => { const [a, b] = W.wallPct.split('{p}'); return '<span class="v"><small>' + esc(a) + '</small><b class="num">' + Math.round(x.ratio * 100) + esc(b || '') + '</b></span>'; };
+      const row = (txt, x, cls) => '<li' + (cls ? ' class="' + cls + '"' : '') + '><span>' + esc(txt.replace('{n}', x.nights).replace('{total}', x.total)) + '</span>'
+        + (x.wall ? pct(x) : '') + '</li>';
+      progHtml = '<ul class="lines earn-prog">' + row(W.lifeNow, pr.now, '') + (pr.prev ? row(W.lifePrev, pr.prev, 'mute') : '')
+        + (pr.newBest ? '<li class="earn-best"><span>' + esc(W.newBest) + '</span></li>' : '') + '</ul>';
+      if (!chRes.firstClear) progHtml += '<p class="earn-grow">' + esc(W.pastSub) + '</p>';
+    }
     return '<div class="modal salv-earn">'
       + '<div class="salv-bg" aria-hidden="true" style="--bg1:url(\'' + esc(art('np-far-drowned')) + '\');--bg2:url(\'' + esc(art('np-sky-water-1')) + '\')"></div>'
       + '<span class="eyebrow">' + esc(T.earnHead) + '</span>'
       + '<h2 class="earn-total">' + esc(T.earnTotal.replace('{n}', res.total)) + '</h2>'
+      + progHtml
       + '<ul class="lines earn-lines">' + lines + '</ul>'
       + chHtml
       + '<p class="mute">' + esc(T.balance.replace('{n}', fmt(IE.Salvage.balance(meta)))) + '</p>'
@@ -36009,9 +36261,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const $ = (sel) => document.querySelector(sel);
 
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = (n) => Math.round(n).toLocaleString('en-US');
-  // 大數字：萬、億
-  const kfmt = (n) => (n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
+  // 第十八期：浮城年表後段的分數會到千億以上：十億或以上改用「億」，一兆或以上用「兆」（舊模式的數字不會這麼大）
+  const fmt = (n) => {
+    const a = Math.abs(n);
+    if (a >= 1e12) return (n / 1e12).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' 兆';
+    if (a >= 1e9) return (n / 1e8).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' 億';
+    return Math.round(n).toLocaleString('en-US');
+  };
+  // 大數字：萬、億、兆
+  const kfmt = (n) => (n >= 1e12 ? (n / 1e12).toFixed(2) + '兆' : n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e6 ? 0 : 1) + '萬' : fmt(n));
   const pad2 = (n) => String(n).padStart(2, '0');
   const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (d ? Math.abs(v).toFixed(d) : fmt(Math.abs(v)));
   const uiCash = (str) => (IE.Rounds && IE.Rounds.cashText && IE.Game && IE.Game.state ? IE.Rounds.cashText(IE.Game.state, str) : str);
@@ -37406,6 +37664,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + (V.rent ? '<span class="rd-rent">' + esc(rentLine) + '</span>' : '')
       + '</div>'
       + floodBannerHtml
+      // 第十八期：這一季最後的外星評審（牆）
+      + (RD.isWall && RD.isWall(s) && D().WALL_TEXT ? '<div class="rd-wall" role="note">' + esc(D().WALL_TEXT.ahead) + '</div>' : '')
       + (IE.EraUI ? IE.EraUI.dayExtras(s) : '')
       + (V.boss ? bossAheadHtml : '')
       + (V.story ? storyStripHtml : '')
@@ -39193,7 +39453,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const sc = (ses && IE.Stages ? IE.Stages.stageScore(ses) : 0) + (extra || 0);
       const goalEl = $('.ct-goal');
       goalEl.classList.add('night');
-      goalEl.querySelector('.lbl').textContent = '今晚目標';
+      // 第十八期：這一季最後的外星評審（牆）
+      const wall = !!(IE.Rounds.isWall && IE.Rounds.isWall(s) && D().WALL_TEXT);
+      goalEl.classList.toggle('wall', wall);
+      goalEl.querySelector('.lbl').textContent = wall ? D().WALL_TEXT.goal : '今晚目標';
       $('.ct-goal i').style.width = Math.min(100, sc / t * 100) + '%';
       $('.ct-goal em').style.display = 'none';
       $('.ct-goal-n').textContent = fmt(sc) + ' / ' + fmt(t);
@@ -40123,6 +40386,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(220);
           break;
+        case 'past':
+          // 第十八期：前世的手稿和掌聲
+          tag('前世 ×' + x.x, 'kpi-good');
+          A().fx('mult', 3);
+          await wait(240);
+          break;
         case 'weather':
           tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');
           A().fx('mult', 2);
@@ -41037,6 +41306,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         UI.toast('打撈了「' + r.node.name + '」', 'good');
         render();
       },
+      // 第十八期：升級前世的軌道
+      pastUp(el) {
+        const r = IE.Salvage.levelUp(Game.meta, el.dataset.id);
+        if (!r.ok) { UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        store.set(KEY_META, Game.meta);
+        const t = IE.Salvage.track(el.dataset.id);
+        UI.toast((t ? t.name : '') + ' Lv.' + r.level, 'good');
+        render();
+      },
       close() { UI.closeModal(); if (after) after(); },
     }, { dismiss: () => { if (after) after(); } });
     render();
@@ -41223,7 +41502,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const testSeed = store.get('ie2080.seed');
     const rounds = (o.mode || 'standard') === 'rounds';
     Game.state = R.newRun({ bg, season, meta: Game.meta, seed: o.seed != null ? o.seed : testSeed, stake: o.stake || 1, daily: o.daily || null, weekly: o.weekly || null, mode: o.mode || 'standard',
-      chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta) : null });
+      // 第十八期：前世的軌道只帶進浮城年表的季節；全城篩選（沒有章節）只看今生
+      chapter: rounds ? (o.chapter || null) : null, salvage: rounds && IE.Salvage ? IE.Salvage.perks(Game.meta, { tracks: !!o.chapter }) : null });
     if (rounds && o.guided) {
       Game.state.guided = true;
       Game.state.hinted = {};
@@ -42310,7 +42590,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     let earnRes = null, chRes = null;
     if (IE.Rounds && IE.Rounds.on(s)) {
       if (IE.Chapters) { chRes = IE.Chapters.record(Game.meta, s, kind); chRes.cleared = chRes.firstClear ? IE.Chapters.of(s) : null; }
-      if (IE.Salvage) earnRes = IE.Salvage.bank(Game.meta, s, kind, { firstClear: !!(chRes && chRes.firstClear) });
+      if (IE.Salvage) earnRes = IE.Salvage.bank(Game.meta, s, kind, { firstClear: !!(chRes && chRes.firstClear), streak: (chRes && chRes.prog && chRes.prog.streak) || 0 });
       Game.meta.cardsSeen = Game.meta.cardsSeen || {};
       Object.keys(s.seenCards || {}).forEach((id) => { Game.meta.cardsSeen[id] = Math.max(Game.meta.cardsSeen[id] || 0, s.seenCards[id]); });
       Game.meta.ach17 = Game.meta.ach17 || {};

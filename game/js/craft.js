@@ -1037,7 +1037,10 @@
       const sc = (ses && IE.Stages ? IE.Stages.stageScore(ses) : 0) + (extra || 0);
       const goalEl = $('.ct-goal');
       goalEl.classList.add('night');
-      goalEl.querySelector('.lbl').textContent = '今晚目標';
+      // 第十八期：這一季最後的外星評審（牆）
+      const wall = !!(IE.Rounds.isWall && IE.Rounds.isWall(s) && D().WALL_TEXT);
+      goalEl.classList.toggle('wall', wall);
+      goalEl.querySelector('.lbl').textContent = wall ? D().WALL_TEXT.goal : '今晚目標';
       $('.ct-goal i').style.width = Math.min(100, sc / t * 100) + '%';
       $('.ct-goal em').style.display = 'none';
       $('.ct-goal-n').textContent = fmt(sc) + ' / ' + fmt(t);
@@ -1966,6 +1969,12 @@
         case 'world':
           tag('世界事件 ×' + x.x, 'kpi-good');
           await wait(220);
+          break;
+        case 'past':
+          // 第十八期：前世的手稿和掌聲
+          tag('前世 ×' + x.x, 'kpi-good');
+          A().fx('mult', 3);
+          await wait(240);
           break;
         case 'weather':
           tag('天氣・' + x.name + ' ×' + x.x, 'kpi-good');

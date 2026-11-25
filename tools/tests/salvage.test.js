@@ -41,24 +41,33 @@ module.exports = (t) => {
   });
 
   t.test('沉積：完成的晚數、達標、超額、通過的輪數、被選中都會算', () => {
-    const s = run();
+    const s = run({ chapter: 'c1' });
     s.nightLog = [
       { night: 1, score: 1000, target: 1000, pass: true },
       { night: 2, score: 6000, target: 1000, pass: true },
       { night: 3, score: 500, target: 1000, pass: false },
     ];
     s.reviewsPassed = 1;
+    const SD = D.SEDIMENT;
     const e = SV.earn(s, 'archived');
-    // 3 晚 ×1 + 2 晚達標 ×3 + 超額（6 倍是第 2 級）2 + 1 輪 ×4 = 15
-    assert.equal(e.total, 3 + 6 + 2 + 4);
+    // 3 晚 + 2 晚達標 + 超額（6 倍是第 2 級）+ 1 輪（第十八期的 D.SEDIMENT）
+    const b = 3 * SD.night + 2 * SD.passed + 2 * SD.over + SD.round;
+    assert.equal(e.total, b);
     const e2 = SV.earn(s, 'recruited', { firstClear: true });
-    assert.equal(e2.total, 15 + 12 + 10);
+    assert.equal(e2.total, b + SD.recruited + SD.firstClear);
     s.salvage = { sedimentX: 0.25 };
-    assert.equal(SV.earn(s, 'archived').total, 15 + Math.round(15 * 0.25));
+    assert.equal(SV.earn(s, 'archived').total, b + Math.round(b * 0.25));
     const m = meta(0);
     SV.bank(m, s, 'archived');
-    assert.equal(SV.balance(m), 19);
-    assert.equal(m.salvage.earned, 19);
+    assert.equal(SV.balance(m), b + Math.round(b * 0.25));
+    assert.equal(m.salvage.earned, b + Math.round(b * 0.25));
+    // 第十八期：越後的季，沉下去的越多
+    const s3 = run({ chapter: 'c3' });
+    s3.nightLog = s.nightLog; s3.reviewsPassed = 1;
+    assert.equal(SV.earn(s3, 'archived').total, b + Math.round(b * (D.CHAPTERS.find((c) => c.id === 'c3').sediment - 1)));
+    const sf = run();
+    sf.nightLog = s.nightLog; sf.reviewsPassed = 1;
+    assert.equal(SV.earn(sf, 'archived').total, b + Math.round(b * (D.ECON16.freeSediment - 1)));
   });
 
   t.test('開局：多帶素材、閃卡、錢、火花、靈魂、起承轉合的等級', () => {

@@ -66,20 +66,43 @@
     const fresh = open.find((c) => !cleared(meta)[c.id]);
     return (fresh || open[open.length - 1] || LIST[0]).id;
   }
-  // 一局結束：記錄嘗試和通過；回傳 { firstClear, next }（next 是這次新開放的一章）
+  // 第十八期：這一生走到哪裏：完成幾晚、最後一晚的 總分÷目標、有沒有走到最後一晚（牆）
+  function progressOf(s) {
+    const log = (s && s.nightLog) || [];
+    const x = log[log.length - 1];
+    const total = nights(s);
+    return { nights: log.length, total, ratio: x && x.target ? Math.round((x.score / x.target) * 100) / 100 : 0, wall: log.length >= total };
+  }
+  // a 是否比 b 走得更遠（先比晚數，再比最後一晚的比例）
+  const farther = (a, b) => !b || a.nights > b.nights || (a.nights === b.nights && a.ratio > b.ratio);
+  const best = (meta, id) => (meta && meta.chapters && meta.chapters.best && meta.chapters.best[id]) || null;
+  // 一局結束：記錄嘗試、通過、這一生的進度；回傳 { firstClear, next, prog }（next 是這次新開放的一章；
+  // prog：{ now 這一生, prev 上一生, best 最遠紀錄, newBest 是否打破之前的紀錄 }，記在 meta.chapters.last／best）
   function record(meta, s, endingKind) {
     if (!meta || !s || !roundsMode(s) || !s.chapter) return { firstClear: false, next: null };
     migrate(meta);
     const id = s.chapter;
     meta.chapters.tries[id] = (meta.chapters.tries[id] || 0) + 1;
-    if (endingKind !== 'recruited') return { firstClear: false, next: null };
+    meta.chapters.best = meta.chapters.best || {};
+    meta.chapters.last = meta.chapters.last || {};
+    meta.chapters.fails = meta.chapters.fails || {};
+    // 執念：這一生之前，同一季連續失敗了幾次（通過就歸零）
+    const streak = meta.chapters.fails[id] || 0;
+    meta.chapters.fails[id] = endingKind === 'recruited' ? 0 : streak + 1;
+    const now = progressOf(s);
+    const prev = meta.chapters.last[id] || null;
+    const before = meta.chapters.best[id] || null;
+    meta.chapters.last[id] = now;
+    if (farther(now, before)) meta.chapters.best[id] = now;
+    const prog = { now, prev, best: meta.chapters.best[id], newBest: !!before && farther(now, before), streak };
+    if (endingKind !== 'recruited') return { firstClear: false, next: null, prog };
     const first = !meta.chapters.cleared[id];
     meta.chapters.cleared[id] = (meta.chapters.cleared[id] || 0) + 1;
     const c = get(id);
     const nx = c ? LIST[c.no] : null;
     const next = first && nx ? nx : null;
-    return { firstClear: first, next, free: first && id === 'c4' };
+    return { firstClear: first, next, free: first && id === 'c4', prog };
   }
 
-  IE.Chapters = { LIST, get, of, feat, rounds, nights, objAllowed, migrate, unlocked, freeUnlocked, status, list, defaultFor, record };
+  IE.Chapters = { LIST, get, of, feat, rounds, nights, objAllowed, migrate, unlocked, freeUnlocked, status, list, defaultFor, record, progressOf, best };
 });

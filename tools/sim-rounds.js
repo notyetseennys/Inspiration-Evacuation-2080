@@ -24,6 +24,21 @@ const path = require('path');
 const IE = globalThis.IE;
 const D = IE.DATA, R = IE.Rules, CARDS = IE.Cards, FLOOD = IE.Flood, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
 
+// 第十八期：WALL='{"c1":3}' 臨時覆寫各季的牆；PASTCOST='{"base":10,"growth":1.25}' 臨時覆寫前世軌道的價錢（校準用）
+if (process.env.WALL) {
+  const over = JSON.parse(process.env.WALL);
+  (D.CHAPTERS || []).forEach((c) => { if (over[c.id] != null) c.wall = over[c.id]; });
+}
+if (process.env.PASTCOST) Object.assign(D.PAST_COST, JSON.parse(process.env.PASTCOST));
+// SEDX='{"c4":4}'：臨時覆寫各季的沉積倍數
+if (process.env.SEDX) {
+  const over = JSON.parse(process.env.SEDX);
+  (D.CHAPTERS || []).forEach((c) => { if (over[c.id] != null) c.sediment = over[c.id]; });
+}
+if (process.env.STEEP) {
+  const over = JSON.parse(process.env.STEEP);
+  (D.CHAPTERS || []).forEach((c) => { if (over[c.id] != null) c.steep = over[c.id]; });
+}
 // 第十七期：CHTARGET='{"c1":0.3}' 臨時覆寫各季的目標倍率（校準用）
 if (process.env.CHTARGET) {
   const over = JSON.parse(process.env.CHTARGET);
@@ -804,9 +819,13 @@ function runShop(s, strat, metrics) {
   metrics.transitions++;
 }
 
-function runOne(bg, season, seed, strat) {
+function runOne(bg, season, seed, strat, opts) {
   // 第十七期：CHAPTER=c1 模擬某一章；SALVAGE='{"startCards":2}' 模擬舊城的加成
-  const s = R.newRun({ bg, season, seed, mode: 'rounds', chapter: process.env.CHAPTER || null, salvage: process.env.SALVAGE ? JSON.parse(process.env.SALVAGE) : null });
+  // 第十八期：opts.chapter／opts.salvage 由 tools/sim-meta.js（連續多生的模擬）傳入，優先於環境變數
+  const o = opts || {};
+  const chapter = o.chapter !== undefined ? o.chapter : (process.env.CHAPTER || null);
+  const salvage = o.salvage !== undefined ? o.salvage : (process.env.SALVAGE ? JSON.parse(process.env.SALVAGE) : null);
+  const s = R.newRun({ bg, season, seed, mode: 'rounds', chapter, salvage, meta: o.meta || undefined });
   const metrics = {
     plays: 0,
     discards: 0,
@@ -876,6 +895,11 @@ function runOne(bg, season, seed, strat) {
     lostHome: ((s.stats && s.stats.lostHome) || 0) > 0 ? 1 : 0,
     moves: (s.stats && s.stats.moves) || 0,
     sawCold: metrics.sawCold ? 1 : 0,
+    // 第十八期：這一生沉下去的沉積（不含「第一次通過」；由 sim-meta.js 另外加）
+    sediment: IE.Salvage ? IE.Salvage.earn(s, s.ended ? (s.ended.type || s.ended.id) : 'archived', { streak: o.streak || 0 }).total : 0,
+    wall: (s.lost || []).includes('wall'),
+    // 第十八期：最後一晚（死前的一晚）總分 ÷ 目標
+    lastRatio: (() => { const L = s.nightLog || []; const x = L[L.length - 1]; return x && x.target ? x.score / x.target : 0; })(),
     estMin,
     metrics,
   };
@@ -1027,6 +1051,11 @@ function runStrategy(strat) {
   };
 }
 
+// 第十八期：被 tools/sim-meta.js 引用時只匯出 runOne，不跑模擬
+if (require.main !== module) {
+  module.exports = { runOne, IE };
+  return;
+}
 const summary = STRATS.map(runStrategy);
 console.log('\n=== 五輪模式總覽 ===');
 console.log('策略                  | 勝率   | 完成夜 | 過輪 | 雪球(N15/N1) | 租金失誤 | 靈魂失誤 | 終局物件 | 局時');

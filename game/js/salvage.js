@@ -30,6 +30,7 @@
   function ensure(meta) {
     meta.salvage = meta.salvage || { sediment: 0, earned: 0, owned: {} };
     meta.salvage.owned = meta.salvage.owned || {};
+    meta.salvage.levels = meta.salvage.levels || {};
     meta.salvage.sediment = meta.salvage.sediment || 0;
     meta.salvage.earned = meta.salvage.earned || 0;
     return meta.salvage;
@@ -56,12 +57,51 @@
     sv.owned[id] = true;
     return { ok: true, node: n, left: sv.sediment };
   }
-  // 已打撈節點的效果合併（數字相加）
-  function perks(meta) {
+  // ---------- 第十八期：前世的軌道（可以一直升級的力量） ----------
+  const TRACKS = D.PAST_TRACKS || [];
+  const TBY = {};
+  TRACKS.forEach((t) => { TBY[t.id] = t; });
+  const track = (id) => TBY[id] || null;
+  const level = (meta, id) => (meta && meta.salvage && meta.salvage.levels && meta.salvage.levels[id]) || 0;
+  // 第 lv 級升到 lv + 1 的價錢
+  function levelCost(lv) {
+    const C = D.PAST_COST || { base: 5, growth: 1.22 };
+    return Math.round(C.base * Math.pow(C.growth, lv));
+  }
+  function canLevel(meta, id) {
+    const t = track(id);
+    const W = D.WALL_TEXT || {};
+    if (!t) return { ok: false, msg: '沒有這條軌道' };
+    const lv = level(meta, id);
+    if (lv >= t.max) return { ok: false, msg: W.levelMax || '已滿' };
+    const cost = levelCost(lv);
+    if (balance(meta) < cost) return { ok: false, msg: D.SALVAGE_TEXT.need.replace('{n}', String(cost)), cost };
+    return { ok: true, cost };
+  }
+  function levelUp(meta, id) {
+    const c = canLevel(meta, id);
+    if (!c.ok) return c;
+    const sv = ensure(meta);
+    sv.sediment -= c.cost;
+    sv.levels[id] = level(meta, id) + 1;
+    return { ok: true, level: sv.levels[id], left: sv.sediment, cost: c.cost };
+  }
+  // 前世的總等級（顯示用）
+  const totalLevel = (meta) => TRACKS.reduce((a, t) => a + level(meta, t.id), 0);
+
+  // 已打撈節點和前世軌道的效果合併（數字相加）。opts.tracks === false：不計前世的軌道（全城篩選只看今生）
+  function perks(meta, opts) {
+    const withTracks = !(opts && opts.tracks === false);
     const out = {};
+    const add = (k, v) => { out[k] = Math.round(((out[k] || 0) + v) * 100) / 100; };
     NODES.forEach((n) => {
       if (!owned(meta, n.id)) return;
-      Object.keys(n.fx || {}).forEach((k) => { out[k] = Math.round(((out[k] || 0) + n.fx[k]) * 100) / 100; });
+      Object.keys(n.fx || {}).forEach((k) => add(k, n.fx[k]));
+    });
+    if (withTracks) TRACKS.forEach((t) => {
+      const lv = level(meta, t.id);
+      // compound：每一級連乘（×(1 + per)），合併成「多了幾成」；其他軌道每一級相加
+      if (lv > 0) Object.keys(t.per || {}).forEach((k) => add(k, t.compound ? Math.pow(1 + t.per[k], lv) - 1 : t.per[k] * lv));
     });
     return out;
   }
@@ -85,12 +125,30 @@
     const T = D.SALVAGE_TEXT.lines;
     let v = 0;
     const add = (k, n, val) => { if (!val) return; v += val; lines.push({ k, text: T[k].replace('{n}', String(n)), v: val }); };
-    add('nights', nights, nights * 1);
-    add('passed', passed, passed * 3);
-    add('over', over, over * 1);
-    add('rounds', roundsPassed, roundsPassed * 4);
-    add('recruited', 1, recruited ? 12 : 0);
-    add('firstClear', 1, o.firstClear ? 10 : 0);
+    // 第十八期：沉積的計法在 D.SEDIMENT（每晚 2、每晚達標 3、超額每級 1、每輪 4、被選中 12、第一次通過 10）
+    const SD = Object.assign({ night: 1, passed: 3, over: 1, round: 4, recruited: 12, firstClear: 10 }, D.SEDIMENT || {});
+    add('nights', nights, nights * SD.night);
+    add('passed', passed, passed * SD.passed);
+    add('over', over, over * SD.over);
+    add('rounds', roundsPassed, roundsPassed * SD.round);
+    add('recruited', 1, recruited ? SD.recruited : 0);
+    add('firstClear', 1, o.firstClear ? SD.firstClear : 0);
+    // 第十八期：越後的季，沉下去的越多（章節的 sediment；全城篩選用 D.ECON16.freeSediment）
+    const ch = IE.Chapters && s ? IE.Chapters.of(s) : null;
+    const f = ch ? (ch.sediment || 1) : (s && s.mode === 'rounds' && D.ECON16 && D.ECON16.freeSediment) || 1;
+    if (f !== 1 && v) {
+      const bonus = Math.round(v * (f - 1));
+      v += bonus;
+      if (T.season) lines.push({ k: 'season', text: T.season.replace('{x}', String(f)), v: bonus });
+    }
+    // 第十八期：執念（o.streak＝這一生之前，同一季連續失敗了幾次）
+    const st = Math.min(o.streak || 0, SD.streakMax || 0);
+    if (st > 0 && SD.streak && v) {
+      const x = Math.round((1 + SD.streak * st) * 100) / 100;
+      const bonus = Math.round(v * (x - 1));
+      v += bonus;
+      if (T.streak) lines.push({ k: 'streak', text: T.streak.replace('{n}', String(o.streak)).replace('{x}', String(x)), v: bonus });
+    }
     const x = (s && s.salvage && s.salvage.sedimentX) || 0;
     if (x && v) {
       const bonus = Math.round(v * x);
@@ -115,5 +173,5 @@
   }
   const districts = () => (D.SALVAGE || []).map((d) => Object.assign({}, d, { nodes: NODES.filter((n) => n.district === d.id) }));
 
-  IE.Salvage = { NODES, get, owned, balance, ownedCount, ensure, canBuy, buy, perks, overTier, earn, bank, describe, districts };
+  IE.Salvage = { NODES, get, owned, balance, ownedCount, ensure, canBuy, buy, perks, overTier, earn, bank, describe, districts, TRACKS, track, level, levelCost, canLevel, levelUp, totalLevel };
 });

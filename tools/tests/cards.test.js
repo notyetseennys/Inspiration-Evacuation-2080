@@ -348,6 +348,7 @@ module.exports = (t) => {
       moveStep: 40,
       rehouse: 260,
       thaw: 0.6,
+      freeSediment: 3,
     });
   });
 };

@@ -1,7 +1,7 @@
 # 交接文件：遊戲大腦（Claude）的工作
 
-> 給接手的 Claude。最後更新：第十七期完成（浮城年表、舊城打撈、撕開，2026-11-25）。
-> 讀完這份、`docs/WORLD.md`（世界觀與語氣聖經）、`docs/workorders/README.md`、`docs/workorders/phase-15/README.md`、`phase-16/README.md` 和 `phase-17/README.md`，就可以接手。
+> 給接手的 Claude。最後更新：第十八期完成（失敗是必然，成長是爽感，2026-11-25）。
+> 讀完這份、`docs/WORLD.md`（世界觀與語氣聖經）、`docs/workorders/README.md`、`docs/workorders/phase-15/README.md`、`phase-16/README.md`、`phase-17/README.md` 和 `phase-18/README.md`，就可以接手（後一期改動前一期時，以後一期為準）。
 
 ## 1. 你的角色
 
@@ -283,6 +283,12 @@
 
 - **Gemini 沒有使用量（2026-11-25）**：製作人要求你完成 Gemini 的工作。之後的工單由你直接在整合分支實作：照工單逐節做，跑工單的全部驗收條件和 §4 第 3 步的自動檢查，寫一份實作記錄（`reviews/WO-XX-XX-r1.md`，格式和審核記錄相同，加「和工單不同的地方」），更新狀態表，推送並確認 CI。**WO-16-11 已完成**（記錄在 `reviews/WO-16-11-r1.md`）：新玩家按「開始」→ 序章之夜（三筆、一次只亮一樣東西）→ 引導局（第一季，逐晚打開）；`tools/first-five.js` 在 CI 量度頭五分鐘。**後段的引擎、WO-16-05、WO-16-07 也已完成**（2026-11-25）：篩選提高火花上限、名作升星；逐晚的目標表 `ECON.curve`（`t1` 24,000）、`payGrowth` 0.45、各季的目標倍率 0.35／0.42／0.46／0.88／0.95；寒潮季（系統開關 `cold`），第五季「急凍」開放。記錄在 `phase-16/CALIBRATION.md`、`reviews/WO-16-07-r1.md`；模擬器有 `TRACE=1`（逐晚的診斷）和 `CHTARGET`（臨時覆寫各季倍率）。**WO-16-08 也已完成**（白天面板頂部的浮城夜景，記錄在 `reviews/WO-16-08-r1.md`）。第十六期甲段、乙段的工單全部完成；下一步是丙段（判斷力）的原型：鑑定素材（第六季）、賣作品要議價（第七季）。
 
+- **第十八期：失敗是必然，成長是爽感（2026-11-25）**：製作人說方向錯了：「太過在意令玩家過關」；要像《Booster Pack Heroes》一樣「玩家必定會輸，然後透過不斷變強的成長曲線，令之前過不到的難關變得過得到」。由你直接實作；總規格 `docs/workorders/phase-18/README.md` 是唯一來源。
+  - 規則：每一季最後一晚是牆（`wall`，不達標這一生就結束）；季內逐晚加難（`steep`）；五條前世的軌道（`D.PAST_TRACKS`、`meta.salvage.levels`；手稿、掌聲每級 ×1.15 連乘，價錢 `10 × 1.12^L`）；沉積 `D.SEDIMENT`、季的倍數 ×1／2／3.5／6／12、執念（同一季連續失敗，每次 +25%，最多 ×2）；進度記在 `meta.chapters.last／best／fails`。全城篩選沒有牆、不帶前世。
+  - 計分修正（只影響五輪模式）：同一件物件的 ×倍率一筆最多兩次（`D.DESK.xCap`）；護士的告解室鑰匙 ×1.5（`DESK_REMAP`）。原因：校準時有一局是目標的 193 倍。
+  - 校準工具 `tools/sim-meta.js`（連續多生）；數值改動之後一定要用它檢查「第一次挑戰的失敗率」「要幾生」「相鄰兩生的增長」三樣（總規格 §9）。`tools/sim-rounds.js` 只量度一生，不能單獨用來校準季節。
+  - 待製作人決定（總規格 §12）：長度（約第 21 生通過五季）、要不要做成絕對的「第一次必定失敗」、角色的平衡、全城篩選要不要帶前世、很大的數字。
+
 ## 6.1 審核 WO-15-11、13（故事線）時要特別留意
 
 - `data-story.js`、`data-cities.js`、`story-data.test.js`、`spec.test.js` 沒有被改（Gemini 只可以讀）。
@@ -358,7 +364,9 @@
 | `proto/night5/` | 原型第五版「創作桌」（真的畫和歌、平衡牌組、圖鑑；說明和分步路線在 `README.md`） |
 | `tools/art-night-web.py` | 原圖 → 網頁版素材（WebP）和 `night-art.json` |
 | `tools/music-night-web.py` | 小節資料庫 → 網頁版分軌（每首 24 小節的 MP3）和 `night-music.json` |
-| `docs/workorders/phase-16/README.md`、`phase-17/README.md` | 第十六期、第十七期總規格 |
+| `docs/workorders/phase-16/README.md`、`phase-17/README.md`、`phase-18/README.md` | 第十六期、第十七期、第十八期總規格 |
+| `tools/sim-meta.js` | 第十八期：連續多生的模擬（每個生涯由第一季玩到第五季，升級前世）；`STRAT`、`CHTARGET`、`STEEP`、`WALL`、`SEDX`、`PASTCOST`、`STOPAT` |
+| `tools/tests/past.test.js` | 第十八期的單元測試（牆、前世、沉積、執念、進度、×倍率上限） |
 | `docs/research/booster-pack-heroes.md` | 《Booster Pack Heroes》研究和建議（第十七期的依據） |
 | `game/js/data-chapters.js` | 第十七期的資料和文字（你撰寫）：`D.CHAPTERS`、`CHAPTER_TEXT`、`SALVAGE`、`SALVAGE_COST`、`SALVAGE_TEXT`、`PACK16`、`ACH17` |
 | `game/js/chapters.js`、`game/js/salvage.js` | `IE.Chapters`（季、系統開關、開放和紀錄）、`IE.Salvage`（沉積、節點、效果合併） |

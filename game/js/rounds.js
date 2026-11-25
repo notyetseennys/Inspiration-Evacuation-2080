@@ -91,7 +91,11 @@
       ? E.curve[R.clamp(k - 1, 0, E.curve.length - 1)]
       : Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
     const ch = IE.Chapters ? IE.Chapters.of(s) : null;
-    return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1));
+    // 第十八期：每一季最後一晚的外星評審是一道牆（章節的 wall；全城篩選用 ECON.wall）
+    const wall = k === nightsTotal(s) ? ((ch && ch.wall) || D.ECON.wall || 1) : 1;
+    // 第十八期：季內的難度逐晚追上自己的力量（章節的 steep；全城篩選用 ECON.steep）
+    const steep = Math.pow((ch && ch.steep) || D.ECON.steep || 1, Math.max(0, k - 1));
+    return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1) * wall * steep);
   }
 
   // 第 r 輪結束時的租金
@@ -591,7 +595,8 @@
     const base = D.ECON.nightPay[k] || 0;
     const r = roundOf(s);
     const pl = Math.max(0, playsLeft || 0);
-    return Math.round(base * (1 + D.ECON.payGrowth * (r - 1))) + D.ECON.earlyBonus * pl;
+    // 第十八期：前世的積蓄（payX）令夜晚的獎金多一點
+    return Math.round(base * (1 + D.ECON.payGrowth * (r - 1)) * (1 + sv(s, 'payX'))) + D.ECON.earlyBonus * pl;
   }
 
   // 這一晚是否已達標
@@ -1304,8 +1309,16 @@
     return ['cr', 'spark', 'soul'].filter((k) => rep.deltas[k] && !h[k]);
   }
 
+  // 第十八期：今晚是不是這一季最後的外星評審（牆）。只有浮城年表的季節有牆；全城篩選要 D.ECON.wall 才有
+  function isWall(s) {
+    if (!(s && on(s) && !s.prologue && (s.night || 0) >= nightsTotal(s))) return false;
+    const ch = IE.Chapters ? IE.Chapters.of(s) : null;
+    return !!(ch ? ch.wall : D.ECON.wall);
+  }
+
   IE.Rounds = {
     on,
+    isWall,
     prologueRun,
     prologueStart,
     prologueStep,

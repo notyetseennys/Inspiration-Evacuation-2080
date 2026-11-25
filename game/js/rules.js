@@ -425,7 +425,9 @@
   function applyStartSalvage(s) {
     const sv = s.salvage;
     if (sv.startCash) s.cr += sv.startCash;
-    if (sv.startSpark) s.spark = round1(Math.min(SPARK_MAX, s.spark + sv.startSpark));
+    // 第十八期：前世的星光也提高火花上限
+    if (sv.sparkCap) s.sparkCapBonus = Math.round(((s.sparkCapBonus || 0) + sv.sparkCap) * 100) / 100;
+    if (sv.startSpark) s.spark = round1(Math.min(SPARK_MAX + (s.sparkCapBonus || 0), s.spark + sv.startSpark));
     if (sv.startSoul) s.soul = Math.max(0, round1(s.soul + sv.startSoul));
     if (sv.fullLevel) { s.forms = s.forms || {}; s.forms.full = (s.forms.full || 1) + sv.fullLevel; }
     for (let i = 0; i < (sv.startCards || 0); i++) {

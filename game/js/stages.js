@@ -185,7 +185,18 @@
       } else {
         s.stats.stages.fail++;
         R.addSpark(s, D.ECON.failSpark, true); out.lines.push('火花 ' + D.ECON.failSpark);
-        IE.Rounds.loseChance(s, 'night', { line: (t) => out.lines.push(t) });
+        if (IE.Rounds.isWall && IE.Rounds.isWall(s)) {
+          // 第十八期：牆：最後的外星評審不達標，這一生就結束（不論還有幾次機會）
+          out.wall = true;
+          if (D.WALL_TEXT) out.lines.push(D.WALL_TEXT.fail);
+          s.lost = s.lost || [];
+          s.lost.push('wall');
+          s.chances = 0;
+          s.ended = R.endingFor(s, 'archived');
+          s.phase = 'ended';
+        } else {
+          IE.Rounds.loseChance(s, 'night', { line: (t) => out.lines.push(t) });
+        }
       }
       s.nightLog = s.nightLog || [];
       s.nightLog.push({ night: s.night, kind: stage.kind, target: stage.target, score, pass, reward, playsLeft: pl });

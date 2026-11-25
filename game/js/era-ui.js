@@ -19,6 +19,10 @@
       const stTxt = st === 'cleared' ? T.cleared + (c.clears > 1 ? ' ×' + c.clears : '') : st === 'locked' ? '🔒' : st === 'building' ? '🚧' : (c.tries ? T.current : '');
       const why = st === 'locked' ? T.locked : st === 'building' ? T.building : '';
       const can = st === 'open' || st === 'cleared';
+      // 第十八期：未通過而試過的季，顯示最遠紀錄
+      const W = D().WALL_TEXT || {};
+      const bst = st === 'open' && c.tries && IE.Chapters.best ? IE.Chapters.best(meta, c.id) : null;
+      const bestTxt = bst ? (bst.wall && W.bestWall ? W.bestWall.replace('{p}', Math.round(bst.ratio * 100)) : W.best.replace('{n}', bst.nights).replace('{total}', bst.total)) : '';
       return '<button type="button" class="era-ch st-' + st + (sel === c.id ? ' sel' : '') + '" data-do="chapter" data-id="' + c.id + '"' + (can ? '' : ' disabled') + ' style="--sky:url(\'' + esc(art(c.sky)) + '\')">'
         + '<span class="era-sky" aria-hidden="true"></span>'
         + '<span class="era-txt">'
@@ -28,6 +32,7 @@
         + '<span class="era-intro">' + esc(c.intro) + '</span>'
         + '<span class="era-adds">' + esc(T.adds.replace('{x}', c.adds)) + '</span>'
         + (why ? '<span class="era-why">' + esc(why) + '</span>' : '<span class="era-len num">' + esc(T.length.replace('{r}', c.rounds).replace('{n}', c.rounds * 3)) + '</span>')
+        + (bestTxt ? '<span class="era-best">' + esc(bestTxt) + '</span>' : '')
         + '</span>'
         + (stTxt ? '<span class="era-st">' + esc(stTxt) + '</span>' : '')
         + '</button>';
@@ -52,6 +57,39 @@
     const sub = c ? T.length.replace('{r}', c.rounds).replace('{n}', c.rounds * 3) + '・' + c.species : '完整的一年';
     return '<div class="su-opt su-era"><span class="lbl">' + esc(T.head) + '</span>'
       + '<button type="button" class="era-pick" data-do="era" style="--sky:url(\'' + esc(art(c ? c.sky : 'np-sky-anger-2')) + '\')"><b>' + esc(txt) + '</b><small>' + esc(sub) + '</small><span class="era-pick-go">換一季 ›</span></button></div>';
+  }
+
+  // ---------- 第十八期：前世的軌道（可以一直升級） ----------
+  // 每一條軌道現在的效果（顯示用）
+  const TRACK_NOW = {
+    chips: (t, lv) => '×' + Math.pow(1 + t.per.chipsX, lv).toFixed(2),
+    mult: (t, lv) => '×' + Math.pow(1 + t.per.multX, lv).toFixed(2),
+    spark: (t, lv) => '+' + (t.per.startSpark * lv).toFixed(1),
+    soul: (t, lv) => '+' + (t.per.soulLimit * lv).toFixed(1) + ' 克',
+    purse: (t, lv) => '+' + Math.round(t.per.payX * lv * 100) + '%',
+  };
+  function pastSection(meta) {
+    const SV = IE.Salvage, W = D().WALL_TEXT || {};
+    if (!SV.TRACKS || !SV.TRACKS.length) return '';
+    const p = SV.perks(meta);
+    const power = Math.round((1 + (p.chipsX || 0)) * (1 + (p.multX || 0)) * 100) / 100;
+    const rows = SV.TRACKS.map((t) => {
+      const lv = SV.level(meta, t.id);
+      const c = SV.canLevel(meta, t.id);
+      const full = lv >= t.max;
+      const now = lv && TRACK_NOW[t.id] ? TRACK_NOW[t.id](t, lv) : '—';
+      return '<li class="past-t' + (lv ? ' has' : '') + '">'
+        + '<span class="past-nm"><b>' + esc(t.name) + '</b><span class="past-lv num">' + esc(W.level.replace('{n}', lv)) + '</span></span>'
+        + '<span class="past-tx">' + esc(SV.describe(t)) + '</span>'
+        + '<span class="past-now num">' + esc(now) + '</span>'
+        + (full ? '<span class="past-full">' + esc(W.levelMax) + '</span>'
+          : '<button type="button" class="btn past-up' + (c.ok ? ' primary' : '') + '" data-do="pastUp" data-id="' + t.id + '"' + (c.ok ? '' : ' disabled') + '>' + esc(W.up) + '<span class="num">' + fmt(SV.levelCost(lv)) + '</span></button>')
+        + '</li>';
+    }).join('');
+    return '<section class="past"><h3>' + esc(W.pastHead) + '<small>' + esc(W.pastSub) + '</small><span class="past-pow num">' + esc(W.pastPower.replace('{x}', power.toFixed(2))) + '</span></h3>'
+      + '<ol class="past-list">' + rows + '</ol>'
+      + (W.pastFree ? '<p class="past-note">' + esc(W.pastFree) + '</p>' : '')
+      + '</section>';
   }
 
   // ---------- 舊城打撈 ----------
@@ -90,6 +128,7 @@
       + '<div class="salv-bg" aria-hidden="true" style="--bg1:url(\'' + esc(art('np-far-drowned')) + '\');--bg2:url(\'' + esc(art('np-sky-water-2')) + '\')"></div>'
       + '<div class="salv-head"><div><span class="eyebrow">' + esc(T.head) + '</span><h2>' + esc(T.head) + '</h2><p class="salv-sub">' + esc(T.sub) + '</p></div>'
       + '<div class="salv-bal"><small>' + esc(T.unit) + '</small><b class="num">' + fmt(bal) + '</b><small>' + SV.ownedCount(meta) + ' / ' + SV.NODES.length + '</small></div></div>'
+      + pastSection(meta)
       + '<div class="salv-grid">' + dists + '</div>'
       + '<div class="salv-detail" aria-live="polite">' + detail + '</div>'
       + '<div class="btn-row"><button class="btn" type="button" data-do="close">' + esc(D().CHAPTER_TEXT.back) + '</button></div>'
@@ -104,10 +143,24 @@
     if (chRes && chRes.firstClear && chRes.cleared) chHtml += '<p class="earn-ch">' + esc(CT.clearedNow.replace('{x}', chRes.cleared.name)) + ' ' + esc(chRes.cleared.clear || '') + '</p>';
     if (chRes && chRes.next) chHtml += '<p class="earn-unlock">' + esc(CT.unlocked.replace('{x}', '第 ' + chRes.next.no + ' 季・' + chRes.next.name)) + '</p>';
     if (chRes && chRes.free) chHtml += '<p class="earn-unlock">' + esc(CT.unlocked.replace('{x}', CT.free)) + '</p>';
+    // 第十八期：這一生走到哪裏，和上一生比較
+    const W = D().WALL_TEXT || {};
+    const pr = chRes && chRes.prog;
+    let progHtml = '';
+    if (pr && pr.now && W.lifeNow) {
+      // 「外星評審 81%」：字和數字分開排（數字用等寬的數字字體）
+      const pct = (x) => { const [a, b] = W.wallPct.split('{p}'); return '<span class="v"><small>' + esc(a) + '</small><b class="num">' + Math.round(x.ratio * 100) + esc(b || '') + '</b></span>'; };
+      const row = (txt, x, cls) => '<li' + (cls ? ' class="' + cls + '"' : '') + '><span>' + esc(txt.replace('{n}', x.nights).replace('{total}', x.total)) + '</span>'
+        + (x.wall ? pct(x) : '') + '</li>';
+      progHtml = '<ul class="lines earn-prog">' + row(W.lifeNow, pr.now, '') + (pr.prev ? row(W.lifePrev, pr.prev, 'mute') : '')
+        + (pr.newBest ? '<li class="earn-best"><span>' + esc(W.newBest) + '</span></li>' : '') + '</ul>';
+      if (!chRes.firstClear) progHtml += '<p class="earn-grow">' + esc(W.pastSub) + '</p>';
+    }
     return '<div class="modal salv-earn">'
       + '<div class="salv-bg" aria-hidden="true" style="--bg1:url(\'' + esc(art('np-far-drowned')) + '\');--bg2:url(\'' + esc(art('np-sky-water-1')) + '\')"></div>'
       + '<span class="eyebrow">' + esc(T.earnHead) + '</span>'
       + '<h2 class="earn-total">' + esc(T.earnTotal.replace('{n}', res.total)) + '</h2>'
+      + progHtml
       + '<ul class="lines earn-lines">' + lines + '</ul>'
       + chHtml
       + '<p class="mute">' + esc(T.balance.replace('{n}', fmt(IE.Salvage.balance(meta)))) + '</p>'

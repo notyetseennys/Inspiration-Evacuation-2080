@@ -182,6 +182,34 @@
 .earn-ch { color: var(--spark); line-height: 1.6; }
 .earn-unlock { color: var(--alien); font-weight: 700; }
 
+/* ---------- 第十八期：前世、這一生的進度、牆 ---------- */
+.past { margin: 4px 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(6, 14, 26, 0.78); border: 1px solid rgba(255, 194, 71, 0.35); }
+.past h3 { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; margin: 0 0 8px; font-size: 16px; }
+.past h3 small { grid-column: 1; color: var(--mute); font-weight: 400; font-size: 12px; }
+.past-pow { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--spark); font-size: 20px; text-shadow: 0 0 12px rgba(255, 194, 71, 0.5); }
+.past-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.past-t { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); }
+.past-t.has { background: rgba(255, 194, 71, 0.07); }
+.past-nm { grid-column: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.past-nm b { font-size: 14px; }
+.past-lv { color: var(--spark); font-size: 15px; }
+.past-tx { grid-column: 1; grid-row: 2; color: #b9c9dc; font-size: 12px; line-height: 1.4; min-width: 0; }
+.past-now { grid-column: 2; grid-row: 1 / span 2; color: var(--sea); font-size: 18px; }
+.past-up, .past-full { grid-column: 3; grid-row: 1 / span 2; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.past-full { color: var(--spark); font-weight: 700; padding: 0 8px; }
+.past-note { margin: 8px 0 0; color: var(--mute); font-size: 12px; line-height: 1.5; }
+.earn-prog { text-align: left; max-width: 340px; margin: 0 auto 10px; }
+.earn-prog li { display: flex; justify-content: space-between; gap: 10px; }
+.earn-prog .v { display: inline-flex; align-items: baseline; gap: 6px; }
+.earn-prog .v small { color: var(--mute); font-size: 12px; }
+.earn-prog .v b { color: var(--sea); font-size: 18px; }
+.earn-prog .earn-best { color: var(--spark); font-weight: 700; justify-content: center; }
+.earn-grow { color: #dbe3f2; margin: 0 0 10px; }
+.era-best { color: var(--spark); font-size: 12.5px; }
+.ct-goal.wall .lbl { color: #ff8a96; font-weight: 700; }
+.ct-goal.wall { box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.55); }
+.rd-wall { padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255, 77, 94, 0.6); background: rgba(255, 77, 94, 0.12); color: #ffd0d5; font-weight: 700; line-height: 1.5; }
+
 /* ---------- 白天的舊城情報 ---------- */
 .era-intels { display: grid; gap: 6px; margin: 6px 0 2px; }
 .era-intel { padding: 6px 10px; border-left: 3px solid var(--sea); border-radius: 4px; background: rgba(55, 195, 214, 0.08); font-size: 13px; line-height: 1.5; }
@@ -207,6 +235,9 @@
   .salv-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .salv-bal b { font-size: 32px; }
   .salv-nm { font-size: 12.5px; }
+  .past-t { grid-template-columns: minmax(0, 1fr) auto; }
+  .past-now { grid-column: 2; grid-row: 1; font-size: 16px; }
+  .past-up, .past-full { grid-column: 2; grid-row: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .salv-n.is-next .salv-lamp { animation: none; }

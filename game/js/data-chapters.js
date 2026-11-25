@@ -17,28 +17,28 @@
   // target：這一季的目標倍數（第一輪校準：第一季最易）。
   const CHAPTERS = [
     {
-      target: 0.35, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      target: 1.2, steep: 1.15, wall: 7, sediment: 1, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
       rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
       intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
       adds: '創作桌、人生的選擇、朋友、差事',
       clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
     },
     {
-      target: 0.42, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      target: 38, steep: 1.15, wall: 2.4, sediment: 2, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
       rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
       intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
       adds: '水位：水淹到家，由受傷到失去住所；天氣',
       clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
     },
     {
-      target: 0.46, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      target: 450, steep: 1.15, wall: 2, sediment: 3.5, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
       rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
       intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
       adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
       clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
     },
     {
-      target: 0.88, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      target: 5000, steep: 1.12, wall: 2.4, sediment: 6, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
       intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
       adds: '外星評審的規則；出國',
@@ -46,7 +46,7 @@
     },
     {
       // WO-16-07 之後開放（2026-11-25）
-      target: 0.95, id: 'c5', collector: 'purge', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
+      target: 70000, steep: 1.12, wall: 2.4, sediment: 12, id: 'c5', collector: 'purge', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip', 'cold'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-water-1',
       intro: '洋流停了。水面結冰，水位暫時不升；融冰的那天，水會一次過上來。',
       adds: '寒潮季：結冰、不能潛水、融冰',
@@ -178,6 +178,8 @@
       recruited: '被選中',
       firstClear: '第一次通過這一季',
       gaze: '升維者的目光',
+      season: '這一季的沉積 ×{x}',
+      streak: '執念：這一季已經失敗 {n} 次，沉積 ×{x}',
     },
     empty: '舊城還是一片漆黑。玩完一局，作品就會沉到這裏。',
     go: '去舊城打撈',
@@ -241,11 +243,47 @@
     { id: 'c4', name: '玻璃櫃', desc: '通過「觀光季」' },
   ];
 
+  // 第十八期（2026-11-25，製作人：「失敗係 100%，然後不斷透過失敗去成長」）：
+  // 前世的軌道：舊城打撈裏可以一直升級的力量。每一級的效果相加；價錢按等級上升（PAST_COST）。
+  // per 的鍵和舊城的節點相同，合併到 s.salvage：chipsX／multX 是每一筆的籌碼和倍率加成，payX 是夜晚獎金加成，sparkCap 是火花上限。
+  const PAST_TRACKS = [
+    { id: 'chips', name: '前世的手稿', text: '每一級：每一筆的籌碼 ×1.15（連乘）', per: { chipsX: 0.15 }, compound: true, max: 60 },
+    { id: 'mult', name: '前世的掌聲', text: '每一級：每一筆的倍率 ×1.15（連乘）', per: { multX: 0.15 }, compound: true, max: 60 },
+    { id: 'spark', name: '前世的星光', text: '開局火花 +0.1、火花上限 +0.1', per: { startSpark: 0.1, sparkCap: 0.1 }, max: 10 },
+    { id: 'soul', name: '前世的藥方', text: '靈魂上限 +0.5 克', per: { soulLimit: 0.5 }, max: 8 },
+    { id: 'purse', name: '前世的積蓄', text: '夜晚的獎金 +10%、開局多 {cash:4}', per: { payX: 0.1, startCash: 4 }, max: 12 },
+  ];
+  // 第 L 級升到 L + 1 的價錢：base × growth^L（四捨五入）
+  const PAST_COST = { base: 10, growth: 1.12 };
+  // 一生沉下去的沉積：每晚、每晚達標、超額每一級、每通過一輪、被選中、第一次通過這一季
+  const SEDIMENT = { night: 4, passed: 6, over: 2, round: 8, recruited: 24, firstClear: 20,
+    // 執念：同一季之前每連續失敗一次，這一生的沉積多 streak（最多算 streakMax 次）；通過這一季就重新計算
+    streak: 0.25, streakMax: 4 };
+  // 牆：每一季最後一晚的外星評審。不達標，這一生就結束（不論還有幾次機會）
+  const WALL_TEXT = {
+    ahead: '今晚是這一季最後的外星評審。不達標，這一生到此為止。',
+    goal: '最後的外星評審',
+    fail: '最後的外星評審沒有選中你。這一生到此為止；你的作品會沉到舊城。',
+    best: '最遠：第 {n}／{total} 晚',
+    bestWall: '最遠：外星評審的 {p}%',
+    lifeNow: '這一生：第 {n}／{total} 晚',
+    lifePrev: '上一生：第 {n}／{total} 晚',
+    wallPct: '外星評審 {p}%',
+    newBest: '新的最遠紀錄',
+    pastHead: '前世',
+    pastSub: '每一次失敗，都令下一生更強。',
+    pastPower: '每一筆 ×{x}',
+    pastFree: '前世的力量只帶進浮城年表的季節；全城篩選只看今生。',
+    level: 'Lv.{n}',
+    levelMax: '已滿',
+    up: '升級',
+  };
+
   // 第十七期（後段的引擎）的文字
   const ENGINE_TEXT = {
     sparkCapUp: '外星人調高了你的訊號上限：火花上限 +{v}（現在 ×{max}）。',
     masterwork: '名作：這幅作品的 {n} 張素材記得更深，各升一星。',
   };
 
-  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17, ENGINE_TEXT });
+  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17, ENGINE_TEXT, PAST_TRACKS, PAST_COST, WALL_TEXT, SEDIMENT });
 });

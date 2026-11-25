@@ -269,6 +269,18 @@
       const noWear = schools.some((x) => x.def.noWear);
       const apply = (e) => { if (e.chips) chips += e.chips; if (e.mult) mult += e.mult; if (e.xmult) mult *= e.xmult; };
       const snap = (o) => Object.assign(o, { C: Math.round(chips), M: r1(mult) });
+      // 第十八期：同一件物件（同一個流派、同一種卡面效果）的「×倍率」，一筆之中最多生效 D.DESK.xCap 次；
+      // 超過的那幾次只計加法的部分（否則每張素材都 ×2 會令一筆的分數按張數連乘）
+      const XCAP = (D.DESK && D.DESK.xCap) || 0;
+      const xUsed = {};
+      const capX = (key, e) => {
+        if (!XCAP || !e || !e.xmult || e.xmult <= 1) return e;
+        xUsed[key] = (xUsed[key] || 0) + 1;
+        if (xUsed[key] <= XCAP) return e;
+        const rest = Object.assign({}, e);
+        delete rest.xmult;
+        return rest.chips || rest.mult ? rest : null;
+      };
       let echoNext = 0;
       const blockedUids = new Set();
       IE.Desk.structSteps(A).forEach((st) => {
@@ -289,16 +301,16 @@
             const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
             chips += v;
             steps.push(snap({ t: 'card', uid: c.uid, idx: st.idx, role: st.role, chips: v, again: r > 0, echo: r > 0 && r <= echoed }));
-            const mf = MOD_FX[c.mod];
+            const mf = capX('mod:' + c.mod, MOD_FX[c.mod]);
             if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
             objs.forEach((o) => {
               if (!o.def.card) return;
-              const e = o.def.card(c, ctx);
+              const e = capX('obj:' + o.id + ':' + o.slot, o.def.card(c, ctx));
               if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid }, e))); }
             });
             schools.forEach((x) => {
               if (!x.def.card) return;
-              const e = x.def.card(c, ctx, x.n);
+              const e = capX('school:' + x.id, x.def.card(c, ctx, x.n));
               if (e) { apply(e); steps.push(snap(Object.assign({ t: 'school', school: x.id, uid: c.uid }, e))); }
             });
           }
@@ -314,7 +326,7 @@
       });
       held.forEach((c) => objs.forEach((o) => {
         if (!o.def.held) return;
-        const e = o.def.held(c, ctx);
+        const e = capX('held:' + o.id + ':' + o.slot, o.def.held(c, ctx));
         if (e) { apply(e); steps.push(snap(Object.assign({ t: 'obj', id: o.id, slot: o.slot, uid: c.uid, held: true }, e))); }
       }));
       const sorted = topRecipes(recs);
@@ -343,6 +355,9 @@
       const wt = RL.weatherTag ? RL.weatherTag(s, sel) : null, wx = wt ? wt.x : 1;
       const sm = SR ? SR.mult(A.id, ctx.kpiMod, sel) : 1;
       const sp = s.spark * (SR ? SR.sparkMult : 1);
+      // 第十八期：前世的手稿（chipsX）和掌聲（multX）
+      const pastX = Math.round((1 + ((s.salvage && s.salvage.chipsX) || 0)) * (1 + ((s.salvage && s.salvage.multX) || 0)) * 100) / 100;
+      if (pastX !== 1) steps.push({ t: 'past', x: pastX });
       if (ai !== 1) steps.push({ t: 'ai', x: ai });
       if (sm !== 1) steps.push({ t: 'stage', x: sm, name: SR.names.join('・') });
       if (wm !== 1) steps.push({ t: 'world', x: wm });
@@ -350,7 +365,7 @@
       if (wt) steps.push({ t: 'weather', x: wx, name: wt.name });
       if (ctx.kpiMod !== 1) steps.push({ t: 'kpi', x: ctx.kpiMod });
       steps.push({ t: 'spark', x: sp });
-      const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx);
+      const raw = Math.round(chips * mult * sp * ai * wm * tm * sm * wx * pastX);
       const total = Math.round(raw * ctx.kpiMod);
       const relief = r1(A.run.reduce((a, c) => a + (c.grams || 0), 0));
       const keys = Object.keys(counts).filter((t) => wpos(t) >= 0);
