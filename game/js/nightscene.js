@@ -1058,15 +1058,19 @@
   // 白天面板掛載（WO-16-08）：0.6 秒淡入換景，失敗時給 .rd-vista 加 is-off
   function mount(canvas, opts) {
     const o = opts || {};
-    const wrap = canvas && canvas.closest ? canvas.closest('.rd-vista') : null;
+    // WO-16-08：白天面板每次重畫都會換一個 .rd-vista，畫布被搬過去；所以外框每次即時找
+    const wrapOf = () => (canvas && canvas.closest ? canvas.closest('.rd-vista') : null);
+    let failed = false;
     const markOff = () => {
+      failed = true;
+      const wrap = wrapOf();
       if (wrap && wrap.classList) wrap.classList.add('is-off');
       if (o.onFallback) o.onFallback();
     };
     const M = artManifest();
     if (!canvas || !M) {
       markOff();
-      return { set() {}, stop() {} };
+      return { set() {}, stop() {}, failed: () => true };
     }
     canvas.width = W;
     canvas.height = H;
@@ -1122,6 +1126,7 @@
     listeners.add(onLoad);
 
     function set(p) {
+      if (failed) { markOff(); return; }
       if (stopped) return;
       if (!p || !artManifest()) {
         markOff();
@@ -1170,6 +1175,7 @@
         .filter(Boolean);
       Promise.all(req.map((nm) => asset(nm).p)).then((list) => {
         if (stopped) return;
+        const wrap = wrapOf();
         if (list.some((x) => !x || x.err || !x.ok)) {
           stopped = true;
           markOff();
@@ -1187,7 +1193,7 @@
       raf = 0;
     }
 
-    return { set, stop };
+    return { set, stop, failed: () => failed };
   }
 
   // 創作桌畫布（WO-16-10）：回傳 { stroke(n, info), finish(), snapshot(), ... }

@@ -249,6 +249,26 @@
     render();
     window.scrollTo({ top: 0 });
   }
+  // WO-16-08：白天面板頂部的浮城夜景。畫布只建立一次：每次重畫面板，把同一個畫布搬進新的 .rd-vista，再 set(plan(s))
+  let vistaCanvas = null, vistaCtl = null;
+  function attachVista(s) {
+    const host = document.querySelector('.rd-day .rd-vista');
+    if (!host) return;
+    if (!IE.NightScene || !D.ART || !D.ART.a) { host.classList.add('is-off'); return; }
+    if (!vistaCanvas) {
+      vistaCanvas = document.createElement('canvas');
+      vistaCanvas.width = 960;
+      vistaCanvas.height = 600;
+      vistaCanvas.setAttribute('aria-hidden', 'true');
+    }
+    host.appendChild(vistaCanvas);
+    if (!vistaCtl) vistaCtl = IE.NightScene.mount(vistaCanvas);
+    if (vistaCtl.failed && vistaCtl.failed()) { host.classList.add('is-off'); return; }
+    const p = IE.NightScene.plan(s);
+    if (!p) { host.classList.add('is-off'); return; }
+    vistaCtl.set(p);
+  }
+
   // WO-16-11：序章之夜。用完即棄的局面 p：Game.state 保持 null，p 不存檔
   function openPrologue(after) {
     A.init();
@@ -1043,6 +1063,7 @@
         UI.modal(UI.memoryModal(s), { close: UI.closeModal }, { dismiss: () => {} });
       },
     });
+    attachVista(s);
     ticketToasts();
     save();
     if (needsPutDown(s)) {

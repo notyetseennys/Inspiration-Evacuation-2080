@@ -1732,6 +1732,59 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('最後一次機會耗盡 → 進入人才檔案結局畫面（.dossier）與局摘要（' + runSum + '）');
 
+    // WO-16-08：白天面板頂部的浮城夜景
+    {
+      const vp = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const vErrors = [];
+      vp.on('pageerror', (e) => vErrors.push(e.message));
+      vp.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) vErrors.push(m.text()); });
+      await vp.goto(URL);
+      await vp.evaluate((seed) => {
+        localStorage.clear();
+        localStorage.setItem('ie2080.seed', String(seed));
+        localStorage.setItem('ie2080.speed', '4');
+        localStorage.setItem('ie2080.noEncounter', '1');
+        localStorage.setItem('ie2080.noPrologue', '1');
+        localStorage.setItem('ie2080.chapter', 'free');
+      }, SEED);
+      await vp.reload();
+      await vp.waitForSelector('.title-menu [data-do="new"]');
+      await vp.click('.title-menu [data-do="new"]');
+      await vp.waitForSelector('[data-do="start"]');
+      await vp.click('[data-do="start"]');
+      for (let i = 0; i < 12; i++) {
+        if (await vp.$('.rd-day .rd-card')) break;
+        const b = await vp.$('#modal .pk:not(.is-open) .pk-seal, #modal [data-do="ok"], #modal [data-do="storypick"]:not([disabled]), #modal .d-opt:not([disabled])');
+        if (b) await b.click();
+        await vp.waitForTimeout(300);
+      }
+      await vp.waitForSelector('.rd-day .rd-vista canvas');
+      const v1 = await vp.evaluate(() => {
+        const host = document.querySelector('.rd-day .rd-vista');
+        const cv = host.querySelector('canvas');
+        cv.__vistaMark = 'same';
+        return { stage: host.dataset.stage, want: window.__IE.Flood.stage(window.__IE.Game.state), off: host.classList.contains('is-off') };
+      });
+      if (v1.stage !== v1.want) await fail('WO-16-08：.rd-vista 的 data-stage（' + v1.stage + '）和 IE.Flood.stage（' + v1.want + '）不同');
+      ok('WO-16-08：白天面板有 .rd-vista canvas，data-stage 等於 IE.Flood.stage（' + v1.stage + '）');
+      await vp.click('.rd-day [data-do="reroll"]');
+      await vp.waitForTimeout(600);
+      const same = await vp.evaluate(() => { const cv = document.querySelector('.rd-day .rd-vista canvas'); return !!(cv && cv.__vistaMark === 'same'); });
+      if (!same) await fail('WO-16-08：白天面板重新渲染之後，夜景的畫布換了一個元素');
+      ok('WO-16-08：白天面板重新渲染之後，畫布仍然是同一個元素');
+      const sw = await vp.evaluate(() => document.documentElement.scrollWidth);
+      if (sw > 390) await fail('WO-16-08：手機 390px 有橫向捲動（' + sw + '）');
+      ok('WO-16-08：手機 390px 沒有橫向捲動');
+      await vp.evaluate(() => { window.__IE.DATA.ART = null; });
+      await vp.click('.rd-day [data-do="reroll"]');
+      await vp.waitForTimeout(600);
+      const off = await vp.evaluate(() => { const h = document.querySelector('.rd-day .rd-vista'); return !!(h && h.classList.contains('is-off') && getComputedStyle(h).display === 'none'); });
+      if (!off) await fail('WO-16-08：IE.DATA.ART = null 之後 .rd-vista 沒有 is-off');
+      if (vErrors.length) await fail('WO-16-08：夜景有 JS 錯誤：\n' + vErrors.join('\n'));
+      ok('WO-16-08：IE.DATA.ART = null 時 .rd-vista 加上 is-off，沒有 JS 錯誤（nightscene.js 沒有 getImageData 見最後一項）');
+      await vp.close();
+    }
+
     // WO-16-07：寒潮季：把季節設為寒潮、重新載入，場景沒有 JS 錯誤；推進一晚之後水位沒有上升
     {
       const cp = await browser.newPage({ viewport: { width: 1280, height: 800 } });

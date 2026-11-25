@@ -1866,3 +1866,26 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   background: rgba(150, 200, 235, 0.14);
   color: #dff3ff;
 }
+
+/* WO-16-08：白天面板頂部的浮城夜景（8:3，看見地平線、水面和碼頭） */
+.rd-day .rd-vista {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 8 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(140, 166, 214, 0.28);
+  background: #0b0e19;
+  margin-bottom: 10px;
+}
+.rd-day .rd-vista canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 72%;
+}
+.rd-day .rd-vista.is-off {
+  display: none;
+}

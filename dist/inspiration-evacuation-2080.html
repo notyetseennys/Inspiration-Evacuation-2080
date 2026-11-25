@@ -6169,6 +6169,29 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   color: #dff3ff;
 }
 
+/* WO-16-08：白天面板頂部的浮城夜景（8:3，看見地平線、水面和碼頭） */
+.rd-day .rd-vista {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 8 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(140, 166, 214, 0.28);
+  background: #0b0e19;
+  margin-bottom: 10px;
+}
+.rd-day .rd-vista canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 72%;
+}
+.rd-day .rd-vista.is-off {
+  display: none;
+}
+
 /* 五輪模式創作桌（WO-16-10）：每一筆畫在同一幅夜景上，手機 390×844 與桌面 1280×800 均在一屏之內 */
 
 #ctable.dk-mode {
@@ -35004,15 +35027,19 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 白天面板掛載（WO-16-08）：0.6 秒淡入換景，失敗時給 .rd-vista 加 is-off
   function mount(canvas, opts) {
     const o = opts || {};
-    const wrap = canvas && canvas.closest ? canvas.closest('.rd-vista') : null;
+    // WO-16-08：白天面板每次重畫都會換一個 .rd-vista，畫布被搬過去；所以外框每次即時找
+    const wrapOf = () => (canvas && canvas.closest ? canvas.closest('.rd-vista') : null);
+    let failed = false;
     const markOff = () => {
+      failed = true;
+      const wrap = wrapOf();
       if (wrap && wrap.classList) wrap.classList.add('is-off');
       if (o.onFallback) o.onFallback();
     };
     const M = artManifest();
     if (!canvas || !M) {
       markOff();
-      return { set() {}, stop() {} };
+      return { set() {}, stop() {}, failed: () => true };
     }
     canvas.width = W;
     canvas.height = H;
@@ -35068,6 +35095,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     listeners.add(onLoad);
 
     function set(p) {
+      if (failed) { markOff(); return; }
       if (stopped) return;
       if (!p || !artManifest()) {
         markOff();
@@ -35116,6 +35144,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         .filter(Boolean);
       Promise.all(req.map((nm) => asset(nm).p)).then((list) => {
         if (stopped) return;
+        const wrap = wrapOf();
         if (list.some((x) => !x || x.err || !x.ok)) {
           stopped = true;
           markOff();
@@ -35133,7 +35162,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       raf = 0;
     }
 
-    return { set, stop };
+    return { set, stop, failed: () => failed };
   }
 
   // 創作桌畫布（WO-16-10）：回傳 { stroke(n, info), finish(), snapshot(), ... }
@@ -37364,7 +37393,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + (V.skip ? '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>' : '')
       + (V.deck ? '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>' : '')
       + (V.memory ? '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>' : '');
+    // WO-16-08：浮城夜景（畫布由 main.js 搬進來；畫不出時加 is-off 隱藏）
+    const vStage = IE.Flood && IE.Flood.stage ? IE.Flood.stage(s) : 'dry';
+    const vistaHtml = '<div class="rd-vista" data-stage="' + esc(vStage) + '" data-cold="' + (s.season === 'cold' ? 1 : 0) + '"></div>';
     return '<div class="rd-day">'
+      + vistaHtml
       + expHtml
       + '<div class="rd-top">'
       + '<div class="rd-map-row">' + (V.map ? '<div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div>' : '') + '<span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
@@ -41138,6 +41171,26 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     render();
     window.scrollTo({ top: 0 });
   }
+  // WO-16-08：白天面板頂部的浮城夜景。畫布只建立一次：每次重畫面板，把同一個畫布搬進新的 .rd-vista，再 set(plan(s))
+  let vistaCanvas = null, vistaCtl = null;
+  function attachVista(s) {
+    const host = document.querySelector('.rd-day .rd-vista');
+    if (!host) return;
+    if (!IE.NightScene || !D.ART || !D.ART.a) { host.classList.add('is-off'); return; }
+    if (!vistaCanvas) {
+      vistaCanvas = document.createElement('canvas');
+      vistaCanvas.width = 960;
+      vistaCanvas.height = 600;
+      vistaCanvas.setAttribute('aria-hidden', 'true');
+    }
+    host.appendChild(vistaCanvas);
+    if (!vistaCtl) vistaCtl = IE.NightScene.mount(vistaCanvas);
+    if (vistaCtl.failed && vistaCtl.failed()) { host.classList.add('is-off'); return; }
+    const p = IE.NightScene.plan(s);
+    if (!p) { host.classList.add('is-off'); return; }
+    vistaCtl.set(p);
+  }
+
   // WO-16-11：序章之夜。用完即棄的局面 p：Game.state 保持 null，p 不存檔
   function openPrologue(after) {
     A.init();
@@ -41932,6 +41985,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         UI.modal(UI.memoryModal(s), { close: UI.closeModal }, { dismiss: () => {} });
       },
     });
+    attachVista(s);
     ticketToasts();
     save();
     if (needsPutDown(s)) {

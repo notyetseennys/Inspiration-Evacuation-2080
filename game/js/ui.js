@@ -1390,7 +1390,11 @@
       + (V.skip ? '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>' : '')
       + (V.deck ? '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>' : '')
       + (V.memory ? '<button class="btn" type="button" data-do="memory">' + esc(memTxt) + '</button>' : '');
+    // WO-16-08：浮城夜景（畫布由 main.js 搬進來；畫不出時加 is-off 隱藏）
+    const vStage = IE.Flood && IE.Flood.stage ? IE.Flood.stage(s) : 'dry';
+    const vistaHtml = '<div class="rd-vista" data-stage="' + esc(vStage) + '" data-cold="' + (s.season === 'cold' ? 1 : 0) + '"></div>';
     return '<div class="rd-day">'
+      + vistaHtml
       + expHtml
       + '<div class="rd-top">'
       + '<div class="rd-map-row">' + (V.map ? '<div class="rd-map" aria-label="' + esc(dayTitle) + '">' + groups.join('') + '</div>' : '') + '<span class="rd-day-title">' + esc(dayTitle) + '</span></div>'
