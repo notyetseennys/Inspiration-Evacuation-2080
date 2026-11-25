@@ -128,4 +128,21 @@ module.exports = (t) => {
     assert.ok(CH.feat(s, 'flood'));
     assert.ok(!s.salvage);
   });
+  t.test('收藏家：每一季第一輪的收藏家是這一季的外星人，有通用的文字；全城篩選照原來的次序', () => {
+    [['c1', 'grey'], ['c2', 'harvest'], ['c3', 'mirror'], ['c4', 'octo']].forEach(([id, sp]) => {
+      assert.equal(CH.get(id).collector, sp, id);
+      const sd = D.STORY.species[sp];
+      assert.ok(typeof sd.why === 'string' && sd.why.length > 0 && sd.fate.includes('{npc}'), sp + '：要有通用的 why、fate');
+      const s = run({ chapter: id });
+      const order = IE.Story.collectOrderOf(s);
+      assert.equal(order[0], sp, id);
+      assert.equal(new Set(order).size, order.length, id + '：次序裏沒有重複的種族');
+      const pl = IE.Story.plan(s);
+      if (pl) {
+        assert.equal(pl.species, sp, id);
+        assert.ok(pl.why && !pl.why.includes('{npc}'), id + '：文字已經代入朋友的名字');
+      }
+    });
+    assert.deepEqual(IE.Story.collectOrderOf(run()), D.STORY.collectOrder);
+  });
 };

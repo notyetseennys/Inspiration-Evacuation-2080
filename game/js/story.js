@@ -401,6 +401,14 @@
   }
 
   // ---------- 朋友線（每輪一位被外星人收藏） ----------
+  // 第十七期：一季由一種外星人主持，第一輪的收藏家就是這一季的外星人（D.CHAPTERS[].collector）；其餘照原來的次序。全城篩選不變
+  function collectOrderOf(s) {
+    const base = D.STORY.collectOrder;
+    const ch = IE.Chapters && IE.Chapters.of ? IE.Chapters.of(s) : null;
+    const sp = ch && ch.collector;
+    if (!sp || !D.STORY.species[sp] || !D.STORY.species[sp].why) return base;
+    return [sp].concat(base.filter((x) => x !== sp));
+  }
   function plan(s) {
     if (!s || !IE.Rounds || !IE.Rounds.on(s) || !D.STORY) return null;
     const st = ensure(s);
@@ -410,7 +418,7 @@
       st.plan[r] = null;
       return null;
     }
-    const species = D.STORY.collectOrder[r - 1];
+    const species = collectOrderOf(s)[r - 1];
     const inCity = R.aliveNpcs(s).filter((n) => !st.taken[n.id] && !st.hidden[n.id]);
     if (!inCity.length) {
       st.plan[r] = null;
@@ -614,6 +622,7 @@
     astar,
     feed,
     fate,
+    collectOrderOf,
     epilogue,
   };
 });
