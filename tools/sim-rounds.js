@@ -125,7 +125,11 @@ function cardExpectedPay(c) {
   return (m[1] === '-' || m[1] === '−' ? -1 : 1) * Number(m[2]);
 }
 
+// 量度用的開關（2026-11-25 好玩度研究）：DAYRANDOM=1 白天、故事、抉擇亂選；SHOPRANDOM=1 市集亂買；SHOPNONE=1 市集甚麼都不買。
+// 創作桌照原本的策略，用來量度白天和市集的決定對結果有多大影響。
+const DAY_RANDOM = !!process.env.DAYRANDOM, SHOP_RANDOM = !!process.env.SHOPRANDOM, SHOP_NONE = !!process.env.SHOPNONE;
 function chooseDilemma(s, strat) {
+  if (DAY_RANDOM) strat = 'random';
   const v = R.dilemmaView(s);
   const d = D.DILEMMAS.find((x) => x.id === v.id);
   const ok = v.options.filter((o) => !o.reason).map((o) => o.i);
@@ -144,6 +148,7 @@ function chooseDilemma(s, strat) {
 }
 
 function pickDayCard(s, strat) {
+  if (DAY_RANDOM) strat = 'random';
   const of = RD.offer(s);
   const infos = (of.ids || []).map((id) => RD.cardInfo(s, id)).filter((c) => c && c.enabled);
   if (!infos.length) return null;
@@ -250,6 +255,7 @@ function pickDayCard(s, strat) {
 }
 
 function chooseStoryChapter(s, ch, strat) {
+  if (DAY_RANDOM) strat = 'random';
   const opts = ch.options || [];
   if (!opts.length) return 0;
   // 只考慮付得起的選項（總規格 §14.3：錢不夠的選項不可以選；每章至少有一個不用付錢的選項）
@@ -573,6 +579,8 @@ function runShop(s, strat, metrics) {
   if (!sh) return;
   metrics.shopVisits++;
   metrics.transitions++;
+  if (SHOP_NONE) { RD.leaveShop(s); metrics.transitions++; return; }
+  if (SHOP_RANDOM) strat = 'random';
 
   if (strat === 'random') {
     const cands = [];

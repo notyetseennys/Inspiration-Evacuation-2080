@@ -368,6 +368,7 @@
 | `tools/sim-meta.js` | 第十八期：連續多生的模擬（每個生涯由第一季玩到第五季，升級前世）；`STRAT`、`CHTARGET`、`STEEP`、`WALL`、`SEDX`、`PASTCOST`、`STOPAT` |
 | `tools/tests/past.test.js` | 第十八期的單元測試（牆、前世、沉積、執念、進度、×倍率上限） |
 | `docs/research/booster-pack-heroes.md` | 《Booster Pack Heroes》研究和建議（第十七期的依據） |
+| `docs/research/fun-audit.md` | 好玩度研究（2026-11-25）：創作桌的決策空間、白天和市集的決定有多重要、建議縫合的機制（改寫文法的物件、四格、委託）；工具 `tools/audit-desk.js`、`tools/audit-shop.js`，模擬器開關 `DAYRANDOM`、`SHOPRANDOM`、`SHOPNONE` |
 | `game/js/data-chapters.js` | 第十七期的資料和文字（你撰寫）：`D.CHAPTERS`、`CHAPTER_TEXT`、`SALVAGE`、`SALVAGE_COST`、`SALVAGE_TEXT`、`PACK16`、`ACH17` |
 | `game/js/chapters.js`、`game/js/salvage.js` | `IE.Chapters`（季、系統開關、開放和紀錄）、`IE.Salvage`（沉積、節點、效果合併） |
 | `game/js/packfx.js`、`game/js/era-ui.js`、`game/css/era.css` | 撕開的包；年表、舊城地圖、沉積結算、收藏冊總覽、白天的舊城情報 |
