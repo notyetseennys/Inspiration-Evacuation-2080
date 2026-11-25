@@ -110,7 +110,8 @@
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">' + (chapterOf(s) ? esc(chapterOf(s).name) + '・' : '') + '第 ' + s.night + '／' + IE.Rounds.nightsTotal(s) + ' 晚</span></div>'
         + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
         + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
-        + '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>'
+        // 第十七期：這一季還沒有水位系統（例如第一季）就不顯示水位
+        + ((!IE.Chapters || IE.Chapters.feat(s, 'flood')) ? '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>' : '')
         + '<div class="hud-btns">'
         + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'

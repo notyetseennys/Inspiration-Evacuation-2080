@@ -1,7 +1,7 @@
 # 交接文件：遊戲大腦（Claude）的工作
 
-> 給接手的 Claude。最後更新：第十五期完成（WO-15-10 合併之後，2026-11-03）。
-> 讀完這份、`docs/WORLD.md`（世界觀與語氣聖經）、`docs/workorders/README.md` 和 `docs/workorders/phase-15/README.md`，就可以接手。
+> 給接手的 Claude。最後更新：第十七期完成（浮城年表、舊城打撈、撕開，2026-11-25）。
+> 讀完這份、`docs/WORLD.md`（世界觀與語氣聖經）、`docs/workorders/README.md`、`docs/workorders/phase-15/README.md`、`phase-16/README.md` 和 `phase-17/README.md`，就可以接手。
 
 ## 1. 你的角色
 
@@ -271,6 +271,16 @@
 
 - **《Booster Pack Heroes》研究（2026-11-25，製作人要求）**：全文在 `docs/research/booster-pack-heroes.md`。結論：我們的元素比它多幾倍，缺的是結構。建議（**未經製作人決定**）：乙段照常完成；之後先做「撕開」（所有得到素材的時刻變成撕開一個包，公開機率、閃卡、重複的卡升星）的原型；再做「舊城打撈」（失敗也帶走沉積，投入以判斷力為主的升級樹）和「浮城年表」（8 至 10 章，每章只加一個新系統，第一章的一生縮短到六晚）；丙段的鑑定和議價放進章節。四個待決定的問題寫在該文件第六節。注意：這個環境的網絡擋住 Steam 和 itch.io，研究只用了搜尋摘要。
 
+- **第十七期：浮城年表、舊城打撈、撕開（2026-11-25，製作人要求「立即全面」按研究的建議做）**：由你直接實作，沒有 Gemini 工單；總規格 `docs/workorders/phase-17/README.md` 是唯一來源。
+  - 浮城年表（`D.CHAPTERS`、`IE.Chapters`）：八季，四季可玩。第一季「招聘季」6 晚、只有創作桌、故事、朋友和差事；第二季加水位和天氣，第三季加立場和 KPI，第四季加評審和出國（第四季等同全城篩選）。`IE.Chapters.feat(s, key)` 是系統的開關；經典模式永遠是 `true`。
+  - 舊城打撈（`D.SALVAGE`、`IE.Salvage`）：每一生按晚數、達標、超額、通過的輪數沉下沉積；六區三十六個節點按次序打撈，以情報和提示為主（界線：只令玩家看得更清楚，不代替玩家決定）。
+  - 撕開（`D.PACK16`、`IE.PackFx`）：每次得到素材都是要撕開的包；5% 閃卡（籌碼 ×1.5，用種子的雜湊決定，**不消耗隨機數**）；同一張再得到升星。序章和工作室的卡不會是閃卡。
+  - 新玩家的標題頁只有一句和「開始」，直接開始第一季；舊玩家（`meta.chapters.legacy`）一開始就可以選全城篩選。
+  - 測試開關：`ie2080.noPrologue = '1'`、`ie2080.chapter = 'free'`（讀原始字串）；三個瀏覽器測試都已經設好，所以煙霧測試走全城篩選。模擬器：`CHAPTER=c1`、`SALVAGE='{...}'`。
+  - 第一輪校準（總規格 §6）：新手 97%、81%、24%、3.5%；均衡 100%、99%、97.5%、72%；全城篩選均衡 73%、高手 78%。兩個結構問題未解決（§6.3）：後段的引擎太弱（「總分 ÷ 目標」一路下降）、第四五輪錢不夠（出國 0 次）。前者是你的規則工作，做完才交 WO-16-05。
+  - WO-16-11 和 WO-16-05 已修訂（各自的開頭和修訂紀錄）。**審核 WO-16-11 時特別留意**：不要刪第十七期的程式（年表、打撈、沉積結算、排練和劇本）；`startGuided` 要帶 `chapter: 'c1'`；煙霧測試的開關不要重複加；序章的四張卡不經撕開的包。
+  - 你維護：`data-chapters.js`、`chapters.js`、`salvage.js`、`rules.js` 裏閃卡和重複的部分、`chapters`／`salvage`／`packs` 三個測試檔。Gemini 只在工單列明時改 `packfx.js`、`era-ui.js`、`era.css`。
+
 ## 6.1 審核 WO-15-11、13（故事線）時要特別留意
 
 - `data-story.js`、`data-cities.js`、`story-data.test.js`、`spec.test.js` 沒有被改（Gemini 只可以讀）。
@@ -344,4 +354,10 @@
 | `proto/night5/` | 原型第五版「創作桌」（真的畫和歌、平衡牌組、圖鑑；說明和分步路線在 `README.md`） |
 | `tools/art-night-web.py` | 原圖 → 網頁版素材（WebP）和 `night-art.json` |
 | `tools/music-night-web.py` | 小節資料庫 → 網頁版分軌（每首 24 小節的 MP3）和 `night-music.json` |
+| `docs/workorders/phase-16/README.md`、`phase-17/README.md` | 第十六期、第十七期總規格 |
+| `docs/research/booster-pack-heroes.md` | 《Booster Pack Heroes》研究和建議（第十七期的依據） |
+| `game/js/data-chapters.js` | 第十七期的資料和文字（你撰寫）：`D.CHAPTERS`、`CHAPTER_TEXT`、`SALVAGE`、`SALVAGE_COST`、`SALVAGE_TEXT`、`PACK16`、`ACH17` |
+| `game/js/chapters.js`、`game/js/salvage.js` | `IE.Chapters`（季、系統開關、開放和紀錄）、`IE.Salvage`（沉積、節點、效果合併） |
+| `game/js/packfx.js`、`game/js/era-ui.js`、`game/css/era.css` | 撕開的包；年表、舊城地圖、沉積結算、收藏冊總覽、白天的舊城情報 |
+| `tools/tests/chapters.test.js`、`salvage.test.js`、`packs.test.js` | 第十七期的單元測試（你維護） |
 | `.github/workflows/ci.yml` | CI |

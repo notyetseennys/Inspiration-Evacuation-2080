@@ -79,6 +79,16 @@ module.exports = (t) => {
     assert.ok(b > a * 1.5, '加倍之後 ' + b + '，之前 ' + a);
   });
 
+  t.test('閃卡：序章的卡和工作室做出來的東西永遠不是閃卡', () => {
+    const ids = (D.DESK_IDS || []).slice(0, 60);
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = run({ seed });
+      const n = s.cards.length;
+      ids.forEach((id) => { R.addCard(s, id, { kind: 'prologue' }); R.addCard(s, id, { kind: 'craft' }); });
+      assert.ok(!s.cards.slice(n).some((c) => c.foil), '種子 ' + seed);
+    }
+  });
+
   t.test('收藏：得到過的素材記在 s.seenCards，閃卡記作 2', () => {
     const s = run();
     const id = freshId(s);

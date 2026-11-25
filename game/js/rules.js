@@ -477,7 +477,8 @@
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
     card.wear = card.wear || 0;
     if (s.mode === 'rounds') {
-      if (P && okind !== 'craft' && !card.foil) {
+      // 工作室做出來的東西和序章的四張卡不會是閃卡（序章的分數要每次相同）
+      if (P && okind !== 'craft' && okind !== 'prologue' && !card.foil) {
         const chance = P.foil * (1 + ((s.salvage && s.salvage.foilX) || 0));
         if (foilRoll(s, card) < chance) markFoil(s, card);
       }

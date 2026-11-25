@@ -14348,7 +14348,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
     card.wear = card.wear || 0;
     if (s.mode === 'rounds') {
-      if (P && okind !== 'craft' && !card.foil) {
+      // 工作室做出來的東西和序章的四張卡不會是閃卡（序章的分數要每次相同）
+      if (P && okind !== 'craft' && okind !== 'prologue' && !card.foil) {
         const chance = P.foil * (1 + ((s.salvage && s.salvage.foilX) || 0));
         if (foilRoll(s, card) < chance) markFoil(s, card);
       }
@@ -35596,7 +35597,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + '<div class="hud-day">' + IE.Chars.img(s.bg, 2) + '<span class="chip night">' + (chapterOf(s) ? esc(chapterOf(s).name) + '・' : '') + '第 ' + s.night + '／' + IE.Rounds.nightsTotal(s) + ' 晚</span></div>'
         + '<span class="chip lives chances">' + esc(T.chances) + ' <b>' + '●'.repeat(chances) + '<i>' + '○'.repeat(Math.max(0, 3 - chances)) + '</i></b></span>'
         + '<span class="chip rent' + (s.cr < rent ? ' short' : '') + '">租金 $' + fmt(rent) + '</span>'
-        + '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>'
+        // 第十七期：這一季還沒有水位系統（例如第一季）就不顯示水位
+        + ((!IE.Chapters || IE.Chapters.feat(s, 'flood')) ? '<span class="chip rd-water f-' + fStage + ((s.floor || 0) <= 0 ? ' is-homeless' : '') + '"><i class="rw-wave" aria-hidden="true"></i><span class="rw-txt">' + esc(waterTxt) + '</span></span>' : '')
         + '<div class="hud-btns">'
         + '<button class="icon-btn" type="button" data-hud="help">玩法</button>'
         + '<button class="icon-btn' + (IE.Audio.muted ? '' : ' sound-on') + '" type="button" data-hud="mute" aria-pressed="' + IE.Audio.muted + '" title="按一下切換：聲音（音樂和音效）→ 只有音效 → 靜音">' + (IE.Audio.muted ? '靜音' : IE.BGM && !IE.BGM.enabled ? '只有音效' : '聲音') + '</button>'
