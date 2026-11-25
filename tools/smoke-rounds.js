@@ -1732,6 +1732,47 @@ const URL = 'http://localhost:' + PORT + '/';
     }
     ok('最後一次機會耗盡 → 進入人才檔案結局畫面（.dossier）與局摘要（' + runSum + '）');
 
+    // WO-16-07：寒潮季：把季節設為寒潮、重新載入，場景沒有 JS 錯誤；推進一晚之後水位沒有上升
+    {
+      const cp = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+      const cErrors = [];
+      cp.on('pageerror', (e) => cErrors.push(e.message));
+      cp.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) cErrors.push(m.text()); });
+      await cp.goto(URL);
+      await cp.evaluate((seed) => {
+        localStorage.clear();
+        localStorage.setItem('ie2080.seed', String(seed));
+        localStorage.setItem('ie2080.speed', '4');
+        localStorage.setItem('ie2080.noEncounter', '1');
+        localStorage.setItem('ie2080.noPrologue', '1');
+        localStorage.setItem('ie2080.chapter', 'free');
+      }, SEED);
+      await cp.reload();
+      await cp.waitForSelector('.title-menu [data-do="new"]');
+      await cp.click('.title-menu [data-do="new"]');
+      await cp.waitForSelector('[data-do="start"]');
+      await cp.click('[data-do="start"]');
+      await cp.waitForFunction(() => window.__IE.Game.state && window.__IE.Game.state.mode === 'rounds');
+      await cp.evaluate(() => { const s = window.__IE.Game.state; s.season = 'cold'; s.weather = { id: 'icelock', day: s.day }; window.__IE.Game.save(); });
+      await cp.reload();
+      await cp.waitForSelector('.title-menu [data-do="continue"]');
+      await cp.click('.title-menu [data-do="continue"]');
+      await cp.waitForFunction(() => window.__IE.Game.state && window.__IE.Game.state.season === 'cold');
+      await cp.waitForTimeout(1500);
+      const w = await cp.evaluate(() => {
+        const IEx = window.__IE, s = IEx.Game.state;
+        const before = s.water;
+        IEx.Rounds.advance(s);
+        IEx.UI.renderHud(s);
+        return { before, after: s.water, season: s.season };
+      });
+      await cp.waitForTimeout(600);
+      if (w.season === 'cold' && w.after > w.before) await fail('WO-16-07：寒潮季推進一晚之後水位上升了：' + JSON.stringify(w));
+      if (cErrors.length) await fail('WO-16-07：寒潮季的場景有 JS 錯誤：\n' + cErrors.join('\n'));
+      ok('WO-16-07：寒潮季的場景沒有 JS 錯誤，推進一晚之後水位沒有上升（' + w.before.toFixed(2) + ' → ' + w.after.toFixed(2) + '）');
+      await cp.close();
+    }
+
     // WO-16-11 §7.2：新玩家（不設 ie2080.noPrologue）：序章之夜 → 引導局（第一季）。手機 390×844
     {
       const np = await browser.newPage({ viewport: { width: 390, height: 844 } });

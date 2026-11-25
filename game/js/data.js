@@ -353,10 +353,18 @@
       water: 0.055, food: 30, nightBody: 0, outdoorBody: -5, labelPay: 1.15, diveRelics: 0,
       sky: ['#1d2a10', '#3d4a12'], tint: '#c4e04a', weather: 'acid',
     },
+    // 第十六期（WO-16-07）：寒潮季，只在五輪模式出現（D.SEASON_ORDER16）；舊模式用 D.SEASON_ORDER，永遠不會進入
+    cold: {
+      name: '寒潮季', desc: '洋流停了。水面結冰，水位暫時不升；甚麼都貴，甚麼都冷。',
+      water: 0, food: 45, nightBody: -4, outdoorBody: -3, labelPay: 1.1, diveRelics: 0,
+      sky: ['#0e1a2b', '#3a5a7a'], tint: '#bfe6ff', weather: 'cold',
+    },
   };
 
   // 季節每 25 天輪替一次
   const SEASON_ORDER = ['storm', 'heat', 'acid'];
+  // 五輪模式有寒潮季的時候（系統開關 cold）的季節次序；開局仍然只從 SEASON_ORDER 選
+  const SEASON_ORDER16 = ['storm', 'heat', 'acid', 'cold'];
   const SEASON_DAYS = 25;
 
   // 同區的創作人朋友，篩選日會被帶走
@@ -497,7 +505,7 @@
 
   IE.DATA = {
     TAGS, CARDS, CARD_POOLS, RECIPES, RESONANCE, MEDLEY, KPIS, THRESHOLDS,
-    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_DAYS, MODES, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
+    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_ORDER16, SEASON_DAYS, MODES, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
     LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, BIAS_LINES, FISH, DIVE_ZONES, SOUL_LIMIT,
     DAYS: 100, REVIEW_DAYS: [20, 40, 60, 80, 100], RENT_EVERY: 7, SLOTS: ['早上', '下午', '晚上'],
   };

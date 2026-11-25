@@ -7,21 +7,20 @@ module.exports = (t) => {
 
   // 總規格 §6
   const ECON = {
-    // 第十七期第一輪校準（2026-11-25，Claude）：創作桌改變了分數的尺度，目標曲線改為兩段式
-    t1: 12000,
-    growth: 1.48,
-    growthLate: 1.3,
-    lateFrom: 6,
+    // 第十七期第二輪校準（2026-11-25，Claude，WO-16-05）：逐晚的目標表；後段的引擎；後段的獎金
+    t1: 24000,
+    curve: [1, 1.98, 3.37, 5.27, 6.7, 9.07, 13.3, 15.6, 19, 21.3, 24.9, 27.2, 31.8, 37.2, 42.3],
     firstRunEase: 0.7,
     hand: 8, plays: 4, discards: 3,
     nightPay: { small: 42, big: 62, boss: 140 },
-    payGrowth: 0.25,
+    payGrowth: 0.45,
     earlyBonus: 8,
     overkillSpark: 0.22,
     failSpark: -0.3,
     rent: [175, 265, 335, 400, 475],
     offerReroll: [10, 20, 30],
     skipSpark: 0.2,
+    sparkCapStep: 0.5, masterStar: 1,
     tripCost: 240, tripPick: 2,
     tripStar: 4, tripSpark: 0.6,
     objReroll: [20, 30, 40, 50],

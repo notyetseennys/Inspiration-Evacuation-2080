@@ -11,6 +11,10 @@
   const D = IE.DATA;
   const W = (id, name, glyph, o) => Object.assign({ id, name, glyph, kind: 'normal', w: 1, mods: {} }, o);
   const WEATHER = [
+    // ---------- 寒潮季（WO-16-07，只在五輪模式）。「大雪」的 id 用 heavysnow：snow 已經是奇怪天氣「熱帶落雪」 ----------
+    W('sleet', '凍雨', '🌨', { seasons: ['cold'], w: 3, vis: 'sleet', forecast: '凍雨。雨傘會結冰，請勿用來指向他人。' }),
+    W('heavysnow', '大雪', '❄', { seasons: ['cold'], w: 3, vis: 'heavysnow', forecast: '浮城下雪了。上一次下雪的記錄，氣象局已經隨舊辦公室一併淹沒。' }),
+    W('icelock', '冰封', '🧊', { seasons: ['cold'], w: 2, vis: 'icelock', forecast: '海面全面結冰。水位局今日休息：水位沒有變化，本局沒有可以發佈的數字。' }),
     // ---------- 風暴季 ----------
     W('drizzle', '毛毛雨', '☂', { seasons: ['storm', 'acid'], w: 3, vis: 'drizzle', forecast: '毛毛雨，全日不停。傘子是浮城最常見的遺物。' }),
     W('downpour', '暴雨', '☔', { seasons: ['storm'], w: 3, vis: 'storm', mods: { pay: { delivery: 1.3 } }, tag: { t: 'water', x: 1.2 },

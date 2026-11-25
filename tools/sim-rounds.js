@@ -24,6 +24,11 @@ const path = require('path');
 const IE = globalThis.IE;
 const D = IE.DATA, R = IE.Rules, CARDS = IE.Cards, FLOOD = IE.Flood, RD = IE.Rounds, CR = IE.Create, ST = IE.Stages, AU = IE.Auto, STORY = IE.Story;
 
+// 第十七期：CHTARGET='{"c1":0.3}' 臨時覆寫各季的目標倍率（校準用）
+if (process.env.CHTARGET) {
+  const over = JSON.parse(process.env.CHTARGET);
+  (D.CHAPTERS || []).forEach((c) => { if (over[c.id] != null) c.target = over[c.id]; });
+}
 // 支援 ECON 環境變數覆寫 D.ECON（供校準迭代使用）
 if (process.env.ECON) {
   const over = JSON.parse(process.env.ECON);
@@ -42,7 +47,7 @@ const BG_ALIAS = { illustrator: 'copywriter', writer: 'copywriter', musician: 'b
 const BGS = process.env.BG
   ? [BG_ALIAS[process.env.BG] || process.env.BG]
   : Object.keys(D.BACKGROUNDS);
-const SEASONS = Object.keys(D.SEASONS);
+const SEASONS = D.SEASON_ORDER.slice();  // 開局的季節（寒潮季只在輪替中出現）
 const ALL_STRATS = [
   { id: 'balanced',  name: '均衡型 (balanced)' },
   { id: 'novice',    name: '新手   (novice)' },
@@ -55,6 +60,8 @@ const ALL_STRATS = [
 ];
 // 出國的門檻（WO-15-14 審核加入）：TRIP=any 時只要付得起旅費就出國，不保留本輪租金；用來估計出國本身的價值
 const TRIP_ANY = process.env.TRIP === 'any';
+// 第十七期：TRACE=1 輸出每晚每一筆的籌碼、倍率、火花、AI 折扣、物件、星級的中位數（診斷用，預設不輸出）
+const TRACE = !!process.env.TRACE;
 const STRATS = process.env.STRAT
   ? ALL_STRATS.filter((x) => process.env.STRAT.split(',').includes(x.id))
   : ALL_STRATS;
@@ -137,6 +144,11 @@ function pickDayCard(s, strat) {
   const rent = RD.rentOf(s);
   const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
   const tripCost = Math.round(D.ECON.tripCost * stMod);
+  // WO-16-05（第十七期第二輪校準）：出國時把本輪餘下夜晚的獎金算進去（打八折：可能有一晚不達標），像真人一樣「這一輪賺得回來」
+  const roundEnd = RD.roundOf(s) * 3;
+  let payAhead = 0;
+  for (let n = s.night; n <= roundEnd; n++) payAhead += RD.nightReward(Object.assign({}, s, { night: n }), RD.kindOf(n), 0);
+  const canTrip = (margin) => (TRIP_ANY ? s.cr >= tripCost : s.cr + payAhead * 0.7 >= rent + tripCost + margin);
 
   // worker：永遠選工作或虧心卡（按收入由高至低）
   if (strat === 'worker') {
@@ -154,7 +166,7 @@ function pickDayCard(s, strat) {
       const ia = topForms.indexOf(fa), ib = topForms.indexOf(fb);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     });
-    const trips = infos.filter((c) => c.kind === 'trip' && s.cr >= (TRIP_ANY ? tripCost : rent + tripCost));
+    const trips = infos.filter((c) => c.kind === 'trip' && s.cr >= tripCost && canTrip(0));
     const lives = infos.filter((c) => c.kind === 'life').sort((a, b) => (LIFE_RANK[b.id] || 0) - (LIFE_RANK[a.id] || 0));
     const restCard = infos.find((c) => c.kind === 'rest');
     if (trips.length) return trips[0].id;
@@ -202,7 +214,9 @@ function pickDayCard(s, strat) {
     if (worst && (worst.wear || 0) > 0 && CR.starOf(worst) >= 4) return null;
   }
 
-  // 3. 否則優先：朋友卡（教的結構是最常用的結構）＞ 出國（錢足夠「本輪租金 + 旅費 + 60」時）＞ 生活卡 ＞ 工作卡
+  // 3. 否則優先：出國（付得起時：現金加上本輪餘下獎金的八成，足夠「本輪租金 + 旅費 + 60」）＞ 朋友卡（教的結構是最常用的結構）＞ 生活卡 ＞ 工作卡
+  const trips = pool.filter((c) => c.kind === 'trip' && s.cr >= tripCost && canTrip(60));
+  if (trips.length) return trips[0].id;
   const topForms = topUsedForms(s);
   const friends = pool.filter((c) => c.kind === 'friend').sort((a, b) => {
     const fa = teachFormOf(a.id.slice(7)), fb = teachFormOf(b.id.slice(7));
@@ -210,9 +224,6 @@ function pickDayCard(s, strat) {
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
   if (friends.length) return friends[0].id;
-
-  const trips = pool.filter((c) => c.kind === 'trip' && s.cr >= (TRIP_ANY ? tripCost : rent + tripCost + 60));
-  if (trips.length) return trips[0].id;
 
   const lives = pool.filter((c) => c.kind === 'life').sort((a, b) => (LIFE_RANK[b.id] || 0) - (LIFE_RANK[a.id] || 0));
   if (lives.length) return lives[0].id;
@@ -382,6 +393,7 @@ function recordNightStats(ses, night, metrics) {
   if (metrics.nightRatios[night] && ses.stage && ses.stage.target > 0) {
     metrics.nightRatios[night].push(ST.stageScore(ses) / ses.stage.target);
   }
+  if (TRACE && ses.stage && ses.stage.target > 0) (metrics.traceRatio[night] = metrics.traceRatio[night] || []).push(ST.stageScore(ses) / ses.stage.target);
 }
 
 function runNight(s, strat, metrics) {
@@ -481,6 +493,14 @@ function runNight(s, strat, metrics) {
     if (!res) break;
     metrics.plays++;
     metrics.forms[res.form] = (metrics.forms[res.form] || 0) + 1;
+    if (TRACE) {
+      const stars = s.cards.map((c) => CR.starOf(c));
+      (metrics.trace[night] = metrics.trace[night] || []).push({
+        total: res.total, chips: res.chips, mult: res.mult, spark: res.spark, ai: res.ai, kpi: res.kpi, n: res.scoring.length,
+        objs: (s.objects || []).length, deck: s.cards.length, star: stars.reduce((a, b) => a + b, 0) / Math.max(1, stars.length),
+        lv: (CR.formStats(s, res.form) || {}).level || 1, wear: res.scoring.reduce((a, u) => a + ((s.cards.find((c) => c.uid === u) || {}).wear || 0), 0) / Math.max(1, res.scoring.length),
+      });
+    }
     if (bg === 'busker' && ses.plays === 0) CR.useAbility(s, 'encore');
   }
   recordNightStats(ses, night, metrics);
@@ -600,7 +620,10 @@ function runShop(s, strat, metrics) {
     return;
   }
 
-  const reserve = RD.rentOf(s) + (strat === 'expert' ? (s.night % 3 === 0 ? 60 : 25) : 0);
+  // WO-16-05（第十七期第二輪校準）：所有策略都保留本輪租金和一點餘額（原本只有高手），輪末保留更多；
+  // 有水位系統時另外預留搬家的錢。原本的機械人資源越多就在市集花得越多，令交不起租的局佔一半。
+  const moveBudget = FLOOD && FLOOD.on && FLOOD.on(s) && FLOOD.forecast && (FLOOD.forecast(s) || {}).stage !== 'dry' ? 60 : 0;
+  const reserve = RD.rentOf(s) + (strat === 'random' ? 0 : (s.night % 3 === 0 ? 60 : 40) + moveBudget);
   const RAR_SCORE = { legend: 3, rare: 2, common: 1 };
 
   // 1. 遺物一定拿
@@ -799,6 +822,8 @@ function runOne(bg, season, seed, strat) {
     nightPlays: {},
     nightRatios: {},
     preReviewCr: {},
+    trace: {},
+    traceRatio: {},
   };
   SNOW_NIGHTS.forEach((n) => {
     metrics.nightPlays[n] = [];
@@ -807,6 +832,7 @@ function runOne(bg, season, seed, strat) {
 
   let guard = 0;
   while (!s.ended && guard++ < 200) {
+    if (s.season === 'cold') metrics.sawCold = true;
     if (s.phase === 'day') {
       runDay(s, strat, metrics);
     } else if (s.phase === 'night') {
@@ -849,6 +875,7 @@ function runOne(bg, season, seed, strat) {
     floodLostCards: (s.stats && s.stats.floodLostCards) || 0,
     lostHome: ((s.stats && s.stats.lostHome) || 0) > 0 ? 1 : 0,
     moves: (s.stats && s.stats.moves) || 0,
+    sawCold: metrics.sawCold ? 1 : 0,
     estMin,
     metrics,
   };
@@ -957,7 +984,7 @@ function runStrategy(strat) {
   const lostHomeRuns = results.filter((r) => r.lostHome > 0).length;
   const avgMoves = avg((r) => r.moves);
   console.log(`  差事與工作: 平均每局小遊戲 ${avgMicros.toFixed(2)} 次 · 過期差事 ${avgExpired.toFixed(2)} 個 · 平均總收入 $${Math.round(avgIncome)}`);
-  console.log(`  水位與搬遷: 平均每局淹水 ${avgFloodNights.toFixed(2)} 晚 · 被水帶走 ${avgFloodCards.toFixed(2)} 張卡 · 失去住所 ${pct(lostHomeRuns)} · 平均搬遷 ${avgMoves.toFixed(2)} 次`);
+  console.log(`  水位與搬遷: 平均每局淹水 ${avgFloodNights.toFixed(2)} 晚 · 被水帶走 ${avgFloodCards.toFixed(2)} 張卡 · 失去住所 ${pct(lostHomeRuns)} · 平均搬遷 ${avgMoves.toFixed(2)} 次 · 遇到寒潮季 ${pct(results.filter((r) => r.sawCold).length)}`);
   console.log(`  出國與故事線: 平均每局出國 ${avgTrips.toFixed(2)} 次 · 回答 ${avgChapters.toFixed(2)} 章角色線 · 極端選項 ${avgExtremes.toFixed(2)} 個 · 發生反轉 ${avgReversals.toFixed(2)} 次 · 朋友被收藏 ${avgTaken.toFixed(2)} 位 · 被藏起 ${avgHidden.toFixed(2)} 位`);
   const structLine = STRUCT_KEYS
     .map((f) => `${f}:${totalPlays ? Math.round((formTotals[f] / totalPlays) * 100) : 0}%`)
@@ -967,6 +994,23 @@ function runStrategy(strat) {
     .join(' · ');
   console.log(`  結構分佈: ${structLine}`);
   console.log(`  總分÷目標中位數: ${ratioLine}`);
+  if (TRACE) {
+    // 診斷（TRACE=1 才輸出）：每晚每一筆的中位數
+    const keys = ['total', 'chips', 'mult', 'spark', 'ai', 'kpi', 'n', 'objs', 'deck', 'star', 'lv', 'wear'];
+    console.log('  [TRACE] 晚 | ' + keys.join(' | '));
+    for (let k = 1; k <= 15; k++) {
+      const rows = results.flatMap((r) => (r.metrics.trace[k] || []));
+      if (!rows.length) continue;
+      const med = (key) => { const v = rows.map((x) => x[key]).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+      console.log('  [TRACE] N' + k + ' | ' + keys.map((key) => { const m = med(key); return Number.isInteger(m) ? m : m.toFixed(2); }).join(' | '));
+    }
+    const rr = [];
+    for (let k = 1; k <= 15; k++) {
+      const v = results.flatMap((r) => (r.metrics.traceRatio[k] || [])).sort((a, b) => a - b);
+      rr.push(v.length ? 'N' + k + '=' + v[Math.floor(v.length / 2)].toFixed(2) : 'N' + k + '=—');
+    }
+    console.log('  [TRACE] 總分÷目標（每晚）: ' + rr.join(' '));
+  }
 
   return {
     name: strat.name,

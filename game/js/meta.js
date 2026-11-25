@@ -119,7 +119,7 @@
     for (const ch of String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
     h >>>= 0;
     const bgs = Object.keys(D.BACKGROUNDS).filter((id) => !D.BACKGROUNDS[id].unlock);
-    const seasons = Object.keys(D.SEASONS);
+    const seasons = D.SEASON_ORDER.slice();
     return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 2 };
   }
 
@@ -143,7 +143,7 @@
     for (const ch of 'week' + String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
     h >>>= 0;
     const bgs = Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === 'R');
-    const seasons = Object.keys(D.SEASONS), mods = Object.keys(WEEKLY_MODS);
+    const seasons = D.SEASON_ORDER.slice(), mods = Object.keys(WEEKLY_MODS);
     return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 3, mod: mods[(h >>> 12) % mods.length] };
   }
 

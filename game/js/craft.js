@@ -2540,6 +2540,7 @@
         + (g.pass
           ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'
             + (ov ? '<small class="sr-overkill">超額 ' + ov.x + ' 倍：火花 +' + ov.spark + (ov.ticket ? '・金色扭蛋券 +' + ov.ticket : '') + '</small>' : '')
+            + (g.master && g.master.length && D().ENGINE_TEXT ? '<small class="sr-overkill sr-master">' + esc(D().ENGINE_TEXT.masterwork.replace('{n}', String(g.master.length))) + '</small>' : '')
           : '<p class="sr-fail-msg">' + esc(RT.failed) + '</p>'
             + '<small class="sr-chances">' + esc(RT.chances) + '：<b class="sr-dots">' + dots + '</b>（火花 ' + E.failSpark + '）</small>')
         + '</div>';

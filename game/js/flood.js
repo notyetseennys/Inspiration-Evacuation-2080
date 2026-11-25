@@ -88,7 +88,8 @@
     }
 
     const flooded = R.flooded(s);
-    s.floodRun = flooded ? (s.floodRun || 0) + 1 : 0;
+    // WO-16-07：寒潮季結冰：已經淹了的維持原來的階段，不再惡化（floodRun 不增加）；「輕」的損失照常
+    s.floodRun = flooded ? (s.season === 'cold' ? Math.max(1, s.floodRun || 0) : (s.floodRun || 0) + 1) : 0;
     if (flooded) {
       s.stats = s.stats || {};
       s.stats.floodNights = (s.stats.floodNights || 0) + 1;

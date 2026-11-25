@@ -273,6 +273,7 @@ module.exports = (t) => {
       moveup: '你搬上了 {f} 樓。樓下的鄰居沒有搬。',
       rehouse: '你租回了一個單位，在 {f} 樓。合約註明：水位上升不屬於業主的責任。',
       pump: '抽水泵響了一整晚，水退了一點。',
+      thaw: '冰融了。水位局表示，這是「季節性補償」。',
     });
     assert.equal(D.CARD_TEXT.lostFlood, '第 {n} 晚，水帶走的。');
     assert.ok(Array.isArray(D.SERVICES16) && D.SERVICES16.length === 2);

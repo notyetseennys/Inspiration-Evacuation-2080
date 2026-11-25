@@ -6162,6 +6162,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   .rd-day .btn { min-height: 46px; }
 }
 
+/* WO-16-07：融冰的那一晚 */
+.rd-day .rd-flood.f-thaw {
+  border-color: rgba(191, 230, 255, 0.55);
+  background: rgba(150, 200, 235, 0.14);
+  color: #dff3ff;
+}
+
 /* 五輪模式創作桌（WO-16-10）：每一筆畫在同一幅夜景上，手機 390×844 與桌面 1280×800 均在一屏之內 */
 
 #ctable.dk-mode {
@@ -8042,10 +8049,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       water: 0.055, food: 30, nightBody: 0, outdoorBody: -5, labelPay: 1.15, diveRelics: 0,
       sky: ['#1d2a10', '#3d4a12'], tint: '#c4e04a', weather: 'acid',
     },
+    // 第十六期（WO-16-07）：寒潮季，只在五輪模式出現（D.SEASON_ORDER16）；舊模式用 D.SEASON_ORDER，永遠不會進入
+    cold: {
+      name: '寒潮季', desc: '洋流停了。水面結冰，水位暫時不升；甚麼都貴，甚麼都冷。',
+      water: 0, food: 45, nightBody: -4, outdoorBody: -3, labelPay: 1.1, diveRelics: 0,
+      sky: ['#0e1a2b', '#3a5a7a'], tint: '#bfe6ff', weather: 'cold',
+    },
   };
 
   // 季節每 25 天輪替一次
   const SEASON_ORDER = ['storm', 'heat', 'acid'];
+  // 五輪模式有寒潮季的時候（系統開關 cold）的季節次序；開局仍然只從 SEASON_ORDER 選
+  const SEASON_ORDER16 = ['storm', 'heat', 'acid', 'cold'];
   const SEASON_DAYS = 25;
 
   // 同區的創作人朋友，篩選日會被帶走
@@ -8186,7 +8201,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   IE.DATA = {
     TAGS, CARDS, CARD_POOLS, RECIPES, RESONANCE, MEDLEY, KPIS, THRESHOLDS,
-    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_DAYS, MODES, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
+    STATS, STAT_KEYS, BACKGROUNDS, SEASONS, SEASON_ORDER, SEASON_ORDER16, SEASON_DAYS, MODES, NPCS, FLOOR_RENT, BASE_RENT, SHOP, FEED, ASTAR,
     LABEL_ITEMS, LABEL_PROMPTS, ADS, SMILE_LINES, SAD_LINES, BIAS_LINES, FISH, DIVE_ZONES, SOUL_LIMIT,
     DAYS: 100, REVIEW_DAYS: [20, 40, 60, 80, 100], RENT_EVERY: 7, SLOTS: ['早上', '下午', '晚上'],
   };
@@ -10422,6 +10437,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const D = IE.DATA;
   const W = (id, name, glyph, o) => Object.assign({ id, name, glyph, kind: 'normal', w: 1, mods: {} }, o);
   const WEATHER = [
+    // ---------- 寒潮季（WO-16-07，只在五輪模式）。「大雪」的 id 用 heavysnow：snow 已經是奇怪天氣「熱帶落雪」 ----------
+    W('sleet', '凍雨', '🌨', { seasons: ['cold'], w: 3, vis: 'sleet', forecast: '凍雨。雨傘會結冰，請勿用來指向他人。' }),
+    W('heavysnow', '大雪', '❄', { seasons: ['cold'], w: 3, vis: 'heavysnow', forecast: '浮城下雪了。上一次下雪的記錄，氣象局已經隨舊辦公室一併淹沒。' }),
+    W('icelock', '冰封', '🧊', { seasons: ['cold'], w: 2, vis: 'icelock', forecast: '海面全面結冰。水位局今日休息：水位沒有變化，本局沒有可以發佈的數字。' }),
     // ---------- 風暴季 ----------
     W('drizzle', '毛毛雨', '☂', { seasons: ['storm', 'acid'], w: 3, vis: 'drizzle', forecast: '毛毛雨，全日不停。傘子是浮城最常見的遺物。' }),
     W('downpour', '暴雨', '☔', { seasons: ['storm'], w: 3, vis: 'storm', mods: { pay: { delivery: 1.3 } }, tag: { t: 'water', x: 1.2 },
@@ -10758,18 +10777,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 五輪模式的經濟與數值常數
   const ECON = {
     // 目標
-    // 第十七期第一輪校準（2026-11-25）：創作桌令分數的尺度改變了（WO-16-09），原本 t1 3120、每晚 ×1.42 令頭幾晚是目標的幾十倍。
-    // 分數前六晚增長快、之後慢，所以目標改為兩段：前六晚 ×1.48，之後 ×1.3。
-    t1: 12000,            // 第 1 晚的目標
-    growth: 1.48,         // 第 2 至 6 晚每晚 ×1.48
-    growthLate: 1.3,      // 第 7 晚起每晚 ×1.3
-    lateFrom: 6,
+    // 第十七期第二輪校準（2026-11-25，WO-16-05，加入後段的引擎之後）：目標改為逐晚的表（t1 × curve[第幾晚 − 1]）。
+    // 外星評審之夜（第 3、6、9、12、15 晚）有評審的規則，本身比較難；曲線單調上升，第四輪升得慢（引擎成形的一輪），第五輪是最後的考驗。
+    t1: 24000,            // 第 1 晚的目標
+    curve: [1, 1.98, 3.37, 5.27, 6.7, 9.07, 13.3, 15.6, 19, 21.3, 24.9, 27.2, 31.8, 37.2, 42.3],
     firstRunEase: 0.7,    // 第一局的第 1、2 晚目標 ×0.7
     // 創作桌
     hand: 8, plays: 4, discards: 3,
     // 收入
     nightPay: { small: 42, big: 62, boss: 140 },
-    payGrowth: 0.25,      // 每多一輪，獎金 +25%
+    payGrowth: 0.45,      // 每多一輪，獎金 +45%（第十七期第二輪校準：原本 +25%，第四、五輪的獎金追不上租金）
     earlyBonus: 8,        // 每次沒有用的下筆
     overkillSpark: 0.22,  // 分數達到目標兩倍：火花 +0.22
     failSpark: -0.3,      // 一晚失敗：火花 −0.3
@@ -10778,6 +10795,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     // 白天
     offerReroll: [10, 20, 30],      // 換一批生活卡（第 4 次起都是最後一個價錢）
     skipSpark: 0.2,                 // 睡懶覺
+    // 第十七期（後段的引擎）：每通過一輪篩選，火花上限 +0.5；一晚達到目標的 2 倍是「名作」，最好的一筆的素材各升一星
+    sparkCapStep: 0.5, masterStar: 1,
     tripCost: 240, tripPick: 2,     // 出國：五選二；2026-11-02 製作人：出國要更貴（約一期租，見 docs/ECONOMY.md）
     tripStar: 4, tripSpark: 0.6,    // 出國帶回的素材是 ★4（親眼見過的東西最亮）；火花 +0.6（WO-15-14 接上）
     // 市集
@@ -10962,6 +10981,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     moveup: '你搬上了 {f} 樓。樓下的鄰居沒有搬。',
     rehouse: '你租回了一個單位，在 {f} 樓。合約註明：水位上升不屬於業主的責任。',
     pump: '抽水泵響了一整晚，水退了一點。',
+    thaw: '冰融了。水位局表示，這是「季節性補償」。',
   };
 
   // 第十六期乙段（WO-16-11）：序章之夜和新玩家的說明
@@ -11084,7 +11104,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     elder: { name: '先選者', attitude: '冷漠（輕蔑）' },
     defector: { name: '逃兵網絡', attitude: '喜歡' },
     ascend: { name: '升維者', attitude: '冷漠（不干預）' },
-    purge: { name: '淨化派', attitude: '不喜歡' },
+    // 第十七期：第五季「急凍」的第一輪由淨化派「收藏」（只有通用文字）
+    purge: { name: '淨化派', attitude: '不喜歡',
+      why: '說對方的作品「受到外星美學污染」，需要隔離',
+      fate: '「衛生部的隔離中心很乾淨，牆是白色的，沒有任何顏色。他們說我很快就會康復。」——{npc}' },
     octo: { name: '章魚星人', attitude: '喜歡（獵奇）',
       why: '說{npc}「很有地球感」',
       fate: '「收藏家的客廳很大，每晚都有客人來看我。他們看得很認真，好像我是一件會呼吸的古董。」——{npc}' },
@@ -13226,7 +13249,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     media: { pure: 4, 3: 2, 4: 3, 5: 5 },
     family: { blend: { mult: 2 }, layer: { chips: 20 }, echo: { echo: 1 }, tension: { xmult: 1.25 }, paradox: { xmult: 1.5 } },
     // 第十七期：AI 模仿你的結構。熱度＝最近用這種結構的次數（每天 ×decay，一晚四天）；超過 free 之後每一點扣 pen，最低 floor
-    ai: { free: 1.5, pen: 0.12, decay: 0.85, floor: 0.4 },
+    ai: { free: 1.5, pen: 0.2, decay: 0.85, floor: 0.4 },
     artTag: { ancient: 'memory', cosmic: 'neon' },  // 外來素材借用哪一種情緒的圖
     // 舊的配色 id → 新的結構 id（物件、流派、評審、技法課的資料照這張表換）
     formMap: { mix: 'single', adj: 'flow', triad: 'twist', split: 'echo', comp: 'contrast', tetrad: 'loop', full: 'full', mono: 'mono', paradox: 'contrast' },
@@ -13588,38 +13611,40 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // target：這一季的目標倍數（第一輪校準：第一季最易）。
   const CHAPTERS = [
     {
-      target: 0.75, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      target: 0.35, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
       rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
       intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
       adds: '創作桌、人生的選擇、朋友、差事',
       clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
     },
     {
-      target: 0.85, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      target: 0.42, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
       rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
       intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
       adds: '水位：水淹到家，由受傷到失去住所；天氣',
       clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
     },
     {
-      target: 0.95, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      target: 0.46, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
       rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
       intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
       adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
       clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
     },
     {
-      target: 1, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      target: 0.88, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
       intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
       adds: '外星評審的規則；出國',
       clear: '觀光團把你的作品放進玻璃櫃。導遊說，下一季會冷。',
     },
     {
-      id: 'c5', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
-      rounds: 5, feats: [], objRarity: [], sky: 'np-sky-water-1', building: true,
+      // WO-16-07 之後開放（2026-11-25）
+      target: 0.95, id: 'c5', collector: 'purge', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
+      rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip', 'cold'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-water-1',
       intro: '洋流停了。水面結冰，水位暫時不升；融冰的那天，水會一次過上來。',
       adds: '寒潮季：結冰、不能潛水、融冰',
+      clear: '衛生部在你的檔案上蓋了「已消毒」。冰融的那晚，你的鞋子濕到腳踝。',
     },
     {
       id: 'c6', no: 6, year: '2081 年・夏', name: '大概是偷來的', species: '逃兵網絡', org: '逃兵網絡', zone: '走私區',
@@ -13810,7 +13835,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     { id: 'c4', name: '玻璃櫃', desc: '通過「觀光季」' },
   ];
 
-  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17 });
+  // 第十七期（後段的引擎）的文字
+  const ENGINE_TEXT = {
+    sparkCapUp: '外星人調高了你的訊號上限：火花上限 +{v}（現在 ×{max}）。',
+    masterwork: '名作：這幅作品的 {n} 張素材記得更深，各升一星。',
+  };
+
+  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17, ENGINE_TEXT });
 });
 
 // ---- js/chapters.js ----
@@ -14171,14 +14202,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
   // 自然恢復的火花受想像力（加成）與服從（壓抑）影響；超過 3 之後越升越慢。
   const SPARK_MAX = 4;
-  const sparkMax = (s) => round1(Math.max(1, Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience) - (perk(s).sparkCapMinus || 0) - (perk(s).lowRatingCap && s.rating < 3 ? perk(s).lowRatingCap : 0)));
+  // 第十七期（後段的引擎）：五輪模式每通過一輪篩選，火花的上限多 D.ECON.sparkCapStep（s.sparkCapBonus）
+  const sparkMax = (s) => round1(Math.max(1, Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience) - (perk(s).sparkCapMinus || 0) - (perk(s).lowRatingCap && s.rating < 3 ? perk(s).lowRatingCap : 0)) + (s.mode === 'rounds' ? (s.sparkCapBonus || 0) : 0));
   function addSpark(s, v, raw) {
     if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey')) * (perk(s).sparkGain || 1);
     if (v > 0 && s.spark >= 3) v *= 0.5;
     const before = s.spark;
     let next = s.spark + v;
     if (v > 0) next = Math.min(next, Math.max(sparkMax(s), s.spark));
-    s.spark = clamp(next, IE.Rounds && IE.Rounds.on(s) ? D.ECON.sparkFloor : 0, SPARK_MAX);
+    s.spark = clamp(next, IE.Rounds && IE.Rounds.on(s) ? D.ECON.sparkFloor : 0, SPARK_MAX + (s.mode === 'rounds' ? (s.sparkCapBonus || 0) : 0));
     return round1(s.spark - before);
   }
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
@@ -17255,7 +17287,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (isDesk) res.art.subject = res.subject;
     s.gallery = (s.gallery || []).concat([res.art]).slice(-40);
     const logEntry = { form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() };
-    if (isDesk) logEntry.subject = res.subject;
+    if (isDesk) { logEntry.subject = res.subject; logEntry.uids = res.scoring.slice(); }
     ses.log.push(logEntry);
     if (passedBefore) {
       ses.encore = (ses.encore || 0) + 1;
@@ -18636,7 +18668,28 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   function settle(s, ses, playsLeft) {
     if (!ses || !ses.stage || (s.stageDone && s.stageDone[s.day])) return null;
     const score = stageScore(ses);
-    return resolve(s, ses.stage, score, playsLeft);
+    const out = resolve(s, ses.stage, score, playsLeft);
+    // 第十七期（後段的引擎）：名作：一晚達到目標的 2 倍，最好的一筆裏計分的素材各升一星（最多 ★5）
+    const ms = D.ECON.masterStar || 0;
+    if (out && out.pass && out.over && ms && IE.Rounds && IE.Rounds.on(s) && ses.log && ses.log.length) {
+      const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
+      const ups = [];
+      (best.uids || []).forEach((u) => {
+        const c = s.cards.find((x) => x.uid === u);
+        if (!c) return;
+        const before = IE.Create.starOf(c);
+        if (before >= 5) return;
+        c.star = Math.min(5, before + ms);
+        c.master = (c.master || 0) + 1;
+        ups.push(c.uid);
+      });
+      if (ups.length) {
+        s.stats.masterworks = (s.stats.masterworks || 0) + 1;
+        out.master = ups;
+        if (D.ENGINE_TEXT) out.lines.push(D.ENGINE_TEXT.masterwork.replace('{n}', String(ups.length)));
+      }
+    }
+    return out;
   }
   function resolve(s, stage, score, playsLeft) {
     if (IE.Rounds && IE.Rounds.on(s)) {
@@ -18984,7 +19037,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     for (const ch of String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
     h >>>= 0;
     const bgs = Object.keys(D.BACKGROUNDS).filter((id) => !D.BACKGROUNDS[id].unlock);
-    const seasons = Object.keys(D.SEASONS);
+    const seasons = D.SEASON_ORDER.slice();
     return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 2 };
   }
 
@@ -19008,7 +19061,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     for (const ch of 'week' + String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
     h >>>= 0;
     const bgs = Object.keys(D.BACKGROUNDS).filter((id) => D.BACKGROUNDS[id].rarity === 'R');
-    const seasons = Object.keys(D.SEASONS), mods = Object.keys(WEEKLY_MODS);
+    const seasons = D.SEASON_ORDER.slice(), mods = Object.keys(WEEKLY_MODS);
     return { key, seed: h % 1000000000, bg: bgs[h % bgs.length], season: seasons[(h >>> 8) % seasons.length], stake: 3, mod: mods[(h >>> 12) % mods.length] };
   }
 
@@ -19437,7 +19490,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     }
 
     const flooded = R.flooded(s);
-    s.floodRun = flooded ? (s.floodRun || 0) + 1 : 0;
+    // WO-16-07：寒潮季結冰：已經淹了的維持原來的階段，不再惡化（floodRun 不增加）；「輕」的損失照常
+    s.floodRun = flooded ? (s.season === 'cold' ? Math.max(1, s.floodRun || 0) : (s.floodRun || 0) + 1) : 0;
     if (flooded) {
       s.stats = s.stats || {};
       s.stats.floodNights = (s.stats.floodNights || 0) + 1;
@@ -19742,9 +19796,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'stageTarget') : 1;
     const ease = s && s.firstRun && k <= 2 ? D.ECON.firstRunEase : 1;
     const nMod = s && s.nightMod && s.nightMod.night === k ? s.nightMod.mult : 1;
-    // 第十七期第一輪校準：兩段式曲線（前 lateFrom 晚 ×growth，之後 ×growthLate）；章節再乘它的難度
+    // 第十七期第二輪校準：逐晚的表 curve（超過表的長度就用最後一個）；沒有表時用舊的兩段式。章節再乘它的難度
     const E = D.ECON, lf = E.lateFrom || 99;
-    const curve = Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
+    const curve = Array.isArray(E.curve) && E.curve.length
+      ? E.curve[R.clamp(k - 1, 0, E.curve.length - 1)]
+      : Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
     const ch = IE.Chapters ? IE.Chapters.of(s) : null;
     return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1));
   }
@@ -19902,7 +19958,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         R.aliveNpcs(s).forEach((n) => out.push('friend:' + n.id));
       } else if (c.id === 'trip') {
         if (r >= (c.minRound || 2)) (c.origins || []).forEach((o) => out.push('trip:' + o));
-      } else if (!(s.removed && s.removed[c.id]) && !R.worldClosed(s, c.id)) {
+      } else if (!(s.removed && s.removed[c.id]) && !R.worldClosed(s, c.id) && !(c.id === 'dive' && s.season === 'cold')) {
+        // WO-16-07：寒潮季水面結冰，不能潛水（已經有的潛水差事照常過期）
         out.push(c.id);
       }
     });
@@ -20651,8 +20708,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     s.pick = null;
     const seasonLen = R.modeOf(s).season || 20;
     if (Math.floor((s.day - 1) / seasonLen) > Math.floor((prevDay - 1) / seasonLen)) {
-      const i = D.SEASON_ORDER.indexOf(s.season);
-      s.season = D.SEASON_ORDER[(i + 1) % D.SEASON_ORDER.length];
+      // WO-16-07：有寒潮季（系統開關 cold）就用四季的次序；由寒潮季換到下一季的那一晚，冰融了，水位一次過上升
+      const order = feat(s, 'cold') && D.SEASON_ORDER16 ? D.SEASON_ORDER16 : D.SEASON_ORDER;
+      const prev = s.season;
+      const i = order.indexOf(s.season);
+      s.season = order[(i + 1) % order.length];
+      if (prev === 'cold' && s.season !== 'cold') {
+        s.water = Math.min(8.5, (s.water || 0) + ((D.ECON16 && D.ECON16.thaw) || 0));
+        s.thawNight = s.night;
+      }
     }
     if (Array.isArray(s.events)) {
       if (s.events.some((e) => s.day >= e.until)) {
@@ -20735,9 +20799,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       lines.push(D.ROUND_TEXT.soulFail.replace('{soul}', soulStr));
     }
     const passed = lost.length === 0;
+    let sparkCapLine = null;
     if (passed) {
       s.reviewsPassed = (s.reviewsPassed || 0) + 1;
       R.gainTicket(s, 'gold', 1, '通過第 ' + round + ' 輪篩選');
+      // 第十七期（後段的引擎）：通過篩選，外星人調高你的訊號上限
+      const capStep = D.ECON.sparkCapStep || 0;
+      if (capStep && round < total(s)) {
+        s.sparkCapBonus = Math.round(((s.sparkCapBonus || 0) + capStep) * 100) / 100;
+        R.addSpark(s, capStep, true);
+        // 放在 rep.sparkCap（不放進 lines：lines[2] 是朋友被收藏的那一句）
+        if (D.ENGINE_TEXT) sparkCapLine = D.ENGINE_TEXT.sparkCapUp.replace('{v}', String(capStep)).replace('{max}', R.sparkMax(s).toFixed(1));
+      }
     }
     s.roundLog = s.roundLog || [];
     s.roundLog.push({ round, rent, paid, soul, soulOk, lost });
@@ -20754,6 +20827,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       ending: null,
       lines,
       collect: null,
+      sparkCap: sparkCapLine,
     };
     if (!s.ended) {
       if (round >= total(s) && s.chances > 0) {
@@ -26394,6 +26468,25 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     },
     drawWater(c, s, night, morning, afternoon, bot) {
       const wy = waterY(s.water);
+      // WO-16-07：寒潮季：水面結冰，靜止，有裂紋和反光（不畫波紋）
+      if (s.season === 'cold') {
+        c.fillStyle = 'rgba(176,214,236,0.9)';
+        c.fillRect(0, wy, 320, 180 - wy);
+        c.fillStyle = 'rgba(235,248,255,0.55)';
+        c.fillRect(0, wy, 320, 1);
+        c.fillStyle = 'rgba(96,140,176,0.55)';
+        for (let i = 0; i < 9; i++) {
+          let x = (i * 37 + 11) % 320, y = wy + 3 + (i * 5) % Math.max(4, 176 - wy);
+          for (let k = 0; k < 7; k++) {
+            c.fillRect(x, y, 3, 1);
+            x += 3; y += ((i + k) % 3) - 1;
+            if (y <= wy + 1 || y >= 179) break;
+          }
+        }
+        c.fillStyle = 'rgba(255,255,255,' + (night ? 0.35 : 0.6) + ')';
+        for (let i = 0; i < 6; i++) c.fillRect((i * 61 + 23) % 316, wy + 2 + (i * 7) % Math.max(3, 170 - wy), 2, 1);
+        return;
+      }
       const isAcid = IE.DATA.SEASONS[s.season].weather === 'acid';
       const waterBase = isAcid ? '#13564c' : morning ? '#14667c' : afternoon ? '#12586e' : '#0e5a6e';
       c.fillStyle = P.rgba(waterBase, 0.8);
@@ -26486,6 +26579,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
           const bx = Math.round((i * 59 + this.t * 30) % 312);
           const phase = (this.t * 3 + i * 0.7) % 1;
           c.fillRect(bx, Math.round(wy - phase * 4), 2, 1);
+        }
+      } else if (w === 'cold') {
+        // WO-16-07：寒潮季：慢慢落下的雪，冷色調
+        c.fillStyle = 'rgba(191,230,255,0.07)';
+        c.fillRect(0, 0, 320, 180);
+        for (let i = 0; i < 46; i++) {
+          const x = Math.round(((i * 89 + Math.sin(this.t * 0.9 + i) * 6 + this.t * 5) % 330 + 330) % 330 - 5);
+          const y = Math.round((i * 53 + this.t * 16) % 180);
+          c.fillStyle = i % 4 ? 'rgba(255,255,255,0.8)' : 'rgba(210,235,255,0.85)';
+          c.fillRect(x, y, i % 5 ? 1 : 2, i % 5 ? 1 : 2);
         }
       } else if (w === 'heat') {
         // 熱浪季：熱空氣扭曲波紋與上升熱流
@@ -26898,6 +27001,39 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       fr(c, 'rgba(160,200,255,0.55)', x + 50, y + 3, 26, 2);
       fr(c, '#d9fbff', x + 66, y - 3, 1, 1);
       if (mod(e.t, 5) < 1) for (let k = 0; k < 5; k++) fr(c, 'rgba(210,240,255,0.7)', x + 56 + k - 2, y - 14 - k * 2 + mod(e.t * 10, 3), 1, 2);
+      return null;
+    },
+    // WO-16-07：寒潮季的三種天氣
+    sleet(c, e) {
+      // 凍雨：斜斜的冰粒，打在冰面上彈起
+      c.fillStyle = 'rgba(205,230,255,0.6)';
+      fall(c, e.t, 60, { speed: 150, dx: -36, draw: (x, y) => { c.fillRect(Math.round(x), Math.round(y), 1, 2); c.fillRect(Math.round(x) - 1, Math.round(y) + 2, 1, 1); } });
+      for (let i = 0; i < 12; i++) {
+        if (mod(Math.floor(e.t * 10) + i * 3, 7)) continue;
+        fr(c, 'rgba(240,250,255,0.85)', mod(i * 53 + e.t * 40, W), e.wy - 1 - (i % 2), 1, 1);
+      }
+      fr(c, 'rgba(180,215,240,0.06)', 0, 0, W, H);
+      return null;
+    },
+    heavysnow(c, e) {
+      // 大雪：密、大片、隨風
+      fall(c, e.t, 130, { speed: 26, dx: 14, sway: 1.1, draw: (x, y, i) => fr(c, i % 3 ? 'rgba(255,255,255,0.9)' : 'rgba(215,235,255,0.95)', x, y, i % 4 ? 2 : 1, i % 4 ? 2 : 1) });
+      fr(c, 'rgba(230,242,255,0.14)', 0, 0, W, H);
+      return null;
+    },
+    icelock(c, e) {
+      // 冰封：海面全面結冰，長長的裂紋，偶爾一點反光；天空很靜
+      c.fillStyle = 'rgba(80,120,160,0.6)';
+      for (let i = 0; i < 5; i++) {
+        let x = mod(i * 71 + 9, W), y = e.wy + 4 + (i * 6) % Math.max(4, H - e.wy - 6);
+        for (let k = 0; k < 26; k++) {
+          c.fillRect(Math.round(x), Math.round(y), 2, 1);
+          x += 2; y += ((i * 7 + k) % 5) < 2 ? -1 : ((i + k) % 4 === 0 ? 1 : 0);
+          if (y <= e.wy + 1 || y >= H - 1) break;
+        }
+      }
+      if (mod(Math.floor(e.t * 1.5), 4) === 0) fr(c, 'rgba(255,255,255,0.8)', mod(Math.floor(e.t) * 47, W - 4), e.wy + 6, 3, 1);
+      fr(c, 'rgba(200,230,255,0.05)', 0, 0, W, H);
       return null;
     },
     freeze(c) {
@@ -36010,7 +36146,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="hud-meters">'
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
       + '<div class="meter m-body"><span class="lbl">身體</span><div class="bar"><i style="width:' + Math.max(0, s.body / bmax * 100) + '%"></i></div><b class="num">' + Math.max(0, Math.round(s.body)) + '<small>/' + bmax + '</small></b></div>'
-      + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">' + (s.spark < 1 ? '麻木' : '火花') + '</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">×' + s.spark.toFixed(1) + '</b></div>'
+      + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">' + (s.spark < 1 ? '麻木' : '火花') + '</span><div class="bar"><i style="width:' + Math.min(100, s.spark / Math.max(R().SPARK_MAX, R().sparkMax(s)) * 100) + '%"></i></div><b class="num">×' + s.spark.toFixed(1) + '</b></div>'
       + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + '<small>克</small></b></div>'
       + '<div class="meter m-signal"><span class="lbl">訊號</span><div class="bar"><i style="width:' + Math.min(100, sig / th * 100) + '%"></i></div><b class="num">' + kfmt(sig) + '/' + kfmt(th) + '</b></div>'
       + '</div>'
@@ -37222,6 +37358,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     } else if (s.floodPump && FT.pump) {
       floodBannerHtml = '<div class="rd-flood f-pump">' + esc(FT.pump) + '</div>';
     }
+    // WO-16-07：由寒潮季換到下一季的那一晚：冰融了，水位一次過上升
+    if (s.thawNight === s.night && FT.thaw) floodBannerHtml = '<div class="rd-flood f-thaw">' + esc(FT.thaw) + '</div>' + floodBannerHtml;
     const btns = (V.reroll ? '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>' : '')
       + (V.skip ? '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>' : '')
       + (V.deck ? '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>' : '')
@@ -37788,6 +37926,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().soulLimit(IE.Game && IE.Game.state) + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
       + '</div>'
       + collectHtml
+      + (rep.sparkCap ? '<p class="era-intel rr-cap">' + esc(rep.sparkCap) + '</p>' : '')
       + (rep.nextJudge && rep.nextJudge.length && D().SALVAGE_TEXT ? '<p class="era-intel">' + esc(D().SALVAGE_TEXT.nextJudge.replace('{rules}', rep.nextJudge.join('、'))) + '</p>' : '')
       + '<div class="rr-verdict">'
       + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'
@@ -37902,7 +38041,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + (curMode === 'rounds' && IE.EraUI && IE.Chapters ? IE.EraUI.chapterChip(meta, sel.chapter) : '')
       + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + modeBtn('rounds') + '</div>'
       + '<details class="sd-more su-classic"' + (isClassic ? ' open' : '') + '><summary>經典模式</summary><p class="mute">舊版玩法，不再平衡。</p><div class="seg">' + modeBtn('standard') + modeBtn('long') + '</div></details></div>'
-      + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + Object.keys(D().SEASONS).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
+      + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + D().SEASON_ORDER.map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
       + (open ? UI.stakeHtml(sel, meta) : '') + '</div>';
     return '<div class="setup8"><div class="panel-head"><h2>你是誰？</h2><p>R 一開始就可以用；SR 要在遊戲中做到某件事；UR 要完成艱難的挑戰。三級都可以用人才扭蛋機抽出來。</p></div>'
       + '<div class="su-layout"><div class="su-roster">' + group('R') + group('SR') + group('UR') + '</div>'
@@ -40524,6 +40663,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + (g.pass
           ? '<p class="sr-reward">獎金 <b class="num">+$' + fmt(g.reward || 0) + '</b>' + (earlyAmt > 0 ? ' <small>（其中提早收工 +$' + fmt(earlyAmt) + '）</small>' : '') + '</p>'
             + (ov ? '<small class="sr-overkill">超額 ' + ov.x + ' 倍：火花 +' + ov.spark + (ov.ticket ? '・金色扭蛋券 +' + ov.ticket : '') + '</small>' : '')
+            + (g.master && g.master.length && D().ENGINE_TEXT ? '<small class="sr-overkill sr-master">' + esc(D().ENGINE_TEXT.masterwork.replace('{n}', String(g.master.length))) + '</small>' : '')
           : '<p class="sr-fail-msg">' + esc(RT.failed) + '</p>'
             + '<small class="sr-chances">' + esc(RT.chances) + '：<b class="sr-dots">' + dots + '</b>（火花 ' + E.failSpark + '）</small>')
         + '</div>';
@@ -40760,7 +40900,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     del(k) { try { localStorage.removeItem(k); } catch (e) { /* 忽略 */ } },
   };
 
-  const seasons = Object.keys(D.SEASONS);
+  const seasons = D.SEASON_ORDER.slice();  // WO-16-07：不包括寒潮季（只在五輪模式的季節輪替出現）
   const Game = IE.Game = {
     state: null, meta: store.get(KEY_META) || {}, scene: null, micro: null,
     setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)], mode: 'rounds' },

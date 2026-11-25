@@ -87,7 +87,9 @@ module.exports = (t) => {
     assert.equal(meta.chapters.legacy, false);
     assert.equal(CH.status(meta, 'c1'), 'open');
     assert.equal(CH.status(meta, 'c2'), 'locked');
-    assert.equal(CH.status(meta, 'c5'), 'building');
+    // 第五季「急凍」在 WO-16-07 之後開放：未通過第四季時是鎖着的；第六季仍在興建中
+    assert.equal(CH.status(meta, 'c5'), 'locked');
+    assert.equal(CH.status(meta, 'c6'), 'building');
     assert.equal(CH.defaultFor(meta), 'c1');
     assert.equal(CH.freeUnlocked(meta), false);
     const s = run({ chapter: 'c1' });

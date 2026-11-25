@@ -17,38 +17,40 @@
   // target：這一季的目標倍數（第一輪校準：第一季最易）。
   const CHAPTERS = [
     {
-      target: 0.75, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      target: 0.35, id: 'c1', collector: 'grey', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
       rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
       intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
       adds: '創作桌、人生的選擇、朋友、差事',
       clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
     },
     {
-      target: 0.85, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      target: 0.42, id: 'c2', collector: 'harvest', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
       rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
       intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
       adds: '水位：水淹到家，由受傷到失去住所；天氣',
       clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
     },
     {
-      target: 0.95, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      target: 0.46, id: 'c3', collector: 'mirror', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
       rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
       intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
       adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
       clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
     },
     {
-      target: 1, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      target: 0.88, id: 'c4', collector: 'octo', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
       rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
       intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
       adds: '外星評審的規則；出國',
       clear: '觀光團把你的作品放進玻璃櫃。導遊說，下一季會冷。',
     },
     {
-      id: 'c5', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
-      rounds: 5, feats: [], objRarity: [], sky: 'np-sky-water-1', building: true,
+      // WO-16-07 之後開放（2026-11-25）
+      target: 0.95, id: 'c5', collector: 'purge', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
+      rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip', 'cold'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-water-1',
       intro: '洋流停了。水面結冰，水位暫時不升；融冰的那天，水會一次過上來。',
       adds: '寒潮季：結冰、不能潛水、融冰',
+      clear: '衛生部在你的檔案上蓋了「已消毒」。冰融的那晚，你的鞋子濕到腳踝。',
     },
     {
       id: 'c6', no: 6, year: '2081 年・夏', name: '大概是偷來的', species: '逃兵網絡', org: '逃兵網絡', zone: '走私區',
@@ -239,5 +241,11 @@
     { id: 'c4', name: '玻璃櫃', desc: '通過「觀光季」' },
   ];
 
-  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17 });
+  // 第十七期（後段的引擎）的文字
+  const ENGINE_TEXT = {
+    sparkCapUp: '外星人調高了你的訊號上限：火花上限 +{v}（現在 ×{max}）。',
+    masterwork: '名作：這幅作品的 {n} 張素材記得更深，各升一星。',
+  };
+
+  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17, ENGINE_TEXT });
 });

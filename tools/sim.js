@@ -474,7 +474,7 @@ function runOne(strat, bg, season, seed) {
 }
 
 const bgs = Object.keys(D.BACKGROUNDS);
-const seasons = Object.keys(D.SEASONS);
+const seasons = D.SEASON_ORDER.slice();
 const pct = (n, t) => (100 * n / t).toFixed(0).padStart(3) + '%';
 const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
 

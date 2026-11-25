@@ -277,6 +277,39 @@
       if (mod(e.t, 5) < 1) for (let k = 0; k < 5; k++) fr(c, 'rgba(210,240,255,0.7)', x + 56 + k - 2, y - 14 - k * 2 + mod(e.t * 10, 3), 1, 2);
       return null;
     },
+    // WO-16-07：寒潮季的三種天氣
+    sleet(c, e) {
+      // 凍雨：斜斜的冰粒，打在冰面上彈起
+      c.fillStyle = 'rgba(205,230,255,0.6)';
+      fall(c, e.t, 60, { speed: 150, dx: -36, draw: (x, y) => { c.fillRect(Math.round(x), Math.round(y), 1, 2); c.fillRect(Math.round(x) - 1, Math.round(y) + 2, 1, 1); } });
+      for (let i = 0; i < 12; i++) {
+        if (mod(Math.floor(e.t * 10) + i * 3, 7)) continue;
+        fr(c, 'rgba(240,250,255,0.85)', mod(i * 53 + e.t * 40, W), e.wy - 1 - (i % 2), 1, 1);
+      }
+      fr(c, 'rgba(180,215,240,0.06)', 0, 0, W, H);
+      return null;
+    },
+    heavysnow(c, e) {
+      // 大雪：密、大片、隨風
+      fall(c, e.t, 130, { speed: 26, dx: 14, sway: 1.1, draw: (x, y, i) => fr(c, i % 3 ? 'rgba(255,255,255,0.9)' : 'rgba(215,235,255,0.95)', x, y, i % 4 ? 2 : 1, i % 4 ? 2 : 1) });
+      fr(c, 'rgba(230,242,255,0.14)', 0, 0, W, H);
+      return null;
+    },
+    icelock(c, e) {
+      // 冰封：海面全面結冰，長長的裂紋，偶爾一點反光；天空很靜
+      c.fillStyle = 'rgba(80,120,160,0.6)';
+      for (let i = 0; i < 5; i++) {
+        let x = mod(i * 71 + 9, W), y = e.wy + 4 + (i * 6) % Math.max(4, H - e.wy - 6);
+        for (let k = 0; k < 26; k++) {
+          c.fillRect(Math.round(x), Math.round(y), 2, 1);
+          x += 2; y += ((i * 7 + k) % 5) < 2 ? -1 : ((i + k) % 4 === 0 ? 1 : 0);
+          if (y <= e.wy + 1 || y >= H - 1) break;
+        }
+      }
+      if (mod(Math.floor(e.t * 1.5), 4) === 0) fr(c, 'rgba(255,255,255,0.8)', mod(Math.floor(e.t) * 47, W - 4), e.wy + 6, 3, 1);
+      fr(c, 'rgba(200,230,255,0.05)', 0, 0, W, H);
+      return null;
+    },
     freeze(c) {
       c.fillStyle = 'rgba(190,225,255,0.55)';
       for (let i = 0; i < 90; i++) c.fillRect(mod(i * 97, W), mod(i * 61, H), 1, 3);

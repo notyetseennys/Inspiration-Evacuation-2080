@@ -91,7 +91,7 @@
       + (curMode === 'rounds' && IE.EraUI && IE.Chapters ? IE.EraUI.chapterChip(meta, sel.chapter) : '')
       + '<div class="su-opt"><span class="lbl">一局的長度</span><div class="seg">' + modeBtn('rounds') + '</div>'
       + '<details class="sd-more su-classic"' + (isClassic ? ' open' : '') + '><summary>經典模式</summary><p class="mute">舊版玩法，不再平衡。</p><div class="seg">' + modeBtn('standard') + modeBtn('long') + '</div></details></div>'
-      + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + Object.keys(D().SEASONS).map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
+      + '<div class="su-opt"><span class="lbl">起始季節</span><div class="seg">' + D().SEASON_ORDER.map((k) => '<button type="button" class="' + (sel.season === k ? 'sel' : '') + '" data-do="season" data-id="' + k + '">' + D().SEASONS[k].name + '</button>').join('') + '</div></div>'
       + (open ? UI.stakeHtml(sel, meta) : '') + '</div>';
     return '<div class="setup8"><div class="panel-head"><h2>你是誰？</h2><p>R 一開始就可以用；SR 要在遊戲中做到某件事；UR 要完成艱難的挑戰。三級都可以用人才扭蛋機抽出來。</p></div>'
       + '<div class="su-layout"><div class="su-roster">' + group('R') + group('SR') + group('UR') + '</div>'

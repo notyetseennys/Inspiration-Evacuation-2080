@@ -124,7 +124,28 @@
   function settle(s, ses, playsLeft) {
     if (!ses || !ses.stage || (s.stageDone && s.stageDone[s.day])) return null;
     const score = stageScore(ses);
-    return resolve(s, ses.stage, score, playsLeft);
+    const out = resolve(s, ses.stage, score, playsLeft);
+    // 第十七期（後段的引擎）：名作：一晚達到目標的 2 倍，最好的一筆裏計分的素材各升一星（最多 ★5）
+    const ms = D.ECON.masterStar || 0;
+    if (out && out.pass && out.over && ms && IE.Rounds && IE.Rounds.on(s) && ses.log && ses.log.length) {
+      const best = ses.log.reduce((a, x) => (x.total > a.total ? x : a), ses.log[0]);
+      const ups = [];
+      (best.uids || []).forEach((u) => {
+        const c = s.cards.find((x) => x.uid === u);
+        if (!c) return;
+        const before = IE.Create.starOf(c);
+        if (before >= 5) return;
+        c.star = Math.min(5, before + ms);
+        c.master = (c.master || 0) + 1;
+        ups.push(c.uid);
+      });
+      if (ups.length) {
+        s.stats.masterworks = (s.stats.masterworks || 0) + 1;
+        out.master = ups;
+        if (D.ENGINE_TEXT) out.lines.push(D.ENGINE_TEXT.masterwork.replace('{n}', String(ups.length)));
+      }
+    }
+    return out;
   }
   function resolve(s, stage, score, playsLeft) {
     if (IE.Rounds && IE.Rounds.on(s)) {

@@ -45,23 +45,24 @@ module.exports = (t) => {
   });
 
   // 第十七期第一輪校準：兩段式曲線（前 lateFrom 晚 ×growth，之後 ×growthLate）
-  const curve = (k) => Math.pow(D.ECON.growth, Math.min(k, D.ECON.lateFrom) - 1) * Math.pow(D.ECON.growthLate, Math.max(0, k - D.ECON.lateFrom));
-  t.test('五輪：目標每晚上升（兩段式：前六晚快、之後慢）', () => {
+  // 第十七期第二輪校準：目標是逐晚的表（t1 × curve[第幾晚 − 1]）
+  const curve = (k) => D.ECON.curve[k - 1];
+  t.test('五輪：目標按逐晚的表上升（t1 × curve），每晚都比前一晚高', () => {
     const s = t.run({ mode: 'rounds' });
+    assert.equal(D.ECON.curve.length, 15);
+    assert.equal(D.ECON.curve[0], 1);
     assert.equal(Rounds.target(s, 1), Rounds.sig3(D.ECON.t1));
-    for (let k = 1; k <= 14; k++) {
+    for (let k = 1; k <= 15; k++) {
       assert.equal(Rounds.target(s, k), Rounds.sig3(D.ECON.t1 * curve(k)));
-      const want = k < D.ECON.lateFrom ? D.ECON.growth : D.ECON.growthLate;
-      const ratio = Rounds.target(s, k + 1) / Rounds.target(s, k);
-      assert.ok(Math.abs(ratio - want) <= want * 0.015, '第 ' + k + ' 晚增長率誤差超過 1.5%');
+      if (k > 1) assert.ok(Rounds.target(s, k) > Rounds.target(s, k - 1), '第 ' + k + ' 晚的目標要比前一晚高');
     }
   });
 
   t.test('五輪：第一局頭兩晚較易', () => {
     const s = t.run({ mode: 'rounds', meta: { runs: 0 } });
     assert.equal(Rounds.target(s, 1), Rounds.sig3(D.ECON.t1 * D.ECON.firstRunEase));
-    assert.equal(Rounds.target(s, 2), Rounds.sig3(D.ECON.t1 * D.ECON.growth * D.ECON.firstRunEase));
-    assert.equal(Rounds.target(s, 3), Rounds.sig3(D.ECON.t1 * Math.pow(D.ECON.growth, 2)));
+    assert.equal(Rounds.target(s, 2), Rounds.sig3(D.ECON.t1 * curve(2) * D.ECON.firstRunEase));
+    assert.equal(Rounds.target(s, 3), Rounds.sig3(D.ECON.t1 * curve(3)));
   });
 
   t.test('五輪：外星評審之夜', () => {

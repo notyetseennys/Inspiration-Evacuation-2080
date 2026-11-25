@@ -85,9 +85,11 @@
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'stageTarget') : 1;
     const ease = s && s.firstRun && k <= 2 ? D.ECON.firstRunEase : 1;
     const nMod = s && s.nightMod && s.nightMod.night === k ? s.nightMod.mult : 1;
-    // 第十七期第一輪校準：兩段式曲線（前 lateFrom 晚 ×growth，之後 ×growthLate）；章節再乘它的難度
+    // 第十七期第二輪校準：逐晚的表 curve（超過表的長度就用最後一個）；沒有表時用舊的兩段式。章節再乘它的難度
     const E = D.ECON, lf = E.lateFrom || 99;
-    const curve = Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
+    const curve = Array.isArray(E.curve) && E.curve.length
+      ? E.curve[R.clamp(k - 1, 0, E.curve.length - 1)]
+      : Math.pow(E.growth, Math.min(k, lf) - 1) * Math.pow(E.growthLate || E.growth, Math.max(0, k - lf));
     const ch = IE.Chapters ? IE.Chapters.of(s) : null;
     return sig3(E.t1 * curve * stMod * ease * nMod * ((ch && ch.target) || 1));
   }
@@ -245,7 +247,8 @@
         R.aliveNpcs(s).forEach((n) => out.push('friend:' + n.id));
       } else if (c.id === 'trip') {
         if (r >= (c.minRound || 2)) (c.origins || []).forEach((o) => out.push('trip:' + o));
-      } else if (!(s.removed && s.removed[c.id]) && !R.worldClosed(s, c.id)) {
+      } else if (!(s.removed && s.removed[c.id]) && !R.worldClosed(s, c.id) && !(c.id === 'dive' && s.season === 'cold')) {
+        // WO-16-07：寒潮季水面結冰，不能潛水（已經有的潛水差事照常過期）
         out.push(c.id);
       }
     });
@@ -994,8 +997,15 @@
     s.pick = null;
     const seasonLen = R.modeOf(s).season || 20;
     if (Math.floor((s.day - 1) / seasonLen) > Math.floor((prevDay - 1) / seasonLen)) {
-      const i = D.SEASON_ORDER.indexOf(s.season);
-      s.season = D.SEASON_ORDER[(i + 1) % D.SEASON_ORDER.length];
+      // WO-16-07：有寒潮季（系統開關 cold）就用四季的次序；由寒潮季換到下一季的那一晚，冰融了，水位一次過上升
+      const order = feat(s, 'cold') && D.SEASON_ORDER16 ? D.SEASON_ORDER16 : D.SEASON_ORDER;
+      const prev = s.season;
+      const i = order.indexOf(s.season);
+      s.season = order[(i + 1) % order.length];
+      if (prev === 'cold' && s.season !== 'cold') {
+        s.water = Math.min(8.5, (s.water || 0) + ((D.ECON16 && D.ECON16.thaw) || 0));
+        s.thawNight = s.night;
+      }
     }
     if (Array.isArray(s.events)) {
       if (s.events.some((e) => s.day >= e.until)) {
@@ -1078,9 +1088,18 @@
       lines.push(D.ROUND_TEXT.soulFail.replace('{soul}', soulStr));
     }
     const passed = lost.length === 0;
+    let sparkCapLine = null;
     if (passed) {
       s.reviewsPassed = (s.reviewsPassed || 0) + 1;
       R.gainTicket(s, 'gold', 1, '通過第 ' + round + ' 輪篩選');
+      // 第十七期（後段的引擎）：通過篩選，外星人調高你的訊號上限
+      const capStep = D.ECON.sparkCapStep || 0;
+      if (capStep && round < total(s)) {
+        s.sparkCapBonus = Math.round(((s.sparkCapBonus || 0) + capStep) * 100) / 100;
+        R.addSpark(s, capStep, true);
+        // 放在 rep.sparkCap（不放進 lines：lines[2] 是朋友被收藏的那一句）
+        if (D.ENGINE_TEXT) sparkCapLine = D.ENGINE_TEXT.sparkCapUp.replace('{v}', String(capStep)).replace('{max}', R.sparkMax(s).toFixed(1));
+      }
     }
     s.roundLog = s.roundLog || [];
     s.roundLog.push({ round, rent, paid, soul, soulOk, lost });
@@ -1097,6 +1116,7 @@
       ending: null,
       lines,
       collect: null,
+      sparkCap: sparkCapLine,
     };
     if (!s.ended) {
       if (round >= total(s) && s.chances > 0) {

@@ -11,7 +11,7 @@
     del(k) { try { localStorage.removeItem(k); } catch (e) { /* 忽略 */ } },
   };
 
-  const seasons = Object.keys(D.SEASONS);
+  const seasons = D.SEASON_ORDER.slice();  // WO-16-07：不包括寒潮季（只在五輪模式的季節輪替出現）
   const Game = IE.Game = {
     state: null, meta: store.get(KEY_META) || {}, scene: null, micro: null,
     setup: { bg: 'copywriter', season: seasons[Math.floor(Math.random() * seasons.length)], mode: 'rounds' },

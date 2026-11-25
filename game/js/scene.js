@@ -447,6 +447,25 @@
     },
     drawWater(c, s, night, morning, afternoon, bot) {
       const wy = waterY(s.water);
+      // WO-16-07：寒潮季：水面結冰，靜止，有裂紋和反光（不畫波紋）
+      if (s.season === 'cold') {
+        c.fillStyle = 'rgba(176,214,236,0.9)';
+        c.fillRect(0, wy, 320, 180 - wy);
+        c.fillStyle = 'rgba(235,248,255,0.55)';
+        c.fillRect(0, wy, 320, 1);
+        c.fillStyle = 'rgba(96,140,176,0.55)';
+        for (let i = 0; i < 9; i++) {
+          let x = (i * 37 + 11) % 320, y = wy + 3 + (i * 5) % Math.max(4, 176 - wy);
+          for (let k = 0; k < 7; k++) {
+            c.fillRect(x, y, 3, 1);
+            x += 3; y += ((i + k) % 3) - 1;
+            if (y <= wy + 1 || y >= 179) break;
+          }
+        }
+        c.fillStyle = 'rgba(255,255,255,' + (night ? 0.35 : 0.6) + ')';
+        for (let i = 0; i < 6; i++) c.fillRect((i * 61 + 23) % 316, wy + 2 + (i * 7) % Math.max(3, 170 - wy), 2, 1);
+        return;
+      }
       const isAcid = IE.DATA.SEASONS[s.season].weather === 'acid';
       const waterBase = isAcid ? '#13564c' : morning ? '#14667c' : afternoon ? '#12586e' : '#0e5a6e';
       c.fillStyle = P.rgba(waterBase, 0.8);
@@ -539,6 +558,16 @@
           const bx = Math.round((i * 59 + this.t * 30) % 312);
           const phase = (this.t * 3 + i * 0.7) % 1;
           c.fillRect(bx, Math.round(wy - phase * 4), 2, 1);
+        }
+      } else if (w === 'cold') {
+        // WO-16-07：寒潮季：慢慢落下的雪，冷色調
+        c.fillStyle = 'rgba(191,230,255,0.07)';
+        c.fillRect(0, 0, 320, 180);
+        for (let i = 0; i < 46; i++) {
+          const x = Math.round(((i * 89 + Math.sin(this.t * 0.9 + i) * 6 + this.t * 5) % 330 + 330) % 330 - 5);
+          const y = Math.round((i * 53 + this.t * 16) % 180);
+          c.fillStyle = i % 4 ? 'rgba(255,255,255,0.8)' : 'rgba(210,235,255,0.85)';
+          c.fillRect(x, y, i % 5 ? 1 : 2, i % 5 ? 1 : 2);
         }
       } else if (w === 'heat') {
         // 熱浪季：熱空氣扭曲波紋與上升熱流

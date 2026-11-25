@@ -1090,7 +1090,7 @@
     if (isDesk) res.art.subject = res.subject;
     s.gallery = (s.gallery || []).concat([res.art]).slice(-40);
     const logEntry = { form: res.form, total: res.total, raw: res.raw, recipes: res.recipes, art: res.art, tags: uids.map((u) => (cardOf(s, u) || { tags: [] }).tags).flat() };
-    if (isDesk) logEntry.subject = res.subject;
+    if (isDesk) { logEntry.subject = res.subject; logEntry.uids = res.scoring.slice(); }
     ses.log.push(logEntry);
     if (passedBefore) {
       ses.encore = (ses.encore || 0) + 1;

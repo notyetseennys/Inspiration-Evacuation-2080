@@ -172,7 +172,7 @@
       + '<div class="hud-meters">'
       + '<div class="meter m-cash"><span class="lbl">$ 信用點</span><b class="num">' + fmt(s.cr) + '</b></div>'
       + '<div class="meter m-body"><span class="lbl">身體</span><div class="bar"><i style="width:' + Math.max(0, s.body / bmax * 100) + '%"></i></div><b class="num">' + Math.max(0, Math.round(s.body)) + '<small>/' + bmax + '</small></b></div>'
-      + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">' + (s.spark < 1 ? '麻木' : '火花') + '</span><div class="bar"><i style="width:' + (s.spark / R().SPARK_MAX * 100) + '%"></i></div><b class="num">×' + s.spark.toFixed(1) + '</b></div>'
+      + '<div class="meter m-spark' + (s.spark < 1 ? ' numb' : '') + '"><span class="lbl">' + (s.spark < 1 ? '麻木' : '火花') + '</span><div class="bar"><i style="width:' + Math.min(100, s.spark / Math.max(R().SPARK_MAX, R().sparkMax(s)) * 100) + '%"></i></div><b class="num">×' + s.spark.toFixed(1) + '</b></div>'
       + '<div class="meter m-soul' + (s.soul > R().SOUL_LIMIT ? ' over' : '') + '"><span class="lbl">靈魂</span><div class="bar"><i style="width:' + Math.min(100, s.soul / 30 * 100) + '%"></i><em style="left:' + (R().SOUL_LIMIT / 30 * 100) + '%"></em></div><b class="num">' + s.soul.toFixed(1) + '<small>克</small></b></div>'
       + '<div class="meter m-signal"><span class="lbl">訊號</span><div class="bar"><i style="width:' + Math.min(100, sig / th * 100) + '%"></i></div><b class="num">' + kfmt(sig) + '/' + kfmt(th) + '</b></div>'
       + '</div>'
@@ -1384,6 +1384,8 @@
     } else if (s.floodPump && FT.pump) {
       floodBannerHtml = '<div class="rd-flood f-pump">' + esc(FT.pump) + '</div>';
     }
+    // WO-16-07：由寒潮季換到下一季的那一晚：冰融了，水位一次過上升
+    if (s.thawNight === s.night && FT.thaw) floodBannerHtml = '<div class="rd-flood f-thaw">' + esc(FT.thaw) + '</div>' + floodBannerHtml;
     const btns = (V.reroll ? '<button class="btn" type="button" data-do="reroll"' + (s.cr < rCost ? ' disabled' : '') + '>' + esc(rerollTxt) + '</button>' : '')
       + (V.skip ? '<button class="btn" type="button" data-do="skip">' + esc(skipTxt) + '</button>' : '')
       + (V.deck ? '<button class="btn" type="button" data-do="deck">素材庫（' + s.cards.length + '/' + maxDeck + '）</button>' : '')
@@ -1950,6 +1952,7 @@
       + '<div class="rr-body"><span class="rr-k">靈魂天秤（上限 ' + R().soulLimit(IE.Game && IE.Game.state) + ' 克）</span><p class="rr-line">' + esc((rep.lines && rep.lines[1]) || '') + '</p></div>'
       + '</div>'
       + collectHtml
+      + (rep.sparkCap ? '<p class="era-intel rr-cap">' + esc(rep.sparkCap) + '</p>' : '')
       + (rep.nextJudge && rep.nextJudge.length && D().SALVAGE_TEXT ? '<p class="era-intel">' + esc(D().SALVAGE_TEXT.nextJudge.replace('{rules}', rep.nextJudge.join('、'))) + '</p>' : '')
       + '<div class="rr-verdict">'
       + '<span class="stamp ' + (rep.passed ? 'pass' : 'fail') + '">' + (rep.passed ? '通過' : '失去機會') + '</span>'

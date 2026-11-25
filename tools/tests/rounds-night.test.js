@@ -108,7 +108,9 @@ module.exports = (t) => {
     s.night = 1;
     assert.equal(Rounds.nightReward(s, 'boss', 0), 140);
     s.night = 15;
-    assert.equal(Rounds.nightReward(s, 'boss', 0), 280);
+    // 第五輪：140 × (1 + payGrowth × 4)（第十七期第二輪校準：payGrowth 0.25 → 0.45）
+    assert.equal(Rounds.nightReward(s, 'boss', 0), Math.round(140 * (1 + D.ECON.payGrowth * 4)));
+    assert.ok(Rounds.nightReward(s, 'boss', 0) > 140);
   });
 
   t.test('夜晚：舊模式不變', () => {

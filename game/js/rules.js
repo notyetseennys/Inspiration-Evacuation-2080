@@ -147,14 +147,15 @@
   // 火花絕對上限為 4；實際上限由良知決定（良知 100% → ×4，良知 0% → ×2）。
   // 自然恢復的火花受想像力（加成）與服從（壓抑）影響；超過 3 之後越升越慢。
   const SPARK_MAX = 4;
-  const sparkMax = (s) => round1(Math.max(1, Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience) - (perk(s).sparkCapMinus || 0) - (perk(s).lowRatingCap && s.rating < 3 ? perk(s).lowRatingCap : 0)));
+  // 第十七期（後段的引擎）：五輪模式每通過一輪篩選，火花的上限多 D.ECON.sparkCapStep（s.sparkCapBonus）
+  const sparkMax = (s) => round1(Math.max(1, Math.min(perk(s).sparkCap || 4, 2 + 2 * s.conscience) - (perk(s).sparkCapMinus || 0) - (perk(s).lowRatingCap && s.rating < 3 ? perk(s).lowRatingCap : 0)) + (s.mode === 'rounds' ? (s.sparkCapBonus || 0) : 0));
   function addSpark(s, v, raw) {
     if (v > 0 && !raw) v *= (1 + 0.005 * A(s, 'imag')) * (1 - 0.003 * A(s, 'obey')) * (perk(s).sparkGain || 1);
     if (v > 0 && s.spark >= 3) v *= 0.5;
     const before = s.spark;
     let next = s.spark + v;
     if (v > 0) next = Math.min(next, Math.max(sparkMax(s), s.spark));
-    s.spark = clamp(next, IE.Rounds && IE.Rounds.on(s) ? D.ECON.sparkFloor : 0, SPARK_MAX);
+    s.spark = clamp(next, IE.Rounds && IE.Rounds.on(s) ? D.ECON.sparkFloor : 0, SPARK_MAX + (s.mode === 'rounds' ? (s.sparkCapBonus || 0) : 0));
     return round1(s.spark - before);
   }
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。

@@ -1859,3 +1859,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   #modal .rd-memory button, #modal .rd-over button, #modal .rd-floodout button, #modal .rd-floodpick button,
   .rd-day .btn { min-height: 46px; }
 }
+
+/* WO-16-07：融冰的那一晚 */
+.rd-day .rd-flood.f-thaw {
+  border-color: rgba(191, 230, 255, 0.55);
+  background: rgba(150, 200, 235, 0.14);
+  color: #dff3ff;
+}
