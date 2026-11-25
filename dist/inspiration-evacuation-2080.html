@@ -13193,6 +13193,458 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   if (IE.Create && IE.Create.syncDeskForms) IE.Create.syncDeskForms();
 });
 
+// ---- js/data-chapters.js ----
+// 《靈感撤離 2080》第十七期：浮城年表（章節）、舊城打撈（局與局之間的升級樹）、撕開（卡包、閃卡、重複升星）。
+// 純資料，瀏覽器和 Node 共用。設計見 docs/research/booster-pack-heroes.md 和 docs/workorders/phase-17/README.md。
+// 只在五輪模式生效；經典模式（standard、long）不讀這個檔案的任何東西。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+
+  // ---------- 浮城年表 ----------
+  // feats：這一章開放的系統。沒有列出的系統在這一章不存在（不是隱藏）。
+  //   collect 朋友被收藏、flood 水淹的後果、weather 天氣、stance 工作裏的抉擇、kpi 外星 KPI、judge 外星評審的規則、trip 出國
+  // objRarity：市集和遺物攤會出現的物件稀有度。
+  // building：還在興建中（等對應的工單），不可以玩。
+  const CHAPTERS = [
+    {
+      id: 'c1', no: 1, year: '2080 年・春', name: '招聘季', species: '灰人', org: '星際人才發展局', zone: '招聘區',
+      rounds: 2, feats: ['collect'], objRarity: ['common'], sky: 'np-sky-neon-1',
+      intro: '星際人才發展局在浮城開設招聘處。他們複製了太多代，再也沒有靈感，只能向人類「招聘」。',
+      adds: '創作桌、人生的選擇、朋友、差事',
+      clear: '你通過了試用期。發展局把你的檔案升了一級，並且附上一句：下一季，水會上來。',
+    },
+    {
+      id: 'c2', no: 2, year: '2080 年・夏', name: '收成季', species: '收割者', org: '收割者農業署', zone: '收成區',
+      rounds: 3, feats: ['collect', 'flood', 'weather'], objRarity: ['common', 'rare'], sky: 'np-sky-water-2',
+      intro: '收割者的農業報告寫着：苦難令靈感豐收。這一季，浮城的水位不會再退。',
+      adds: '水位：水淹到家，由受傷到失去住所；天氣',
+      clear: '農業署把你列為「高產」。報告的附錄說，水位的上升「符合預期」。',
+    },
+    {
+      id: 'c3', no: 3, year: '2080 年・秋', name: '朝聖季', species: '鏡神族', org: '被提教會', zone: '朝聖區',
+      rounds: 4, feats: ['collect', 'flood', 'weather', 'stance', 'kpi'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-guilt-2',
+      intro: '鏡神族化成你崇拜的樣子，在浮城經營「被提」信仰。從這一季起，工作要你表態。',
+      adds: '工作裏的抉擇：照做、不照做、為了一個人；外星人的 KPI',
+      clear: '教會為你舉行了儀式。你不記得自己有沒有跪下。',
+    },
+    {
+      id: 'c4', no: 4, year: '2080 年・冬', name: '觀光季', species: '章魚星人', org: '章魚星觀光團', zone: '觀光區',
+      rounds: 5, feats: ['collect', 'flood', 'weather', 'stance', 'kpi', 'judge', 'trip'], objRarity: ['common', 'rare', 'legend'], sky: 'np-sky-memory-2',
+      intro: '章魚星人的觀光團來了。他們真心喜歡人類的藝術，喜歡的方式是擁有。五輪篩選，完整的一年。',
+      adds: '外星評審的規則；出國',
+      clear: '觀光團把你的作品放進玻璃櫃。導遊說，下一季會冷。',
+    },
+    {
+      id: 'c5', no: 5, year: '2081 年・春', name: '急凍', species: '淨化派', org: '淨化派衛生部', zone: '清除區',
+      rounds: 5, feats: [], objRarity: [], sky: 'np-sky-water-1', building: true,
+      intro: '洋流停了。水面結冰，水位暫時不升；融冰的那天，水會一次過上來。',
+      adds: '寒潮季：結冰、不能潛水、融冰',
+    },
+    {
+      id: 'c6', no: 6, year: '2081 年・夏', name: '大概是偷來的', species: '逃兵網絡', org: '逃兵網絡', zone: '走私區',
+      rounds: 5, feats: [], objRarity: [], sky: 'np-sky-rebel-2', building: true,
+      intro: '市面上開始出現 AI 仿造的記憶。給你素材的人，未必是朋友。',
+      adds: '鑑定素材：有些經歷是假的',
+    },
+    {
+      id: 'c7', no: 7, year: '2081 年・秋', name: '收藏家的價錢', species: '保育者', org: '人類保護區委員會', zone: '保護區',
+      rounds: 5, feats: [], objRarity: [], sky: 'np-sky-warmth-2', building: true,
+      intro: '保育者願意出高價收購人類的作品，條件是作者一併搬進保護區。',
+      adds: '賣作品要議價',
+    },
+    {
+      id: 'c8', no: 8, year: '2081 年・冬', name: '升維', species: '升維者', org: '（沒有機構）', zone: '柏拉圖空間',
+      rounds: 5, feats: [], objRarity: [], sky: 'np-sky-hope-2', building: true,
+      intro: '一個夠輕、夠亮的靈魂，可以不靠飛碟離開。',
+      adds: '最後的篩選',
+    },
+  ];
+
+  const CHAPTER_TEXT = {
+    head: '浮城年表',
+    sub: '一年四季，一季一種外星人。打敗那一季最後的外星評審，下一季才會開始。',
+    play: '開始這一季',
+    locked: '打敗上一季最後的外星評審，才會開放。',
+    building: '水位仍在上漲。這一季還在興建中。',
+    cleared: '已通過',
+    current: '進行中',
+    adds: '這一季新加入：{x}',
+    length: '{r} 輪・{n} 晚',
+    species: '{species}・{org}',
+    unlocked: '新的一季開放了：{x}',
+    clearedNow: '你通過了「{x}」。',
+    free: '全城篩選',
+    freeDesc: '完整的一年，所有系統全開；可以選角色、季節和外星評級。通過「觀光季」之後開放。',
+    back: '返回',
+  };
+
+  // ---------- 舊城打撈 ----------
+  // 每一生（任何結局）的作品最後沉到舊城，變成「沉積」。局與局之間，用沉積在舊城的六區打撈。
+  // 每區由上而下：買了上一個才可以買下一個。效果只在五輪模式生效。
+  // fx 的鍵見 game/js/salvage.js 的 FX 說明。
+  const SALVAGE_COST = [5, 9, 14, 20, 28, 38];
+  const SALVAGE = [
+    {
+      id: 'dock', name: '舊碼頭', line: '開局帶甚麼', nodes: [
+        { id: 'bottle', name: '漂流瓶', text: '開局多一張素材。', fx: { startCards: 1 } },
+        { id: 'drybag', name: '防水袋', text: '開局的素材之中，一張是閃卡。', fx: { startFoil: 1 } },
+        { id: 'tide', name: '潮汐表', text: '市集的素材包多一個選擇（四選一）。', fx: { packExtra: 1 } },
+        { id: 'net', name: '舊碼頭的網', text: '抽到重複的素材，升兩星而不是一星。', fx: { dupStar: 1 } },
+        { id: 'wreck', name: '沉船貨櫃', text: '每輪開始，送你一個打撈包。', fx: { roundPack: 1 } },
+        { id: 'lamp', name: '碼頭的燈', text: '開局再多一張素材。', fx: { startCards: 1 } },
+      ],
+    },
+    {
+      id: 'theatre', name: '舊戲院', line: '創作桌', nodes: [
+        { id: 'rehearse', name: '排練', text: '下筆之前，看得到這一筆的預計分數。', fx: { preview: 1 }, info: true },
+        { id: 'script', name: '劇本', text: '創作桌提示這手牌最好的排法。', fx: { hint: 1 }, info: true },
+        { id: 'backstage', name: '後台', text: '每晚多一次改稿。', fx: { discards: 1 } },
+        { id: 'repertoire', name: '舊劇目', text: '開局「起承轉合」就是 Lv.2。', fx: { fullLevel: 1 } },
+        { id: 'notes', name: '導演筆記', text: 'AI 模仿你的結構，速度減半。', fx: { aiHalf: 1 } },
+        { id: 'fullhouse', name: '滿座', text: '每晚第一筆，籌碼 +30。', fx: { firstChips: 30 } },
+      ],
+    },
+    {
+      id: 'clinic', name: '舊診所', line: '靈魂', nodes: [
+        { id: 'chart', name: '病歷', text: '靈魂離上限不足 2 克時，會提醒你。', fx: { soulWarn: 1 }, info: true },
+        { id: 'cabinet', name: '舊藥櫃', text: '開局靈魂輕 1 克。', fx: { startSoul: -1 } },
+        { id: 'confess', name: '告解室', text: '每輪一次：靈魂輕 1 克，火花 −0.2。', fx: { confess: 1 }, info: true },
+        { id: 'ecg', name: '心電圖', text: '每輪最後一晚，預告篩選的結果（租金和靈魂）。', fx: { reviewPreview: 1 }, info: true },
+        { id: 'visit', name: '探病', text: '「為了一個人」的選擇，靈魂多輕 0.5 克。', fx: { careBonus: 0.5 } },
+        { id: 'discharge', name: '出院紙', text: '靈魂的上限多 1 克。', fx: { soulLimit: 1 } },
+      ],
+    },
+    {
+      id: 'rooftop', name: '舊天台', line: '火花', nodes: [
+        { id: 'laundry', name: '晾衫架', text: '睡懶覺，火花多 +0.1。', fx: { skipSpark: 0.1 } },
+        { id: 'kite', name: '風箏', text: '開局火花 +0.2。', fx: { startSpark: 0.2 } },
+        { id: 'party', name: '天台派對', text: '每輪第一晚，火花 +0.1。', fx: { roundSpark: 0.1 } },
+        { id: 'tank', name: '水塔', text: '早上火花低於 ×1，回到 ×1。', fx: { sparkFloor: 1 } },
+        { id: 'bow', name: '謝幕', text: '達標之後的加演，每筆火花多 +0.05。', fx: { encoreSpark: 0.05 } },
+        { id: 'stars', name: '星空', text: '每晚達標，火花 +0.05。', fx: { passSpark: 0.05 } },
+      ],
+    },
+    {
+      id: 'market', name: '舊市集', line: '錢和卡包', nodes: [
+        { id: 'receipt', name: '當舖收據', text: '開局多 {cash:15}。', fx: { startCash: 15 } },
+        { id: 'regular', name: '熟客', text: '換一批生活卡，半價。', fx: { rerollDisc: 0.5 } },
+        { id: 'flash', name: '閃光燈', text: '閃卡的機會加倍。', fx: { foilX: 1 } },
+        { id: 'haggle', name: '講價', text: '市集的物件便宜 15%。', fx: { shopDisc: 0.15 } },
+        { id: 'movers', name: '搬屋公司的卡片', text: '搬上一層、租回單位便宜 25%。', fx: { moveDisc: 0.25 } },
+        { id: 'paper', name: '舊報紙', text: '每輪第一次換一批生活卡，免費。', fx: { freeReroll: 1 } },
+      ],
+    },
+    {
+      id: 'consulate', name: '外星領事館', line: '情報', nodes: [
+        { id: 'bulletin', name: '水位局內部通告', text: '白天看得到明晚的水位。', fx: { floodForecast: 1 }, info: true },
+        { id: 'adverts', name: '招聘廣告', text: '篩選之後，預告下一輪外星評審的規則。', fx: { nextJudge: 1 }, info: true },
+        { id: 'translator', name: '翻譯機', text: '外星評審的規則旁邊，寫明你有幾張素材會受影響。', fx: { judgeImpact: 1 }, info: true },
+        { id: 'safehouse', name: '逃兵的暗號', text: '每局一次：第一次失去機會時，不扣機會。', fx: { saveChance: 1 } },
+        { id: 'hideout', name: '藏身處', text: '把被收藏家看中的朋友藏起來，費用減半。', fx: { hideDisc: 0.5 } },
+        { id: 'gaze', name: '升維者的目光', text: '每一生沉下去的沉積多 25%。', fx: { sedimentX: 0.25 } },
+      ],
+    },
+  ];
+
+  const SALVAGE_TEXT = {
+    head: '舊城打撈',
+    sub: '你每一生的作品，最後都沉到這裏。水底的東西，留給下一個你。',
+    unit: '沉積',
+    balance: '沉積 {n}',
+    buy: '打撈',
+    bought: '已打撈',
+    need: '要 {n} 沉積',
+    lockedPrev: '先打撈上面一層',
+    infoTag: '情報',
+    earnHead: '這一生沉下去的',
+    earnTotal: '沉積 +{n}',
+    lines: {
+      nights: '完成 {n} 晚',
+      passed: '{n} 晚達標',
+      over: '超額 {n} 次',
+      rounds: '通過 {n} 輪篩選',
+      recruited: '被選中',
+      firstClear: '第一次通過這一季',
+      gaze: '升維者的目光',
+    },
+    empty: '舊城還是一片漆黑。玩完一局，作品就會沉到這裏。',
+    go: '去舊城打撈',
+    confessBtn: '告解',
+    confessDone: '你在告解室坐了一個下午。靈魂輕了 1 克，火花也弱了一點。',
+    saved: '逃兵網絡替你改了一筆紀錄：這一次不扣機會。',
+    forecast: '水位局內部通告：明晚水位 {w} 樓・{stage}',
+    reviewPreview: '心電圖：今晚之後篩選。租金 {rent}（{rentOk}）・靈魂 {soul} 克（{soulOk}）',
+    ok: '夠',
+    short: '不夠',
+    soulOk: '合格',
+    soulOver: '超重',
+    soulWarn: '病歷：靈魂離上限不足 2 克。',
+    nextJudge: '招聘廣告：下一輪的外星評審規則是 {rules}',
+    impact: '你有 {n} 張素材受影響',
+    hint: '劇本：最好的排法是「{form}」，預計 {score} 分',
+    preview: '排練：預計 {score} 分',
+    roundPack: '沉船貨櫃：水退了一點，你撈起一個包。',
+  };
+
+  // ---------- 撕開：卡包、閃卡、重複升星 ----------
+  const PACK16 = {
+    foil: 0.05, // 每張新得到的素材是閃卡的機會（舊城的「閃光燈」加倍）
+    foilChips: 1.5, // 閃卡計分時籌碼 ×1.5
+    // 這些來歷的素材：同一張素材再抽到，不會多一張，而是原來那張升星
+    dupKinds: ['story', 'work', 'trip', 'shop', 'friend', 'salvage'],
+    kinds: {
+      start: { name: '隨身行李', line: '來浮城之前就帶在身上的東西。' },
+      story: { name: '人生的信封', line: '有些東西，是選擇留給你的。' },
+      work: { name: '工資袋', line: '工資之外，工作還留下了一點別的。' },
+      trip: { name: '旅行包', line: '從遠方帶回來的，通常不是紀念品。' },
+      shop: { name: '市集包', line: '來歷不明，價錢公道。' },
+      friend: { name: '朋友的信', line: '信封上的字，你認得。' },
+      craft: { name: '工作室的盒', line: '你親手做出來的東西。' },
+      salvage: { name: '打撈包', line: '舊城的水底，有上一生沉下去的東西。' },
+      prologue: { name: '序章', line: '你第一次排出起承轉合。' },
+    },
+    tear: '撕開',
+    tearHint: '用手指劃過封口',
+    reveal: '再看一張',
+    done: '收好',
+    badge: { new: '新', foil: '閃', dup: '升星' },
+    dupLine: '同一段經歷又來了一次，記得更深：升到 ★{n}。',
+    foilLine: '閃卡：計分時籌碼 ×1.5。',
+    oddsHead: '根據《浮城博彩透明條例》第 7 條，本包的機率公開如下',
+    oddsStar: '★{n}：{p}',
+    oddsFoil: '閃卡：每張 {p}',
+    oddsPool: '這個包可能有：{list}',
+    oddsBtn: '機率',
+  };
+
+  // ---------- 收藏冊的成就（第十七期新增） ----------
+  const ACH17 = [
+    { id: 'foil1', name: '品質超出預期，已通報有關部門', desc: '抽到第一張閃卡' },
+    { id: 'dup1', name: '同一個夢做了兩次', desc: '第一次抽到重複的素材' },
+    { id: 'salvage1', name: '水底的第一件東西', desc: '在舊城打撈第一個節點' },
+    { id: 'salvageAll', name: '舊城重建委員會', desc: '打撈舊城的全部節點' },
+    { id: 'c1', name: '試用期滿', desc: '通過「招聘季」' },
+    { id: 'c2', name: '高產', desc: '通過「收成季」' },
+    { id: 'c3', name: '信徒', desc: '通過「朝聖季」' },
+    { id: 'c4', name: '玻璃櫃', desc: '通過「觀光季」' },
+  ];
+
+  Object.assign(D, { CHAPTERS, CHAPTER_TEXT, SALVAGE, SALVAGE_COST, SALVAGE_TEXT, PACK16, ACH17 });
+});
+
+// ---- js/chapters.js ----
+// 《靈感撤離 2080》第十七期：浮城年表（章節）。純邏輯，瀏覽器和 Node 共用。
+// 一局（一生）屬於一章：章節決定有幾輪、開放哪些系統、市集有哪些物件。沒有章節（s.chapter 為 null）＝完整的五輪模式（「全城篩選」）。
+// 跨局的紀錄在 meta.chapters：{ cleared: { c1: 次數 }, tries: { c1: 次數 }, legacy: 布林 }。
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const LIST = D.CHAPTERS || [];
+  const BY = {};
+  LIST.forEach((c) => { BY[c.id] = c; });
+
+  const get = (id) => BY[id] || null;
+  const of = (s) => (s && s.chapter && BY[s.chapter]) || null;
+  const roundsMode = (s) => !!(s && D.MODES && D.MODES[s.mode] && D.MODES[s.mode].rounds);
+
+  // 這一局有沒有這個系統：沒有章節＝全部都有；經典模式不受章節影響
+  function feat(s, key) {
+    if (!roundsMode(s)) return true;
+    const c = of(s);
+    return c ? c.feats.includes(key) : true;
+  }
+  const rounds = (s) => { const c = roundsMode(s) ? of(s) : null; return c ? c.rounds : 5; };
+  const nights = (s) => rounds(s) * 3;
+  // 市集和遺物攤的物件：章節限制稀有度
+  function objAllowed(s, o) {
+    if (!roundsMode(s) || !o) return true;
+    const c = of(s);
+    return c ? c.objRarity.includes(o.rarity) : true;
+  }
+
+  // ---------- 跨局 ----------
+  const cleared = (meta) => (meta && meta.chapters && meta.chapters.cleared) || {};
+  const legacy = (meta) => !!(meta && meta.chapters && meta.chapters.legacy);
+  // 舊玩家（章節出現之前已經玩過）：全城篩選一開始就開放
+  function migrate(meta) {
+    if (!meta) return meta;
+    if (!meta.chapters) meta.chapters = { cleared: {}, tries: {}, legacy: (meta.runs || 0) > 0 };
+    meta.chapters.cleared = meta.chapters.cleared || {};
+    meta.chapters.tries = meta.chapters.tries || {};
+    return meta;
+  }
+  function unlocked(meta, id) {
+    const c = get(id);
+    if (!c || c.building) return false;
+    if (c.no === 1) return true;
+    const prev = LIST[c.no - 2];
+    return !!(prev && cleared(meta)[prev.id]);
+  }
+  const freeUnlocked = (meta) => legacy(meta) || !!cleared(meta).c4;
+  function status(meta, id) {
+    const c = get(id);
+    if (!c) return 'locked';
+    if (c.building) return 'building';
+    if (cleared(meta)[id]) return 'cleared';
+    return unlocked(meta, id) ? 'open' : 'locked';
+  }
+  function list(meta) {
+    return LIST.map((c) => Object.assign({}, c, { status: status(meta, c.id), clears: cleared(meta)[c.id] || 0, tries: (meta && meta.chapters && meta.chapters.tries && meta.chapters.tries[c.id]) || 0 }));
+  }
+  // 開局頁預設選哪一章：最早一個開放而未通過的；全部通過就選最後一個開放的
+  function defaultFor(meta) {
+    const open = LIST.filter((c) => unlocked(meta, c.id));
+    const fresh = open.find((c) => !cleared(meta)[c.id]);
+    return (fresh || open[open.length - 1] || LIST[0]).id;
+  }
+  // 一局結束：記錄嘗試和通過；回傳 { firstClear, next }（next 是這次新開放的一章）
+  function record(meta, s, endingKind) {
+    if (!meta || !s || !roundsMode(s) || !s.chapter) return { firstClear: false, next: null };
+    migrate(meta);
+    const id = s.chapter;
+    meta.chapters.tries[id] = (meta.chapters.tries[id] || 0) + 1;
+    if (endingKind !== 'recruited') return { firstClear: false, next: null };
+    const first = !meta.chapters.cleared[id];
+    meta.chapters.cleared[id] = (meta.chapters.cleared[id] || 0) + 1;
+    const c = get(id);
+    const nx = c ? LIST[c.no] : null;
+    const next = first && nx ? nx : null;
+    return { firstClear: first, next, free: first && id === 'c4' };
+  }
+
+  IE.Chapters = { LIST, get, of, feat, rounds, nights, objAllowed, migrate, unlocked, freeUnlocked, status, list, defaultFor, record };
+});
+
+// ---- js/salvage.js ----
+// 《靈感撤離 2080》第十七期：舊城打撈（局與局之間的升級樹）。純邏輯，瀏覽器和 Node 共用。
+// 每一生（任何結局）沉下去的作品變成「沉積」；用沉積在舊城六區由上而下打撈節點。
+// 跨局的紀錄在 meta.salvage：{ sediment: 現有, earned: 累計, owned: { 節點 id: true } }。
+// 開新局時 perks(meta) 合併已打撈節點的 fx，複製到 s.salvage；遊戲各處用 s.salvage 的鍵：
+//   startCards 開局多幾張素材、startFoil 開局幾張閃卡、packExtra 素材包多幾個選擇、dupStar 重複時多升幾星、roundPack 每輪送打撈包、
+//   preview 預計分數、hint 最好的排法、discards 改稿、fullLevel 起承轉合的等級、aiHalf AI 模仿減半、firstChips 第一筆籌碼、
+//   soulWarn 靈魂提醒、startSoul 開局靈魂、confess 告解、reviewPreview 篩選預告、careBonus 為了一個人、soulLimit 靈魂上限、
+//   skipSpark 睡懶覺、startSpark 開局火花、roundSpark 每輪第一晚、sparkFloor 火花下限、encoreSpark 加演、passSpark 達標、
+//   startCash 開局的錢（內部單位）、rerollDisc 換一批折扣、foilX 閃卡機會倍數、shopDisc 物件折扣、moveDisc 搬遷折扣、freeReroll 每輪免費換一批、
+//   floodForecast 水位預報、nextJudge 下一輪評審預告、judgeImpact 評審規則的影響、saveChance 免扣機會、hideDisc 藏朋友折扣、sedimentX 沉積加成
+(function (factory) {
+  const root = typeof window !== 'undefined' ? window : globalThis;
+  root.IE = root.IE || {};
+  factory(root.IE);
+})(function (IE) {
+  'use strict';
+  const D = IE.DATA;
+  const COST = D.SALVAGE_COST || [];
+  const NODES = [];
+  (D.SALVAGE || []).forEach((dist) => dist.nodes.forEach((n, i) => {
+    NODES.push(Object.assign({}, n, { district: dist.id, tier: i, cost: COST[i] || COST[COST.length - 1] || 99 }));
+  }));
+  const BY = {};
+  NODES.forEach((n) => { BY[n.id] = n; });
+
+  const get = (id) => BY[id] || null;
+  const owned = (meta, id) => !!(meta && meta.salvage && meta.salvage.owned && meta.salvage.owned[id]);
+  const balance = (meta) => (meta && meta.salvage && meta.salvage.sediment) || 0;
+  const ownedCount = (meta) => NODES.filter((n) => owned(meta, n.id)).length;
+  function ensure(meta) {
+    meta.salvage = meta.salvage || { sediment: 0, earned: 0, owned: {} };
+    meta.salvage.owned = meta.salvage.owned || {};
+    meta.salvage.sediment = meta.salvage.sediment || 0;
+    meta.salvage.earned = meta.salvage.earned || 0;
+    return meta.salvage;
+  }
+  // 上一層（同一區、tier − 1）
+  const prevOf = (n) => (n.tier > 0 ? NODES.find((x) => x.district === n.district && x.tier === n.tier - 1) : null);
+
+  function canBuy(meta, id) {
+    const T = D.SALVAGE_TEXT;
+    const n = get(id);
+    if (!n) return { ok: false, msg: '沒有這個節點' };
+    if (owned(meta, id)) return { ok: false, msg: T.bought };
+    const p = prevOf(n);
+    if (p && !owned(meta, p.id)) return { ok: false, msg: T.lockedPrev };
+    if (balance(meta) < n.cost) return { ok: false, msg: T.need.replace('{n}', String(n.cost)), cost: n.cost };
+    return { ok: true, cost: n.cost };
+  }
+  function buy(meta, id) {
+    const c = canBuy(meta, id);
+    if (!c.ok) return c;
+    const sv = ensure(meta);
+    const n = get(id);
+    sv.sediment -= n.cost;
+    sv.owned[id] = true;
+    return { ok: true, node: n, left: sv.sediment };
+  }
+  // 已打撈節點的效果合併（數字相加）
+  function perks(meta) {
+    const out = {};
+    NODES.forEach((n) => {
+      if (!owned(meta, n.id)) return;
+      Object.keys(n.fx || {}).forEach((k) => { out[k] = Math.round(((out[k] || 0) + n.fx[k]) * 100) / 100; });
+    });
+    return out;
+  }
+
+  // 一晚的超額級數（和 IE.Stages 的超額規則一致：2、5、10 倍）
+  function overTier(score, target) {
+    if (!target || !score) return 0;
+    const x = score / target;
+    return x >= 10 ? 3 : x >= 5 ? 2 : x >= 2 ? 1 : 0;
+  }
+  // 這一生沉下去多少沉積（純函數，不改局面）
+  function earn(s, endingKind, opts) {
+    const o = opts || {};
+    const log = (s && s.nightLog) || [];
+    const nights = log.length;
+    const passed = log.filter((x) => x.pass).length;
+    const over = log.reduce((a, x) => a + overTier(x.score, x.target), 0);
+    const roundsPassed = (s && s.reviewsPassed) || 0;
+    const recruited = endingKind === 'recruited';
+    const lines = [];
+    const T = D.SALVAGE_TEXT.lines;
+    let v = 0;
+    const add = (k, n, val) => { if (!val) return; v += val; lines.push({ k, text: T[k].replace('{n}', String(n)), v: val }); };
+    add('nights', nights, nights * 1);
+    add('passed', passed, passed * 3);
+    add('over', over, over * 1);
+    add('rounds', roundsPassed, roundsPassed * 4);
+    add('recruited', 1, recruited ? 12 : 0);
+    add('firstClear', 1, o.firstClear ? 10 : 0);
+    const x = (s && s.salvage && s.salvage.sedimentX) || 0;
+    if (x && v) {
+      const bonus = Math.round(v * x);
+      v += bonus;
+      lines.push({ k: 'gaze', text: T.gaze, v: bonus });
+    }
+    return { total: v, lines };
+  }
+  // 存進舊城：回傳 earn 的結果
+  function bank(meta, s, endingKind, opts) {
+    const res = earn(s, endingKind, opts);
+    const sv = ensure(meta);
+    sv.sediment += res.total;
+    sv.earned += res.total;
+    return res;
+  }
+  // 節點的說明（{cash:15} 換成顯示的金額）
+  function describe(n) {
+    if (!n) return '';
+    const rate = (D.CITIES && D.CITY_DEFAULT && D.CITIES[D.CITY_DEFAULT] && D.CITIES[D.CITY_DEFAULT].currency && D.CITIES[D.CITY_DEFAULT].currency.rate) || 1;
+    return String(n.text || '').replace(/\{cash:(\d+)\}/g, (m, v) => '$' + String(Math.round(Number(v) * rate)).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+  }
+  const districts = () => (D.SALVAGE || []).map((d) => Object.assign({}, d, { nodes: NODES.filter((n) => n.district === d.id) }));
+
+  IE.Salvage = { NODES, get, owned, balance, ownedCount, ensure, canBuy, buy, perks, overTier, earn, bank, describe, districts };
+});
+
 // ---- js/rules.js ----
 // 《靈感撤離 2080》規則核心：純邏輯，不涉及 DOM，瀏覽器與 Node（tools/sim.js）共用。
 // 核心公式：作品分 = 素材籌碼 × 組合倍率 × 火花倍率 × KPI
@@ -13256,6 +13708,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   };
   // 每天早上擲天氣：一般天氣跟季節走；奇怪狀態由一成多開始，越到後期越常見；不會連續兩天一樣
   function rollWeather(s) {
+    if (s.mode === 'rounds' && IE.Chapters && !IE.Chapters.feat(s, 'weather')) { s.weather = null; return; }
     if (!D.WEATHER || s.trip || (s.weather && s.weather.day === s.day)) return;
     const odd = !s.firstRun && rand(s) < 0.14 + 0.16 * age(s) / 100;
     const prev = s.weather && s.weather.id;
@@ -13355,6 +13808,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
   // 外星人的牽引光束最多只能拉起 21 克的靈魂，太重會污染他們的神經網絡。
   const SOUL_LIMIT = D.SOUL_LIMIT;
+  // 第十七期：五輪模式的靈魂上限（舊城的「出院紙」加 1 克）
+  const soulLimit = (s) => SOUL_LIMIT + ((s && s.mode === 'rounds' && s.salvage && s.salvage.soulLimit) || 0);
   const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1) * (perk(s).sinMult || 1);
   function sin(s, base, rep, reason, guiltName, tag) {
     const grams = round1(base * sinFactor(s));
@@ -13604,8 +14059,30 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       // 五個外星評審之夜的規則在開局時全部選好：介面可以預告，之後讀取規則也不會動到隨機數
       if (IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
       if (IE.Story && IE.Story.init) IE.Story.init(s);
+      // 第十七期：浮城年表的章節和舊城打撈的加成（只在五輪模式）
+      const ch = opts.chapter && D.CHAPTERS ? D.CHAPTERS.find((c) => c.id === opts.chapter && !c.building) : null;
+      s.chapter = ch ? ch.id : null;
+      s.roundsTotal = ch ? ch.rounds : 5;
+      s.salvage = opts.salvage && Object.keys(opts.salvage).length ? Object.assign({}, opts.salvage) : null;
+      if (s.salvage) applyStartSalvage(s);
     }
     return s;
+  }
+  // 舊城打撈的開局效果（第十七期）
+  function applyStartSalvage(s) {
+    const sv = s.salvage;
+    if (sv.startCash) s.cr += sv.startCash;
+    if (sv.startSpark) s.spark = round1(Math.min(SPARK_MAX, s.spark + sv.startSpark));
+    if (sv.startSoul) s.soul = Math.max(0, round1(s.soul + sv.startSoul));
+    if (sv.fullLevel) { s.forms = s.forms || {}; s.forms.full = (s.forms.full || 1) + sv.fullLevel; }
+    for (let i = 0; i < (sv.startCards || 0); i++) {
+      const pool = (D.DESK_IDS || []).filter((id) => !s.cards.some((c) => c.id === id));
+      if (pool.length) addCard(s, pick(s, pool), { kind: 'salvage' });
+    }
+    for (let i = 0; i < (sv.startFoil || 0); i++) {
+      const c = s.cards.find((x) => !x.foil && !x.relic);
+      if (c) markFoil(s, c);
+    }
   }
   const countAction = (s, k) => { s.stats.actions[k] = (s.stats.actions[k] || 0) + 1; };
 
@@ -13617,10 +14094,42 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (c.rarity) card.rarity = c.rarity;
     return card;
   }
+  // 第十七期：閃卡用局面的種子和卡的 uid 決定（不消耗隨機數，同一局永遠一樣）
+  function foilRoll(s, card) {
+    const str = String(s.seed) + ':' + card.uid + ':' + card.id;
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return ((h >>> 0) % 100000) / 100000;
+  }
+  function markFoil(s, card) {
+    card.foil = true;
+    s.stats.foils = (s.stats.foils || 0) + 1;
+    s.seenCards = s.seenCards || {};
+    if (card.id) s.seenCards[card.id] = 2;
+  }
   function addCard(s, idOrCard, origin) {
+    const P = D.PACK16;
+    const okind = origin && origin.kind;
+    // 第十七期：同一張素材再抽到，原來那張升星（只限故事、工作、旅行、市集、朋友、打撈得到的素材）
+    if (s.mode === 'rounds' && P && typeof idOrCard === 'string' && okind && P.dupKinds.includes(okind)) {
+      const ex = s.cards.find((c) => c.id === idOrCard && !c.relic);
+      if (ex) {
+        const before = IE.Create && IE.Create.starOf ? IE.Create.starOf(ex) : (ex.star || 1);
+        ex.star = Math.min(5, before + 1 + ((s.salvage && s.salvage.dupStar) || 0));
+        ex.echoes = (ex.echoes || 0) + 1;
+        ex.echo = { night: s.night || 0, from: before, to: ex.star };
+        s.stats.dups = (s.stats.dups || 0) + 1;
+        return { card: ex, dropped: null, over: !!s.over, dup: true };
+      }
+    }
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
     card.wear = card.wear || 0;
     if (s.mode === 'rounds') {
+      if (P && okind !== 'craft' && !card.foil) {
+        const chance = P.foil * (1 + ((s.salvage && s.salvage.foilX) || 0));
+        if (foilRoll(s, card) < chance) markFoil(s, card);
+      }
+      if (card.id) { s.seenCards = s.seenCards || {}; s.seenCards[card.id] = Math.max(s.seenCards[card.id] || 0, card.foil ? 2 : 1); }
       if (IE.Cards) IE.Cards.ensure(s);
       else { s.memory = s.memory || []; if (typeof s.over !== 'boolean') s.over = false; }
       // 來歷放在 card.from：card.origin 是出國素材的地區（字串），兩者不可以混用
@@ -13659,7 +14168,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (rep) rep.line('技法提升：「' + f.name + '」升到 Lv.' + s.forms[fid], 'good');
   }
   const ownsObject = (s, id) => s.objects.includes(id) || s.objStash.includes(id);
-  const objectAvailable = (s, o) => !o.unlock || s.unlocked.includes(o.id);
+  const objectAvailable = (s, o) => (!o.unlock || s.unlocked.includes(o.id)) && (!IE.Chapters || IE.Chapters.objAllowed(s, o));
   // 物件欄：還俗的僧人只有一格；黑市義體技師多一格，但只可以放機械流
   const slotsOf = (s) => (perk(s).objMax || (s.weekly && s.weekly.mod === 'single') ? Math.min(perk(s).objMax || 1, s.objSlots) : s.objSlots);
   function canEquip(s, id) {
@@ -13796,7 +14305,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const rarityTh = (s) => RARITY_TH[D.BACKGROUNDS[s.bg].rarity] || 1;
   const threshold = (s) => Math.round(modeOf(s).thresholds[s.quarter] * (worldMods(s).thresholdMult || 1) * stakeMod(s, 'threshold') * rarityTh(s));
   const reviewDay = (s) => (s.quarter + 1) * modeOf(s).period;
-  const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
+  const KPI_NONE = { id: 'none', name: '', desc: '', mod: 1 };
+  const kpi = (s) => (s.mode === 'rounds' && IE.Chapters && !IE.Chapters.feat(s, 'kpi') ? KPI_NONE : D.KPIS[s.kpis[s.quarter]]);
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
   const nextRentDay = (s) => Math.ceil(s.day / D.RENT_EVERY) * D.RENT_EVERY;
   const foodCost = (s) => (perk(s).noFood ? 0 : Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1) * (perk(s).foodMult || 1)));
@@ -15124,7 +15634,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
   IE.Rules = {
     newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX, sparkMax,
-    SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
+    SOUL_LIMIT, soulLimit, markFoil, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldClosed, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
     stallOpen, stallBuy, stallReroll, stallRerollCost, stallPrice,
@@ -15353,7 +15863,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(STAR_CHIPS[starOf(c)] * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
+    // 第十七期：閃卡計分時籌碼 ×1.5（只有五輪模式有閃卡）
+    const foil = c.foil && D.PACK16 ? D.PACK16.foilChips : 1;
+    return Math.round(foil * STAR_CHIPS[starOf(c)] * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -15477,7 +15989,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const heat = ((s.style && s.style[form]) || 0) * speed;
     // 覺醒的 AI：模仿自己反而越來越強
     if (P.aiInvert) return Math.min(2, r2(1 + 0.12 * heat));
-    const pen = 0.1 * Math.max(0, heat - 2) * (objs.some((o) => o.def.aiHalf) ? 0.5 : 1);
+    const half = objs.some((o) => o.def.aiHalf) || !!(s.salvage && s.salvage.aiHalf);
+    const pen = 0.1 * Math.max(0, heat - 2) * (half ? 0.5 : 1);
     return Math.max(0.4, r2(1 - pen));
   }
 
@@ -15523,6 +16036,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const fs = formStats(s, A.id);
       let chips = fs.chips, mult = fs.mult;
       const steps = [{ t: 'form', form: A.id, level: fs.level, chips, mult, C: chips, M: mult }];
+      // 第十七期：舊城的「滿座」：每晚第一筆籌碼多一點
+      const fc = (s.salvage && s.salvage.firstChips) || 0;
+      if (fc && s.session && !(s.session.log || []).length) { chips += fc; steps.push({ t: 'salvage', name: '滿座', chips: fc, C: chips, M: mult }); }
       const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
       const objs = SR && SR.noObjects ? [] : activeObjects(s);
       const schools = activeSchools(s, objs);
@@ -16206,7 +16722,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
         handSize: E.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
         plays: (perk.playsSet || E.plays) + m.plays + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0),
-        discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
+        discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0) + ((s.salvage && s.salvage.discards) || 0)),
         discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, passed: false, encore: 0, refund,
       };
       s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
@@ -16363,7 +16879,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     ses.log.push(logEntry);
     if (passedBefore) {
       ses.encore = (ses.encore || 0) + 1;
-      const encSp = RL.addSpark(s, 0.1, true);
+      const encSp = RL.addSpark(s, 0.1 + ((s.salvage && s.salvage.encoreSpark) || 0), true);
       s.spark = r2(s.spark);
       res.encorePlay = ses.encore;
       if (encSp) {
@@ -17309,7 +17825,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         if (g) line((D.STANCE_TEXT && D.STANCE_TEXT.comply) || '你照做了。', 'sin', g, 'soul');
         if (s.spark < sparkBefore) line('良知被磨損，你的感受力也變弱了', 'bad', R.round1(s.spark - sparkBefore), 'spark');
       } else if (stance === 'care') {
-        const g = R.atone(s, 1, null);
+        const g = R.atone(s, 1 + ((s.salvage && s.salvage.careBonus) || 0), null);
         if (g) line((D.STANCE_TEXT && D.STANCE_TEXT.care) || '你為了一個人，放棄了今天的成績。', 'good', -g, 'soul');
       }
       const stDef = D.STANCE && D.STANCE[microKey];
@@ -17688,7 +18204,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const K = KINDS[kind];
     if (IE.Rounds && IE.Rounds.on(s)) {
       const target = IE.Rounds.target(s, day / 4);
-      return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
+      // 第十七期：章節沒有「外星評審的規則」時，評審之夜只看分數
+      const judgeOn = !IE.Chapters || IE.Chapters.feat(s, 'judge');
+      return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: judgeOn && (kind === 'boss' || (s.weekly && s.weekly.mod === 'judges')) ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
     }
     // 第一局的頭兩關目標較低（第十二期），讓新玩家先嘗到過關的滋味
     const easy = s.firstRun && q === 0 && kind !== 'boss' ? 0.6 : 1;
@@ -17754,6 +18272,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
         s.cr += reward; s.stats.crEarned += reward; out.cr = reward;
         out.lines.push('獎金 $' + reward);
+        // 第十七期：舊城的「星空」：每晚達標火花多一點
+        const ps = (s.salvage && s.salvage.passSpark) || 0;
+        if (ps) { const g = R.addSpark(s, ps, true); if (g) out.lines.push('星空：火花 +' + g); }
         const overs = (D.ECON16 && D.ECON16.over) || [{ x: 2, spark: D.ECON.overkillSpark }];
         let over = null;
         overs.forEach((ov) => { if (score >= stage.target * ov.x) over = ov; });
@@ -18456,8 +18977,10 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const D = IE.DATA, R = IE.Rules;
 
   function on(s) {
-    return !!(s && D.MODES && D.MODES[s.mode] && D.MODES[s.mode].rounds);
+    // 第十七期：章節沒有「水位」時，水照樣上升，但不會淹到家
+    return !!(s && D.MODES && D.MODES[s.mode] && D.MODES[s.mode].rounds) && (!IE.Chapters || IE.Chapters.feat(s, 'flood'));
   }
+  const moveMod = (s) => 1 - ((s && s.salvage && s.salvage.moveDisc) || 0);
 
   function priceMod(s) {
     return IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
@@ -18661,7 +19184,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if ((s.floor || 0) <= 0) {
       const def = defs.find((x) => x.id === 'rehouse') || { id: 'rehouse', name: '租回一個單位', desc: '租回 {f} 樓的單位，恢復素材庫上限' };
       const nextFloor = Math.min(8, Math.max(1, Math.floor(s.water || 0) + 2));
-      const cost = Math.round((E.rehouse != null ? E.rehouse : 260) * mod);
+      const cost = Math.round((E.rehouse != null ? E.rehouse : 260) * mod * moveMod(s));
       const affordable = (s.cr || 0) >= cost;
       return [{
         id: 'rehouse',
@@ -18679,7 +19202,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const nextFloor = s.floor + 1;
       const base = E.moveBase != null ? E.moveBase : 120;
       const step = E.moveStep != null ? E.moveStep : 40;
-      const cost = Math.round((base + step * nextFloor) * mod);
+      const cost = Math.round((base + step * nextFloor) * mod * moveMod(s));
       const affordable = (s.cr || 0) >= cost;
       return [{
         id: 'moveup',
@@ -18725,7 +19248,19 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     };
   }
 
+  // 第十七期：舊城的「水位局內部通告」：明晚的水位和階段（不改局面）
+  function forecast(s) {
+    if (!on(s)) return null;
+    const S = D.SEASONS[s.season];
+    const water = Math.min(8.5, (s.water || 0) + (S ? S.water * 4 : 0));
+    const t = Object.assign({}, s, { water });
+    const flooded = (t.floor || 0) > 0 && R.flooded(t);
+    t.floodRun = flooded ? (s.floodRun || 0) + 1 : 0;
+    return { water: Math.round(water * 10) / 10, floor: s.floor || 0, stage: stage(t) };
+  }
+
   IE.Flood = {
+    forecast,
     on,
     ensure,
     stage,
@@ -18787,10 +19322,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     );
   }
 
-  // 第幾輪（1..5）
+  // 第十七期：這一局有幾輪（章節決定；沒有章節是五輪）
+  const total = (s) => (s && s.roundsTotal) || 5;
+  const nightsTotal = (s) => total(s) * 3;
+  const sv = (s, k) => (s && s.salvage && s.salvage[k]) || 0;
+  const feat = (s, k) => !IE.Chapters || IE.Chapters.feat(s, k);
+  // 第幾輪（1..total）
   function roundOf(s, night) {
     const n = night == null ? s.night : night;
-    return R.clamp(Math.ceil(n / 3), 1, 5);
+    return R.clamp(Math.ceil(n / 3), 1, total(s));
+  }
+  // 「第 2 輪・第 4／15 晚」：章節較短時把 15 換成這一局的晚數
+  function dayTitle(s, round, night) {
+    const t = D.ROUND_TEXT.dayTitle.replace('{round}', round).replace('{night}', night);
+    return nightsTotal(s) === 15 ? t : t.replace('／15', '／' + nightsTotal(s));
   }
 
   // 這一晚的關卡種類：小展／聯展／外星評審
@@ -19012,7 +19557,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       : R.pick(s, p2.length ? p2 : nonMicro([c1]));
 
     const tripDef = D.DAYCARDS.find((c) => c.id === 'trip');
-    const trips = all.filter((id) => id.startsWith('trip:'));
+    const trips = feat(s, 'trip') ? all.filter((id) => id.startsWith('trip:')) : [];
     const restPool = nonMicro([c1, c2]);
     const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !restPool.length)
       ? R.pick(s, trips)
@@ -19038,7 +19583,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const arr = D.ECON.offerReroll;
     const base = arr[R.clamp(r, 0, arr.length - 1)];
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
-    return Math.round(base * stMod);
+    if (sv(s, 'freeReroll') && s.freeRerollRound !== roundOf(s)) return 0;
+    return Math.round(base * stMod * (1 - sv(s, 'rerollDisc')));
   }
 
   // 換一批生活卡
@@ -19047,6 +19593,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const cost = offerCost(s);
     if (s.cr < cost) return { ok: false, msg: '換一批要 $' + cost };
     s.cr -= cost;
+    if (cost === 0 && sv(s, 'freeReroll')) s.freeRerollRound = roundOf(s);
     of.rerolls = (of.rerolls || 0) + 1;
     const drawn = drawOffer(s);
     of.ids = drawn.ids;
@@ -19183,7 +19730,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       return null;
     }
     const rep = R.report(s, '睡懶覺');
-    const sp = R.addSpark(s, D.ECON.skipSpark, true);
+    const sp = R.addSpark(s, D.ECON.skipSpark + sv(s, 'skipSpark'), true);
     rep.line('今天甚麼都不做，睡了一整天', 'good', sp, 'spark');
     afterDay(s);
     return rep.done();
@@ -19341,6 +19888,11 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 失去一次機會；機會用完即進入結局
   function loseChance(s, cause, rep) {
     if (!s || !on(s)) return;
+    if (sv(s, 'saveChance') && !s.chanceSaved) {
+      s.chanceSaved = cause;
+      if (rep && rep.line && D.SALVAGE_TEXT) rep.line(D.SALVAGE_TEXT.saved, 'good');
+      return;
+    }
     s.chances = Math.max(0, (s.chances == null ? 3 : s.chances) - 1);
     s.lost = s.lost || [];
     s.lost.push(cause);
@@ -19420,7 +19972,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (slot.startsWith('obj:')) {
       const id = slot.slice(4);
       const o = D.OBJ[id];
-      return o ? Math.round((D.OBJ_PRICE[o.rarity] || 90) * mod) : 0;
+      return o ? Math.round((D.OBJ_PRICE[o.rarity] || 90) * mod * (1 - sv(s, 'shopDisc'))) : 0;
     }
     if (slot.startsWith('pack:')) {
       const pid = slot.slice(5);
@@ -19491,7 +20043,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     });
     const fallback = allIds.filter((k) => D.CARDS[k].rarity !== 'legend' && !pool.includes(k));
     const cards = [];
-    while (cards.length < 3 && (pool.length || fallback.length || legends.length)) {
+    while (cards.length < 3 + sv(s, 'packExtra') && (pool.length || fallback.length || legends.length)) {
       const src = legends.length && (R.rand(s) < D.ECON.packLegend || !(pool.length || fallback.length)) ? legends : pool.length ? pool : fallback;
       const id = R.pick(s, src);
       src.splice(src.indexOf(id), 1);
@@ -19632,7 +20184,8 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
     const picked = s.pack.cards[i];
     const res = R.addCard(s, picked.id, { kind: 'shop' });
-    res.card.star = picked.star;
+    if (res.dup) res.card.star = Math.max(res.card.star || 1, picked.star);
+    else res.card.star = picked.star;
     s.pack = null;
     return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
   }
@@ -19730,6 +20283,12 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         if (c && c.wear > 0) c.wear = Math.max(0, c.wear - 1);
       });
     }
+    // 第十七期：舊城打撈的每日和每輪效果
+    if (sv(s, 'sparkFloor') && s.spark < 1) s.spark = 1;
+    if ((s.night - 1) % 3 === 0) {
+      if (sv(s, 'roundSpark')) R.addSpark(s, sv(s, 'roundSpark'), true);
+      if (sv(s, 'roundPack')) grantSalvagePack(s);
+    }
     if ((s.night - 1) % 3 === 0) {
       const gigs = ensureGigs(s);
       const due = [];
@@ -19782,7 +20341,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     }
     const soul = s.soul;
     const soulStr = (soul || 0).toFixed(1);
-    const soulOk = soul <= R.SOUL_LIMIT;
+    const soulOk = soul <= R.soulLimit(s);
     if (soulOk) {
       lines.push(D.ROUND_TEXT.soulOk.replace('{soul}', soulStr));
     } else {
@@ -19812,12 +20371,16 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       collect: null,
     };
     if (!s.ended) {
-      if (round >= 5 && s.chances > 0) {
+      if (round >= total(s) && s.chances > 0) {
         s.ended = R.endingFor(s, 'recruited');
         s.phase = 'ended';
       } else {
-        if (round < 5 && IE.Story && IE.Story.collect) {
+        if (round < total(s) && feat(s, 'collect') && IE.Story && IE.Story.collect) {
           IE.Story.collect(s, rep);
+        }
+        // 第十七期：舊城的「招聘廣告」預告下一輪外星評審的規則
+        if (sv(s, 'nextJudge') && feat(s, 'judge') && IE.Stages && IE.Stages.bossesFor && round < total(s)) {
+          rep.nextJudge = IE.Stages.bossesFor(s, round).map((b) => b.name + '（' + b.desc + '）');
         }
         advance(s);
       }
@@ -19833,10 +20396,51 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     s.reviewRep = null;
   }
 
+  // ---------- 第十七期：舊城打撈的白天效果 ----------
+  // 沉船貨櫃：每輪開始送一個打撈包（一張平衡素材，來歷是打撈）；介面在早上把它當作一個包撕開
+  function grantSalvagePack(s) {
+    const pool = (D.DESK_IDS || []).slice();
+    if (!pool.length) return null;
+    const id = R.pick(s, pool);
+    const res = R.addCard(s, id, { kind: 'salvage' });
+    s.packQueue = s.packQueue || [];
+    s.packQueue.push({ kind: 'salvage', uids: [res.card.uid], night: s.night });
+    return res;
+  }
+  // 告解室：每輪一次，靈魂輕 1 克，火花 −0.2
+  function canConfess(s) {
+    return !!(on(s) && sv(s, 'confess') && s.phase === 'day' && s.confessRound !== roundOf(s));
+  }
+  function confess(s) {
+    if (!canConfess(s)) return null;
+    s.confessRound = roundOf(s);
+    const rep = R.report(s, D.SALVAGE_TEXT.confessBtn);
+    const g = Math.min(s.soul, 1);
+    s.soul = Math.round((s.soul - g) * 10) / 10;
+    rep.delta('soul', -g);
+    const sp = R.addSpark(s, -0.2, true);
+    rep.delta('spark', sp);
+    rep.line(D.SALVAGE_TEXT.confessDone, 'good');
+    return rep.done();
+  }
+  // 心電圖：每輪最後一晚，預告篩選的結果（不改局面）
+  function reviewPreview(s) {
+    if (!on(s) || (s.night % 3) !== 0) return null;
+    const rent = rentOf(s, roundOf(s));
+    return { rent, rentOk: s.cr >= rent, soul: s.soul, soulOk: s.soul <= R.soulLimit(s) };
+  }
+
   IE.Rounds = {
     on,
     cash,
     cashText,
+    total,
+    nightsTotal,
+    dayTitle,
+    grantSalvagePack,
+    canConfess,
+    confess,
+    reviewPreview,
     roundOf,
     kindOf,
     dayOfNight,
@@ -20285,7 +20889,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const st = ensure(s);
     const r = IE.Rounds.roundOf(s);
     if (Object.prototype.hasOwnProperty.call(st.plan, r)) return st.plan[r];
-    if (r >= 5) {
+    if (r >= ((IE.Rounds.total && IE.Rounds.total(s)) || 5)) {
       st.plan[r] = null;
       return null;
     }
@@ -20319,7 +20923,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if (!pl || pl.npc !== npc) return { ok: false, msg: '不是本輪預告的朋友' };
     if (st.hidden[npc] || st.taken[npc]) return { ok: false, msg: '已經不在浮城' };
     const rawCost = (D.ECON.hideCost && D.ECON.hideCost[r - 1]) || 80;
-    const cost = Math.abs(money(s, -rawCost));
+    const cost = Math.round(Math.abs(money(s, -rawCost)) * (1 - ((s.salvage && s.salvage.hideDisc) || 0)));
     if (s.cr < cost) {
       return { ok: false, msg: D.STORY.text.hideFail.replace('{cost}', fmt(s, cost)), cost };
     }
@@ -20341,7 +20945,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     if ((s.chances != null && s.chances <= 0) || s.ended) return null;
     const st = ensure(s);
     const r = IE.Rounds.roundOf(s);
-    if (r >= 5) return null;
+    if (r >= ((IE.Rounds.total && IE.Rounds.total(s)) || 5)) return null;
     const pl = plan(s);
     if (!pl || !pl.npc) return null;
     const npc = pl.npc;
@@ -27502,6 +28106,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   // 兩難出現時間：整個小遊戲時長的 40% 至 70%（使用局內亂數）
   function dilemmaAt(s, duration) {
     if (!inRounds(s)) return Infinity;
+    if (IE.Chapters && !IE.Chapters.feat(s, 'stance')) return Infinity;
     return duration * (0.4 + 0.3 * runRand(s));
   }
   // 從還在浮城的 D.NPCS 與路人表抽出指定人數（needFriend 為真時優先放入 1 位還在浮城的朋友）

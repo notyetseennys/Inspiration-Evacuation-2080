@@ -9,8 +9,10 @@
   const D = IE.DATA, R = IE.Rules;
 
   function on(s) {
-    return !!(s && D.MODES && D.MODES[s.mode] && D.MODES[s.mode].rounds);
+    // 第十七期：章節沒有「水位」時，水照樣上升，但不會淹到家
+    return !!(s && D.MODES && D.MODES[s.mode] && D.MODES[s.mode].rounds) && (!IE.Chapters || IE.Chapters.feat(s, 'flood'));
   }
+  const moveMod = (s) => 1 - ((s && s.salvage && s.salvage.moveDisc) || 0);
 
   function priceMod(s) {
     return IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
@@ -214,7 +216,7 @@
     if ((s.floor || 0) <= 0) {
       const def = defs.find((x) => x.id === 'rehouse') || { id: 'rehouse', name: '租回一個單位', desc: '租回 {f} 樓的單位，恢復素材庫上限' };
       const nextFloor = Math.min(8, Math.max(1, Math.floor(s.water || 0) + 2));
-      const cost = Math.round((E.rehouse != null ? E.rehouse : 260) * mod);
+      const cost = Math.round((E.rehouse != null ? E.rehouse : 260) * mod * moveMod(s));
       const affordable = (s.cr || 0) >= cost;
       return [{
         id: 'rehouse',
@@ -232,7 +234,7 @@
       const nextFloor = s.floor + 1;
       const base = E.moveBase != null ? E.moveBase : 120;
       const step = E.moveStep != null ? E.moveStep : 40;
-      const cost = Math.round((base + step * nextFloor) * mod);
+      const cost = Math.round((base + step * nextFloor) * mod * moveMod(s));
       const affordable = (s.cr || 0) >= cost;
       return [{
         id: 'moveup',
@@ -278,7 +280,19 @@
     };
   }
 
+  // 第十七期：舊城的「水位局內部通告」：明晚的水位和階段（不改局面）
+  function forecast(s) {
+    if (!on(s)) return null;
+    const S = D.SEASONS[s.season];
+    const water = Math.min(8.5, (s.water || 0) + (S ? S.water * 4 : 0));
+    const t = Object.assign({}, s, { water });
+    const flooded = (t.floor || 0) > 0 && R.flooded(t);
+    t.floodRun = flooded ? (s.floodRun || 0) + 1 : 0;
+    return { water: Math.round(water * 10) / 10, floor: s.floor || 0, stage: stage(t) };
+  }
+
   IE.Flood = {
+    forecast,
     on,
     ensure,
     stage,

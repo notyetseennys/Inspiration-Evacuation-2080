@@ -46,10 +46,20 @@
     );
   }
 
-  // 第幾輪（1..5）
+  // 第十七期：這一局有幾輪（章節決定；沒有章節是五輪）
+  const total = (s) => (s && s.roundsTotal) || 5;
+  const nightsTotal = (s) => total(s) * 3;
+  const sv = (s, k) => (s && s.salvage && s.salvage[k]) || 0;
+  const feat = (s, k) => !IE.Chapters || IE.Chapters.feat(s, k);
+  // 第幾輪（1..total）
   function roundOf(s, night) {
     const n = night == null ? s.night : night;
-    return R.clamp(Math.ceil(n / 3), 1, 5);
+    return R.clamp(Math.ceil(n / 3), 1, total(s));
+  }
+  // 「第 2 輪・第 4／15 晚」：章節較短時把 15 換成這一局的晚數
+  function dayTitle(s, round, night) {
+    const t = D.ROUND_TEXT.dayTitle.replace('{round}', round).replace('{night}', night);
+    return nightsTotal(s) === 15 ? t : t.replace('／15', '／' + nightsTotal(s));
   }
 
   // 這一晚的關卡種類：小展／聯展／外星評審
@@ -271,7 +281,7 @@
       : R.pick(s, p2.length ? p2 : nonMicro([c1]));
 
     const tripDef = D.DAYCARDS.find((c) => c.id === 'trip');
-    const trips = all.filter((id) => id.startsWith('trip:'));
+    const trips = feat(s, 'trip') ? all.filter((id) => id.startsWith('trip:')) : [];
     const restPool = nonMicro([c1, c2]);
     const c3 = trips.length && (R.rand(s) < (tripDef ? tripDef.chance : 0.15) || !restPool.length)
       ? R.pick(s, trips)
@@ -297,7 +307,8 @@
     const arr = D.ECON.offerReroll;
     const base = arr[R.clamp(r, 0, arr.length - 1)];
     const stMod = IE.Meta && IE.Meta.stakeMod ? IE.Meta.stakeMod(s, 'prices') : 1;
-    return Math.round(base * stMod);
+    if (sv(s, 'freeReroll') && s.freeRerollRound !== roundOf(s)) return 0;
+    return Math.round(base * stMod * (1 - sv(s, 'rerollDisc')));
   }
 
   // 換一批生活卡
@@ -306,6 +317,7 @@
     const cost = offerCost(s);
     if (s.cr < cost) return { ok: false, msg: '換一批要 $' + cost };
     s.cr -= cost;
+    if (cost === 0 && sv(s, 'freeReroll')) s.freeRerollRound = roundOf(s);
     of.rerolls = (of.rerolls || 0) + 1;
     const drawn = drawOffer(s);
     of.ids = drawn.ids;
@@ -442,7 +454,7 @@
       return null;
     }
     const rep = R.report(s, '睡懶覺');
-    const sp = R.addSpark(s, D.ECON.skipSpark, true);
+    const sp = R.addSpark(s, D.ECON.skipSpark + sv(s, 'skipSpark'), true);
     rep.line('今天甚麼都不做，睡了一整天', 'good', sp, 'spark');
     afterDay(s);
     return rep.done();
@@ -600,6 +612,11 @@
   // 失去一次機會；機會用完即進入結局
   function loseChance(s, cause, rep) {
     if (!s || !on(s)) return;
+    if (sv(s, 'saveChance') && !s.chanceSaved) {
+      s.chanceSaved = cause;
+      if (rep && rep.line && D.SALVAGE_TEXT) rep.line(D.SALVAGE_TEXT.saved, 'good');
+      return;
+    }
     s.chances = Math.max(0, (s.chances == null ? 3 : s.chances) - 1);
     s.lost = s.lost || [];
     s.lost.push(cause);
@@ -679,7 +696,7 @@
     if (slot.startsWith('obj:')) {
       const id = slot.slice(4);
       const o = D.OBJ[id];
-      return o ? Math.round((D.OBJ_PRICE[o.rarity] || 90) * mod) : 0;
+      return o ? Math.round((D.OBJ_PRICE[o.rarity] || 90) * mod * (1 - sv(s, 'shopDisc'))) : 0;
     }
     if (slot.startsWith('pack:')) {
       const pid = slot.slice(5);
@@ -750,7 +767,7 @@
     });
     const fallback = allIds.filter((k) => D.CARDS[k].rarity !== 'legend' && !pool.includes(k));
     const cards = [];
-    while (cards.length < 3 && (pool.length || fallback.length || legends.length)) {
+    while (cards.length < 3 + sv(s, 'packExtra') && (pool.length || fallback.length || legends.length)) {
       const src = legends.length && (R.rand(s) < D.ECON.packLegend || !(pool.length || fallback.length)) ? legends : pool.length ? pool : fallback;
       const id = R.pick(s, src);
       src.splice(src.indexOf(id), 1);
@@ -891,7 +908,8 @@
     if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
     const picked = s.pack.cards[i];
     const res = R.addCard(s, picked.id, { kind: 'shop' });
-    res.card.star = picked.star;
+    if (res.dup) res.card.star = Math.max(res.card.star || 1, picked.star);
+    else res.card.star = picked.star;
     s.pack = null;
     return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
   }
@@ -989,6 +1007,12 @@
         if (c && c.wear > 0) c.wear = Math.max(0, c.wear - 1);
       });
     }
+    // 第十七期：舊城打撈的每日和每輪效果
+    if (sv(s, 'sparkFloor') && s.spark < 1) s.spark = 1;
+    if ((s.night - 1) % 3 === 0) {
+      if (sv(s, 'roundSpark')) R.addSpark(s, sv(s, 'roundSpark'), true);
+      if (sv(s, 'roundPack')) grantSalvagePack(s);
+    }
     if ((s.night - 1) % 3 === 0) {
       const gigs = ensureGigs(s);
       const due = [];
@@ -1041,7 +1065,7 @@
     }
     const soul = s.soul;
     const soulStr = (soul || 0).toFixed(1);
-    const soulOk = soul <= R.SOUL_LIMIT;
+    const soulOk = soul <= R.soulLimit(s);
     if (soulOk) {
       lines.push(D.ROUND_TEXT.soulOk.replace('{soul}', soulStr));
     } else {
@@ -1071,12 +1095,16 @@
       collect: null,
     };
     if (!s.ended) {
-      if (round >= 5 && s.chances > 0) {
+      if (round >= total(s) && s.chances > 0) {
         s.ended = R.endingFor(s, 'recruited');
         s.phase = 'ended';
       } else {
-        if (round < 5 && IE.Story && IE.Story.collect) {
+        if (round < total(s) && feat(s, 'collect') && IE.Story && IE.Story.collect) {
           IE.Story.collect(s, rep);
+        }
+        // 第十七期：舊城的「招聘廣告」預告下一輪外星評審的規則
+        if (sv(s, 'nextJudge') && feat(s, 'judge') && IE.Stages && IE.Stages.bossesFor && round < total(s)) {
+          rep.nextJudge = IE.Stages.bossesFor(s, round).map((b) => b.name + '（' + b.desc + '）');
         }
         advance(s);
       }
@@ -1092,10 +1120,51 @@
     s.reviewRep = null;
   }
 
+  // ---------- 第十七期：舊城打撈的白天效果 ----------
+  // 沉船貨櫃：每輪開始送一個打撈包（一張平衡素材，來歷是打撈）；介面在早上把它當作一個包撕開
+  function grantSalvagePack(s) {
+    const pool = (D.DESK_IDS || []).slice();
+    if (!pool.length) return null;
+    const id = R.pick(s, pool);
+    const res = R.addCard(s, id, { kind: 'salvage' });
+    s.packQueue = s.packQueue || [];
+    s.packQueue.push({ kind: 'salvage', uids: [res.card.uid], night: s.night });
+    return res;
+  }
+  // 告解室：每輪一次，靈魂輕 1 克，火花 −0.2
+  function canConfess(s) {
+    return !!(on(s) && sv(s, 'confess') && s.phase === 'day' && s.confessRound !== roundOf(s));
+  }
+  function confess(s) {
+    if (!canConfess(s)) return null;
+    s.confessRound = roundOf(s);
+    const rep = R.report(s, D.SALVAGE_TEXT.confessBtn);
+    const g = Math.min(s.soul, 1);
+    s.soul = Math.round((s.soul - g) * 10) / 10;
+    rep.delta('soul', -g);
+    const sp = R.addSpark(s, -0.2, true);
+    rep.delta('spark', sp);
+    rep.line(D.SALVAGE_TEXT.confessDone, 'good');
+    return rep.done();
+  }
+  // 心電圖：每輪最後一晚，預告篩選的結果（不改局面）
+  function reviewPreview(s) {
+    if (!on(s) || (s.night % 3) !== 0) return null;
+    const rent = rentOf(s, roundOf(s));
+    return { rent, rentOk: s.cr >= rent, soul: s.soul, soulOk: s.soul <= R.soulLimit(s) };
+  }
+
   IE.Rounds = {
     on,
     cash,
     cashText,
+    total,
+    nightsTotal,
+    dayTitle,
+    grantSalvagePack,
+    canConfess,
+    confess,
+    reviewPreview,
     roundOf,
     kindOf,
     dayOfNight,

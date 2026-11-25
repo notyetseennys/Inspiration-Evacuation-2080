@@ -406,7 +406,7 @@
     const st = ensure(s);
     const r = IE.Rounds.roundOf(s);
     if (Object.prototype.hasOwnProperty.call(st.plan, r)) return st.plan[r];
-    if (r >= 5) {
+    if (r >= ((IE.Rounds.total && IE.Rounds.total(s)) || 5)) {
       st.plan[r] = null;
       return null;
     }
@@ -440,7 +440,7 @@
     if (!pl || pl.npc !== npc) return { ok: false, msg: '不是本輪預告的朋友' };
     if (st.hidden[npc] || st.taken[npc]) return { ok: false, msg: '已經不在浮城' };
     const rawCost = (D.ECON.hideCost && D.ECON.hideCost[r - 1]) || 80;
-    const cost = Math.abs(money(s, -rawCost));
+    const cost = Math.round(Math.abs(money(s, -rawCost)) * (1 - ((s.salvage && s.salvage.hideDisc) || 0)));
     if (s.cr < cost) {
       return { ok: false, msg: D.STORY.text.hideFail.replace('{cost}', fmt(s, cost)), cost };
     }
@@ -462,7 +462,7 @@
     if ((s.chances != null && s.chances <= 0) || s.ended) return null;
     const st = ensure(s);
     const r = IE.Rounds.roundOf(s);
-    if (r >= 5) return null;
+    if (r >= ((IE.Rounds.total && IE.Rounds.total(s)) || 5)) return null;
     const pl = plan(s);
     if (!pl || !pl.npc) return null;
     const npc = pl.npc;

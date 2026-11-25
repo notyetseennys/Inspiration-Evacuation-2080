@@ -73,7 +73,9 @@
     const K = KINDS[kind];
     if (IE.Rounds && IE.Rounds.on(s)) {
       const target = IE.Rounds.target(s, day / 4);
-      return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: kind === 'boss' || (s.weekly && s.weekly.mod === 'judges') ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
+      // 第十七期：章節沒有「外星評審的規則」時，評審之夜只看分數
+      const judgeOn = !IE.Chapters || IE.Chapters.feat(s, 'judge');
+      return { day, quarter: q, kind, name: K.name, short: K.short, color: K.color, target, rules: judgeOn && (kind === 'boss' || (s.weekly && s.weekly.mod === 'judges')) ? bossesFor(s, q) : [], index: q * 3 + ['small', 'big', 'boss'].indexOf(kind) + 1 };
     }
     // 第一局的頭兩關目標較低（第十二期），讓新玩家先嘗到過關的滋味
     const easy = s.firstRun && q === 0 && kind !== 'boss' ? 0.6 : 1;
@@ -139,6 +141,9 @@
         Object.keys(sc).forEach((k) => { if (sc[k] >= 3) { s.stats.schoolPass = s.stats.schoolPass || {}; s.stats.schoolPass[k] = true; } });
         s.cr += reward; s.stats.crEarned += reward; out.cr = reward;
         out.lines.push('獎金 $' + reward);
+        // 第十七期：舊城的「星空」：每晚達標火花多一點
+        const ps = (s.salvage && s.salvage.passSpark) || 0;
+        if (ps) { const g = R.addSpark(s, ps, true); if (g) out.lines.push('星空：火花 +' + g); }
         const overs = (D.ECON16 && D.ECON16.over) || [{ x: 2, spark: D.ECON.overkillSpark }];
         let over = null;
         overs.forEach((ov) => { if (score >= stage.target * ov.x) over = ov; });

@@ -6,7 +6,9 @@
 //   ECON='{"growth":1.28,"nightPay":{"small":95,"big":150,"boss":220}}' node tools/sim-rounds.js 200
 //   BG=monk node tools/sim-rounds.js 50
 //   SEED0=5000 node tools/sim-rounds.js 200（換一段種子：第 i 局的種子是 SEED0 + i，審核時確認結果穩定）
-//   TRIP=any node tools/sim-rounds.js 200（只要付得起旅費就出國，不保留本輪租金：估計出國本身的價值，見 CALIBRATION.md 第九節）
+//   TRIP=any node tools/sim-rounds.js 200
+//   CHAPTER=c1 node tools/sim-rounds.js 200（第十七期：模擬浮城年表的某一章；不設＝完整的五輪模式）
+//   SALVAGE='{"startCards":2,"discards":1}' node tools/sim-rounds.js 200（第十七期：模擬舊城打撈的加成）（只要付得起旅費就出國，不保留本輪租金：估計出國本身的價值，見 CALIBRATION.md 第九節）
 'use strict';
 
 const path = require('path');
@@ -14,7 +16,7 @@ const path = require('path');
   'data.js', 'data-events.js', 'data-incidents.js', 'data-deaths.js', 'data-jobs.js',
   'data-craft.js', 'data-world.js', 'data-world2.js', 'data-chars.js', 'data-schools.js',
   'data-abilities.js', 'data-stories.js', 'data-weather.js', 'data-contacts.js',
-  'data-rounds.js', 'data-cities.js', 'data-story.js', 'data-stance.js', 'data-art.js', 'desk.js', 'data-desk.js',
+  'data-rounds.js', 'data-cities.js', 'data-story.js', 'data-stance.js', 'data-art.js', 'desk.js', 'data-desk.js', 'data-chapters.js', 'chapters.js', 'salvage.js',
   'rules.js', 'cards.js', 'create.js', 'world.js', 'jobs2.js', 'auto.js',
   'stages.js', 'meta.js', 'dossier.js', 'flood.js', 'rounds.js', 'story.js',
 ].forEach((f) => require(path.join(__dirname, '../game/js', f)));
@@ -775,7 +777,8 @@ function runShop(s, strat, metrics) {
 }
 
 function runOne(bg, season, seed, strat) {
-  const s = R.newRun({ bg, season, seed, mode: 'rounds' });
+  // 第十七期：CHAPTER=c1 模擬某一章；SALVAGE='{"startCards":2}' 模擬舊城的加成
+  const s = R.newRun({ bg, season, seed, mode: 'rounds', chapter: process.env.CHAPTER || null, salvage: process.env.SALVAGE ? JSON.parse(process.env.SALVAGE) : null });
   const metrics = {
     plays: 0,
     discards: 0,

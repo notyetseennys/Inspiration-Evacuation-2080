@@ -75,7 +75,9 @@
   const wearMult = (c) => Math.max(0.3, 1 - 0.12 * (c.wear || 0));
   function cardValue(s, c) {
     const perk = D.BACKGROUNDS[s.bg].perk;
-    return Math.round(STAR_CHIPS[starOf(c)] * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
+    // 第十七期：閃卡計分時籌碼 ×1.5（只有五輪模式有閃卡）
+    const foil = c.foil && D.PACK16 ? D.PACK16.foilChips : 1;
+    return Math.round(foil * STAR_CHIPS[starOf(c)] * (schoolOn(s, 'cliche') ? 1 : wearMult(c)) * (perk.dataChips && med(c) === 'data' ? perk.dataChips : 1) * (perk.craftChips || 1) * (1 + 0.003 * s.attr.craft) * (decorOn(s, 'bookshelf') ? 1.05 : 1) * (c.rarity === 'rare' && perk.rareChips ? perk.rareChips : 1));
   }
   const MOD_FX = { shine: { chips: 30 }, burn: { mult: 4 }, tear: { xmult: 1.5 } };
 
@@ -199,7 +201,8 @@
     const heat = ((s.style && s.style[form]) || 0) * speed;
     // 覺醒的 AI：模仿自己反而越來越強
     if (P.aiInvert) return Math.min(2, r2(1 + 0.12 * heat));
-    const pen = 0.1 * Math.max(0, heat - 2) * (objs.some((o) => o.def.aiHalf) ? 0.5 : 1);
+    const half = objs.some((o) => o.def.aiHalf) || !!(s.salvage && s.salvage.aiHalf);
+    const pen = 0.1 * Math.max(0, heat - 2) * (half ? 0.5 : 1);
     return Math.max(0.4, r2(1 - pen));
   }
 
@@ -245,6 +248,9 @@
       const fs = formStats(s, A.id);
       let chips = fs.chips, mult = fs.mult;
       const steps = [{ t: 'form', form: A.id, level: fs.level, chips, mult, C: chips, M: mult }];
+      // 第十七期：舊城的「滿座」：每晚第一筆籌碼多一點
+      const fc = (s.salvage && s.salvage.firstChips) || 0;
+      if (fc && s.session && !(s.session.log || []).length) { chips += fc; steps.push({ t: 'salvage', name: '滿座', chips: fc, C: chips, M: mult }); }
       const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
       const objs = SR && SR.noObjects ? [] : activeObjects(s);
       const schools = activeSchools(s, objs);
@@ -928,7 +934,7 @@
         deck: shuffle(s, s.cards.map((c) => c.uid)), hand: [],
         handSize: E.hand + (s.handBonus || 0) + (perk.handBonus || 0) + m.hand + (s.trip ? 1 : 0) + (IE.World ? IE.World.stampBonus(s).hand : 0),
         plays: (perk.playsSet || E.plays) + m.plays + (RL.worldMods(s).extraPlay || 0) + (IE.World ? IE.World.stampBonus(s).plays : 0),
-        discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0)),
+        discards: Math.max(0, E.discards + m.discards + (decorOn(s, 'easel') ? 1 : 0) - (IE.Meta ? IE.Meta.stakeMod(s, 'discards') : 0) + ((s.salvage && s.salvage.discards) || 0)),
         discardsUsed: 0, log: [], total: 0, raw: 0, fresh: [], relief: 0, notes: [], used: [], reshuffled: 0, passed: false, encore: 0, refund,
       };
       s.session.base = { plays: s.session.plays, discards: s.session.discards, handSize: s.session.handSize };
@@ -1085,7 +1091,7 @@
     ses.log.push(logEntry);
     if (passedBefore) {
       ses.encore = (ses.encore || 0) + 1;
-      const encSp = RL.addSpark(s, 0.1, true);
+      const encSp = RL.addSpark(s, 0.1 + ((s.salvage && s.salvage.encoreSpark) || 0), true);
       s.spark = r2(s.spark);
       res.encorePlay = ses.encore;
       if (encSp) {

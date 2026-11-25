@@ -1,6 +1,8 @@
 // 第十六期（WO-16-01）：卡的來歷、回憶、作品記錄與遺物單元測試。
 'use strict';
 
+// 第十七期修訂：同一張素材由故事、工作、旅行、市集、朋友再得到時會升星（不會多一張），
+// 這裏要測素材庫的張數，所以用不會合併的來歷「craft」。
 module.exports = (t) => {
   if (!t.IE.Cards) require('../../game/js/cards.js');
   const { IE, D, R, C, assert } = t;
@@ -56,6 +58,9 @@ module.exports = (t) => {
       ],
     };
     line.chapters.unshift(testCh);
+    // 第十七期：這個測試只檢查來歷；暫時關掉「重複的素材升星」，免得抽到已有的素材時沒有新卡
+    const dupKinds = D.PACK16 ? D.PACK16.dupKinds : null;
+    if (D.PACK16) D.PACK16.dupKinds = [];
     try {
       const s = t.run({ mode: 'rounds', bg: 'copywriter', seed: 12 });
       s.night = 4;
@@ -112,6 +117,7 @@ module.exports = (t) => {
         npc: null,
       });
     } finally {
+      if (D.PACK16) D.PACK16.dupKinds = dupKinds;
       line.chapters.shift();
     }
   });
@@ -121,14 +127,14 @@ module.exports = (t) => {
     const max = D.CRAFT.deckMax;
     const cardId = Object.keys(D.CARDS)[0];
     while (s.cards.length < max) {
-      const r = R.addCard(s, cardId, { kind: 'shop' });
+      const r = R.addCard(s, cardId, { kind: 'craft' });
       assert.equal(r.dropped, null);
       assert.equal(r.over, false);
     }
     assert.equal(s.cards.length, max);
     assert.equal(s.over, false);
 
-    const overRes = R.addCard(s, cardId, { kind: 'shop' });
+    const overRes = R.addCard(s, cardId, { kind: 'craft' });
     assert.equal(s.cards.length, max + 1);
     assert.equal(overRes.dropped, null);
     assert.equal(overRes.over, true);
@@ -147,7 +153,7 @@ module.exports = (t) => {
     const max = D.CRAFT.deckMax;
     const cardId = Object.keys(D.CARDS)[0];
     while (s.cards.length < max + 2) {
-      R.addCard(s, cardId, { kind: 'shop' });
+      R.addCard(s, cardId, { kind: 'craft' });
     }
     assert.equal(s.cards.length, max + 2);
     assert.equal(s.over, true);
@@ -179,7 +185,7 @@ module.exports = (t) => {
     const max = D.CRAFT.deckMax;
     const cardId = Object.keys(D.CARDS)[0];
     while (s.cards.length < max + 1) {
-      R.addCard(s, cardId, { kind: 'shop' });
+      R.addCard(s, cardId, { kind: 'craft' });
     }
     const relicCard = s.cards[0];
     relicCard.relic = true;

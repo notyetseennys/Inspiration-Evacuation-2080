@@ -186,7 +186,7 @@
         if (g) line((D.STANCE_TEXT && D.STANCE_TEXT.comply) || '你照做了。', 'sin', g, 'soul');
         if (s.spark < sparkBefore) line('良知被磨損，你的感受力也變弱了', 'bad', R.round1(s.spark - sparkBefore), 'spark');
       } else if (stance === 'care') {
-        const g = R.atone(s, 1, null);
+        const g = R.atone(s, 1 + ((s.salvage && s.salvage.careBonus) || 0), null);
         if (g) line((D.STANCE_TEXT && D.STANCE_TEXT.care) || '你為了一個人，放棄了今天的成績。', 'good', -g, 'soul');
       }
       const stDef = D.STANCE && D.STANCE[microKey];

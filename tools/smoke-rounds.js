@@ -957,7 +957,7 @@ const URL = 'http://localhost:' + PORT + '/';
       const maxDeck = (D.BACKGROUNDS[s.bg].perk.deckMax || R.MAX_CARDS);
       s.memory = [];
       while (s.cards.length <= maxDeck) {
-        R.addCard(s, 'd_comic', { kind: 'shop' });
+        R.addCard(s, 'd_comic', { kind: 'craft' }); // 第十七期：市集的重複素材會升星，這裏要塞滿素材庫，所以用工作室的來歷
       }
       window.__IE.Game.roundsGo();
       const first = s.cards.find((c) => c && !c.relic);

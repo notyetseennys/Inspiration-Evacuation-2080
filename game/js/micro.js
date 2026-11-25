@@ -231,6 +231,7 @@
   // 兩難出現時間：整個小遊戲時長的 40% 至 70%（使用局內亂數）
   function dilemmaAt(s, duration) {
     if (!inRounds(s)) return Infinity;
+    if (IE.Chapters && !IE.Chapters.feat(s, 'stance')) return Infinity;
     return duration * (0.4 + 0.3 * runRand(s));
   }
   // 從還在浮城的 D.NPCS 與路人表抽出指定人數（needFriend 為真時優先放入 1 位還在浮城的朋友）

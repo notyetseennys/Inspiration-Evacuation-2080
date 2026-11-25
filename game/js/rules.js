@@ -60,6 +60,7 @@
   };
   // 每天早上擲天氣：一般天氣跟季節走；奇怪狀態由一成多開始，越到後期越常見；不會連續兩天一樣
   function rollWeather(s) {
+    if (s.mode === 'rounds' && IE.Chapters && !IE.Chapters.feat(s, 'weather')) { s.weather = null; return; }
     if (!D.WEATHER || s.trip || (s.weather && s.weather.day === s.day)) return;
     const odd = !s.firstRun && rand(s) < 0.14 + 0.16 * age(s) / 100;
     const prev = s.weather && s.weather.id;
@@ -159,6 +160,8 @@
   // 良知是負重：同一件虧心事，良知越強、同理心越高就越重；每做一次，良知都會被磨損（麻木）。
   // 外星人的牽引光束最多只能拉起 21 克的靈魂，太重會污染他們的神經網絡。
   const SOUL_LIMIT = D.SOUL_LIMIT;
+  // 第十七期：五輪模式的靈魂上限（舊城的「出院紙」加 1 克）
+  const soulLimit = (s) => SOUL_LIMIT + ((s && s.mode === 'rounds' && s.salvage && s.salvage.soulLimit) || 0);
   const sinFactor = (s) => (0.3 + 0.7 * s.conscience) * (1 + 0.003 * A(s, 'empathy')) * (worldMods(s).sinMult || 1) * (perk(s).sinMult || 1);
   function sin(s, base, rep, reason, guiltName, tag) {
     const grams = round1(base * sinFactor(s));
@@ -408,8 +411,30 @@
       // 五個外星評審之夜的規則在開局時全部選好：介面可以預告，之後讀取規則也不會動到隨機數
       if (IE.Stages) for (let q = 0; q < 5; q++) IE.Stages.bossesFor(s, q);
       if (IE.Story && IE.Story.init) IE.Story.init(s);
+      // 第十七期：浮城年表的章節和舊城打撈的加成（只在五輪模式）
+      const ch = opts.chapter && D.CHAPTERS ? D.CHAPTERS.find((c) => c.id === opts.chapter && !c.building) : null;
+      s.chapter = ch ? ch.id : null;
+      s.roundsTotal = ch ? ch.rounds : 5;
+      s.salvage = opts.salvage && Object.keys(opts.salvage).length ? Object.assign({}, opts.salvage) : null;
+      if (s.salvage) applyStartSalvage(s);
     }
     return s;
+  }
+  // 舊城打撈的開局效果（第十七期）
+  function applyStartSalvage(s) {
+    const sv = s.salvage;
+    if (sv.startCash) s.cr += sv.startCash;
+    if (sv.startSpark) s.spark = round1(Math.min(SPARK_MAX, s.spark + sv.startSpark));
+    if (sv.startSoul) s.soul = Math.max(0, round1(s.soul + sv.startSoul));
+    if (sv.fullLevel) { s.forms = s.forms || {}; s.forms.full = (s.forms.full || 1) + sv.fullLevel; }
+    for (let i = 0; i < (sv.startCards || 0); i++) {
+      const pool = (D.DESK_IDS || []).filter((id) => !s.cards.some((c) => c.id === id));
+      if (pool.length) addCard(s, pick(s, pool), { kind: 'salvage' });
+    }
+    for (let i = 0; i < (sv.startFoil || 0); i++) {
+      const c = s.cards.find((x) => !x.foil && !x.relic);
+      if (c) markFoil(s, c);
+    }
   }
   const countAction = (s, k) => { s.stats.actions[k] = (s.stats.actions[k] || 0) + 1; };
 
@@ -421,10 +446,42 @@
     if (c.rarity) card.rarity = c.rarity;
     return card;
   }
+  // 第十七期：閃卡用局面的種子和卡的 uid 決定（不消耗隨機數，同一局永遠一樣）
+  function foilRoll(s, card) {
+    const str = String(s.seed) + ':' + card.uid + ':' + card.id;
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return ((h >>> 0) % 100000) / 100000;
+  }
+  function markFoil(s, card) {
+    card.foil = true;
+    s.stats.foils = (s.stats.foils || 0) + 1;
+    s.seenCards = s.seenCards || {};
+    if (card.id) s.seenCards[card.id] = 2;
+  }
   function addCard(s, idOrCard, origin) {
+    const P = D.PACK16;
+    const okind = origin && origin.kind;
+    // 第十七期：同一張素材再抽到，原來那張升星（只限故事、工作、旅行、市集、朋友、打撈得到的素材）
+    if (s.mode === 'rounds' && P && typeof idOrCard === 'string' && okind && P.dupKinds.includes(okind)) {
+      const ex = s.cards.find((c) => c.id === idOrCard && !c.relic);
+      if (ex) {
+        const before = IE.Create && IE.Create.starOf ? IE.Create.starOf(ex) : (ex.star || 1);
+        ex.star = Math.min(5, before + 1 + ((s.salvage && s.salvage.dupStar) || 0));
+        ex.echoes = (ex.echoes || 0) + 1;
+        ex.echo = { night: s.night || 0, from: before, to: ex.star };
+        s.stats.dups = (s.stats.dups || 0) + 1;
+        return { card: ex, dropped: null, over: !!s.over, dup: true };
+      }
+    }
     const card = typeof idOrCard === 'string' ? makeCard(s, idOrCard) : Object.assign({ uid: s.uid++ }, idOrCard);
     card.wear = card.wear || 0;
     if (s.mode === 'rounds') {
+      if (P && okind !== 'craft' && !card.foil) {
+        const chance = P.foil * (1 + ((s.salvage && s.salvage.foilX) || 0));
+        if (foilRoll(s, card) < chance) markFoil(s, card);
+      }
+      if (card.id) { s.seenCards = s.seenCards || {}; s.seenCards[card.id] = Math.max(s.seenCards[card.id] || 0, card.foil ? 2 : 1); }
       if (IE.Cards) IE.Cards.ensure(s);
       else { s.memory = s.memory || []; if (typeof s.over !== 'boolean') s.over = false; }
       // 來歷放在 card.from：card.origin 是出國素材的地區（字串），兩者不可以混用
@@ -463,7 +520,7 @@
     if (rep) rep.line('技法提升：「' + f.name + '」升到 Lv.' + s.forms[fid], 'good');
   }
   const ownsObject = (s, id) => s.objects.includes(id) || s.objStash.includes(id);
-  const objectAvailable = (s, o) => !o.unlock || s.unlocked.includes(o.id);
+  const objectAvailable = (s, o) => (!o.unlock || s.unlocked.includes(o.id)) && (!IE.Chapters || IE.Chapters.objAllowed(s, o));
   // 物件欄：還俗的僧人只有一格；黑市義體技師多一格，但只可以放機械流
   const slotsOf = (s) => (perk(s).objMax || (s.weekly && s.weekly.mod === 'single') ? Math.min(perk(s).objMax || 1, s.objSlots) : s.objSlots);
   function canEquip(s, id) {
@@ -600,7 +657,8 @@
   const rarityTh = (s) => RARITY_TH[D.BACKGROUNDS[s.bg].rarity] || 1;
   const threshold = (s) => Math.round(modeOf(s).thresholds[s.quarter] * (worldMods(s).thresholdMult || 1) * stakeMod(s, 'threshold') * rarityTh(s));
   const reviewDay = (s) => (s.quarter + 1) * modeOf(s).period;
-  const kpi = (s) => D.KPIS[s.kpis[s.quarter]];
+  const KPI_NONE = { id: 'none', name: '', desc: '', mod: 1 };
+  const kpi = (s) => (s.mode === 'rounds' && IE.Chapters && !IE.Chapters.feat(s, 'kpi') ? KPI_NONE : D.KPIS[s.kpis[s.quarter]]);
   const flooded = (s) => s.floor > 0 && s.water >= s.floor;
   const nextRentDay = (s) => Math.ceil(s.day / D.RENT_EVERY) * D.RENT_EVERY;
   const foodCost = (s) => (perk(s).noFood ? 0 : Math.round(seasonOf(s).food * (worldMods(s).foodMult || 1) * (perk(s).foodMult || 1)));
@@ -1928,7 +1986,7 @@
 
   IE.Rules = {
     newRun, rand, pick, clamp, round1, addCard, legacyCard, addSpark, SPARK_MAX, sparkMax,
-    SOUL_LIMIT, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
+    SOUL_LIMIT, soulLimit, markFoil, sinFactor, sin, atone, offsetCost, applyVolunteer, drawDilemma, dilemmaView, resolveDilemma,
     train, bodyMax, worldMods, worldClosed, worldInfo, eventsInfo, eventActive, evDef, addParanoia, foodCost,
     hurt, kill, addCond, cureConds, condsInfo, outdoorRisk, homeRisk,
     stallOpen, stallBuy, stallReroll, stallRerollCost, stallPrice,

@@ -277,7 +277,8 @@ module.exports = (t) => {
       const repYes = R.applyMicro(sYes, 'dive', bDiveRes);
       assert.equal(repYes.rank.id, 'B');
       assert.equal(repYes.cards.length, 1, '差事 B 級必定有卡（seed=' + seed + '）');
-      repYes.cards.forEach((c) => {
+      // 第十七期：抽到素材庫已有的素材時，是原來那張升星（來歷保持原來的）
+      repYes.cards.filter((c) => !c.echo).forEach((c) => {
         assert.deepEqual(c.from, {
           kind: 'work',
           night: 1,
@@ -302,7 +303,8 @@ module.exports = (t) => {
       assert.equal(rep.rank.id, wantRank);
       assert.ok(rep.cards.length >= 1);
       let sawUpgraded = false;
-      rep.cards.forEach((c) => {
+      // 第十七期：重複的素材是原來那張升星，不在這個檢查之內
+      rep.cards.filter((c) => !c.echo).forEach((c) => {
         const baseStar = C.starOf(D.CARDS[c.id]);
         assert.equal(C.starOf(c), Math.max(baseStar, wantStar));
         if (baseStar < wantStar && C.starOf(c) === wantStar) sawUpgraded = true;
