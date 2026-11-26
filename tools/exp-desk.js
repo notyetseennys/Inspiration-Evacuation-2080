@@ -12,6 +12,8 @@
 //   macro-greedy  四格：一晚四筆的主調依次是起、承、轉、合，第四筆 ×2（機械人不理會四格，只量度自然發生的比例）
 //   macro-plan    四格：機械人會為四格計劃（承、轉的那一筆加權 1.3，完成的一筆 ×2）
 //   commission    委託：每晚一個委託（主調、剛好三張、沒有轉、不是起承轉合或迴旋、三種媒材），完成的一筆 ×2
+//   commission-hard  委託要兩個條件（主調＋至少四張、主調＋剛好三張、四種媒材、五張的首尾呼應或獨白）
+//   macro-steps   四格的每一步都有獎勵：承 ×1.2、轉 ×1.3、合 ×1.6（機械人會計劃）
 // 每一筆由均衡機械人選「價值」最高的相連排法；輸出結構的分佈和多樣性、用幾張、每晚的 總分÷目標、變體專屬的量度。
 'use strict';
 const path = require('path');
@@ -54,11 +56,11 @@ function newNight(s) {
   nightState.mains = [];
   nightState.com = null;
   nightState.comDone = false;
-  if (VARIANT === 'commission') {
+  if (VARIANT.startsWith('commission')) {
     const counts = {};
     s.cards.forEach((c) => c.tags.forEach((t) => { if (WHEEL.includes(t)) counts[t] = (counts[t] || 0) + 1; }));
     const emos = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 5);
-    const types = ['main', 'three', 'nozhuan', 'notfull', 'media'];
+    const types = VARIANT === 'commission-hard' ? ['main4', 'main3', 'media4', 'echo5'] : ['main', 'three', 'nozhuan', 'notfull', 'media'];
     const type = types[Math.floor(rand() * types.length)];
     nightState.com = { type, emo: emos[Math.floor(rand() * emos.length)] || 'warmth' };
     nightState.comNights++;
@@ -73,6 +75,10 @@ function comOk(s, res) {
   if (c.type === 'nozhuan') return run.length >= 3 && ['flow', 'echo', 'mono'].includes(res.form);
   if (c.type === 'notfull') return run.length >= 3 && !['full', 'loop'].includes(res.form);
   if (c.type === 'media') return new Set(run.map((x) => C.medium(x))).size >= 3;
+  if (c.type === 'main4') return mainOf(res) === c.emo && run.length >= 4;
+  if (c.type === 'main3') return mainOf(res) === c.emo && run.length === 3;
+  if (c.type === 'media4') return new Set(run.map((x) => C.medium(x))).size >= 4;
+  if (c.type === 'echo5') return run.length === 5 && ['echo', 'mono'].includes(res.form);
   return false;
 }
 // 這一筆實際的額外倍數（規則）和機械人估值用的倍數（規則加計劃）
@@ -80,13 +86,18 @@ function bonus(s, res, planning) {
   const k = nightState.mains.length, m = mainOf(res), M = nightState.mains;
   let real = 1, plan = 1;
   if (VARIANT === 'serial' && k > 0 && m && m === M[k - 1]) { real *= 1.5; plan *= 1.5; }
-  if (VARIANT.startsWith('macro')) {
+  if (VARIANT === 'macro-steps') {
+    const alive2 = k >= 1 && cheng(M[0], M[1]), alive3 = alive2 && k >= 2 && zhuan(M[1], M[2]);
+    if (k === 1 && cheng(M[0], m)) { real *= 1.2; plan *= 1.2; }
+    if (k === 2 && alive2 && zhuan(M[1], m)) { real *= 1.3; plan *= 1.3; }
+    if (k === 3 && alive3 && cheng(m, M[0])) { real *= 1.6; plan *= 1.6; }
+  } else if (VARIANT.startsWith('macro')) {
     const alive2 = k >= 1 && cheng(M[0], M[1]), alive3 = alive2 && k >= 2 && zhuan(M[1], M[2]);
     if (k === 3 && alive3 && cheng(m, M[0])) { real *= 2; plan *= 2; }
     if (planning && k === 1 && cheng(M[0], m)) plan *= 1.3;
     if (planning && k === 2 && alive2 && zhuan(M[1], m)) plan *= 1.3;
   }
-  if (VARIANT === 'commission' && comOk(s, res)) { real *= 2; plan *= 2; }
+  if (VARIANT.startsWith('commission') && comOk(s, res)) { real *= 2; plan *= 2; }
   return { real, plan };
 }
 
@@ -141,11 +152,13 @@ C.play = function (s, uids) {
     res.total += extra;
     if (s.session) s.session.total += extra;
   }
-  if (VARIANT === 'commission' && comOk(s, res)) { nightState.comDone = true; nightState.comHits++; }
+  if (VARIANT.startsWith('commission') && comOk(s, res)) { nightState.comDone = true; nightState.comHits++; }
   nightState.mains.push(mainOf(res));
   if (VARIANT.startsWith('macro') && nightState.mains.length === 4) {
     nightState.macroNights++;
     const M = nightState.mains;
+    if (cheng(M[0], M[1])) nightState.step2 = (nightState.step2 || 0) + 1;
+    if (cheng(M[0], M[1]) && zhuan(M[1], M[2])) nightState.step3 = (nightState.step3 || 0) + 1;
     if (cheng(M[0], M[1]) && zhuan(M[1], M[2]) && cheng(M[3], M[0])) nightState.macroDone++;
   }
   const cards = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
@@ -185,6 +198,7 @@ const out = {
   nightRatioMedian: +med(nightRatios).toFixed(2), nightRatioGeo: +geo(nightRatios).toFixed(2),
   diverge: Math.round(100 * nightState.diverge / Math.max(1, nightState.decisions)) + '%',
   macro: nightState.macroNights ? Math.round(100 * nightState.macroDone / nightState.macroNights) + '%' : '—',
+  macroSteps: nightState.macroNights ? [nightState.step2 || 0, nightState.step3 || 0, nightState.macroDone].map((x) => Math.round(100 * x / nightState.macroNights) + '%').join('／') : '—',
   commission: nightState.comNights ? Math.round(100 * nightState.comHits / nightState.comNights) + '%' : '—',
   seconds: Math.round((Date.now() - t0) / 1000),
 };
