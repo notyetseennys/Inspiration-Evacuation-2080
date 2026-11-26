@@ -14,6 +14,7 @@
 //   commission    委託：每晚一個委託（主調、剛好三張、沒有轉、不是起承轉合或迴旋、三種媒材），完成的一筆 ×2
 //   commission-hard  委託要兩個條件（主調＋至少四張、主調＋剛好三張、四種媒材、五張的首尾呼應或獨白）
 //   macro-steps   四格的每一步都有獎勵：承 ×1.2、轉 ×1.3、合 ×1.6（機械人會計劃）
+//   macro-loose   放寬的四格：每一筆的主調或配調都算（例如第三筆的配調和第二筆的主調相反也算轉），獎勵同 macro-steps
 // 每一筆由均衡機械人選「價值」最高的相連排法；輸出結構的分佈和多樣性、用幾張、每晚的 總分÷目標、變體專屬的量度。
 'use strict';
 const path = require('path');
@@ -46,7 +47,7 @@ if (has('negspace')) {
 
 // ---------- 一晚之內的情境（連載、四格、委託） ----------
 const mainOf = (res) => (res && res.subject && res.subject.main) || null;
-const nightState = { key: null, mains: [], com: null, comDone: false, comHits: 0, comNights: 0, macroDone: 0, macroNights: 0, diverge: 0, decisions: 0 };
+const nightState = { key: null, mains: [], pairs: [], com: null, comDone: false, comHits: 0, comNights: 0, macroDone: 0, macroNights: 0, diverge: 0, decisions: 0 };
 let rng = 4242;
 const rand = () => { rng = (rng * 1103515245 + 12345) & 0x7fffffff; return rng / 0x7fffffff; };
 function newNight(s) {
@@ -54,6 +55,7 @@ function newNight(s) {
   if (nightState.key === key) return;
   nightState.key = key;
   nightState.mains = [];
+  nightState.pairs = [];
   nightState.com = null;
   nightState.comDone = false;
   if (VARIANT.startsWith('commission')) {
@@ -82,9 +84,20 @@ function comOk(s, res) {
   return false;
 }
 // 這一筆實際的額外倍數（規則）和機械人估值用的倍數（規則加計劃）
+// 放寬的四格：兩筆的情緒（主調和配調）之中，有一對隔鄰就算承、有一對相反就算轉
+const pairOf = (res) => [mainOf(res), res && res.subject && res.subject.second].filter(Boolean);
+const anyRel = (A, B, f) => !!(A && B) && A.some((a) => B.some((b) => f(a, b)));
 function bonus(s, res, planning) {
   const k = nightState.mains.length, m = mainOf(res), M = nightState.mains;
   let real = 1, plan = 1;
+  if (VARIANT === 'macro-loose') {
+    const P = nightState.pairs, me = pairOf(res);
+    const alive2 = k >= 1 && anyRel(P[0], P[1], cheng), alive3 = alive2 && k >= 2 && anyRel(P[1], P[2], zhuan);
+    if (k === 1 && anyRel(P[0], me, cheng)) { real *= 1.2; plan *= 1.2; }
+    if (k === 2 && alive2 && anyRel(P[1], me, zhuan)) { real *= 1.3; plan *= 1.3; }
+    if (k === 3 && alive3 && anyRel(me, P[0], cheng)) { real *= 1.6; plan *= 1.6; }
+    return { real, plan };
+  }
   if (VARIANT === 'serial' && k > 0 && m && m === M[k - 1]) { real *= 1.5; plan *= 1.5; }
   if (VARIANT === 'macro-steps') {
     const alive2 = k >= 1 && cheng(M[0], M[1]), alive3 = alive2 && k >= 2 && zhuan(M[1], M[2]);
@@ -154,12 +167,16 @@ C.play = function (s, uids) {
   }
   if (VARIANT.startsWith('commission') && comOk(s, res)) { nightState.comDone = true; nightState.comHits++; }
   nightState.mains.push(mainOf(res));
+  nightState.pairs.push(pairOf(res));
   if (VARIANT.startsWith('macro') && nightState.mains.length === 4) {
     nightState.macroNights++;
-    const M = nightState.mains;
-    if (cheng(M[0], M[1])) nightState.step2 = (nightState.step2 || 0) + 1;
-    if (cheng(M[0], M[1]) && zhuan(M[1], M[2])) nightState.step3 = (nightState.step3 || 0) + 1;
-    if (cheng(M[0], M[1]) && zhuan(M[1], M[2]) && cheng(M[3], M[0])) nightState.macroDone++;
+    const M = nightState.mains, P = nightState.pairs;
+    const c = VARIANT === 'macro-loose' ? (a, b) => anyRel(a, b, cheng) : (a, b) => cheng(a, b);
+    const z = VARIANT === 'macro-loose' ? (a, b) => anyRel(a, b, zhuan) : (a, b) => zhuan(a, b);
+    const X = VARIANT === 'macro-loose' ? P : M;
+    if (c(X[0], X[1])) nightState.step2 = (nightState.step2 || 0) + 1;
+    if (c(X[0], X[1]) && z(X[1], X[2])) nightState.step3 = (nightState.step3 || 0) + 1;
+    if (c(X[0], X[1]) && z(X[1], X[2]) && c(X[3], X[0])) nightState.macroDone++;
   }
   const cards = uids.map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
   const A = K.analyze(cards, { repair: BREAKS });
