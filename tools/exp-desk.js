@@ -15,6 +15,7 @@
 //   commission-hard  委託要兩個條件（主調＋至少四張、主調＋剛好三張、四種媒材、五張的首尾呼應或獨白）
 //   macro-steps   四格的每一步都有獎勵：承 ×1.2、轉 ×1.3、合 ×1.6（機械人會計劃）
 //   macro-loose   放寬的四格：每一筆的主調或配調都算（例如第三筆的配調和第二筆的主調相反也算轉），獎勵同 macro-steps
+//   macro-mid     折衷的四格：承、合用主調或配調；轉要第三筆的主調和第二筆的主調或配調相反。獎勵較小：承 ×1.1、轉 ×1.2、合 ×1.5
 // 每一筆由均衡機械人選「價值」最高的相連排法；輸出結構的分佈和多樣性、用幾張、每晚的 總分÷目標、變體專屬的量度。
 'use strict';
 const path = require('path');
@@ -90,12 +91,15 @@ const anyRel = (A, B, f) => !!(A && B) && A.some((a) => B.some((b) => f(a, b)));
 function bonus(s, res, planning) {
   const k = nightState.mains.length, m = mainOf(res), M = nightState.mains;
   let real = 1, plan = 1;
-  if (VARIANT === 'macro-loose') {
+  if (VARIANT === 'macro-loose' || VARIANT === 'macro-mid') {
     const P = nightState.pairs, me = pairOf(res);
-    const alive2 = k >= 1 && anyRel(P[0], P[1], cheng), alive3 = alive2 && k >= 2 && anyRel(P[1], P[2], zhuan);
-    if (k === 1 && anyRel(P[0], me, cheng)) { real *= 1.2; plan *= 1.2; }
-    if (k === 2 && alive2 && anyRel(P[1], me, zhuan)) { real *= 1.3; plan *= 1.3; }
-    if (k === 3 && alive3 && anyRel(me, P[0], cheng)) { real *= 1.6; plan *= 1.6; }
+    const mid = VARIANT === 'macro-mid';
+    const zOk = (a, b) => !!(a && b) && (mid ? anyRel(a, [b[0]], zhuan) : anyRel(a, b, zhuan));  // mid：第三筆只看主調
+    const alive2 = k >= 1 && anyRel(P[0], P[1], cheng), alive3 = alive2 && k >= 2 && zOk(P[1], P[2]);
+    const W = mid ? [1.1, 1.2, 1.5] : [1.2, 1.3, 1.6];
+    if (k === 1 && anyRel(P[0], me, cheng)) { real *= W[0]; plan *= W[0]; }
+    if (k === 2 && alive2 && zOk(P[1], me)) { real *= W[1]; plan *= W[1]; }
+    if (k === 3 && alive3 && anyRel(me, P[0], cheng)) { real *= W[2]; plan *= W[2]; }
     return { real, plan };
   }
   if (VARIANT === 'serial' && k > 0 && m && m === M[k - 1]) { real *= 1.5; plan *= 1.5; }
@@ -171,9 +175,10 @@ C.play = function (s, uids) {
   if (VARIANT.startsWith('macro') && nightState.mains.length === 4) {
     nightState.macroNights++;
     const M = nightState.mains, P = nightState.pairs;
-    const c = VARIANT === 'macro-loose' ? (a, b) => anyRel(a, b, cheng) : (a, b) => cheng(a, b);
-    const z = VARIANT === 'macro-loose' ? (a, b) => anyRel(a, b, zhuan) : (a, b) => zhuan(a, b);
-    const X = VARIANT === 'macro-loose' ? P : M;
+    const loose = VARIANT === 'macro-loose' || VARIANT === 'macro-mid';
+    const c = loose ? (a, b) => anyRel(a, b, cheng) : (a, b) => cheng(a, b);
+    const z = VARIANT === 'macro-mid' ? (a, b) => !!(a && b) && anyRel(a, [b[0]], zhuan) : loose ? (a, b) => anyRel(a, b, zhuan) : (a, b) => zhuan(a, b);
+    const X = loose ? P : M;
     if (c(X[0], X[1])) nightState.step2 = (nightState.step2 || 0) + 1;
     if (c(X[0], X[1]) && z(X[1], X[2])) nightState.step3 = (nightState.step3 || 0) + 1;
     if (c(X[0], X[1]) && z(X[1], X[2]) && c(X[3], X[0])) nightState.macroDone++;

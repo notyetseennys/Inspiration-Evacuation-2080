@@ -9,6 +9,7 @@
 //   stake-never   加碼：從不加碼（對照組；用遊戲本身的最好排法）
 //   stake-smart   加碼：估計今晚夠強就加碼：目標 ×1.5；達標的話夜晚獎金加倍，最好一筆的素材各升一星
 //   stake-always  加碼：每晚都加碼
+//   STAKEX=2：加碼時目標的倍數（預設 1.5）
 // 輸出：通關率、每晚 總分÷目標、委託完成率、加碼的比例和成功率。
 'use strict';
 const path = require('path');
@@ -105,9 +106,9 @@ RD.startNight = function (s) {
     if (VARIANT === 'stake-smart') {
       // 估計：現在這手牌最好的一筆 × 可以下的筆數，夠目標的 1.5 倍再加三成餘裕才加碼
       const b = C.bestPlay(s);
-      go = !!(b && b.total * ses.plays >= ses.stage.target * 1.5 * 1.3);
+      go = !!(b && b.total * ses.plays >= ses.stage.target * (Number(process.env.STAKEX) || 1.5) * 1.3);
     }
-    if (go) { night.stake = true; ses.stage.target = Math.round(ses.stage.target * 1.5); stats.stakes++; }
+    if (go) { night.stake = true; ses.stage.target = Math.round(ses.stage.target * (Number(process.env.STAKEX) || 1.5)); stats.stakes++; }
   }
   return ses;
 };
