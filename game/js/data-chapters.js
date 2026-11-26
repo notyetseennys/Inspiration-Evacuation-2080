@@ -204,6 +204,20 @@
   const PACK16 = {
     foil: 0.05, // 每張新得到的素材是閃卡的機會（舊城的「閃光燈」加倍）
     foilChips: 1.5, // 閃卡計分時籌碼 ×1.5
+    skipRefund: 0.5, // 第十九期：市集的素材包可以跳過，拿回這個比例的錢
+    // 第十九期：市集的素材包「選一燒一」的文字
+    text: {
+      pickHead: '撕開，挑一張收進素材庫。',
+      skip: '跳過，拿回 {cash}',
+      burnHead: '要同時燒掉一張素材嗎？',
+      burnSub: '素材庫越精，越容易抽到想要的牌。燒掉的素材不會回來。',
+      burnBtn: '燒掉',
+      keep: '不燒，收下就好',
+      back: '重新選',
+      burnGuilt: '愧疚素材不能燒掉',
+      burnPicked: '不能燒掉剛選中的那一張',
+      burnMissing: '找不到要燒掉的素材',
+    },
     // 這些來歷的素材：同一張素材再抽到，不會多一張，而是原來那張升星
     dupKinds: ['story', 'work', 'trip', 'shop', 'friend', 'salvage'],
     kinds: {

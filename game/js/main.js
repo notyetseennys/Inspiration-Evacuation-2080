@@ -1208,18 +1208,34 @@
       },
     });
   }
+  // 市集的素材包：選一張 →（第十九期）要不要同時燒掉一張；或者整包跳過，拿回一半的錢
   function roundsPack() {
     const s = Game.state;
     UI.renderHud(s); save();
-    UI.modal(UI.packModal(s), {
-      packpick(el) {
-        const r = IE.Rounds.packPick(s, Number(el.dataset.i));
-        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
-        A.sfx('pickup');
+    let chosen = null, opened = false;
+    const finish = (burnUid) => {
+      const r = IE.Rounds.packPick(s, chosen, burnUid);
+      if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+      A.sfx('pickup');
+      if (r.burned) UI.toast(r.msg, 'good');
+      save();
+      roundsShop();
+    };
+    const render = () => UI.modal(UI.packModal(s, { chosen, opened }), {
+      packpick(el) { chosen = Number(el.dataset.i); opened = true; A.sfx('click'); render(); },
+      packkeep() { finish(null); },
+      packburn(el) { finish(Number(el.dataset.uid)); },
+      packback() { chosen = null; A.sfx('click'); render(); },
+      packskip() {
+        const r = IE.Rounds.packSkip(s);
+        if (!r || !r.ok) { if (r && r.msg) UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        UI.toast(r.msg, 'good');
         save();
         roundsShop();
       },
     });
+    render();
   }
   function roundsPick() {
     const s = Game.state;

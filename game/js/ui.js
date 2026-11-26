@@ -1730,24 +1730,56 @@
       + '<button class="btn primary" type="button" data-do="leave">' + esc(T.leave) + '</button>'
       + '</div></div>';
   }
-  function packModal(s) {
+  // o.chosen：已經選了第幾張（第十九期：第二步問要不要同時燒掉一張）；o.opened：包已經撕開（返回第一步時不用再撕）
+  function packModal(s, o) {
     const pk = s.pack || { name: '素材包', cards: [] };
+    const opt = o || {};
+    const T = (D().PACK16 && D().PACK16.text) || {};
     // 第十七期：撕開之後的卡用真的圖（和得到素材時的包一樣）
     const face = (c, i) => (IE.PackFx && D().PACK16 ? IE.PackFx.cardFace(s, c, i, { dup: false }) : cardHtml(c));
+    const n = (pk.cards || []).length;
+    if (opt.chosen != null && pk.cards && pk.cards[opt.chosen]) {
+      // 第二步：同時燒掉一張？（愧疚素材、剛選中而會升星的那一張不可以燒）
+      const picked = pk.cards[opt.chosen];
+      const C = IE.Create;
+      const dup = (s.cards || []).find((c) => c.id === picked.id && !c.relic);
+      const minDeck = (D().ECON && D().ECON.minDeck) || 8;
+      const tooSmall = (s.cards || []).length + (dup ? 0 : 1) - 1 < minDeck;
+      const deck = (s.cards || []).slice().sort((a, b) => C.starOf(a) - C.starOf(b) || (a.value || 0) - (b.value || 0));
+      const items = deck.map((c) => {
+        const why = c.guilt ? T.burnGuilt : dup && dup.uid === c.uid ? T.burnPicked : tooSmall ? '素材庫最少要留 ' + minDeck + ' 張' : '';
+        const btn = '<button type="button" class="cardpick" data-do="packburn" data-uid="' + c.uid + '"' + (why ? ' disabled title="' + esc(why) + '"' : '') + '>'
+          + cardHtml(c) + '<span class="cp-act">' + esc(why ? '不能燒' : (T.burnBtn || '燒掉')) + '</span></button>';
+        return cardSlotHtml(btn, c.uid);
+      }).join('');
+      return '<div class="modal wide rd-pack rd-pack-burn">'
+        + '<span class="eyebrow">' + esc(pk.name) + '</span>'
+        + '<h2>' + esc(T.burnHead || '要同時燒掉一張素材嗎？') + '</h2>'
+        + '<div class="rp-chosen">' + face(picked, opt.chosen) + '<p class="mute">' + esc(T.burnSub || '') + '</p></div>'
+        + '<div class="btn-row"><button class="btn primary" type="button" data-do="packkeep">' + esc(T.keep || '不燒，收下就好') + '</button>'
+        + '<button class="btn" type="button" data-do="packback">' + esc(T.back || '重新選') + '</button></div>'
+        + '<div class="cp-grid">' + items + '</div>'
+        + '</div>';
+    }
     const cards = (pk.cards || []).map((c, i) => {
       const btn = '<button type="button" class="rp-card pk-pick" data-do="packpick" data-i="' + i + '">' + face(c, i) + '</button>';
       return cardSlotHtml(btn, 'pack:' + i);
     }).join('');
-    const n = (pk.cards || []).length;
     const pdef = (D().PACKS || []).find((p) => p.name === pk.name) || null;
     const body = IE.PackFx && D().PACK16
-      ? IE.PackFx.html(s, pk.cards || [], { kind: 'shop', cardsHtml: cards, count: n, gridCls: 'rp-grid' }) + IE.PackFx.oddsHtml(s, pdef)
+      ? IE.PackFx.html(s, pk.cards || [], { kind: 'shop', cardsHtml: cards, count: n, gridCls: 'rp-grid', cls: opt.opened ? 'is-open' : '' }) + IE.PackFx.oddsHtml(s, pdef)
       : '<div class="rp-grid">' + cards + '</div>';
+    // 第十九期：跳過，拿回一半的錢
+    const back = Math.floor((pk.paid || 0) * ((D().PACK16 && D().PACK16.skipRefund) || 0.5));
+    const skipBtn = pk.paid != null && IE.Rounds && IE.Rounds.packSkip
+      ? '<div class="btn-row rp-skip"><button class="btn" type="button" data-do="packskip">' + esc((T.skip || '跳過，拿回 {cash}').replace('{cash}', IE.Rounds.cash(s, back))) + '</button></div>'
+      : '';
     return '<div class="modal wide rd-pack">'
       + '<span class="eyebrow">開包・' + (n === 4 ? '四' : '三') + '選一</span>'
       + '<h2>' + esc(pk.name) + '</h2>'
-      + '<p class="mute" style="font-size:13px">撕開，挑一張素材收進素材庫。</p>'
+      + '<p class="mute" style="font-size:13px">' + esc(T.pickHead || '撕開，挑一張收進素材庫。') + '</p>'
       + body
+      + skipBtn
       + '</div>';
   }
   function pickModal(s) {

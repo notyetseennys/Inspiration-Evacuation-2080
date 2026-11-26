@@ -251,14 +251,17 @@
       const fs = formStats(s, A.id);
       let chips = fs.chips, mult = fs.mult;
       const steps = [{ t: 'form', form: A.id, level: fs.level, chips, mult, C: chips, M: mult }];
+      // 第十九期：opt.structOnly：只計結構的部分（素材的籌碼、結構、相連、複合情緒、媒材、題材、合、稱號），
+      // 不計物件、流派、卡面效果、具名組合、舊城的加成和最後的倍數：下筆之前給玩家比較兩種排法用
+      const structOnly = !!(opt && opt.structOnly);
       // 第十七期：舊城的「滿座」：每晚第一筆籌碼多一點
-      const fc = (s.salvage && s.salvage.firstChips) || 0;
+      const fc = structOnly ? 0 : (s.salvage && s.salvage.firstChips) || 0;
       if (fc && s.session && !(s.session.log || []).length) { chips += fc; steps.push({ t: 'salvage', name: '滿座', chips: fc, C: chips, M: mult }); }
       const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
-      const objs = SR && SR.noObjects ? [] : activeObjects(s);
+      const objs = structOnly || (SR && SR.noObjects) ? [] : activeObjects(s);
       const schools = activeSchools(s, objs);
       const ses = s.session || {};
-      const recs = A.run.length < 2 ? [] : matchRecipes(s, A.run);
+      const recs = structOnly || A.run.length < 2 ? [] : matchRecipes(s, A.run);
       const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
       const counts = tagCounts(A.run), distinct = Object.keys(counts).length;
       const media = mediaCounts(A.run), mdistinct = Object.keys(media).length;
@@ -301,7 +304,7 @@
             const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
             chips += v;
             steps.push(snap({ t: 'card', uid: c.uid, idx: st.idx, role: st.role, chips: v, again: r > 0, echo: r > 0 && r <= echoed }));
-            const mf = capX('mod:' + c.mod, MOD_FX[c.mod]);
+            const mf = structOnly ? null : capX('mod:' + c.mod, MOD_FX[c.mod]);
             if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
             objs.forEach((o) => {
               if (!o.def.card) return;
@@ -498,8 +501,13 @@
         });
       }
       hints.sort((a, b) => b.power - a.power);
+      // 第十九期：結構的部分（下筆之前顯示）和它的 ×倍率（轉、合、稱號、張力、矛盾）
+      const sp = scorePlay(s, uids, { roll: 0.5, structOnly: true });
+      const structX = sp.steps.filter((x) => x.xmult && ['link', 'he', 'title', 'compound'].includes(x.t))
+        .map((x) => ({ t: x.t, x: x.xmult, name: x.t === 'link' ? '轉' : x.t === 'he' ? '合' : x.t === 'title' ? x.name : x.name + '・' + x.famName }));
       return {
         form: A.id, name: formOf(s, A.id).name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: A.run.map((c) => c.uid),
+        structChips: sp.chips, structMult: sp.mult, structX,
         recipes: recs, ai: aiFactor(s, A.id, activeObjects(s), activeSchools(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
         blocked: est.steps.filter((x) => x.t === 'blocked').length,
         links: A.links, roles: IE.Desk.roles(A), he: A.he, noise: est.noise, subject: est.subject,

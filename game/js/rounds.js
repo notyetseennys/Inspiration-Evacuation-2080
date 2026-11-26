@@ -829,6 +829,7 @@
       s.cr -= cost;
       sh.bought.push(slot);
       s.pack = openPack(s, pdef);
+      s.pack.paid = cost;  // 跳過時拿回一半（packSkip）
       return { ok: true, msg: '打開「' + pdef.name + '」', pack: s.pack };
     }
 
@@ -914,16 +915,45 @@
     return { ok: true, msg: '重抽了市集物件' };
   }
 
-  function packPick(s, i) {
+  // 選一張收進素材庫。第十九期：同時可以燒掉素材庫的一張（burnUid）：不可以是愧疚素材、不可以是剛選中（升星）的那一張，
+  // 燒掉之後素材庫最少留 ECON.minDeck 張
+  function packPick(s, i, burnUid) {
     if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
     if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
     if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
     const picked = s.pack.cards[i];
+    let burn = null;
+    if (burnUid != null) {
+      const T = (D.PACK16 && D.PACK16.text) || {};
+      burn = s.cards.find((x) => x.uid === burnUid) || null;
+      if (!burn) return { ok: false, msg: T.burnMissing || '找不到要燒掉的素材' };
+      if (burn.guilt) return { ok: false, msg: T.burnGuilt || '愧疚素材不能燒掉' };
+      // 同一張素材再抽到是原來那張升星（R.addCard 的重複規則）：那一張不可以同時燒掉
+      const dupOf = (D.PACK16 && D.PACK16.dupKinds || []).includes('shop') ? s.cards.find((x) => x.id === picked.id && !x.relic) : null;
+      if (dupOf && dupOf.uid === burn.uid) return { ok: false, msg: T.burnPicked || '不能燒掉剛選中的那一張' };
+      if (s.cards.length + (dupOf ? 0 : 1) - 1 < D.ECON.minDeck) return { ok: false, msg: '素材庫最少要留 ' + D.ECON.minDeck + ' 張素材' };
+    }
     const res = R.addCard(s, picked.id, { kind: 'shop' });
     if (res.dup) res.card.star = Math.max(res.card.star || 1, picked.star);
     else res.card.star = picked.star;
     s.pack = null;
-    return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
+    let msg = '獲得「' + res.card.name + '」（★' + res.card.star + '）';
+    if (burn && s.cards.some((x) => x.uid === burn.uid)) {
+      s.cards = s.cards.filter((x) => x.uid !== burn.uid);
+      s.stats.packBurns = (s.stats.packBurns || 0) + 1;
+      msg += '，燒掉了「' + burn.name + '」';
+    }
+    return { ok: true, msg, card: res.card, dropped: res.dropped, burned: burn };
+  }
+  // 第十九期：跳過這個包：一張都不收，拿回一半的錢（D.PACK16.skipRefund）
+  function packSkip(s) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
+    const back = Math.floor((s.pack.paid || 0) * ((D.PACK16 && D.PACK16.skipRefund) || 0.5));
+    s.cr += back;
+    s.pack = null;
+    s.stats.packSkips = (s.stats.packSkips || 0) + 1;
+    return { ok: true, msg: '把素材包放回去，拿回 $' + back, refund: back };
   }
 
   function pickCard(s, uid) {
@@ -1369,6 +1399,7 @@
     shopBuy,
     objReroll,
     packPick,
+    packSkip,
     pickCard,
     cancelPick,
     leaveShop,

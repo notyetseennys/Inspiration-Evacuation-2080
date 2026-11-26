@@ -817,7 +817,12 @@ function runShop(s, strat, metrics) {
             bestIdx = i;
           }
         }
-        RD.packPick(s, bestIdx);
+        // 第十九期：選一燒一：素材庫超過 10 張時，同時燒掉最弱的一張（星級不高於選中的那一張；不燒愧疚、不燒會升星的那一張）
+        const picked = s.pack.cards[bestIdx];
+        const weakest = s.cards.filter((c) => !c.guilt && c.id !== picked.id)
+          .sort((a, b) => CR.starOf(a) - CR.starOf(b) || (a.value || 0) - (b.value || 0))[0];
+        const burnUid = process.env.NOBURN || !weakest || s.cards.length <= 10 || CR.starOf(weakest) > picked.star ? null : weakest.uid;
+        RD.packPick(s, bestIdx, burnUid);
         CARDS.autoPutDown(s);
       }
     }

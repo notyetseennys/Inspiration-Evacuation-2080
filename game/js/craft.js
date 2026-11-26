@@ -295,6 +295,7 @@
         + '<div class="dk-tags ct-tags"></div>'
         + '<div class="dk-total ct-total num" hidden></div>'
         + '<div class="dk-obj-flash" aria-live="polite"></div>'
+        + '<div class="dk-wheel" role="img"></div>'
         + '</div>'
         + '<div class="dk-layer-hint"></div>'
         + '</div>'
@@ -610,9 +611,47 @@
         + '</button>');
     });
     if (pv && pv.he) {
-      parts.push('<span class="dk-he">合 ×2</span>');
+      parts.push('<span class="dk-he">合 ×' + ((D_.DESK && D_.DESK.he) || 1.5) + '</span>');
     }
     rowEl.innerHTML = parts.join('');
+  }
+
+  // 第十九期：創作桌角落的小色輪：十種情緒順着色輪排；對面的情緒之間有一條線（轉）；
+  // 稿紙上最後一張素材的情緒是「現在」，隔鄰的是「承」，對面的是「轉」；手上沒有的情緒變暗
+  function renderDeskWheel(uids) {
+    const el = $('.dk-wheel');
+    const s = st.s, D_ = D(), WH = D_.DESK_WHEEL, W = D_.WHEEL;
+    if (!el || !WH || !W || !IE.Desk) return;
+    const cards = (uids || []).map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const last = cards[cards.length - 1];
+    const lastT = last ? last.tags.filter((t) => W.includes(t)) : [];
+    const inHand = {};
+    ((s.session && s.session.hand) || []).forEach((u) => {
+      const c = s.cards.find((x) => x.uid === u);
+      if (c && !(uids || []).includes(u)) c.tags.forEach((t) => { if (W.includes(t)) inHand[t] = (inHand[t] || 0) + 1; });
+    });
+    const pos = (i, r) => { const a = (-90 + i * 36) * Math.PI / 180; return [50 + r * Math.cos(a), 50 + r * Math.sin(a)]; };
+    let svg = '<svg viewBox="0 0 100 100" aria-hidden="true">';
+    for (let i = 0; i < 5; i++) {
+      const [x1, y1] = pos(i, 30), [x2, y2] = pos(i + 5, 30);
+      const hot = lastT.some((t) => W.indexOf(t) === i || W.indexOf(t) === i + 5);
+      svg += '<line class="dw-axis' + (hot ? ' hot' : '') + '" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"/>';
+    }
+    const labels = [];
+    W.forEach((t, i) => {
+      const [x, y] = pos(i, 38);
+      const d = lastT.length ? Math.min(...lastT.map((u) => IE.Desk.wdist(u, t))) : -1;
+      const cls = d === 0 ? ' cur' : d === 1 ? ' cheng' : d === 5 ? ' zhuan' : '';
+      const nm = (D_.TAGS[t] && D_.TAGS[t].name) || t;
+      const n = inHand[t] || 0;
+      labels.push(nm + (n ? '（' + WH.hand.replace('{n}', n) + '）' : ''));
+      svg += '<g class="dw-e' + cls + (n ? '' : ' none') + '"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10" style="--c:' + ((D_.TAGS[t] && D_.TAGS[t].color) || '#888') + '"/>'
+        + '<text x="' + x.toFixed(1) + '" y="' + (y + 3.6).toFixed(1) + '">' + esc(WH.short[t] || nm.slice(0, 1)) + '</text></g>';
+    });
+    svg += '<text class="dw-c" x="50" y="53">' + esc(WH.center) + '</text></svg>';
+    el.innerHTML = svg;
+    el.setAttribute('aria-label', WH.center + '：' + labels.join('、') + '。' + WH.legend);
+    el.title = WH.legend;
   }
 
   function renderDesk() {
@@ -678,6 +717,7 @@
     const pv = activeUids.length ? C().preview(s, activeUids) : null;
     if (!st.busy) {
       renderDeskRow(activeUids, pv);
+      renderDeskWheel(activeUids);
       if (!pv) {
         $('.ct-form .fn').textContent = doneStrokes ? '再下一筆' : '選擇素材';
         $('.ct-form .fl').textContent = '';
@@ -686,10 +726,20 @@
       } else {
         $('.ct-form .fn').textContent = pv.name;
         $('.ct-form .fl').textContent = 'Lv.' + pv.level;
-        setBoxes(pv.chips, pv.mult, 'preview');
+        // 第十九期：下筆之前顯示結構的部分（素材、結構、相連、情緒），令玩家可以比較兩種排法；物件、組合和火花留到下筆才揭曉
+        setBoxes(pv.structChips != null ? pv.structChips : pv.chips, pv.structMult != null ? pv.structMult : pv.mult, 'preview');
         const notes = [];
+        (pv.structX || []).forEach((x) => {
+          const nm = x.t === 'title' ? '稱號' : x.t === 'compound' ? x.name.split('・').pop() : x.name;
+          notes.push('<span class="dk-pv-pill x">' + esc(nm) + ' ×' + x.x + '</span>');
+        });
+        // 手機放不下逐項的倍率：只顯示合計（CSS 按寬度二選一）
+        if ((pv.structX || []).length) {
+          const prod = pv.structX.reduce((a, x) => a * x.x, 1);
+          notes.push('<span class="dk-pv-pill xsum">結構 ×' + (Math.round(prod * 100) / 100) + '</span>');
+        }
         if (pv.subject && pv.subject.bonus && pv.subject.name) {
-          notes.push('<span class="dk-pv-pill">題材：' + esc(pv.subject.name) + '</span>');
+          notes.push('<span class="dk-pv-pill subj">題材：' + esc(pv.subject.name) + '</span>');
         }
         if (pv.ai < 1) {
           notes.push('<span class="dk-pv-pill bad">AI ×' + pv.ai + '</span>');
@@ -1508,6 +1558,7 @@
     t.textContent = text;
     $('.ct-tags').appendChild(t);
     t.animate([{ transform: 'scale(2.2) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1 }], { duration: 260 / Math.min(2, speedK()), easing: 'cubic-bezier(.2,2,.4,1)' });
+    return t;
   }
 
   // ---------- 火焰粒子（倍率燃燒） ----------
@@ -1762,6 +1813,18 @@
     const multEl = $('.ct-mult'), chipsEl = $('.ct-chips');
     const drawnPlans = new Set();
     let n = 0;
+    // 第十九期：小的加成（承、複合情緒的加法、回響、媒材、題材）合併成一個會跳動的「情緒」標籤，不再每一個一行；
+    // 真正改變局面的 ×倍率（轉、合、稱號、張力、矛盾）和物件仍然各自一拍
+    let emo = null;
+    const emoAdd = (chips, mult, name) => {
+      if (!emo) emo = { el: tag('', 'recipe emo'), chips: 0, mult: 0, names: [] };
+      emo.chips += chips || 0;
+      emo.mult = Math.round((emo.mult + (mult || 0)) * 10) / 10;
+      if (name && !emo.names.includes(name)) emo.names.push(name);
+      const nm = emo.names.length > 3 ? emo.names.slice(0, 3).join('・') + '…' : emo.names.join('・');
+      emo.el.textContent = '情緒' + (nm ? '「' + nm + '」' : '') + (emo.mult ? '　+' + emo.mult + ' 倍率' : '') + (emo.chips ? '　+' + emo.chips + ' 籌碼' : '');
+      emo.el.animate([{ transform: 'scale(1.12) rotate(-2deg)' }, { transform: 'scale(1) rotate(-2deg)' }], { duration: 160 });
+    };
     for (const x of res.steps) {
       if (!root) return;
       switch (x.t) {
@@ -1810,13 +1873,17 @@
         }
         case 'compound': {
           const el = x.uid != null ? rowSlot(x.uid) : null;
-          const valTxt = x.chips ? '+' + x.chips + ' 籌碼' : x.mult ? '+' + x.mult + ' 倍率' : x.xmult ? '×' + x.xmult : '再計一次';
-          tag('「' + x.name + '・' + x.famName + '」　' + valTxt, x.xmult ? 'new' : 'recipe');
-          if (el) floatText(el, x.name + '・' + x.famName, x.xmult ? 'xmult' : x.chips ? 'chips' : 'mult');
+          if (x.xmult) {
+            tag('「' + x.name + '・' + x.famName + '」　×' + x.xmult, 'new');
+            if (el) floatText(el, x.name + '・' + x.famName, 'xmult');
+          } else {
+            emoAdd(x.chips, x.mult, x.name);
+            if (el) floatText(el, x.name + (x.chips ? ' +' + x.chips : x.mult ? ' +' + x.mult : '・再計一次'), x.chips ? 'chips' : 'mult');
+          }
           setBoxes(x.C, x.M);
           pulse(x.chips ? chipsEl : multEl);
           A().fx(x.xmult ? 'xmult' : 'mult', ++n);
-          await wait(230);
+          await wait(x.xmult ? 260 : 120);
           break;
         }
         case 'link': {
@@ -1827,29 +1894,30 @@
             ? nextSlot.previousElementSibling
             : null;
           if (linkEl) linkEl.classList.add('lit');
-          tag(lbl, x.xmult ? 'new' : 'recipe');
+          if (x.xmult) tag(lbl, 'new');
+          else if (x.mult) emoAdd(0, x.mult, '');
           if (linkEl || nextSlot) floatText(linkEl || nextSlot, lbl, x.xmult ? 'xmult' : 'mult');
           setBoxes(x.C, x.M);
           pulse(multEl);
           A().fx(x.xmult ? 'xmult' : 'mult', ++n);
           if (x.xmult) shake(4);
-          await wait(x.xmult ? 290 : 200);
+          await wait(x.xmult ? 290 : 100);
           break;
         }
         case 'media': {
-          tag(x.name + '　+' + x.mult + ' 倍率', 'recipe');
+          emoAdd(0, x.mult, x.name);
           setBoxes(x.C, x.M);
           pulse(multEl);
           A().fx('mult', ++n);
-          await wait(220);
+          await wait(120);
           break;
         }
         case 'subject': {
-          tag('題材「' + x.name + '」　+' + x.mult + ' 倍率', 'recipe');
+          emoAdd(0, x.mult, '題材' + x.name);
           setBoxes(x.C, x.M);
           pulse(multEl);
           A().fx('mult', ++n);
-          await wait(220);
+          await wait(120);
           break;
         }
         case 'he': {

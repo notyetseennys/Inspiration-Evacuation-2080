@@ -1,7 +1,7 @@
 # 交接文件：遊戲大腦（Claude）的工作
 
-> 給接手的 Claude。最後更新：第十八期完成（失敗是必然，成長是爽感，2026-11-25）。
-> 讀完這份、`docs/WORLD.md`（世界觀與語氣聖經）、`docs/workorders/README.md`、`docs/workorders/phase-15/README.md`、`phase-16/README.md`、`phase-17/README.md` 和 `phase-18/README.md`，就可以接手（後一期改動前一期時，以後一期為準）。
+> 給接手的 Claude。最後更新：第十九期第一步完成（讀得懂的創作桌、值得買的素材包，2026-11-26）。
+> 讀完這份、`docs/WORLD.md`（世界觀與語氣聖經）、`docs/workorders/README.md`、`docs/workorders/phase-15/README.md` 至 `phase-19/README.md`，就可以接手（後一期改動前一期時，以後一期為準）。
 
 ## 1. 你的角色
 
@@ -289,6 +289,9 @@
   - 校準工具 `tools/sim-meta.js`（連續多生）；數值改動之後一定要用它檢查「第一次挑戰的失敗率」「要幾生」「相鄰兩生的增長」三樣（總規格 §9）。`tools/sim-rounds.js` 只量度一生，不能單獨用來校準季節。
   - 待製作人決定（總規格 §12）：長度（約第 21 生通過五季）、要不要做成絕對的「第一次必定失敗」、角色的平衡、全城篩選要不要帶前世、很大的數字。
 
+- **好玩度研究（2026-11-25、26）**：`docs/research/fun-audit.md`。第一部分量度現在的機制（創作桌一個答案佔四成、白天的決定影響小、素材包買了反而差）；第二部分在模擬器裏實驗各個提案（`tools/exp-desk.js`）。第十一節是修正後的七項提案和量度目標。
+- **第十九期（2026-11-26 起）**：按研究的提案逐項做，總規格 `docs/workorders/phase-19/README.md`。第一步已完成：讀得懂的創作桌（結構的預覽 `scorePlay(..., { structOnly: true })`、「情緒」一拍、小色輪 `D.DESK_WHEEL`）、素材包選一燒一或跳過（`packPick(s, i, burnUid)`、`packSkip`）。下一步等製作人決定（研究第十一節第 2 至 7 項）。
+
 ## 6.1 審核 WO-15-11、13（故事線）時要特別留意
 
 - `data-story.js`、`data-cities.js`、`story-data.test.js`、`spec.test.js` 沒有被改（Gemini 只可以讀）。
@@ -367,6 +370,8 @@
 | `docs/workorders/phase-16/README.md`、`phase-17/README.md`、`phase-18/README.md` | 第十六期、第十七期、第十八期總規格 |
 | `tools/sim-meta.js` | 第十八期：連續多生的模擬（每個生涯由第一季玩到第五季，升級前世）；`STRAT`、`CHTARGET`、`STEEP`、`WALL`、`SEDX`、`PASTCOST`、`STOPAT` |
 | `tools/tests/past.test.js` | 第十八期的單元測試（牆、前世、沉積、執念、進度、×倍率上限） |
+| `docs/workorders/phase-19/README.md`、`tools/tests/packshop.test.js` | 第十九期總規格；素材包選一燒一和跳過的單元測試 |
+| `tools/exp-desk.js` | 好玩度研究的機制實驗（在模擬器裏換掉創作桌的規則） |
 | `docs/research/booster-pack-heroes.md` | 《Booster Pack Heroes》研究和建議（第十七期的依據） |
 | `docs/research/fun-audit.md` | 好玩度研究（2026-11-25）：創作桌的決策空間、白天和市集的決定有多重要、建議縫合的機制（改寫文法的物件、四格、委託）；工具 `tools/audit-desk.js`、`tools/audit-shop.js`，模擬器開關 `DAYRANDOM`、`SHOPRANDOM`、`SHOPNONE` |
 | `game/js/data-chapters.js` | 第十七期的資料和文字（你撰寫）：`D.CHAPTERS`、`CHAPTER_TEXT`、`SALVAGE`、`SALVAGE_COST`、`SALVAGE_TEXT`、`PACK16`、`ACH17` |

@@ -6661,6 +6661,39 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   box-shadow: 0 0 14px rgba(255, 226, 138, 0.9);
 }
 
+/* 第十九期：夜景右上角的小色輪 .dk-wheel（序章不顯示；計分時變淡） */
+#ctable.dk-mode .dk-wheel {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 64px;
+  height: 64px;
+  max-width: 30%;
+  border-radius: 50%;
+  background: rgba(8, 12, 24, 0.62);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: opacity 0.25s ease;
+  z-index: 2;
+}
+#ctable.dk-mode .dk-wheel svg { display: block; width: 100%; height: 100%; }
+#ctable.dk-mode .dk-wheel .dw-axis { stroke: rgba(255, 255, 255, 0.14); stroke-width: 1; }
+#ctable.dk-mode .dk-wheel .dw-axis.hot { stroke: #ffb35c; stroke-width: 2; }
+#ctable.dk-mode .dk-wheel .dw-e circle { fill: var(--c); stroke: rgba(0, 0, 0, 0.5); stroke-width: 1; }
+#ctable.dk-mode .dk-wheel .dw-e text { font-size: 10.5px; font-weight: 900; fill: #10131c; text-anchor: middle; }
+#ctable.dk-mode .dk-wheel .dw-e.none circle { opacity: 0.35; }
+#ctable.dk-mode .dk-wheel .dw-e.cur circle { stroke: #fff; stroke-width: 2.5; }
+#ctable.dk-mode .dk-wheel .dw-e.cheng circle { stroke: #8bf0a4; stroke-width: 2.5; }
+#ctable.dk-mode .dk-wheel .dw-e.zhuan circle { stroke: #ffb35c; stroke-width: 3; }
+#ctable.dk-mode .dk-wheel .dw-c { font-size: 9px; fill: rgba(255, 255, 255, 0.55); text-anchor: middle; }
+#ctable.dk-mode.ct-busy .dk-wheel { opacity: 0.2; }
+#ctable.dk-mode.is-prologue .dk-wheel { display: none; }
+#ctable.dk-mode .dk-pv-pill.x, #ctable.dk-mode .dk-pv-pill.xsum { background: rgba(255, 138, 74, 0.16); border-color: rgba(255, 160, 92, 0.5); color: #ffd0a8; flex-shrink: 0; }
+#ctable.dk-mode .dk-pv-pill.xsum { display: none; }
+@media (max-width: 560px) {
+  #ctable.dk-mode .dk-pv-pill.x, #ctable.dk-mode .dk-pv-pill.subj { display: none; }
+  #ctable.dk-mode .dk-pv-pill.xsum { display: inline-block; }
+}
+
 /* 預覽區 .dk-preview（只顯示結構名與籌碼 × 倍率，不顯示總分） */
 #ctable.dk-mode .dk-preview {
   flex-shrink: 0;
@@ -7221,6 +7254,9 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 
 /* 桌面版（>= 900px）：畫在左，其餘在右，1280×800 一屏不捲動 */
 @media (min-width: 900px) {
+  #ctable.dk-mode .dk-wheel { width: 88px; height: 88px; top: 8px; right: 8px; }
+}
+@media (min-width: 900px) {
   #ctable.dk-mode {
     padding: 16px 22px;
   }
@@ -7625,6 +7661,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
 .ct-goal.wall .lbl { color: #ff8a96; font-weight: 700; }
 .ct-goal.wall { box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.55); }
 .rd-wall { padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255, 77, 94, 0.6); background: rgba(255, 77, 94, 0.12); color: #ffd0d5; font-weight: 700; line-height: 1.5; }
+
+/* ---------- 第十九期：素材包「選一燒一」或跳過 ---------- */
+.rp-skip { margin-top: 10px; justify-content: center; }
+.rp-chosen { display: flex; align-items: center; gap: 12px; margin: 6px 0 10px; }
+.rp-chosen > :first-child { flex: 0 0 auto; width: 120px; max-width: 34%; }
+.rp-chosen p { margin: 0; line-height: 1.6; min-width: 0; }
+.rd-pack-burn .cp-grid { margin-top: 10px; }
 
 /* ---------- 白天的舊城情報 ---------- */
 .era-intels { display: grid; gap: 6px; margin: 6px 0 2px; }
@@ -11068,7 +11111,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     head: '玩法',
     goal: '撐過這一季的每一晚和每一輪篩選（第一季是六晚、兩輪）。最後一晚是這一季最後的外星評審：不達標，這一生就到此為止。其他晚上不達標、交不起租、靈魂太重，都會失去一次機會；三次用完，你會被歸入人才庫。',
     pillars: [
-      { name: '創作', text: '晚上把素材按次序排成一行。相同或相鄰的情緒是「承」，相反的情緒是「轉」，最後一張回到開頭是「合」。先承、後轉、再合，就是起承轉合，分數最高；斷開的素材不計分。每一筆都會畫進同一幅夜景。' },
+      { name: '創作', text: '晚上把素材按次序排成一行。相同或相鄰的情緒是「承」，相反的情緒是「轉」，最後一張回到開頭是「合」。先承、後轉、再合，就是起承轉合，分數最高；斷開的素材不計分。夜景右上角的小色輪：隔鄰是承，對面是轉。下筆之前看得到結構的籌碼和倍率；物件、組合和火花在下筆時才揭曉。每一筆都會畫進同一幅夜景。' },
       { name: '靈魂', text: '外星人只要又亮又輕的人：靈魂超過 21 克就不會被選中。做虧心事會變重，為別人做事會變輕。' },
       { name: '浮城', text: '白天選一件事做。工作是罕有的差事，過了期限就沒有；故事的選擇會改變你的錢、靈魂和素材。水位每天上漲，水淹到家會帶走東西。' },
     ],
@@ -13649,7 +13692,15 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     },
   };
 
-  Object.assign(D, { DESK_CARDS, DESK_IDS, DESK_FORMS, DESK_FORM, DESK_REMAP });
+  // 第十九期：創作桌角落的小色輪（每種情緒一個字；最後一張素材的「承」和「轉」會亮起）
+  const DESK_WHEEL = {
+    short: { warmth: '情', hope: '望', water: '水', memory: '憶', rebel: '叛', machine: '機', guilt: '疚', anger: '怒', neon: '霓', hunger: '餓' },
+    center: '色輪',
+    legend: '承＝同色或隔鄰・轉＝對面',
+    hand: '手上 {n} 張',
+  };
+
+  Object.assign(D, { DESK_CARDS, DESK_IDS, DESK_FORMS, DESK_FORM, DESK_REMAP, DESK_WHEEL });
   if (IE.Create && IE.Create.syncDeskForms) IE.Create.syncDeskForms();
 });
 
@@ -13860,6 +13911,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
   const PACK16 = {
     foil: 0.05, // 每張新得到的素材是閃卡的機會（舊城的「閃光燈」加倍）
     foilChips: 1.5, // 閃卡計分時籌碼 ×1.5
+    skipRefund: 0.5, // 第十九期：市集的素材包可以跳過，拿回這個比例的錢
+    // 第十九期：市集的素材包「選一燒一」的文字
+    text: {
+      pickHead: '撕開，挑一張收進素材庫。',
+      skip: '跳過，拿回 {cash}',
+      burnHead: '要同時燒掉一張素材嗎？',
+      burnSub: '素材庫越精，越容易抽到想要的牌。燒掉的素材不會回來。',
+      burnBtn: '燒掉',
+      keep: '不燒，收下就好',
+      back: '重新選',
+      burnGuilt: '愧疚素材不能燒掉',
+      burnPicked: '不能燒掉剛選中的那一張',
+      burnMissing: '找不到要燒掉的素材',
+    },
     // 這些來歷的素材：同一張素材再抽到，不會多一張，而是原來那張升星
     dupKinds: ['story', 'work', 'trip', 'shop', 'friend', 'salvage'],
     kinds: {
@@ -16631,14 +16696,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       const fs = formStats(s, A.id);
       let chips = fs.chips, mult = fs.mult;
       const steps = [{ t: 'form', form: A.id, level: fs.level, chips, mult, C: chips, M: mult }];
+      // 第十九期：opt.structOnly：只計結構的部分（素材的籌碼、結構、相連、複合情緒、媒材、題材、合、稱號），
+      // 不計物件、流派、卡面效果、具名組合、舊城的加成和最後的倍數：下筆之前給玩家比較兩種排法用
+      const structOnly = !!(opt && opt.structOnly);
       // 第十七期：舊城的「滿座」：每晚第一筆籌碼多一點
-      const fc = (s.salvage && s.salvage.firstChips) || 0;
+      const fc = structOnly ? 0 : (s.salvage && s.salvage.firstChips) || 0;
       if (fc && s.session && !(s.session.log || []).length) { chips += fc; steps.push({ t: 'salvage', name: '滿座', chips: fc, C: chips, M: mult }); }
       const SR = IE.Stages && s.session ? IE.Stages.scoring(s) : null;
-      const objs = SR && SR.noObjects ? [] : activeObjects(s);
+      const objs = structOnly || (SR && SR.noObjects) ? [] : activeObjects(s);
       const schools = activeSchools(s, objs);
       const ses = s.session || {};
-      const recs = A.run.length < 2 ? [] : matchRecipes(s, A.run);
+      const recs = structOnly || A.run.length < 2 ? [] : matchRecipes(s, A.run);
       const held = (ses.hand || []).filter((u) => !uids.includes(u)).map((u) => cardOf(s, u)).filter(Boolean);
       const counts = tagCounts(A.run), distinct = Object.keys(counts).length;
       const media = mediaCounts(A.run), mdistinct = Object.keys(media).length;
@@ -16681,7 +16749,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
             const v = SR && SR.extraWear && !noWear ? Math.round(cardValue(s, c) * wearMult({ wear: (c.wear || 0) + SR.extraWear }) / wearMult(c)) : cardValue(s, c);
             chips += v;
             steps.push(snap({ t: 'card', uid: c.uid, idx: st.idx, role: st.role, chips: v, again: r > 0, echo: r > 0 && r <= echoed }));
-            const mf = capX('mod:' + c.mod, MOD_FX[c.mod]);
+            const mf = structOnly ? null : capX('mod:' + c.mod, MOD_FX[c.mod]);
             if (mf) { apply(mf); steps.push(snap(Object.assign({ t: 'mod', uid: c.uid, mod: c.mod }, mf))); }
             objs.forEach((o) => {
               if (!o.def.card) return;
@@ -16878,8 +16946,13 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         });
       }
       hints.sort((a, b) => b.power - a.power);
+      // 第十九期：結構的部分（下筆之前顯示）和它的 ×倍率（轉、合、稱號、張力、矛盾）
+      const sp = scorePlay(s, uids, { roll: 0.5, structOnly: true });
+      const structX = sp.steps.filter((x) => x.xmult && ['link', 'he', 'title', 'compound'].includes(x.t))
+        .map((x) => ({ t: x.t, x: x.xmult, name: x.t === 'link' ? '轉' : x.t === 'he' ? '合' : x.t === 'title' ? x.name : x.name + '・' + x.famName }));
       return {
         form: A.id, name: formOf(s, A.id).name, level: fs.level, chips: fs.chips, mult: fs.mult, scoring: A.run.map((c) => c.uid),
+        structChips: sp.chips, structMult: sp.mult, structX,
         recipes: recs, ai: aiFactor(s, A.id, activeObjects(s), activeSchools(s)), est: est.total, estChips: est.chips, estMult: est.mult, hints: hints.slice(0, 3),
         blocked: est.steps.filter((x) => x.t === 'blocked').length,
         links: A.links, roles: IE.Desk.roles(A), he: A.he, noise: est.noise, subject: est.subject,
@@ -20749,6 +20822,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       s.cr -= cost;
       sh.bought.push(slot);
       s.pack = openPack(s, pdef);
+      s.pack.paid = cost;  // 跳過時拿回一半（packSkip）
       return { ok: true, msg: '打開「' + pdef.name + '」', pack: s.pack };
     }
 
@@ -20834,16 +20908,45 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     return { ok: true, msg: '重抽了市集物件' };
   }
 
-  function packPick(s, i) {
+  // 選一張收進素材庫。第十九期：同時可以燒掉素材庫的一張（burnUid）：不可以是愧疚素材、不可以是剛選中（升星）的那一張，
+  // 燒掉之後素材庫最少留 ECON.minDeck 張
+  function packPick(s, i, burnUid) {
     if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
     if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
     if (!Number.isInteger(i) || i < 0 || i >= s.pack.cards.length) return { ok: false, msg: '無效的選擇' };
     const picked = s.pack.cards[i];
+    let burn = null;
+    if (burnUid != null) {
+      const T = (D.PACK16 && D.PACK16.text) || {};
+      burn = s.cards.find((x) => x.uid === burnUid) || null;
+      if (!burn) return { ok: false, msg: T.burnMissing || '找不到要燒掉的素材' };
+      if (burn.guilt) return { ok: false, msg: T.burnGuilt || '愧疚素材不能燒掉' };
+      // 同一張素材再抽到是原來那張升星（R.addCard 的重複規則）：那一張不可以同時燒掉
+      const dupOf = (D.PACK16 && D.PACK16.dupKinds || []).includes('shop') ? s.cards.find((x) => x.id === picked.id && !x.relic) : null;
+      if (dupOf && dupOf.uid === burn.uid) return { ok: false, msg: T.burnPicked || '不能燒掉剛選中的那一張' };
+      if (s.cards.length + (dupOf ? 0 : 1) - 1 < D.ECON.minDeck) return { ok: false, msg: '素材庫最少要留 ' + D.ECON.minDeck + ' 張素材' };
+    }
     const res = R.addCard(s, picked.id, { kind: 'shop' });
     if (res.dup) res.card.star = Math.max(res.card.star || 1, picked.star);
     else res.card.star = picked.star;
     s.pack = null;
-    return { ok: true, msg: '獲得「' + res.card.name + '」（★' + res.card.star + '）', card: res.card, dropped: res.dropped };
+    let msg = '獲得「' + res.card.name + '」（★' + res.card.star + '）';
+    if (burn && s.cards.some((x) => x.uid === burn.uid)) {
+      s.cards = s.cards.filter((x) => x.uid !== burn.uid);
+      s.stats.packBurns = (s.stats.packBurns || 0) + 1;
+      msg += '，燒掉了「' + burn.name + '」';
+    }
+    return { ok: true, msg, card: res.card, dropped: res.dropped, burned: burn };
+  }
+  // 第十九期：跳過這個包：一張都不收，拿回一半的錢（D.PACK16.skipRefund）
+  function packSkip(s) {
+    if (!s || !on(s) || s.phase !== 'shop') return { ok: false, msg: '不在市集' };
+    if (!s.pack || !Array.isArray(s.pack.cards)) return { ok: false, msg: '沒有打開的素材包' };
+    const back = Math.floor((s.pack.paid || 0) * ((D.PACK16 && D.PACK16.skipRefund) || 0.5));
+    s.cr += back;
+    s.pack = null;
+    s.stats.packSkips = (s.stats.packSkips || 0) + 1;
+    return { ok: true, msg: '把素材包放回去，拿回 $' + back, refund: back };
   }
 
   function pickCard(s, uid) {
@@ -21289,6 +21392,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     shopBuy,
     objReroll,
     packPick,
+    packSkip,
     pickCard,
     cancelPick,
     leaveShop,
@@ -37985,24 +38089,56 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       + '<button class="btn primary" type="button" data-do="leave">' + esc(T.leave) + '</button>'
       + '</div></div>';
   }
-  function packModal(s) {
+  // o.chosen：已經選了第幾張（第十九期：第二步問要不要同時燒掉一張）；o.opened：包已經撕開（返回第一步時不用再撕）
+  function packModal(s, o) {
     const pk = s.pack || { name: '素材包', cards: [] };
+    const opt = o || {};
+    const T = (D().PACK16 && D().PACK16.text) || {};
     // 第十七期：撕開之後的卡用真的圖（和得到素材時的包一樣）
     const face = (c, i) => (IE.PackFx && D().PACK16 ? IE.PackFx.cardFace(s, c, i, { dup: false }) : cardHtml(c));
+    const n = (pk.cards || []).length;
+    if (opt.chosen != null && pk.cards && pk.cards[opt.chosen]) {
+      // 第二步：同時燒掉一張？（愧疚素材、剛選中而會升星的那一張不可以燒）
+      const picked = pk.cards[opt.chosen];
+      const C = IE.Create;
+      const dup = (s.cards || []).find((c) => c.id === picked.id && !c.relic);
+      const minDeck = (D().ECON && D().ECON.minDeck) || 8;
+      const tooSmall = (s.cards || []).length + (dup ? 0 : 1) - 1 < minDeck;
+      const deck = (s.cards || []).slice().sort((a, b) => C.starOf(a) - C.starOf(b) || (a.value || 0) - (b.value || 0));
+      const items = deck.map((c) => {
+        const why = c.guilt ? T.burnGuilt : dup && dup.uid === c.uid ? T.burnPicked : tooSmall ? '素材庫最少要留 ' + minDeck + ' 張' : '';
+        const btn = '<button type="button" class="cardpick" data-do="packburn" data-uid="' + c.uid + '"' + (why ? ' disabled title="' + esc(why) + '"' : '') + '>'
+          + cardHtml(c) + '<span class="cp-act">' + esc(why ? '不能燒' : (T.burnBtn || '燒掉')) + '</span></button>';
+        return cardSlotHtml(btn, c.uid);
+      }).join('');
+      return '<div class="modal wide rd-pack rd-pack-burn">'
+        + '<span class="eyebrow">' + esc(pk.name) + '</span>'
+        + '<h2>' + esc(T.burnHead || '要同時燒掉一張素材嗎？') + '</h2>'
+        + '<div class="rp-chosen">' + face(picked, opt.chosen) + '<p class="mute">' + esc(T.burnSub || '') + '</p></div>'
+        + '<div class="btn-row"><button class="btn primary" type="button" data-do="packkeep">' + esc(T.keep || '不燒，收下就好') + '</button>'
+        + '<button class="btn" type="button" data-do="packback">' + esc(T.back || '重新選') + '</button></div>'
+        + '<div class="cp-grid">' + items + '</div>'
+        + '</div>';
+    }
     const cards = (pk.cards || []).map((c, i) => {
       const btn = '<button type="button" class="rp-card pk-pick" data-do="packpick" data-i="' + i + '">' + face(c, i) + '</button>';
       return cardSlotHtml(btn, 'pack:' + i);
     }).join('');
-    const n = (pk.cards || []).length;
     const pdef = (D().PACKS || []).find((p) => p.name === pk.name) || null;
     const body = IE.PackFx && D().PACK16
-      ? IE.PackFx.html(s, pk.cards || [], { kind: 'shop', cardsHtml: cards, count: n, gridCls: 'rp-grid' }) + IE.PackFx.oddsHtml(s, pdef)
+      ? IE.PackFx.html(s, pk.cards || [], { kind: 'shop', cardsHtml: cards, count: n, gridCls: 'rp-grid', cls: opt.opened ? 'is-open' : '' }) + IE.PackFx.oddsHtml(s, pdef)
       : '<div class="rp-grid">' + cards + '</div>';
+    // 第十九期：跳過，拿回一半的錢
+    const back = Math.floor((pk.paid || 0) * ((D().PACK16 && D().PACK16.skipRefund) || 0.5));
+    const skipBtn = pk.paid != null && IE.Rounds && IE.Rounds.packSkip
+      ? '<div class="btn-row rp-skip"><button class="btn" type="button" data-do="packskip">' + esc((T.skip || '跳過，拿回 {cash}').replace('{cash}', IE.Rounds.cash(s, back))) + '</button></div>'
+      : '';
     return '<div class="modal wide rd-pack">'
       + '<span class="eyebrow">開包・' + (n === 4 ? '四' : '三') + '選一</span>'
       + '<h2>' + esc(pk.name) + '</h2>'
-      + '<p class="mute" style="font-size:13px">撕開，挑一張素材收進素材庫。</p>'
+      + '<p class="mute" style="font-size:13px">' + esc(T.pickHead || '撕開，挑一張收進素材庫。') + '</p>'
       + body
+      + skipBtn
       + '</div>';
   }
   function pickModal(s) {
@@ -38711,6 +38847,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + '<div class="dk-tags ct-tags"></div>'
         + '<div class="dk-total ct-total num" hidden></div>'
         + '<div class="dk-obj-flash" aria-live="polite"></div>'
+        + '<div class="dk-wheel" role="img"></div>'
         + '</div>'
         + '<div class="dk-layer-hint"></div>'
         + '</div>'
@@ -39026,9 +39163,47 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         + '</button>');
     });
     if (pv && pv.he) {
-      parts.push('<span class="dk-he">合 ×2</span>');
+      parts.push('<span class="dk-he">合 ×' + ((D_.DESK && D_.DESK.he) || 1.5) + '</span>');
     }
     rowEl.innerHTML = parts.join('');
+  }
+
+  // 第十九期：創作桌角落的小色輪：十種情緒順着色輪排；對面的情緒之間有一條線（轉）；
+  // 稿紙上最後一張素材的情緒是「現在」，隔鄰的是「承」，對面的是「轉」；手上沒有的情緒變暗
+  function renderDeskWheel(uids) {
+    const el = $('.dk-wheel');
+    const s = st.s, D_ = D(), WH = D_.DESK_WHEEL, W = D_.WHEEL;
+    if (!el || !WH || !W || !IE.Desk) return;
+    const cards = (uids || []).map((u) => s.cards.find((c) => c.uid === u)).filter(Boolean);
+    const last = cards[cards.length - 1];
+    const lastT = last ? last.tags.filter((t) => W.includes(t)) : [];
+    const inHand = {};
+    ((s.session && s.session.hand) || []).forEach((u) => {
+      const c = s.cards.find((x) => x.uid === u);
+      if (c && !(uids || []).includes(u)) c.tags.forEach((t) => { if (W.includes(t)) inHand[t] = (inHand[t] || 0) + 1; });
+    });
+    const pos = (i, r) => { const a = (-90 + i * 36) * Math.PI / 180; return [50 + r * Math.cos(a), 50 + r * Math.sin(a)]; };
+    let svg = '<svg viewBox="0 0 100 100" aria-hidden="true">';
+    for (let i = 0; i < 5; i++) {
+      const [x1, y1] = pos(i, 30), [x2, y2] = pos(i + 5, 30);
+      const hot = lastT.some((t) => W.indexOf(t) === i || W.indexOf(t) === i + 5);
+      svg += '<line class="dw-axis' + (hot ? ' hot' : '') + '" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"/>';
+    }
+    const labels = [];
+    W.forEach((t, i) => {
+      const [x, y] = pos(i, 38);
+      const d = lastT.length ? Math.min(...lastT.map((u) => IE.Desk.wdist(u, t))) : -1;
+      const cls = d === 0 ? ' cur' : d === 1 ? ' cheng' : d === 5 ? ' zhuan' : '';
+      const nm = (D_.TAGS[t] && D_.TAGS[t].name) || t;
+      const n = inHand[t] || 0;
+      labels.push(nm + (n ? '（' + WH.hand.replace('{n}', n) + '）' : ''));
+      svg += '<g class="dw-e' + cls + (n ? '' : ' none') + '"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10" style="--c:' + ((D_.TAGS[t] && D_.TAGS[t].color) || '#888') + '"/>'
+        + '<text x="' + x.toFixed(1) + '" y="' + (y + 3.6).toFixed(1) + '">' + esc(WH.short[t] || nm.slice(0, 1)) + '</text></g>';
+    });
+    svg += '<text class="dw-c" x="50" y="53">' + esc(WH.center) + '</text></svg>';
+    el.innerHTML = svg;
+    el.setAttribute('aria-label', WH.center + '：' + labels.join('、') + '。' + WH.legend);
+    el.title = WH.legend;
   }
 
   function renderDesk() {
@@ -39094,6 +39269,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const pv = activeUids.length ? C().preview(s, activeUids) : null;
     if (!st.busy) {
       renderDeskRow(activeUids, pv);
+      renderDeskWheel(activeUids);
       if (!pv) {
         $('.ct-form .fn').textContent = doneStrokes ? '再下一筆' : '選擇素材';
         $('.ct-form .fl').textContent = '';
@@ -39102,10 +39278,20 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       } else {
         $('.ct-form .fn').textContent = pv.name;
         $('.ct-form .fl').textContent = 'Lv.' + pv.level;
-        setBoxes(pv.chips, pv.mult, 'preview');
+        // 第十九期：下筆之前顯示結構的部分（素材、結構、相連、情緒），令玩家可以比較兩種排法；物件、組合和火花留到下筆才揭曉
+        setBoxes(pv.structChips != null ? pv.structChips : pv.chips, pv.structMult != null ? pv.structMult : pv.mult, 'preview');
         const notes = [];
+        (pv.structX || []).forEach((x) => {
+          const nm = x.t === 'title' ? '稱號' : x.t === 'compound' ? x.name.split('・').pop() : x.name;
+          notes.push('<span class="dk-pv-pill x">' + esc(nm) + ' ×' + x.x + '</span>');
+        });
+        // 手機放不下逐項的倍率：只顯示合計（CSS 按寬度二選一）
+        if ((pv.structX || []).length) {
+          const prod = pv.structX.reduce((a, x) => a * x.x, 1);
+          notes.push('<span class="dk-pv-pill xsum">結構 ×' + (Math.round(prod * 100) / 100) + '</span>');
+        }
         if (pv.subject && pv.subject.bonus && pv.subject.name) {
-          notes.push('<span class="dk-pv-pill">題材：' + esc(pv.subject.name) + '</span>');
+          notes.push('<span class="dk-pv-pill subj">題材：' + esc(pv.subject.name) + '</span>');
         }
         if (pv.ai < 1) {
           notes.push('<span class="dk-pv-pill bad">AI ×' + pv.ai + '</span>');
@@ -39924,6 +40110,7 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     t.textContent = text;
     $('.ct-tags').appendChild(t);
     t.animate([{ transform: 'scale(2.2) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1 }], { duration: 260 / Math.min(2, speedK()), easing: 'cubic-bezier(.2,2,.4,1)' });
+    return t;
   }
 
   // ---------- 火焰粒子（倍率燃燒） ----------
@@ -40178,6 +40365,18 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
     const multEl = $('.ct-mult'), chipsEl = $('.ct-chips');
     const drawnPlans = new Set();
     let n = 0;
+    // 第十九期：小的加成（承、複合情緒的加法、回響、媒材、題材）合併成一個會跳動的「情緒」標籤，不再每一個一行；
+    // 真正改變局面的 ×倍率（轉、合、稱號、張力、矛盾）和物件仍然各自一拍
+    let emo = null;
+    const emoAdd = (chips, mult, name) => {
+      if (!emo) emo = { el: tag('', 'recipe emo'), chips: 0, mult: 0, names: [] };
+      emo.chips += chips || 0;
+      emo.mult = Math.round((emo.mult + (mult || 0)) * 10) / 10;
+      if (name && !emo.names.includes(name)) emo.names.push(name);
+      const nm = emo.names.length > 3 ? emo.names.slice(0, 3).join('・') + '…' : emo.names.join('・');
+      emo.el.textContent = '情緒' + (nm ? '「' + nm + '」' : '') + (emo.mult ? '　+' + emo.mult + ' 倍率' : '') + (emo.chips ? '　+' + emo.chips + ' 籌碼' : '');
+      emo.el.animate([{ transform: 'scale(1.12) rotate(-2deg)' }, { transform: 'scale(1) rotate(-2deg)' }], { duration: 160 });
+    };
     for (const x of res.steps) {
       if (!root) return;
       switch (x.t) {
@@ -40226,13 +40425,17 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
         }
         case 'compound': {
           const el = x.uid != null ? rowSlot(x.uid) : null;
-          const valTxt = x.chips ? '+' + x.chips + ' 籌碼' : x.mult ? '+' + x.mult + ' 倍率' : x.xmult ? '×' + x.xmult : '再計一次';
-          tag('「' + x.name + '・' + x.famName + '」　' + valTxt, x.xmult ? 'new' : 'recipe');
-          if (el) floatText(el, x.name + '・' + x.famName, x.xmult ? 'xmult' : x.chips ? 'chips' : 'mult');
+          if (x.xmult) {
+            tag('「' + x.name + '・' + x.famName + '」　×' + x.xmult, 'new');
+            if (el) floatText(el, x.name + '・' + x.famName, 'xmult');
+          } else {
+            emoAdd(x.chips, x.mult, x.name);
+            if (el) floatText(el, x.name + (x.chips ? ' +' + x.chips : x.mult ? ' +' + x.mult : '・再計一次'), x.chips ? 'chips' : 'mult');
+          }
           setBoxes(x.C, x.M);
           pulse(x.chips ? chipsEl : multEl);
           A().fx(x.xmult ? 'xmult' : 'mult', ++n);
-          await wait(230);
+          await wait(x.xmult ? 260 : 120);
           break;
         }
         case 'link': {
@@ -40243,29 +40446,30 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
             ? nextSlot.previousElementSibling
             : null;
           if (linkEl) linkEl.classList.add('lit');
-          tag(lbl, x.xmult ? 'new' : 'recipe');
+          if (x.xmult) tag(lbl, 'new');
+          else if (x.mult) emoAdd(0, x.mult, '');
           if (linkEl || nextSlot) floatText(linkEl || nextSlot, lbl, x.xmult ? 'xmult' : 'mult');
           setBoxes(x.C, x.M);
           pulse(multEl);
           A().fx(x.xmult ? 'xmult' : 'mult', ++n);
           if (x.xmult) shake(4);
-          await wait(x.xmult ? 290 : 200);
+          await wait(x.xmult ? 290 : 100);
           break;
         }
         case 'media': {
-          tag(x.name + '　+' + x.mult + ' 倍率', 'recipe');
+          emoAdd(0, x.mult, x.name);
           setBoxes(x.C, x.M);
           pulse(multEl);
           A().fx('mult', ++n);
-          await wait(220);
+          await wait(120);
           break;
         }
         case 'subject': {
-          tag('題材「' + x.name + '」　+' + x.mult + ' 倍率', 'recipe');
+          emoAdd(0, x.mult, '題材' + x.name);
           setBoxes(x.C, x.M);
           pulse(multEl);
           A().fx('mult', ++n);
-          await wait(220);
+          await wait(120);
           break;
         }
         case 'he': {
@@ -42399,18 +42603,34 @@ body.mode-rounds #stage:not(.playing) canvas { height: min(46vh, 420px) !importa
       },
     });
   }
+  // 市集的素材包：選一張 →（第十九期）要不要同時燒掉一張；或者整包跳過，拿回一半的錢
   function roundsPack() {
     const s = Game.state;
     UI.renderHud(s); save();
-    UI.modal(UI.packModal(s), {
-      packpick(el) {
-        const r = IE.Rounds.packPick(s, Number(el.dataset.i));
-        if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
-        A.sfx('pickup');
+    let chosen = null, opened = false;
+    const finish = (burnUid) => {
+      const r = IE.Rounds.packPick(s, chosen, burnUid);
+      if (!r || !r.ok) { if (r && (r.msg || r.reason)) UI.toast(r.msg || r.reason, 'bad'); A.sfx('wrong'); return; }
+      A.sfx('pickup');
+      if (r.burned) UI.toast(r.msg, 'good');
+      save();
+      roundsShop();
+    };
+    const render = () => UI.modal(UI.packModal(s, { chosen, opened }), {
+      packpick(el) { chosen = Number(el.dataset.i); opened = true; A.sfx('click'); render(); },
+      packkeep() { finish(null); },
+      packburn(el) { finish(Number(el.dataset.uid)); },
+      packback() { chosen = null; A.sfx('click'); render(); },
+      packskip() {
+        const r = IE.Rounds.packSkip(s);
+        if (!r || !r.ok) { if (r && r.msg) UI.toast(r.msg, 'bad'); A.sfx('wrong'); return; }
+        A.sfx('coin');
+        UI.toast(r.msg, 'good');
         save();
         roundsShop();
       },
     });
+    render();
   }
   function roundsPick() {
     const s = Game.state;

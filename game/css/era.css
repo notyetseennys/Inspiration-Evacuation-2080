@@ -210,6 +210,13 @@
 .ct-goal.wall { box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.55); }
 .rd-wall { padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255, 77, 94, 0.6); background: rgba(255, 77, 94, 0.12); color: #ffd0d5; font-weight: 700; line-height: 1.5; }
 
+/* ---------- 第十九期：素材包「選一燒一」或跳過 ---------- */
+.rp-skip { margin-top: 10px; justify-content: center; }
+.rp-chosen { display: flex; align-items: center; gap: 12px; margin: 6px 0 10px; }
+.rp-chosen > :first-child { flex: 0 0 auto; width: 120px; max-width: 34%; }
+.rp-chosen p { margin: 0; line-height: 1.6; min-width: 0; }
+.rd-pack-burn .cp-grid { margin-top: 10px; }
+
 /* ---------- 白天的舊城情報 ---------- */
 .era-intels { display: grid; gap: 6px; margin: 6px 0 2px; }
 .era-intel { padding: 6px 10px; border-left: 3px solid var(--sea); border-radius: 4px; background: rgba(55, 195, 214, 0.08); font-size: 13px; line-height: 1.5; }

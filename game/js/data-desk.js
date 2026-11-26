@@ -172,6 +172,14 @@
     },
   };
 
-  Object.assign(D, { DESK_CARDS, DESK_IDS, DESK_FORMS, DESK_FORM, DESK_REMAP });
+  // 第十九期：創作桌角落的小色輪（每種情緒一個字；最後一張素材的「承」和「轉」會亮起）
+  const DESK_WHEEL = {
+    short: { warmth: '情', hope: '望', water: '水', memory: '憶', rebel: '叛', machine: '機', guilt: '疚', anger: '怒', neon: '霓', hunger: '餓' },
+    center: '色輪',
+    legend: '承＝同色或隔鄰・轉＝對面',
+    hand: '手上 {n} 張',
+  };
+
+  Object.assign(D, { DESK_CARDS, DESK_IDS, DESK_FORMS, DESK_FORM, DESK_REMAP, DESK_WHEEL });
   if (IE.Create && IE.Create.syncDeskForms) IE.Create.syncDeskForms();
 });

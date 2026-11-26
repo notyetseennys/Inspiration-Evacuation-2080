@@ -697,8 +697,25 @@ const URL = 'http://localhost:' + PORT + '/';
     for (const u of pick3Uids) await page.click('#ctable .dk-hand .dk-card[data-uid="' + u + '"]');
     const linkCount3 = await page.$$eval('#ctable .dk-row .dk-link', (els) => els.length);
     if (linkCount3 !== 2) await fail('WO-16-10：選三張卡之後 .dk-row 應有 2 個 .dk-link，實際：' + linkCount3);
+    // 第十九期：下筆之前顯示結構的部分（籌碼 × 倍率）；夜景右上角的小色輪有十種情緒，最後一張的情緒亮起
+    const desk19 = await page.evaluate((uids) => {
+      const IEx = window.__IE, s = IEx.Game.state;
+      const pv = IEx.Create.preview(s, uids);
+      return {
+        chips: (document.querySelector('#ctable .dk-preview .ct-chips b') || {}).textContent,
+        structChips: pv.structChips,
+        wheelDots: document.querySelectorAll('#ctable .dk-wheel .dw-e').length,
+        cur: document.querySelectorAll('#ctable .dk-wheel .dw-e.cur').length,
+        he: (document.querySelector('#ctable .dk-row .dk-he') || {}).textContent || null,
+        heX: IEx.DATA.DESK.he,
+      };
+    }, pick3Uids);
+    if (String(desk19.structChips) !== String(desk19.chips).replace(/,/g, '')) await fail('第十九期：預覽的籌碼應該是結構的部分：' + JSON.stringify(desk19));
+    if (desk19.wheelDots !== 10 || desk19.cur < 1) await fail('第十九期：創作桌的小色輪不對：' + JSON.stringify(desk19));
+    if (desk19.he && !desk19.he.includes('×' + desk19.heX)) await fail('第十九期：稿紙上「合」的倍率不對：' + JSON.stringify(desk19));
     for (const u of pick3Uids) await page.click('#ctable .dk-hand .dk-card[data-uid="' + u + '"]');
     ok('WO-16-10：選三張卡之後 .dk-row 有兩個 .dk-link');
+    ok('第十九期：下筆之前顯示結構的籌碼（' + desk19.chips + '）；小色輪十種情緒、最後一張亮起' + (desk19.he ? '；「' + desk19.he + '」' : ''));
 
     // 收工演出只出現約一秒：用 MutationObserver 記下它曾經出現（WO-15-07 審核加入）
     await page.evaluate(() => {
@@ -869,13 +886,37 @@ const URL = 'http://localhost:' + PORT + '/';
       await page.screenshot({ path: path.join(__dirname, '..', 'docs', 'shots', 'wo-15-07-pack-mobile.png') });
       await page.setViewportSize({ width: 1280, height: 800 });
     }
+    // 第十九期：第一步有「跳過，拿回一半的錢」
+    if (!(await page.$('#modal .rd-pack [data-do="packskip"]'))) await fail('素材包沒有「跳過」的按鈕');
     // 第十七期：選到素材庫已有的素材時，是原來那張升星，張數不變
     const pickDup = await page.evaluate(() => { const s = window.__IE.Game.state; const c = s.pack && s.pack.cards[0]; return !!(c && s.cards.some((x) => x.id === c.id && !x.relic)); });
     await page.click('#modal .rd-pack [data-i="0"]');
+    // 第十九期：選了之後問要不要同時燒掉一張；這一次不燒
+    await page.waitForSelector('#modal .rd-pack-burn');
+    const burnBtns = await page.$$eval('#modal .rd-pack-burn [data-do="packburn"]', (els) => els.length);
+    if (burnBtns < 8) await fail('燒掉的一步應該列出整個素材庫，現在只有 ' + burnBtns + ' 張');
+    await page.click('#modal .rd-pack-burn [data-do="packkeep"]');
     await page.waitForSelector('#modal .rd-shop');
     const cardsAfter = await page.evaluate(() => window.__IE.Game.state.cards.length);
     if (cardsAfter !== cardsBefore + (pickDup ? 0 : 1)) await fail('開包選卡後 s.cards.length 應 ' + (pickDup ? '不變（重複升星）' : '+1') + '（' + cardsBefore + ' → ' + cardsAfter + '）');
-    ok('開包三選一（.rd-pack）：素材庫 ' + cardsBefore + ' → ' + cardsAfter + ' 張');
+    ok('開包三選一（.rd-pack）：有「跳過」；選了之後問要不要燒（列出 ' + burnBtns + ' 張）；不燒：素材庫 ' + cardsBefore + ' → ' + cardsAfter + ' 張');
+    // 第十九期：第二個包（付得起才試）：選一張，同時燒掉素材庫裏第一張可以燒的
+    if (await page.$('#modal .rs-item[data-slot^="pack:"] button:not([disabled])')) {
+      const before2 = await page.evaluate(() => window.__IE.Game.state.cards.map((c) => c.uid));
+      await page.click('#modal .rs-item[data-slot^="pack:"] button:not([disabled])');
+      await page.waitForSelector('#modal .rd-pack');
+      if (await page.$('#modal .rd-pack .pk-seal')) await page.click('#modal .rd-pack .pk-seal');
+      await page.waitForTimeout(150);
+      const dup2 = await page.evaluate(() => { const s = window.__IE.Game.state; const c = s.pack && s.pack.cards[0]; return !!(c && s.cards.some((x) => x.id === c.id && !x.relic)); });
+      await page.click('#modal .rd-pack [data-i="0"]');
+      await page.waitForSelector('#modal .rd-pack-burn');
+      const victim = await page.$eval('#modal .rd-pack-burn [data-do="packburn"]:not([disabled])', (el) => Number(el.dataset.uid));
+      await page.click('#modal .rd-pack-burn [data-do="packburn"][data-uid="' + victim + '"]');
+      await page.waitForSelector('#modal .rd-shop');
+      const after2 = await page.evaluate(() => window.__IE.Game.state.cards.map((c) => c.uid));
+      if (after2.includes(victim) || after2.length !== before2.length + (dup2 ? -1 : 0)) await fail('選一燒一之後素材庫不對：' + before2.length + ' → ' + after2.length + '，燒掉的 ' + victim + (after2.includes(victim) ? ' 仍在' : ''));
+      ok('第十九期：素材包選一燒一：燒掉了一張，素材庫 ' + before2.length + ' → ' + after2.length + ' 張');
+    }
 
     // 10. 按 .rs-item[data-slot="tech"] button:not([disabled])；檢查對應配色的等級加了 1，該格變成 disabled
     const techFid = await page.evaluate(() => window.__IE.Game.state.shop.tech);

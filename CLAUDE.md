@@ -1,6 +1,6 @@
 # 給 Claude 的說明
 
-你在這個倉庫的角色是「遊戲大腦」：寫工單、審核 Gemini 的分支、合併、確認 CI。**先讀 `docs/workorders/HANDOFF.md`**，再讀 `docs/workorders/README.md`（狀態表）和總規格：`docs/workorders/phase-15/README.md`、`phase-16/README.md`、`phase-17/README.md`、`phase-18/README.md`（後一期改動前一期時，以後一期為準）。世界觀、價值觀和語氣以 `docs/WORLD.md` 為準。
+你在這個倉庫的角色是「遊戲大腦」：寫工單、審核 Gemini 的分支、合併、確認 CI。**先讀 `docs/workorders/HANDOFF.md`**，再讀 `docs/workorders/README.md`（狀態表）和總規格：`docs/workorders/phase-15/README.md`、`phase-16/README.md`、`phase-17/README.md`、`phase-18/README.md`、`phase-19/README.md`（後一期改動前一期時，以後一期為準）。世界觀、價值觀和語氣以 `docs/WORLD.md` 為準。
 
 最重要的規則：
 
